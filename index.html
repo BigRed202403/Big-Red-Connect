@@ -2,54 +2,92 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Big Red Connect OKC</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Big Red Connect</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <style>
     body {
-      background-color: #111;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #000;
       color: #fff;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+
+    .wrapper {
+      max-width: 500px;
+      margin: 0 auto;
+      padding: 40px 20px;
+      background-color: #1a1a1a;
+      border: 4px solid #cc0000;
+      border-radius: 12px;
+    }
+
+    .logo {
+      max-width: 100%;
+      height: auto;
+      margin-bottom: 25px;
+    }
+
+    h1 {
+      font-size: 28px;
+      margin-bottom: 20px;
+      color: #cc0000;
+    }
+
+    .links {
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 40px 20px;
+      gap: 15px;
     }
-    h1 {
-      color: #e00000;
-      margin-bottom: 10px;
-      font-size: 2.5rem;
-    }
-    p {
-      margin-bottom: 30px;
-      font-style: italic;
-      color: #ccc;
-    }
+
     .button {
-      display: block;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      background-color: #cc0000;
+      color: white;
+      padding: 15px 25px;
+      font-size: 18px;
+      font-weight: bold;
+      text-decoration: none;
+      border-radius: 6px;
       width: 100%;
       max-width: 300px;
-      margin: 10px 0;
-      padding: 15px;
-      background-color: #e00000;
-      color: white;
-      text-align: center;
-      text-decoration: none;
-      font-weight: bold;
-      border-radius: 6px;
-      transition: background-color 0.3s;
+      transition: background-color 0.3s ease;
     }
+
     .button:hover {
-      background-color: #c00000;
+      background-color: #990000;
+    }
+
+    .fa-icon {
+      font-size: 20px;
     }
   </style>
 </head>
 <body>
-  <h1>Big Red Connect OKC</h1>
-  <p>Private. Local. Trusted. You know the drill.</p>
+  <div class="wrapper">
+    <img src="logo.png" alt="Big Red Connect Logo" class="logo" />
+    <h1>Big Red Connect</h1>
 
-  <a class="button" href="sms:8335262643">📲 Text to Connect</a>
-  <a class="button" href="https://big-red-connect-okc.square.site" target="_blank">🌐 Main Page</a>
-  <a class="button" href="https://www.facebook.com/share/g/16XP93KAZV/?mibextid=wwXIfr" target="_blank">💬 Join the Group Chat</a>
-  <a href="https://www.facebook.com/profile.php?id=61576750077359" target="_blank">Facebook Page</a>
+    <div class="links">
+      <a href="https://big-red-connect-okc.square.site" class="button" target="_blank">
+        <i class="fas fa-globe fa-icon"></i> Book Online
+      </a>
+      <a href="sms:8335262643" class="button">
+        <i class="fas fa-sms fa-icon"></i> Text to Book
+      </a>
+      <a href="https://www.facebook.com/profile.php?id=61576750077359" class="button" target="_blank">
+        <i class="fab fa-facebook fa-icon"></i> Facebook Page
+      </a>
+      <a href="https://www.facebook.com/share/g/16XP93KAZV/?mibextid=wwXIfr" class="button" target="_blank">
+        <i class="fab fa-facebook-group fa-icon"></i> Facebook Group
+      </a>
+    </div>
+  </div>
 </body>
 </html>
