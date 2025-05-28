@@ -1,0 +1,84 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rider Agreement - Big Red Connect</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f8f8;
+            margin: 20px;
+            padding: 20px;
+            color: #333;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        h1 {
+            color: #b30000;
+        }
+        .section {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            box-sizing: border-box;
+        }
+        button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #b30000;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #990000;
+        }
+    </style>
+</head>
+<body>
+    <h1>Rider Agreement - Big Red Connect</h1>
+    <p>This form confirms your agreement to the policies of Big Red Connect as a rider. Please review each section carefully before signing below.</p>
+
+    <div class="section">
+        <h2>Agreement Terms</h2>
+        <ul>
+            <li><strong>Payment:</strong> Payment is due as agreed. Late or missed payments may result in service refusal.</li>
+            <li><strong>Cancellation:</strong> Must cancel at least 3 hours in advance for a refund.</li>
+            <li><strong>No Show:</strong> A $5 fee applies if rider does not appear within 5 minutes of arrival notice.</li>
+            <li><strong>Changes & Stops:</strong> Additional stops or changes may incur up to $5 extra per stop.</li>
+            <li><strong>Damages:</strong> Rider is responsible for damages or cleaning fees (up to $200).</li>
+            <li><strong>Group Responsibility:</strong> Booking party is liable for actions of all riders in their group.</li>
+            <li><strong>Insurance Disclaimer:</strong> Rides are offered by an independent operator under a personal policy with a rideshare endorsement. Riders acknowledge that coverage is limited compared to standard commercial carriers.</li>
+            <li><strong>Limitation of Liability:</strong> By riding with Big Red Connect, the rider voluntarily assumes all risks associated with transportation services. The company and driver are not liable for personal injury, property loss, or damage except in cases of gross negligence or intentional misconduct.</li>
+        </ul>
+    </div>
+
+    <form name="riderAgreement">
+        <div class="section">
+            <label for="fullName">Full Name:</label>
+            <input type="text" id="fullName" name="fullName" required>
+            
+            <label for="email">Email Address:</label>
+            <input type="email" id="email" name="email">
+
+            <label for="date">Date:</label>
+            <input type="date" id="date" name="date" required>
+
+            <label for="signature">Type Your Full Name as Signature:</label>
+            <input type="text" id="signature" name="signature" required>
+
+            <button type="submit">Submit Agreement</button>
+        </div>
+    </form>
+</body>
+</html>
