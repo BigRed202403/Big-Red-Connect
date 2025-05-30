@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Leave a Review • Big Red Connect</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #fff;
+      color: #333;
+      max-width: 600px;
+      margin: 2rem auto;
+      padding: 1rem;
+    }
+    h1 {
+      color: #cc0000;
+      text-align: center;
+    }
+    label {
+      display: block;
+      margin-top: 1rem;
+      font-weight: bold;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 10px;
+      margin-top: 0.5rem;
+      box-sizing: border-box;
+    }
+    button {
+      background-color: #cc0000;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      margin-top: 1.5rem;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #990000;
+    }
+    .note {
+      font-size: 0.9rem;
+      color: gray;
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Leave a Review</h1>
+  <p style="text-align:center;">We’d love to hear about your experience with Big Red Connect.</p>
+  <form action="mailto:bigredconnectokc@gmail.com" method="post" enctype="text/plain">
+    <label for="name">Your Name (optional):</label>
+    <input type="text" id="name" name="Name">
+
+    <label for="contact">Contact Info (optional):</label>
+    <input type="text" id="contact" name="Contact">
+
+    <label for="rating">Rating:</label>
+    <select id="rating" name="Rating" required>
+      <option value="">Select...</option>
+      <option value="⭐️">⭐️</option>
+      <option value="⭐️⭐️">⭐️⭐️</option>
+      <option value="⭐️⭐️⭐️">⭐️⭐️⭐️</option>
+      <option value="⭐️⭐️⭐️⭐️">⭐️⭐️⭐️⭐️</option>
+      <option value="⭐️⭐️⭐️⭐️⭐️">⭐️⭐️⭐️⭐️⭐️</option>
+    </select>
+
+    <label for="review">What did you think?</label>
+    <textarea id="review" name="Review" rows="5" required></textarea>
+
+    <button type="submit">Submit Review</button>
+    <p class="note">Your feedback goes directly to Big Red Connect and will not be made public without permission.</p>
+  </form>
+</body>
+</html>
