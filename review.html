@@ -9,48 +9,59 @@
       font-family: Arial, sans-serif;
       background: #fff;
       color: #333;
-      max-width: 600px;
+      max-width: 700px;
       margin: 2rem auto;
       padding: 1rem;
     }
+
     h1 {
       color: #cc0000;
       text-align: center;
+      font-size: 2rem;
     }
-    p {
+
+    .description {
       text-align: center;
+      margin-bottom: 1.5rem;
     }
-    .qr {
-      display: block;
-      margin: 1.5rem auto;
-      max-width: 250px;
+
+    iframe {
+      width: 100%;
+      height: 700px;
+      border: none;
     }
-    .btn {
-      display: block;
-      background-color: #cc0000;
-      color: white;
+
+    .qr-container {
       text-align: center;
-      text-decoration: none;
-      padding: 15px 20px;
-      margin: 1.5rem auto;
-      width: fit-content;
-      border-radius: 5px;
-      font-size: 1.1rem;
+      margin-top: 2rem;
     }
-    .btn:hover {
-      background-color: #990000;
+
+    .qr-container img {
+      max-width: 200px;
+      height: auto;
+    }
+
+    .note {
+      text-align: center;
+      font-size: 0.9rem;
+      color: gray;
+      margin-top: 1rem;
     }
   </style>
 </head>
 <body>
   <h1>Leave a Review</h1>
-  <p>We’d love to hear about your experience with Big Red Connect.</p>
-  <p>Tap the button below or scan the QR code to leave your review.</p>
+  <p class="description">We’d love to hear about your experience with Big Red Connect. Just pick a star rating and leave your feedback!</p>
 
-  <a class="btn" href="https://docs.google.com/forms/d/e/1FAIpQLSeq6WCnkrG417rWCGwN56i7FplWpNTHlg1lpGuC-IETDEkEHw/viewform?usp=dialog" target="_blank">Leave a Review</a>
+  <!-- Embedded Google Form -->
+  <iframe src="https://docs.google.com/forms/d/e/1FAIpQLSeq6WCnkrG417rWCGwN56i7FplWpNTHlg1lpGuC-IETDEkEHw/viewform?embedded=true" allowfullscreen></iframe>
 
-  <img class="qr" src="./Review-qr.png" alt="Scan to leave a review">
+  <!-- QR Code -->
+  <div class="qr-container">
+    <p>Prefer to use your phone? Scan here:</p>
+    <img src="./Review-qr.png" alt="Scan to leave a review">
+  </div>
 
-  <p style="text-align:center; font-size: 0.9rem; color: gray;">Your feedback helps us keep Big Red Connect surge-free and rider-first.</p>
+  <p class="note">Your feedback goes directly to Big Red Connect. Thank you for supporting local!</p>
 </body>
 </html>
