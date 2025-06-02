@@ -17,60 +17,40 @@
       color: #cc0000;
       text-align: center;
     }
-    label {
+    p {
+      text-align: center;
+    }
+    .qr {
       display: block;
-      margin-top: 1rem;
-      font-weight: bold;
+      margin: 1.5rem auto;
+      max-width: 250px;
     }
-    input, select, textarea {
-      width: 100%;
-      padding: 10px;
-      margin-top: 0.5rem;
-      box-sizing: border-box;
-    }
-    button {
+    .btn {
+      display: block;
       background-color: #cc0000;
       color: white;
-      border: none;
-      padding: 10px 20px;
-      margin-top: 1.5rem;
-      cursor: pointer;
+      text-align: center;
+      text-decoration: none;
+      padding: 15px 20px;
+      margin: 1.5rem auto;
+      width: fit-content;
+      border-radius: 5px;
+      font-size: 1.1rem;
     }
-    button:hover {
+    .btn:hover {
       background-color: #990000;
-    }
-    .note {
-      font-size: 0.9rem;
-      color: gray;
-      margin-top: 1rem;
     }
   </style>
 </head>
 <body>
   <h1>Leave a Review</h1>
-  <p style="text-align:center;">We’d love to hear about your experience with Big Red Connect.</p>
-  <form action="mailto:bigredconnectokc@gmail.com" method="post" enctype="text/plain">
-    <label for="name">Your Name (optional):</label>
-    <input type="text" id="name" name="Name">
+  <p>We’d love to hear about your experience with Big Red Connect.</p>
+  <p>Tap the button below or scan the QR code to leave your review.</p>
 
-    <label for="contact">Contact Info (optional):</label>
-    <input type="text" id="contact" name="Contact">
+  <a class="btn" href="https://docs.google.com/forms/d/e/1FAIpQLSeq6WCnkrG417rWCGwN56i7FplWpNTHlg1lpGuC-IETDEkEHw/viewform?usp=dialog" target="_blank">Leave a Review</a>
 
-    <label for="rating">Rating:</label>
-    <select id="rating" name="Rating" required>
-      <option value="">Select...</option>
-      <option value="⭐️">⭐️</option>
-      <option value="⭐️⭐️">⭐️⭐️</option>
-      <option value="⭐️⭐️⭐️">⭐️⭐️⭐️</option>
-      <option value="⭐️⭐️⭐️⭐️">⭐️⭐️⭐️⭐️</option>
-      <option value="⭐️⭐️⭐️⭐️⭐️">⭐️⭐️⭐️⭐️⭐️</option>
-    </select>
+  <img class="qr" src="./assets/review-qr.png" alt="Scan to leave a review">
 
-    <label for="review">What did you think?</label>
-    <textarea id="review" name="Review" rows="5" required></textarea>
-
-    <button type="submit">Submit Review</button>
-    <p class="note">Your feedback goes directly to Big Red Connect and will not be made public without permission.</p>
-  </form>
+  <p style="text-align:center; font-size: 0.9rem; color: gray;">Your feedback helps us keep Big Red Connect surge-free and rider-first.</p>
 </body>
 </html>
