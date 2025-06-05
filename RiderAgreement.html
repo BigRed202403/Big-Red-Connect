@@ -1,85 +1,75 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rider Agreement - Big Red Connect</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f8f8f8;
-            margin: 20px;
-            padding: 20px;
-            color: #333;
-            max-width: 800px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-        h1 {
-            color: #b30000;
-        }
-        .section {
-            margin-bottom: 20px;
-        }
-        label {
-            display: block;
-            margin-top: 10px;
-        }
-        input, textarea {
-            width: 100%;
-            padding: 8px;
-            margin-top: 5px;
-            box-sizing: border-box;
-        }
-        button {
-            margin-top: 20px;
-            padding: 10px 20px;
-            background-color: #b30000;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #990000;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Rider Agreement – Big Red Connect</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f9f9f9;
+      padding: 20px;
+      max-width: 800px;
+      margin: auto;
+      color: #333;
+    }
+    h1 {
+      color: #b30000;
+    }
+    ul {
+      margin-left: 20px;
+    }
+    a.button {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 10px 18px;
+      background-color: #b30000;
+      color: white;
+      text-decoration: none;
+      border-radius: 5px;
+    }
+    a.button:hover {
+      background-color: #990000;
+    }
+    .notice {
+      background: #fff3cd;
+      color: #856404;
+      padding: 12px;
+      border: 1px solid #ffeeba;
+      border-radius: 4px;
+      margin-top: 20px;
+    }
+  </style>
 </head>
 <body>
-    <h1>Rider Agreement - Big Red Connect</h1>
-    <p>This form confirms your agreement to the policies of Big Red Connect as a rider. Please review each section carefully before signing below.</p>
+  <h1>Rider Agreement – Big Red Connect</h1>
+  <p>By riding with Big Red Connect, you agree to the following policies. These are displayed in-vehicle, on our website, and shared at time of booking:</p>
 
-    <div class="section">
-        <h2>Agreement Terms</h2>
-        <ul>
-            <li><strong>Payment:</strong> Payment is due as agreed. Late or missed payments may result in service refusal.</li>
-            <li><strong>Cancellation:</strong> Must cancel at least 3 hours in advance for a refund.</li>
-            <li><strong>No Show:</strong> A $5 fee applies if rider does not appear within 5 minutes of arrival notice.</li>
-            <li><strong>Changes & Stops:</strong> Additional stops or changes may incur up to $5 extra per stop.</li>
-            <li><strong>Damages:</strong> Rider is responsible for damages or cleaning fees (up to $200).</li>
-            <li><strong>Group Responsibility:</strong> Booking party is liable for actions of all riders in their group.</li>
-            <li><strong>Insurance Disclaimer:</strong> Rides are offered by an independent operator under a personal policy with a rideshare endorsement. Riders acknowledge that coverage is limited compared to standard commercial carriers.</li>
-            <li><strong>Limitation of Liability:</strong> By riding with Big Red Connect, the rider voluntarily assumes all risks associated with transportation services. The company and driver are not liable for personal injury, property loss, or damage except in cases of gross negligence or intentional misconduct.</li>
-            <li><strong>Recording Notice:</strong> A dashcam may record video and audio inside the vehicle. By riding with Big Red Connect, you consent to this recording as part of the safety and accountability policy.</li>
-        </ul>
-    </div>
+  <ul>
+    <li><strong>Payment:</strong> Due as agreed. Missed or late payment may result in refusal of service.</li>
+    <li><strong>Cancellation:</strong> Cancel at least 3 hours in advance for refund eligibility.</li>
+    <li><strong>No-Shows:</strong> $5 fee after 5-minute wait.</li>
+    <li><strong>Stops/Changes:</strong> May result in a $5 fee per extra stop or major detour.</li>
+    <li><strong>Cleaning/Damage:</strong> Fees up to $200 may apply if required.</li>
+    <li><strong>Group Responsibility:</strong> The booking party is responsible for the behavior and costs of all group members.</li>
+    <li><strong>Insurance Disclaimer:</strong> Service provided under a personal policy with rideshare endorsement. Limited liability applies.</li>
+    <li><strong>Dash Cam Notice:</strong> Audio and video may be recorded inside the vehicle for safety and liability purposes. Riding implies consent.</li>
+  </ul>
 
-    <form name="riderAgreement">
-        <div class="section">
-            <label for="fullName">Full Name:</label>
-            <input type="text" id="fullName" name="fullName" required>
-            
-            <label for="email">Email Address:</label>
-            <input type="email" id="email" name="email">
+  <div class="notice">
+    <strong>By accepting a ride, you agree to these terms.</strong><br />
+    No physical signature is required for single or routine rides.
+  </div>
 
-            <label for="date">Date:</label>
-            <input type="date" id="date" name="date" required>
+  <p>If you need a formal record (e.g. for a group, special event, or employer), you may complete the signed agreement form below:</p>
 
-            <label for="signature">Type Your Full Name as Signature:</label>
-            <input type="text" id="signature" name="signature" required>
+  <a class="button" href="https://docs.google.com/forms/d/e/1FAIpQLSe9qLWuv1fF8PLVs8QCVJUNr9o-YlytixhDi1Rcz5St5e6hlw/viewform?usp=dialog" target="_blank">
+    Complete Signed Rider Form
+  </a>
 
-            <button type="submit">Submit Agreement</button>
-        </div>
-    </form>
+  <p style="margin-top: 40px; font-size: 0.9em; color: #666;">
+    This document is publicly available at <strong>bigred202403.github.io/Big-Red-Connect/RiderAgreement.html</strong><br />
+    For questions, text us at <strong>833-526-2643</strong>.
+  </p>
 </body>
 </html>
