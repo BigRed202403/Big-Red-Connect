@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Big Red Connect - Reviews & Info</title>
+<style>
+  /* Reset & base */
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #fff;
+    color: #222;
+    margin: 0; padding: 0;
+  }
+  header {
+    background: #cc0000;
+    color: white;
+    padding: 1rem 1.5rem;
+    text-align: center;
+  }
+  nav {
+    background: #330000;
+    display: flex;
+    justify-content: center;
+    padding: 0.5rem 0;
+  }
+  nav a {
+    color: white;
+    text-decoration: none;
+    margin: 0 1rem;
+    font-weight: 600;
+    font-size: 1.1rem;
+    transition: color 0.3s ease;
+  }
+  nav a:hover,
+  nav a:focus {
+    color: #ff6666;
+  }
+  main {
+    max-width: 900px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+  }
+  h1 {
+    text-align: center;
+    margin-bottom: 1rem;
+  }
+  section {
+    margin-bottom: 3rem;
+  }
+  /* Review Form iframe */
+  .review-form-container {
+    max-width: 600px;
+    margin: 0 auto;
+    border: 2px solid #cc0000;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  iframe {
+    width: 100%;
+    height: 700px;
+    border: none;
+  }
+  /* Footer */
+  footer {
+    background: #cc0000;
+    color: white;
+    text-align: center;
+    padding: 1rem 1.5rem;
+    font-size: 0.9rem;
+  }
+  /* QR Code styling */
+  .qr-container {
+    text-align: center;
+    margin-top: 1rem;
+  }
+  .qr-container img {
+    max-width: 150px;
+    height: auto;
+  }
+  .qr-caption {
+    font-size: 0.9rem;
+    color: #660000;
+    margin-top: 0.5rem;
+  }
+  /* Responsive adjustments */
+  @media (max-width: 600px) {
+    iframe {
+      height: 500px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Big Red Connect</h1>
+  <p>Local. Surge Free. Trusted.</p>
+</header>
+
+<nav role="navigation" aria-label="Primary">
+  <a href="index.html">Home</a>
+  <a href="info.html">Info & FAQ</a>
+  <a href="reviews.html" aria-current="page">Reviews</a>
+  <a href="contact.html">Contact</a>
+</nav>
+
+<main>
+  <section aria-labelledby="reviews-title">
+    <h2 id="reviews-title">Leave Your Review & See What Others Say</h2>
+    <p>We love hearing from our connections! Please share your experience with Big Red Connect below or scan the QR code to open the review form on your phone.</p>
+
+    <div class="review-form-container" role="region" aria-label="Big Red Connect Google Review Form">
+      <iframe
+        src="https://docs.google.com/forms/d/e/1FAIpQLSeq6WCnkrG417rWCGwN56i7FplWpNTHlg1lpGuC-IETDEkEHw/viewform?embedded=true"
+        title="Big Red Connect Review Form"
+        aria-describedby="qr-instruction"
+        loading="lazy"
+      >
+        Loading review form...
+      </iframe>
+    </div>
+
+    <div class="qr-container" aria-describedby="qr-instruction">
+      <img src="review-qr.png" alt="QR code to open Big Red Connect review form" />
+      <p id="qr-instruction" class="qr-caption">Scan this QR code to open the review form on your mobile device.</p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <p>&copy; 2025 Big Red Connect. All rights reserved.</p>
+</footer>
+
+</body>
+</html>
