@@ -1,153 +1,159 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Big Red Connect - Local. Surge Free. Trusted.</title>
-<style>
-  body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: #000;
-    color: #eee;
-    margin: 0; padding: 0;
-  }
-  .logo-container {
-    text-align: center;
-    padding: 1.5rem 0 0.5rem 0;
-  }
-  .logo-container img {
-    max-width: 300px;
-    height: auto;
-  }
-  header {
-    background: #cc0000;
-    color: white;
-    padding: 1.5rem;
-    text-align: center;
-  }
-  nav {
-    background: #1a1a1a;
-    display: flex;
-    justify-content: center;
-    padding: 0.75rem 0;
-  }
-  nav a {
-    color: white;
-    text-decoration: none;
-    margin: 0 1.5rem;
-    font-weight: 600;
-    font-size: 1.1rem;
-    transition: color 0.3s ease;
-  }
-  nav a:hover, nav a:focus {
-    color: #ff6666;
-  }
-  main {
-    max-width: 1000px;
-    margin: 2rem auto;
-    padding: 0 1rem;
-  }
-  h1 {
-    text-align: center;
-    font-size: 2.2rem;
-    color: #fff;
-  }
-  p.tagline {
-    text-align: center;
-    font-size: 1.3rem;
-    color: #bbb;
-  }
-  section {
-    margin: 3rem 0;
-  }
-  .cta {
-    background: #cc0000;
-    color: white;
-    padding: 2rem;
-    text-align: center;
-    border-radius: 8px;
-    margin-top: 2rem;
-  }
-  .cta h2 {
-    margin: 0 0 1rem 0;
-  }
-  .cta p {
-    font-size: 1.2rem;
-  }
-  .cta a {
-    display: inline-block;
-    margin-top: 1rem;
-    background: #fff;
-    color: #cc0000;
-    padding: 0.75rem 2rem;
-    text-decoration: none;
-    font-weight: bold;
-    border-radius: 5px;
-    transition: 0.3s;
-  }
-  .cta a:hover {
-    background: #ffe6e6;
-  }
-  footer {
-    background: #1a1a1a;
-    color: #aaa;
-    text-align: center;
-    padding: 1rem;
-    font-size: 0.9rem;
-  }
-  .contact {
-    text-align: center;
-    font-size: 1.1rem;
-    margin-top: 2rem;
-  }
-  .contact a {
-    color: #ff4444;
-    text-decoration: none;
-    font-weight: bold;
-  }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Big Red Connect</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background-color: #000;
+            color: #fff;
+            text-align: center;
+            padding: 20px 15px;
+            max-width: 600px;
+            margin: auto;
+        }
+        .logo {
+            margin: 30px 0 20px 0;
+        }
+        h1 {
+            font-size: 2.2em;
+            margin-bottom: 0.3em;
+        }
+        .tagline {
+            font-size: 1.1em;
+            color: #ccc;
+            margin-bottom: 2em;
+            padding: 0 10px;
+        }
+        .buttons a {
+            display: inline-block;
+            margin: 10px 8px;
+            padding: 15px 30px;
+            font-size: 1.1em;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #fff;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            transition: transform 0.1s ease;
+        }
+        .buttons a:hover {
+            transform: scale(1.05);
+        }
+        .text-button {
+            background-color: #c40000;
+        }
+        .call-button {
+            background-color: #444;
+        }
+        h2 {
+            font-size: 1.5em;
+            margin-top: 2em;
+            margin-bottom: 0.7em;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+            font-size: 1em;
+            line-height: 1.8em;
+            margin: 0 auto;
+            text-align: left;
+            display: inline-block;
+        }
+        li:before {
+            content: "â¢ ";
+            color: #c40000;
+        }
+        .review {
+            margin: 25px 0;
+            padding: 20px;
+            background-color: #111;
+            border-radius: 10px;
+            font-style: italic;
+            font-size: 1em;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        .about {
+            margin-top: 40px;
+            font-size: 1em;
+            color: #ccc;
+            line-height: 1.5em;
+            padding: 0 10px;
+        }
+        footer {
+            margin-top: 50px;
+            font-size: 0.85em;
+            color: #666;
+            padding-bottom: 30px;
+        }
+        footer a {
+            color: #999;
+            text-decoration: none;
+        }
+    </style>
 </head>
 <body>
 
-<div class="logo-container">
-  <img src="1A5072F2-8604-4CAB-BC84-E15D86D8CE73.png" alt="Big Red Connect Logo" class="logo" />
-</div>
+    <div class="logo">
+        <img src="logo-placeholder.png" alt="Big Red Connect Logo" width="140">
+    </div>
 
-<header>
-  <h1>Big Red Connect</h1>
-  <p>Local. Surge Free. Trusted.</p>
-</header>
+    <h1>BIG RED CONNECT</h1>
+    <div class="tagline">Your Local Connection Across OKC â Owner Operated, Surge-Free, Trusted.</div>
 
-<nav role="navigation" aria-label="Primary">
-  <a href="index.html" aria-current="page">Home</a>
-  <a href="info.html">Info & FAQ</a>
-  <a href="reviews.html">Reviews</a>
-  <a href="contact.html">Contact</a>
-</nav>
+    <div class="buttons">
+        <a href="sms:14053784907" class="text-button">TEXT BIG RED</a>
+        <a href="tel:14053784907" class="call-button">CALL BIG RED</a>
+    </div>
 
-<main>
+    <h2>WHAT WE DO</h2>
+    <ul>
+        <li>Work, meetings & appointments</li>
+        <li>Shopping runs & errands</li>
+        <li>Nights out across OKC venues</li>
+        <li>Airport & Tinker AFB connections</li>
+        <li>Event & nightlife link-ups</li>
+    </ul>
 
-  <section>
-    <h1>Welcome to Big Red Connect</h1>
-    <p class="tagline">Your Local Link-Up Across OKC & Metro</p>
-    <p style="text-align:center; max-width:750px; margin:auto;">Skip the surge. Skip the apps. Big Red Connect offers trusted, locally-managed connections to your favorite venues, events, nights out, and airport moves across the metro — built on relationships, not random algorithms.</p>
-  </section>
+    <h2>WHY BIG RED?</h2>
+    <ul>
+        <li>Owner-operated: one trusted local connection</li>
+        <li>No surge pricing or surprise fees</li>
+        <li>Consistent, personal service</li>
+        <li>Trusted by OKC venues & locals</li>
+        <li>Flexible scheduling â simple communication</li>
+    </ul>
 
-  <section class="cta">
-    <h2>Planning Your Next Move?</h2>
-    <p>Tap in with Big Red directly — local communication, surge-free pricing, trusted connections.</p>
-    <a href="tel:+14053784907">📞 Text or Call: (405) 378-4907</a>
-  </section>
+    <div class="review">
+        â­â­â­â­â­<br>
+        "Big Red keeps it easy, local, and reliable â no apps, no headaches."<br>â Samantha, OKC
+    </div>
 
-  <section class="contact">
-    <p>🔗 Need Info? Visit <a href="info.html">Info & FAQ</a> • <a href="reviews.html">Leave a Review</a></p>
-  </section>
+    <div class="review">
+        â­â­â­â­â­<br>
+        "Always on time, always dependable â my go-to for work meetings."<br>â James, Moore
+    </div>
 
-</main>
+    <div style="margin-top:10px;">
+        <a href="https://bigred202403.github.io/Big-Red-Connect/reviewed.html" style="color:#ccc;" target="_blank">See more reviews â</a> |
+        <a href="https://bigred202403.github.io/Big-Red-Connect/review.html" style="color:#ccc;" target="_blank">Leave a review</a>
+    </div>
 
-<footer>
-  <p>&copy; 2025 Big Red Connect. All rights reserved.</p>
-</footer>
+    <div class="about">
+        Big Red Connect is independently owned and operated in Oklahoma City. You work directly with one local professional for every connection â not a random app driver.<br><br>
+        Local. Surge-Free. Trusted.
+    </div>
+
+    <footer>
+        &copy; 2025 Big Red Connect<br>
+        <a href="https://www.facebook.com/profile.php?id=61577217145544" target="_blank">Facebook Page</a> | 
+        <a href="https://www.facebook.com/share/g/16XP93KAZV/?mibextid=wwXIfr" target="_blank">Community Group</a><br>
+        <a href="https://bigred202403.github.io/Big-Red-Connect/info.html" target="_blank">Info (FAQ & Policies)</a> |
+        <a href="https://bigred202403.github.io/Big-Red-Connect/review.html" target="_blank">Leave a Review</a><br>
+        Tip: Use your browserâs menu to add this page to your home screen for quick access.
+    </footer>
 
 </body>
 </html>
