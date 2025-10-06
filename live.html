@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Live Map • Big Red Connect</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #000;
+      color: #fff;
+      text-align: center;
+      padding: 20px;
+      margin: 0;
+    }
+    h1 { color: #cc0000; margin-bottom: 10px; }
+    iframe {
+      width: 100%;
+      height: 420px;
+      border: 0;
+      border-radius: 10px;
+      margin-top: 15px;
+    }
+    .offline-box {
+      background:#111;
+      border:2px solid #cc0000;
+      border-radius:10px;
+      padding:30px 20px;
+      max-width:500px;
+      margin:40px auto;
+    }
+    .btn {
+      display:inline-block;
+      margin-top:15px;
+      background-color:#c40000;
+      color:white;
+      padding:12px 24px;
+      border-radius:8px;
+      text-decoration:none;
+      font-weight:bold;
+    }
+    footer {
+      margin-top: 40px;
+      font-size: 0.85em;
+      color: #666;
+    }
+    footer a {
+      color: #999;
+      text-decoration: none;
+    }
+    footer a:hover {
+      color: #cc0000;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Big Red Connect Live Map</h1>
+  <div id="content"></div>
+
+  <script>
+    /* ===== EDIT THIS LINE TO GO LIVE OR OFFLINE ===== */
+    let mode = "offline";   // change to "online" when live
+    /* ================================================= */
+
+    const content = document.getElementById('content');
+
+    const onlineHTML = `
+      <p>📍 Big Red is currently on the move around OKC Metro!</p>
+      <iframe src="PASTE_YOUR_GOOGLE_MAPS_SHARE_LINK_HERE"
+              allowfullscreen loading="lazy"></iframe>
+      <p style="color:#aaa;margin-top:10px;">Location updates end when drive session closes.</p>
+    `;
+
+    const offlineHTML = `
+      <div class="offline-box">
+        <h2>Big Red is offline right now</h2>
+        <p>Need a connection or want to plan ahead? Text me below.</p>
+        <a href="sms:+14053784024" class="btn">📲 Text “RED” to (405) 378-4024</a>
+      </div>
+    `;
+
+    content.innerHTML = (mode === "online") ? onlineHTML : offlineHTML;
+  </script>
+
+  <footer>
+    &copy; 2025 Big Red Connect<br>
+    <a href="index.html">Main Site</a> |
+    <a href="info.html">Info & Policies</a>
+  </footer>
+
+</body>
+</html>
