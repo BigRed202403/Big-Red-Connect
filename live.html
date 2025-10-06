@@ -1,92 +1,114 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Live Map • Big Red Connect</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live Map – Big Red Connect</title>
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
       background-color: #000;
       color: #fff;
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
       text-align: center;
-      padding: 20px;
-      margin: 0;
+      padding: 20px 15px;
+      max-width: 600px;
+      margin: auto;
     }
-    h1 { color: #cc0000; margin-bottom: 10px; }
+
+    .logo {
+      margin: 30px 0 15px 0;
+    }
+
+    h1 {
+      font-size: 2em;
+      color: #c40000;
+      margin-bottom: 10px;
+      letter-spacing: 0.5px;
+    }
+
+    p {
+      color: #ccc;
+      font-size: 1em;
+      line-height: 1.5em;
+    }
+
     iframe {
       width: 100%;
-      height: 420px;
-      border: 0;
+      height: 450px;
+      border: 2px solid #c40000;
       border-radius: 10px;
+      margin-top: 20px;
+      box-shadow: 0 0 10px rgba(255, 0, 0, 0.2);
+    }
+
+    .offline {
+      background: #111;
+      border: 1px solid #c40000;
+      border-radius: 10px;
+      padding: 18px;
+      margin-top: 25px;
+    }
+
+    .button {
+      display: inline-block;
+      background-color: #c40000;
+      color: #fff;
+      padding: 14px 24px;
       margin-top: 15px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 1.1em;
+      box-shadow: 0 4px 8px rgba(255, 0, 0, 0.3);
+      transition: transform 0.1s ease, background-color 0.2s ease;
     }
-    .offline-box {
-      background:#111;
-      border:2px solid #cc0000;
-      border-radius:10px;
-      padding:30px 20px;
-      max-width:500px;
-      margin:40px auto;
+
+    .button:hover {
+      background-color: #990000;
+      transform: scale(1.05);
     }
-    .btn {
-      display:inline-block;
-      margin-top:15px;
-      background-color:#c40000;
-      color:white;
-      padding:12px 24px;
-      border-radius:8px;
-      text-decoration:none;
-      font-weight:bold;
-    }
+
     footer {
       margin-top: 40px;
-      font-size: 0.85em;
-      color: #666;
+      font-size: 0.9em;
+      color: #777;
+      padding-bottom: 30px;
     }
+
     footer a {
       color: #999;
       text-decoration: none;
     }
+
     footer a:hover {
-      color: #cc0000;
+      text-decoration: underline;
+      color: #fff;
     }
   </style>
 </head>
 <body>
 
+  <div class="logo">
+    <img src="148D1A08-D537-4A0C-B141-2336DBF68A15.png" alt="Big Red Connect Logo" width="280">
+  </div>
+
   <h1>Big Red Connect Live Map</h1>
-  <div id="content"></div>
+  <p>See if Big Red is currently on the move in the OKC Metro.</p>
 
-  <script>
-    /* ===== EDIT THIS LINE TO GO LIVE OR OFFLINE ===== */
-    let mode = "offline";   // change to "online" when live
-    /* ================================================= */
+  <!-- Live Glympse Embed -->
+  <iframe src="https://glympse.com/!bigredconnect" allowfullscreen></iframe>
 
-    const content = document.getElementById('content');
-
-    const onlineHTML = `
-      <p>📍 Big Red is currently on the move around OKC Metro!</p>
-      <iframe src="PASTE_YOUR_GOOGLE_MAPS_SHARE_LINK_HERE"
-              allowfullscreen loading="lazy"></iframe>
-      <p style="color:#aaa;margin-top:10px;">Location updates end when drive session closes.</p>
-    `;
-
-    const offlineHTML = `
-      <div class="offline-box">
-        <h2>Big Red is offline right now</h2>
-        <p>Need a connection or want to plan ahead? Text me below.</p>
-        <a href="sms:+14053784024" class="btn">📲 Text “RED” to (405) 378-4024</a>
-      </div>
-    `;
-
-    content.innerHTML = (mode === "online") ? onlineHTML : offlineHTML;
-  </script>
+  <div class="offline">
+    <p>If the live map isn’t showing, Big Red may currently be offline or out of service range.</p>
+    <a href="sms:+14053784024" class="button">Text “RED” to (405) 378-4024</a>
+  </div>
 
   <footer>
-    &copy; 2025 Big Red Connect<br>
-    <a href="index.html">Main Site</a> |
-    <a href="info.html">Info & Policies</a>
+    <p>
+      &copy; 2025 Big Red Connect<br>
+      <a href="index.html">← Return to Main Page</a>
+    </p>
   </footer>
 
 </body>
