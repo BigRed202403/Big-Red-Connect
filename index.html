@@ -15,19 +15,9 @@
       max-width: 600px;
       margin: auto;
     }
-    .logo {
-      margin: 30px 0 20px 0;
-    }
-    h1 {
-      font-size: 2.2em;
-      margin-bottom: 0.3em;
-    }
-    .tagline {
-      font-size: 1.1em;
-      color: #ccc;
-      margin-bottom: 2em;
-      padding: 0 10px;
-    }
+    .logo { margin: 30px 0 20px 0; }
+    h1 { font-size: 2.2em; margin-bottom: 0.3em; }
+    .tagline { font-size: 1.1em; color: #ccc; margin-bottom: 2em; padding: 0 10px; }
     .buttons a {
       display: inline-block;
       margin: 10px 8px;
@@ -39,16 +29,10 @@
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
       transition: transform 0.1s ease;
     }
-    .buttons a:hover {
-      transform: scale(1.05);
-    }
-    .text-button {
-      background-color: #c40000;
-    }
-    .call-button {
-      background-color: #444;
-    }
-    .live-button {
+    .buttons a:hover { transform: scale(1.05); }
+    .text-button { background-color: #c40000; }
+    .call-button { background-color: #444; }
+    .live-button, .fare-button {
       display: inline-block;
       background-color: #c40000;
       color: #fff;
@@ -61,58 +45,29 @@
       box-shadow: 0 4px 8px rgba(255, 0, 0, 0.3);
       transition: background-color 0.2s ease, transform 0.1s ease;
     }
-    .live-button:hover {
-      background-color: #990000;
-      transform: scale(1.05);
-    }
-    h2 {
-      font-size: 1.5em;
-      margin-top: 2em;
-      margin-bottom: 0.7em;
-    }
+    .live-button:hover, .fare-button:hover { background-color: #990000; transform: scale(1.05); }
+    h2 { font-size: 1.5em; margin-top: 2em; margin-bottom: 0.7em; }
     ul {
-      list-style: none;
-      padding: 0;
-      font-size: 1em;
-      line-height: 1.8em;
-      margin: 0 auto;
-      text-align: left;
-      display: inline-block;
+      list-style: none; padding: 0;
+      font-size: 1em; line-height: 1.8em;
+      margin: 0 auto; text-align: left; display: inline-block;
     }
-    li:before {
-      content: "• ";
-      color: #c40000;
-    }
+    li:before { content: "• "; color: #c40000; }
     .review {
-      margin: 25px 0;
-      padding: 20px;
-      background-color: #111;
-      border-radius: 10px;
-      font-style: italic;
-      font-size: 1em;
+      margin: 25px 0; padding: 20px;
+      background-color: #111; border-radius: 10px;
+      font-style: italic; font-size: 1em;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
     }
     .about {
-      margin-top: 40px;
-      font-size: 1em;
-      color: #ccc;
-      line-height: 1.5em;
-      padding: 0 10px;
+      margin-top: 40px; font-size: 1em; color: #ccc;
+      line-height: 1.5em; padding: 0 10px;
     }
     footer {
-      margin-top: 50px;
-      font-size: 0.85em;
-      color: #666;
-      padding-bottom: 30px;
+      margin-top: 50px; font-size: 0.85em; color: #666; padding-bottom: 30px;
     }
-    footer a {
-      color: #999;
-      text-decoration: none;
-    }
-    footer a:hover {
-      text-decoration: underline;
-      color: #fff;
-    }
+    footer a { color: #999; text-decoration: none; }
+    footer a:hover { text-decoration: underline; color: #fff; }
   </style>
 </head>
 <body>
@@ -129,8 +84,8 @@
     <a href="tel:+14053784024" class="call-button">CALL BIG RED</a>
   </div>
 
-  <!-- 🗺️ Live Map Link -->
   <a href="live.html" class="live-button">🗺️ View Live Map</a>
+  <a href="farecalculator.html" class="fare-button">💲 Fare Calculator</a>
 
   <h2>WHAT WE DO</h2>
   <ul>
@@ -173,17 +128,16 @@
   <footer>
     <p>Questions or ride connection requests? Text <strong>“RED”</strong> to (405) 378-4024.</p>
 
-    <!-- 🔴 Facebook Follow Buttons -->
     <div style="margin: 20px 0;">
-      <a href="https://www.facebook.com/profile.php?id=61577217145544" target="_blank" 
-         style="display:inline-block; background-color:#1877F2; color:white; 
-                padding:12px 24px; border-radius:8px; text-decoration:none; 
+      <a href="https://www.facebook.com/profile.php?id=61577217145544" target="_blank"
+         style="display:inline-block; background-color:#1877F2; color:white;
+                padding:12px 24px; border-radius:8px; text-decoration:none;
                 font-weight:bold; margin:6px; box-shadow:0 3px 6px rgba(0,0,0,0.4);">
         👍 Follow on Facebook
       </a>
-      <a href="https://www.facebook.com/share/g/16XP93KAZV/?mibextid=wwXIfr" target="_blank" 
-         style="display:inline-block; background-color:#444; color:white; 
-                padding:12px 24px; border-radius:8px; text-decoration:none; 
+      <a href="https://www.facebook.com/share/g/16XP93KAZV/?mibextid=wwXIfr" target="_blank"
+         style="display:inline-block; background-color:#444; color:white;
+                padding:12px 24px; border-radius:8px; text-decoration:none;
                 font-weight:bold; margin:6px; box-shadow:0 3px 6px rgba(0,0,0,0.4);">
         👥 Join Our Community Group
       </a>
