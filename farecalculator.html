@@ -40,6 +40,7 @@
     }
     #result .total { font-size:1.6em; color:#ff4444; font-weight:800; text-align:center; margin:0 0 8px; }
     #result p { margin:6px 0; }
+    #fairness-note { color:#999; font-size:0.9em; font-style:italic; margin-top:4px; text-align:left; }
     .disclaimer { font-size:.9em; color:#999; margin:16px 0 28px; font-style:italic; }
     footer { margin:28px 0 36px; color:#666; font-size:.9em; }
     footer a { color:#aaa; text-decoration:none; }
@@ -81,6 +82,7 @@
     <option value="10">$10 (short trip outside metro)</option>
     <option value="20">$20 (long trip outside metro)</option>
   </select>
+  <div id="fairness-note"></div>
 
   <label for="payment">Payment Method:</label>
   <select id="payment">
@@ -100,72 +102,80 @@
     &copy; 2025 Big Red Connect — <a href="index.html">Return to Main Page</a>
   </footer>
 
-  <!-- Google Maps API -->
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places,geometry&callback=initGoogle" async defer></script>
 
   <script>
+    const HQ = { lat: 35.2902, lng: -97.5289 }; // SE 149th & Western
+    let driverPos = null, pickupLatLng = null, dropoffLatLng = null;
     let map, geocoder, distanceService, pickupMarker, dropoffMarker;
-    let pickupLatLng = null, dropoffLatLng = null;
 
     function initGoogle() {
-      try {
-        geocoder = new google.maps.Geocoder();
-        distanceService = new google.maps.DistanceMatrixService();
-        map = new google.maps.Map(document.getElementById('map'), {
-          center: { lat: 35.4676, lng: -97.5164 },
-          zoom: 11,
-          mapTypeControl: true,
-          fullscreenControl: false,
-          streetViewControl: false
-        });
+      geocoder = new google.maps.Geocoder();
+      distanceService = new google.maps.DistanceMatrixService();
+      map = new google.maps.Map(document.getElementById('map'), {
+        center: { lat: 35.4676, lng: -97.5164 },
+        zoom: 11, mapTypeControl:false, streetViewControl:false
+      });
 
-        const pickupAC = new google.maps.places.Autocomplete(document.getElementById('pickup'));
-        const dropoffAC = new google.maps.places.Autocomplete(document.getElementById('dropoff'));
+      const pickupAC = new google.maps.places.Autocomplete(document.getElementById('pickup'));
+      const dropoffAC = new google.maps.places.Autocomplete(document.getElementById('dropoff'));
 
-        pickupAC.addListener('place_changed', () => {
-          const place = pickupAC.getPlace();
-          if (place.geometry) {
-            pickupLatLng = place.geometry.location;
-            map.setCenter(pickupLatLng);
-            map.setZoom(13);
-            if (pickupMarker) pickupMarker.setMap(null);
-            pickupMarker = new google.maps.Marker({ position: pickupLatLng, map, label: 'A' });
-          }
-        });
+      pickupAC.addListener('place_changed', () => {
+        const place = pickupAC.getPlace();
+        if (place.geometry) {
+          pickupLatLng = place.geometry.location;
+          updatePickupMarker();
+          autoApplyFairnessFee();
+        }
+      });
+      dropoffAC.addListener('place_changed', () => {
+        const place = dropoffAC.getPlace();
+        if (place.geometry) {
+          dropoffLatLng = place.geometry.location;
+          updateDropoffMarker();
+        }
+      });
 
-        dropoffAC.addListener('place_changed', () => {
-          const place = dropoffAC.getPlace();
-          if (place.geometry) {
-            dropoffLatLng = place.geometry.location;
-            if (dropoffMarker) dropoffMarker.setMap(null);
-            dropoffMarker = new google.maps.Marker({ position: dropoffLatLng, map, label: 'B' });
-          }
-        });
-
-        document.getElementById('locateBtn').addEventListener('click', getCurrentLocation);
-        document.getElementById('calcBtn').addEventListener('click', calculateFare);
-      } catch (e) {
-        document.getElementById('map').innerHTML =
-          "<p style='color:#f66; font-weight:600;'>Map failed to load. Please refresh or check Google Maps settings.</p>";
-      }
+      document.getElementById('locateBtn').addEventListener('click', getCurrentLocation);
+      document.getElementById('calcBtn').addEventListener('click', calculateFare);
     }
 
     function getCurrentLocation() {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(pos => {
-          pickupLatLng = new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude);
-          map.setCenter(pickupLatLng);
-          map.setZoom(13);
-          if (pickupMarker) pickupMarker.setMap(null);
-          pickupMarker = new google.maps.Marker({ position: pickupLatLng, map, label: 'A' });
+          driverPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+          map.setCenter(driverPos); map.setZoom(12);
+          new google.maps.Marker({ position: driverPos, map, label: '🚗' });
+          alert('Live location active — Travel Fairness will use your current position.');
+        }, () => alert('Could not get live location; using HQ fallback.'));
+      } else alert('Geolocation not supported; using HQ fallback.');
+    }
 
-          geocoder.geocode({ location: pickupLatLng }, (res, status) => {
-            if (status === 'OK' && res[0]) {
-              document.getElementById('pickup').value = res[0].formatted_address;
-            } else alert('Could not find your address.');
-          });
-        }, () => alert('Location permission denied.'));
-      } else alert('Geolocation not supported.');
+    function updatePickupMarker() {
+      if (pickupMarker) pickupMarker.setMap(null);
+      pickupMarker = new google.maps.Marker({ position: pickupLatLng, map, label: 'A' });
+      map.setCenter(pickupLatLng); map.setZoom(12);
+    }
+    function updateDropoffMarker() {
+      if (dropoffMarker) dropoffMarker.setMap(null);
+      dropoffMarker = new google.maps.Marker({ position: dropoffLatLng, map, label: 'B' });
+    }
+
+    function autoApplyFairnessFee() {
+      const origin = driverPos || HQ;
+      const pickup = pickupLatLng;
+      if (!pickup) return;
+      const dist = google.maps.geometry.spherical.computeDistanceBetween(
+        new google.maps.LatLng(origin.lat, origin.lng), pickup
+      ) / 1609.34;
+
+      let fee = 0, note = '';
+      if (dist <= 15) { fee = 0; note = `Pickup is ${dist.toFixed(1)} mi from ${driverPos ? 'current location' : 'Big Red HQ'} — no Travel Fairness Fee.`; }
+      else if (dist <= 30) { fee = 10; note = `Pickup is ${dist.toFixed(1)} mi from ${driverPos ? 'current location' : 'Big Red HQ'} — $10 Travel Fairness Fee applied.`; }
+      else { fee = 20; note = `Pickup is ${dist.toFixed(1)} mi from ${driverPos ? 'current location' : 'Big Red HQ'} — $20 Travel Fairness Fee applied.`; }
+
+      document.getElementById('travelFee').value = fee.toString();
+      document.getElementById('fairness-note').innerText = note;
     }
 
     function calculateFare() {
@@ -174,45 +184,36 @@
       if (!pickup || !dropoff) return alert('Please enter both pickup and drop-off locations.');
 
       distanceService.getDistanceMatrix({
-        origins: [pickup],
-        destinations: [dropoff],
-        travelMode: 'DRIVING'
-      }, (res, status) => {
-        if (status !== 'OK') return alert('Error: ' + status);
-        const data = res.rows[0].elements[0];
-        if (!data || data.status !== 'OK') return alert('Could not calculate distance.');
+        origins:[pickup], destinations:[dropoff], travelMode:'DRIVING'
+      }, (res,status)=>{
+        if(status!=='OK') return alert('Error: '+status);
+        const data=res.rows[0].elements[0];
+        if(!data||data.status!=='OK') return alert('Could not calculate distance.');
 
-        const miles = data.distance.value / 1609.34;
-        const base = parseFloat(document.getElementById('tripType').value);
-        const travelFee = parseFloat(document.getElementById('travelFee').value);
-        const payment = document.getElementById('payment').value;
+        const miles=data.distance.value/1609.34;
+        const base=parseFloat(document.getElementById('tripType').value);
+        const travelFee=parseFloat(document.getElementById('travelFee').value);
+        const payment=document.getElementById('payment').value;
 
-        let fare = base;
-        if (miles > 10 && miles <= 20) fare += (miles - 10) * 1.25;
-        else if (miles > 20) fare += (10 * 1.25) + ((miles - 20) * 1.0);
-        fare += travelFee;
+        let fare=base;
+        if(miles>10&&miles<=20) fare+=(miles-10)*1.25;
+        else if(miles>20) fare+=(10*1.25)+((miles-20)*1.0);
+        fare+=travelFee;
 
-        if (payment === 'card') {
-          const booking = fare * 0.033;
-          const fuel = fare * 0.024;
-          fare += booking + fuel;
-        }
+        if(payment==='card'){ fare+=fare*0.033 + fare*0.024; }
 
-        const total = fare.toFixed(2);
-        const distText = miles.toFixed(1) + ' miles';
+        const total=fare.toFixed(2);
+        const gMapsURL=`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(pickup)}&destination=${encodeURIComponent(dropoff)}&travelmode=driving`;
 
-        const gMapsURL = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(pickup)}&destination=${encodeURIComponent(dropoff)}&travelmode=driving`;
-
-        const resultDiv = document.getElementById('result');
-        resultDiv.innerHTML = `
+        const r=document.getElementById('result');
+        r.innerHTML=`
           <div class="total">$${total}</div>
-          <p><strong>Distance:</strong> ${distText}</p>
+          <p><strong>Distance:</strong> ${miles.toFixed(1)} mi</p>
           <p><strong>Ride Type:</strong> $${base.toFixed(2)} base</p>
           <p><strong>Travel Fee:</strong> $${travelFee.toFixed(2)}</p>
-          <p><strong>Payment:</strong> ${payment === 'card' ? 'Card (includes booking & fuel)' : 'Cash'}</p>
-          <a href="${gMapsURL}" target="_blank" class="btn" style="display:block; text-align:center; margin-top:12px;">📍 View Route on Google Maps</a>
-        `;
-        resultDiv.style.display = 'block';
+          <p><strong>Payment:</strong> ${payment==='card'?'Card (includes booking & fuel)':'Cash'}</p>
+          <a href="${gMapsURL}" target="_blank" class="btn" style="display:block;text-align:center;margin-top:12px;">📍 View Route on Google Maps</a>`;
+        r.style.display='block';
       });
     }
   </script>
