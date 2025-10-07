@@ -2,208 +2,204 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Fare Calculator – Big Red Connect</title>
   <style>
     body {
-      background-color: #000;
-      color: #fff;
-      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-      text-align: center;
-      margin: 0;
-      padding: 20px;
-      max-width: 600px;
-      margin: auto;
+      background:#000; color:#fff;
+      font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+      margin:0; padding:20px;
+      max-width:640px; margin:auto; text-align:center;
     }
-    .logo { margin: 30px 0 20px 0; }
-    h1 { color: #c40000; margin-bottom: 20px; font-size: 1.8em; }
-    label { display: block; text-align: left; margin-top: 15px; color: #ccc; }
-    input, select {
-      width: 100%;
-      padding: 10px;
-      border-radius: 6px;
-      border: 1px solid #333;
-      margin-top: 5px;
-      background-color: #111;
-      color: #fff;
+    .logo { margin:28px 0 16px; }
+    h1 { color:#c40000; font-size:1.9em; margin:0 0 10px; }
+    p.lead { color:#bbb; margin:0 0 18px; }
+    label { display:block; text-align:left; margin:14px 0 6px; color:#ccc; }
+    input,select {
+      width:100%; padding:12px;
+      border-radius:8px; border:1px solid #333;
+      background:#111; color:#fff;
     }
-    button {
-      background-color: #c40000;
-      color: #fff;
-      border: none;
-      padding: 12px 24px;
-      border-radius: 8px;
-      margin-top: 20px;
-      font-weight: bold;
-      font-size: 1.1em;
-      cursor: pointer;
-      transition: 0.2s ease;
-      box-shadow: 0 3px 6px rgba(255, 0, 0, 0.3);
+    .btn {
+      background:#c40000; color:#fff; border:none;
+      padding:12px 22px; border-radius:10px;
+      margin-top:16px; font-weight:700; font-size:1.05em;
+      box-shadow:0 3px 6px rgba(255,0,0,.3); cursor:pointer;
+      transition:.15s;
     }
-    button:hover { background-color: #990000; transform: scale(1.05); }
+    .btn:hover { background:#990000; transform:scale(1.03); }
     #result {
-      background-color: #111;
-      border: 1px solid #c40000;
-      border-radius: 10px;
-      padding: 20px;
-      margin-top: 25px;
+      background:#111; border:1px solid #c40000;
+      border-radius:12px; padding:18px; margin-top:22px;
+      text-align:left;
     }
-    .total { color: #ff4444; font-size: 1.6em; font-weight: bold; }
-    footer {
-      margin-top: 40px;
-      font-size: 0.85em;
-      color: #666;
-      padding-bottom: 30px;
-    }
-    footer a { color: #999; text-decoration: none; }
-    footer a:hover { text-decoration: underline; color: #fff; }
-    .disclaimer {
-      font-size: 0.9em;
-      color: #999;
-      margin-top: 20px;
-      font-style: italic;
-    }
+    #result .total { font-size:1.6em; color:#ff4444; font-weight:800; text-align:center; margin:0 0 8px; }
+    #result p { margin:6px 0; }
+    .disclaimer { font-size:.9em; color:#999; margin:16px 0 28px; font-style:italic; }
+    footer { margin:28px 0 36px; color:#666; font-size:.9em; }
+    footer a { color:#aaa; text-decoration:none; }
+    footer a:hover { text-decoration:underline; color:#fff; }
   </style>
 </head>
 <body>
-
   <div class="logo">
-    <img src="148D1A08-D537-4A0C-B141-2336DBF68A15.png" alt="Big Red Connect Logo" width="260">
+    <img src="148D1A08-D537-4A0C-B141-2336DBF68A15.png" alt="Big Red Connect" width="260">
   </div>
 
   <h1>Big Red Connect Fare Calculator</h1>
-  <p>Estimate your local ride connection cost instantly.</p>
+  <p class="lead">
+    Type an address or business (e.g. <em>Walmart</em>, <em>Campus Corner</em>, <em>Riverwind Casino</em>)  
+    — or tap the pin to use your current location.
+  </p>
 
-  <label for="pickup">Pickup Address:</label>
-  <input type="text" id="pickup" placeholder="Enter pickup location">
+  <label for="pickup">Pickup Location:</label>
+  <input id="pickup" type="text" placeholder="Enter pickup address or place">
 
-  <label for="dropoff">Drop-off Address:</label>
-  <input type="text" id="dropoff" placeholder="Enter drop-off location">
+  <label for="dropoff">Drop-off Location:</label>
+  <input id="dropoff" type="text" placeholder="Enter drop-off address or place">
 
-  <button id="locateBtn">📍 Use My Location</button>
+  <button id="locateBtn" class="btn">📍 Use My Location</button>
 
   <label for="tripType">Ride Type:</label>
   <select id="tripType">
     <option value="10">Standard ($10 base)</option>
-    <option value="15rush">Rush Hour ($15 base)</option>
-    <option value="15airport">Airport ($15 base)</option>
-    <option value="20event">Event ($20 base)</option>
+    <option value="15">Rush Hour ($15 base)</option>
+    <option value="15">Airport ($15 base)</option>
+    <option value="20">Special Event ($20 base)</option>
   </select>
 
   <label for="travelFee">Travel Fairness Fee:</label>
   <select id="travelFee">
     <option value="0">None (within OKC Metro)</option>
-    <option value="10">$10 (1–15 miles outside metro)</option>
-    <option value="20">$20 (>15 miles outside metro)</option>
+    <option value="10">$10 (short trip outside metro)</option>
+    <option value="20">$20 (long trip outside metro)</option>
   </select>
 
   <label for="payment">Payment Method:</label>
   <select id="payment">
     <option value="cash">Cash (no fees)</option>
-    <option value="card">Card (+5.7%)</option>
+    <option value="card">Card (+3.3% booking + 2.4% fuel)</option>
   </select>
 
-  <button onclick="calculateFare()">💲 Calculate Fare</button>
+  <button class="btn" id="calcBtn">💲 Calculate Fare</button>
 
-  <div id="result"></div>
+  <div id="result" style="display:none;"></div>
 
   <div class="disclaimer">
-    *Estimates only. Final total may vary slightly based on route, traffic, or wait time.*
+    *Estimates only. Final fare may vary slightly based on route, wait time, or negotiated pricing.
   </div>
 
   <footer>
-    &copy; 2025 Big Red Connect<br>
-    <a href="index.html">← Return to Main Page</a>
+    &copy; 2025 Big Red Connect — <a href="index.html">Return to Main Page</a>
   </footer>
 
+  <!-- Google Maps API -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places" defer></script>
+
   <script>
-    const apiKey = "AIzaSyALA9-LR2waqj0rUZ5TJPfeMJ1FoZrjzvo";
+    let pickupLatLng = null, dropoffLatLng = null;
+    let geocoder, distanceService;
 
-    // 🔹 Accepts both addresses and "lat,lng" coordinates
-    async function getCoordinates(address) {
-      // Check for coordinate format first
-      if (/^-?\\d+\\.\\d+,\\s*-?\\d+\\.\\d+$/.test(address)) {
-        const [lat, lng] = address.split(",").map(x => parseFloat(x.trim()));
-        return { lat, lng };
-      }
+    window.addEventListener('load', () => {
+      const waitForGoogle = setInterval(() => {
+        if (window.google && google.maps && google.maps.places) {
+          clearInterval(waitForGoogle);
+          initGoogle();
+        }
+      }, 100);
+    });
 
-      // Otherwise, use Geocoding API
-      const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${apiKey}`;
-      const response = await fetch(url);
-      const data = await response.json();
+    function initGoogle() {
+      geocoder = new google.maps.Geocoder();
+      distanceService = new google.maps.DistanceMatrixService();
 
-      if (data.status === "OK") {
-        return data.results[0].geometry.location;
-      } else {
-        alert(\`Address not found: \${address}\`);
-        return null;
-      }
+      const options = { fields: ['geometry', 'name'], types: ['establishment', 'geocode'] };
+      const pickupAC = new google.maps.places.Autocomplete(document.getElementById('pickup'), options);
+      const dropoffAC = new google.maps.places.Autocomplete(document.getElementById('dropoff'), options);
+
+      pickupAC.addListener('place_changed', () => {
+        const place = pickupAC.getPlace();
+        if (place && place.geometry) pickupLatLng = place.geometry.location;
+      });
+
+      dropoffAC.addListener('place_changed', () => {
+        const place = dropoffAC.getPlace();
+        if (place && place.geometry) dropoffLatLng = place.geometry.location;
+      });
+
+      document.getElementById('locateBtn').addEventListener('click', getCurrentLocation);
+      document.getElementById('calcBtn').addEventListener('click', calculateFare);
     }
 
-    function calcDistanceMiles(lat1, lon1, lat2, lon2) {
-      const R = 3958.8;
-      const toRad = x => x * Math.PI / 180;
-      const dLat = toRad(lat2 - lat1);
-      const dLon = toRad(lon2 - lon1);
-      const a = Math.sin(dLat / 2) ** 2 +
-                Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-                Math.sin(dLon / 2) ** 2;
-      return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+    function getCurrentLocation() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(pos => {
+          pickupLatLng = new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude);
+          geocoder.geocode({ location: pickupLatLng }, (res, status) => {
+            if (status === 'OK' && res[0]) {
+              document.getElementById('pickup').value = res[0].formatted_address;
+            } else {
+              alert('Could not find your address.');
+            }
+          });
+        }, () => alert('Location permission denied.'));
+      } else alert('Geolocation not supported.');
     }
 
-    async function calculateFare() {
-      const pickup = document.getElementById("pickup").value.trim();
-      const dropoff = document.getElementById("dropoff").value.trim();
-      const tripType = document.getElementById("tripType").value;
-      const travelFee = parseFloat(document.getElementById("travelFee").value);
-      const payment = document.getElementById("payment").value;
+    function calculateFare() {
+      const pickup = document.getElementById('pickup').value.trim();
+      const dropoff = document.getElementById('dropoff').value.trim();
 
       if (!pickup || !dropoff) {
-        alert("Please enter both pickup and drop-off addresses.");
+        alert('Please enter both pickup and drop-off locations.');
         return;
       }
 
-      const start = await getCoordinates(pickup);
-      const end = await getCoordinates(dropoff);
-      if (!start || !end) return;
-
-      const miles = calcDistanceMiles(start.lat, start.lng, end.lat, end.lng);
-      let baseRate = parseFloat(tripType);
-      let mileageCharge = 0;
-
-      if (miles > 10 && miles <= 20) mileageCharge = (miles - 10) * 1.25;
-      else if (miles > 20) mileageCharge = (10 * 1.25) + ((miles - 20) * 1.0);
-
-      let subtotal = baseRate + mileageCharge + travelFee;
-      let cardFee = (payment === "card") ? subtotal * 0.057 : 0;
-      let total = Math.round(subtotal + cardFee);
-
-      document.getElementById("result").innerHTML = `
-        <div class="total">Estimated Total: $${total}</div>
-        <p>Base: $${baseRate.toFixed(2)}<br>
-        Mileage: $${mileageCharge.toFixed(2)} (${miles.toFixed(1)} mi)<br>
-        Travel Fee: $${travelFee.toFixed(2)}<br>
-        Card Fee: $${cardFee.toFixed(2)}</p>
-        <p><a href="https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(pickup)}&destination=${encodeURIComponent(dropoff)}"
-              target="_blank" style="color:#c40000;">📍 View route on Google Maps</a></p>
-        <p>Text “RED” to (405) 378-4024 to plan your connection.</p>
-      `;
+      if (!pickupLatLng || !dropoffLatLng) {
+        distanceService.getDistanceMatrix({
+          origins: [pickup], destinations: [dropoff], travelMode: 'DRIVING'
+        }, handleDistanceResponse);
+      } else {
+        distanceService.getDistanceMatrix({
+          origins: [pickupLatLng], destinations: [dropoffLatLng], travelMode: 'DRIVING'
+        }, handleDistanceResponse);
+      }
     }
 
-    // 🔹 Button fills pickup with current lat,lng
-    document.getElementById("locateBtn").addEventListener("click", () => {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            const coords = \`\${pos.coords.latitude.toFixed(6)},\${pos.coords.longitude.toFixed(6)}\`;
-            document.getElementById("pickup").value = coords;
-          },
-          () => alert("Unable to access location.")
-        );
-      } else {
-        alert("Geolocation not supported.");
+    function handleDistanceResponse(res, status) {
+      if (status !== 'OK') { alert('Error: ' + status); return; }
+      const data = res.rows[0].elements[0];
+      if (!data || data.status !== 'OK') { alert('Could not calculate distance.'); return; }
+
+      const miles = data.distance.value / 1609.34;
+      const base = parseFloat(document.getElementById('tripType').value);
+      const travelFee = parseFloat(document.getElementById('travelFee').value);
+      const payment = document.getElementById('payment').value;
+
+      let fare = base;
+      if (miles > 10 && miles <= 20) fare += (miles - 10) * 1.25;
+      else if (miles > 20) fare += (10 * 1.25) + ((miles - 20) * 1.0);
+      fare += travelFee;
+
+      if (payment === 'card') {
+        const booking = fare * 0.033;
+        const fuel = fare * 0.024;
+        fare += booking + fuel;
       }
-    });
+
+      const total = fare.toFixed(2);
+      const distText = miles.toFixed(1) + ' miles';
+
+      const resultDiv = document.getElementById('result');
+      resultDiv.innerHTML = `
+        <div class="total">$${total}</div>
+        <p><strong>Distance:</strong> ${distText}</p>
+        <p><strong>Ride Type:</strong> $${base.toFixed(2)} base</p>
+        <p><strong>Travel Fee:</strong> $${travelFee.toFixed(2)}</p>
+        <p><strong>Payment:</strong> ${payment === 'card' ? 'Card (includes booking & fuel)' : 'Cash'}</p>
+      `;
+      resultDiv.style.display = 'block';
+    }
   </script>
 </body>
 </html>
