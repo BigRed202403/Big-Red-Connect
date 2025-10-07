@@ -7,32 +7,28 @@
   <style>
     body {
       margin: 0;
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
       background-color: #000;
       color: #fff;
-      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
       text-align: center;
-      padding: 20px 15px;
+      padding: 20px;
       max-width: 600px;
       margin: auto;
     }
-
     .logo {
       margin: 30px 0 15px 0;
     }
-
     h1 {
       font-size: 2em;
       color: #c40000;
       margin-bottom: 10px;
       letter-spacing: 0.5px;
     }
-
     p {
       color: #ccc;
       font-size: 1em;
       line-height: 1.5em;
     }
-
     iframe {
       width: 100%;
       height: 450px;
@@ -41,15 +37,13 @@
       margin-top: 20px;
       box-shadow: 0 0 10px rgba(255, 0, 0, 0.2);
     }
-
     .offline {
       background: #111;
       border: 1px solid #c40000;
       border-radius: 10px;
-      padding: 18px;
+      padding: 20px;
       margin-top: 25px;
     }
-
     .button {
       display: inline-block;
       background-color: #c40000;
@@ -63,24 +57,20 @@
       box-shadow: 0 4px 8px rgba(255, 0, 0, 0.3);
       transition: transform 0.1s ease, background-color 0.2s ease;
     }
-
     .button:hover {
       background-color: #990000;
       transform: scale(1.05);
     }
-
     footer {
       margin-top: 40px;
       font-size: 0.9em;
       color: #777;
       padding-bottom: 30px;
     }
-
     footer a {
       color: #999;
       text-decoration: none;
     }
-
     footer a:hover {
       text-decoration: underline;
       color: #fff;
@@ -94,21 +84,35 @@
   </div>
 
   <h1>Big Red Connect Live Map</h1>
-  <p>See if Big Red is currently on the move in the OKC Metro.</p>
+  <div id="content"></div>
 
-  <!-- Live Glympse Embed -->
-  <iframe src="https://glympse.com/!bigredconnect" allowfullscreen></iframe>
+  <script>
+    /* ====== TOGGLE ONLINE OR OFFLINE BELOW ====== */
+    let mode = "offline";   // change to "online" when live
+    /* ============================================ */
 
-  <div class="offline">
-    <p>If the live map isn’t showing, Big Red may currently be offline or out of service range.</p>
-    <a href="sms:+14053784024" class="button">Text “RED” to (405) 378-4024</a>
-  </div>
+    const content = document.getElementById('content');
+
+    const onlineHTML = `
+      <p>📍 Big Red is currently on the move around the OKC Metro!</p>
+      <iframe src="https://glympse.com/!bigredconnect?embed=true" allowfullscreen loading="lazy"></iframe>
+      <p style="color:#aaa;margin-top:10px;">Location updates active while drive session is live.</p>
+    `;
+
+    const offlineHTML = `
+      <div class="offline">
+        <h2>Big Red is offline right now</h2>
+        <p>Need a connection or want to plan ahead? Text me below.</p>
+        <a href="sms:+14053784024" class="button">📲 Text “RED” to (405) 378-4024</a>
+      </div>
+    `;
+
+    content.innerHTML = (mode === "online") ? onlineHTML : offlineHTML;
+  </script>
 
   <footer>
-    <p>
-      &copy; 2025 Big Red Connect<br>
-      <a href="index.html">← Return to Main Page</a>
-    </p>
+    &copy; 2025 Big Red Connect<br>
+    <a href="index.html">← Return to Main Page</a>
   </footer>
 
 </body>
