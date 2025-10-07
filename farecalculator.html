@@ -5,40 +5,28 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Fare Calculator – Big Red Connect</title>
   <style>
-    body {
-      background:#000; color:#fff;
-      font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
-      margin:0; padding:20px;
-      max-width:640px; margin:auto; text-align:center;
-    }
-    .logo { margin:28px 0 16px; }
-    h1 { color:#c40000; font-size:1.9em; margin:0 0 10px; }
-    p.lead { color:#bbb; margin:0 0 18px; }
-    label { display:block; text-align:left; margin:14px 0 6px; color:#ccc; }
-    input,select {
-      width:100%; padding:12px;
-      border-radius:8px; border:1px solid #333;
-      background:#111; color:#fff;
-    }
-    .btn {
-      background:#c40000; color:#fff; border:none;
-      padding:12px 22px; border-radius:10px;
-      margin-top:16px; font-weight:700; font-size:1.05em;
-      box-shadow:0 3px 6px rgba(255,0,0,.3); cursor:pointer;
-      transition:.15s;
-    }
-    .btn:hover { background:#990000; transform:scale(1.03); }
-    #result {
-      background:#111; border:1px solid #c40000;
-      border-radius:12px; padding:18px; margin-top:22px;
-      text-align:left;
-    }
-    #result .total { font-size:1.6em; color:#ff4444; font-weight:800; text-align:center; margin:0 0 8px; }
-    #result p { margin:6px 0; }
-    .disclaimer { font-size:.9em; color:#999; margin:16px 0 28px; font-style:italic; }
-    footer { margin:28px 0 36px; color:#666; font-size:.9em; }
-    footer a { color:#aaa; text-decoration:none; }
-    footer a:hover { text-decoration:underline; color:#fff; }
+    body{background:#000;color:#fff;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+      margin:0;padding:20px;max-width:640px;margin:auto;text-align:center}
+    .logo{margin:28px 0 16px}
+    h1{color:#c40000;font-size:1.9em;margin:0 0 10px}
+    p.lead{color:#bbb;margin:0 0 18px}
+    label{display:block;text-align:left;margin:14px 0 6px;color:#ccc}
+    input,select{width:100%;padding:12px;border-radius:8px;border:1px solid #333;background:#111;color:#fff}
+    .btn{background:#c40000;color:#fff;border:none;padding:12px 22px;border-radius:10px;
+      margin-top:16px;font-weight:700;font-size:1.05em;box-shadow:0 3px 6px rgba(255,0,0,.3);
+      cursor:pointer;transition:.15s}
+    .btn:hover{background:#990000;transform:scale(1.03)}
+    #result{background:#111;border:1px solid #c40000;border-radius:12px;padding:18px;margin-top:22px;text-align:left}
+    #result .total{font-size:1.6em;color:#ff4444;font-weight:800;text-align:center;margin:0 0 8px}
+    #map{width:100%;height:220px;border-radius:10px;margin-top:16px;border:2px solid #c40000}
+    .disclaimer{font-size:.9em;color:#999;margin:16px 0 28px;font-style:italic}
+    footer{margin:28px 0 36px;color:#666;font-size:.9em}
+    footer a{color:#aaa;text-decoration:none}
+    footer a:hover{text-decoration:underline;color:#fff}
+    .routeBtn{display:block;text-align:center;margin-top:14px}
+    .routeBtn a{display:inline-block;background:#c40000;color:#fff;padding:10px 18px;
+      border-radius:6px;text-decoration:none;font-weight:bold;box-shadow:0 2px 6px rgba(255,0,0,.4)}
+    .routeBtn a:hover{background:#990000}
   </style>
 </head>
 <body>
@@ -48,8 +36,7 @@
 
   <h1>Big Red Connect Fare Calculator</h1>
   <p class="lead">
-    Type an address or business (e.g. <em>Walmart</em>, <em>Campus Corner</em>, <em>Riverwind Casino</em>)  
-    — or tap the pin to use your current location.
+    Type an address or business (e.g. <em>Walmart</em>, <em>Campus Corner</em>, <em>Riverwind Casino</em>) — or tap the pin to use your current location.
   </p>
 
   <label for="pickup">Pickup Location:</label>
@@ -57,6 +44,8 @@
 
   <label for="dropoff">Drop-off Location:</label>
   <input id="dropoff" type="text" placeholder="Enter drop-off address or place">
+
+  <div id="map"></div>
 
   <button id="locateBtn" class="btn">📍 Use My Location</button>
 
@@ -85,120 +74,87 @@
 
   <div id="result" style="display:none;"></div>
 
-  <div class="disclaimer">
-    *Estimates only. Final fare may vary slightly based on route, wait time, or negotiated pricing.
-  </div>
+  <div class="disclaimer">*Estimates only. Final fare may vary slightly based on route, wait time, or negotiated pricing.</div>
 
   <footer>
     &copy; 2025 Big Red Connect — <a href="index.html">Return to Main Page</a>
   </footer>
 
-  <!-- Google Maps API -->
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places" defer></script>
+  <script async
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places,geometry&callback=initGoogle">
+  </script>
 
   <script>
-    let pickupLatLng = null, dropoffLatLng = null;
-    let geocoder, distanceService;
-
-    window.addEventListener('load', () => {
-      const waitForGoogle = setInterval(() => {
-        if (window.google && google.maps && google.maps.places) {
-          clearInterval(waitForGoogle);
-          initGoogle();
-        }
-      }, 100);
-    });
-
-    function initGoogle() {
-      geocoder = new google.maps.Geocoder();
-      distanceService = new google.maps.DistanceMatrixService();
-
-      const options = { fields: ['geometry', 'name'], types: ['establishment', 'geocode'] };
-      const pickupAC = new google.maps.places.Autocomplete(document.getElementById('pickup'), options);
-      const dropoffAC = new google.maps.places.Autocomplete(document.getElementById('dropoff'), options);
-
-      pickupAC.addListener('place_changed', () => {
-        const place = pickupAC.getPlace();
-        if (place && place.geometry) pickupLatLng = place.geometry.location;
+    let pickupLatLng=null,dropoffLatLng=null,map,markerA,markerB,geocoder,distanceService;
+    function initGoogle(){
+      geocoder=new google.maps.Geocoder();
+      distanceService=new google.maps.DistanceMatrixService();
+      map=new google.maps.Map(document.getElementById('map'),{
+        center:{lat:35.4676,lng:-97.5164},zoom:10,mapId:"bigred_map",
+        styles:[
+          {elementType:"geometry",stylers:[{color:"#1a1a1a"}]},
+          {elementType:"labels.text.fill",stylers:[{color:"#ffffff"}]},
+          {featureType:"road",stylers:[{color:"#333333"}]},
+          {featureType:"poi",stylers:[{color:"#2a2a2a"}]}
+        ]
       });
-
-      dropoffAC.addListener('place_changed', () => {
-        const place = dropoffAC.getPlace();
-        if (place && place.geometry) dropoffLatLng = place.geometry.location;
-      });
-
-      document.getElementById('locateBtn').addEventListener('click', getCurrentLocation);
-      document.getElementById('calcBtn').addEventListener('click', calculateFare);
+      const options={fields:['geometry','name'],types:['establishment','geocode']};
+      const pickupAC=new google.maps.places.Autocomplete(document.getElementById('pickup'),options);
+      const dropoffAC=new google.maps.places.Autocomplete(document.getElementById('dropoff'),options);
+      pickupAC.addListener('place_changed',()=>{const p=pickupAC.getPlace();if(p.geometry){pickupLatLng=p.geometry.location;map.panTo(pickupLatLng);if(!markerA)markerA=new google.maps.Marker({map,position:pickupLatLng,label:"A"});else markerA.setPosition(pickupLatLng);}});
+      dropoffAC.addListener('place_changed',()=>{const p=dropoffAC.getPlace();if(p.geometry){dropoffLatLng=p.geometry.location;map.panTo(dropoffLatLng);if(!markerB)markerB=new google.maps.Marker({map,position:dropoffLatLng,label:"B"});else markerB.setPosition(dropoffLatLng);}});
+      document.getElementById('locateBtn').addEventListener('click',getCurrentLocation);
+      document.getElementById('calcBtn').addEventListener('click',calculateFare);
     }
 
-    function getCurrentLocation() {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(pos => {
-          pickupLatLng = new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude);
-          geocoder.geocode({ location: pickupLatLng }, (res, status) => {
-            if (status === 'OK' && res[0]) {
-              document.getElementById('pickup').value = res[0].formatted_address;
-            } else {
-              alert('Could not find your address.');
-            }
+    function getCurrentLocation(){
+      if(navigator.geolocation){
+        navigator.geolocation.getCurrentPosition(pos=>{
+          pickupLatLng=new google.maps.LatLng(pos.coords.latitude,pos.coords.longitude);
+          map.panTo(pickupLatLng);map.setZoom(13);
+          if(!markerA)markerA=new google.maps.Marker({map,position:pickupLatLng,label:"A"});
+          else markerA.setPosition(pickupLatLng);
+          geocoder.geocode({location:pickupLatLng},(res,status)=>{
+            if(status==='OK'&&res[0])document.getElementById('pickup').value=res[0].formatted_address;
           });
-        }, () => alert('Location permission denied.'));
-      } else alert('Geolocation not supported.');
-    }
-
-    function calculateFare() {
-      const pickup = document.getElementById('pickup').value.trim();
-      const dropoff = document.getElementById('dropoff').value.trim();
-
-      if (!pickup || !dropoff) {
-        alert('Please enter both pickup and drop-off locations.');
-        return;
-      }
-
-      if (!pickupLatLng || !dropoffLatLng) {
-        distanceService.getDistanceMatrix({
-          origins: [pickup], destinations: [dropoff], travelMode: 'DRIVING'
-        }, handleDistanceResponse);
-      } else {
-        distanceService.getDistanceMatrix({
-          origins: [pickupLatLng], destinations: [dropoffLatLng], travelMode: 'DRIVING'
-        }, handleDistanceResponse);
+        });
       }
     }
 
-    function handleDistanceResponse(res, status) {
-      if (status !== 'OK') { alert('Error: ' + status); return; }
-      const data = res.rows[0].elements[0];
-      if (!data || data.status !== 'OK') { alert('Could not calculate distance.'); return; }
+    function calculateFare(){
+      const pickup=document.getElementById('pickup').value.trim();
+      const dropoff=document.getElementById('dropoff').value.trim();
+      if(!pickup||!dropoff)return alert('Please enter both pickup and drop-off locations.');
+      distanceService.getDistanceMatrix({origins:[pickupLatLng||pickup],destinations:[dropoffLatLng||dropoff],travelMode:'DRIVING'},handleDistanceResponse);
+    }
 
-      const miles = data.distance.value / 1609.34;
-      const base = parseFloat(document.getElementById('tripType').value);
-      const travelFee = parseFloat(document.getElementById('travelFee').value);
-      const payment = document.getElementById('payment').value;
-
-      let fare = base;
-      if (miles > 10 && miles <= 20) fare += (miles - 10) * 1.25;
-      else if (miles > 20) fare += (10 * 1.25) + ((miles - 20) * 1.0);
-      fare += travelFee;
-
-      if (payment === 'card') {
-        const booking = fare * 0.033;
-        const fuel = fare * 0.024;
-        fare += booking + fuel;
-      }
-
-      const total = fare.toFixed(2);
-      const distText = miles.toFixed(1) + ' miles';
-
-      const resultDiv = document.getElementById('result');
-      resultDiv.innerHTML = `
+    function handleDistanceResponse(res,status){
+      if(status!=='OK')return alert('Error: '+status);
+      const data=res.rows[0].elements[0];
+      if(!data||data.status!=='OK')return alert('Could not calculate distance.');
+      const miles=data.distance.value/1609.34;
+      const base=parseFloat(document.getElementById('tripType').value);
+      const travelFee=parseFloat(document.getElementById('travelFee').value);
+      const payment=document.getElementById('payment').value;
+      let fare=base;
+      if(miles>10&&miles<=20)fare+=(miles-10)*1.25;
+      else if(miles>20)fare+=(10*1.25)+((miles-20)*1.0);
+      fare+=travelFee;
+      if(payment==='card')fare+=fare*(0.033+0.024);
+      const total=fare.toFixed(2);
+      const distText=miles.toFixed(1)+' miles';
+      const pickup=document.getElementById('pickup').value.trim();
+      const dropoff=document.getElementById('dropoff').value.trim();
+      const mapLink=`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(pickup)}&destination=${encodeURIComponent(dropoff)}&travelmode=driving`;
+      const resultDiv=document.getElementById('result');
+      resultDiv.innerHTML=`
         <div class="total">$${total}</div>
         <p><strong>Distance:</strong> ${distText}</p>
         <p><strong>Ride Type:</strong> $${base.toFixed(2)} base</p>
         <p><strong>Travel Fee:</strong> $${travelFee.toFixed(2)}</p>
-        <p><strong>Payment:</strong> ${payment === 'card' ? 'Card (includes booking & fuel)' : 'Cash'}</p>
-      `;
-      resultDiv.style.display = 'block';
+        <p><strong>Payment:</strong> ${payment==='card'?'Card (includes booking & fuel)':'Cash'}</p>
+        <div class="routeBtn"><a href="${mapLink}" target="_blank">📍 View Route on Google Maps</a></div>`;
+      resultDiv.style.display='block';
     }
   </script>
 </body>
