@@ -170,9 +170,9 @@
       ) / 1609.34;
 
       let fee = 0, note = '';
-      if (dist <= 15) { fee = 0; note = `Pickup is ${dist.toFixed(1)} mi from ${driverPos ? 'current location' : 'Big Red HQ'} — no Travel Fairness Fee.`; }
-      else if (dist <= 30) { fee = 10; note = `Pickup is ${dist.toFixed(1)} mi from ${driverPos ? 'current location' : 'Big Red HQ'} — $10 Travel Fairness Fee applied.`; }
-      else { fee = 20; note = `Pickup is ${dist.toFixed(1)} mi from ${driverPos ? 'current location' : 'Big Red HQ'} — $20 Travel Fairness Fee applied.`; }
+      if (dist <= 15) { fee = 0; note = `Pickup is ${dist.toFixed(1)} mi from ${driverPos ? 'current location' : 'Big Red'} — no Travel Fairness Fee.`; }
+      else if (dist <= 30) { fee = 10; note = `Pickup is ${dist.toFixed(1)} mi from ${driverPos ? 'current location' : 'Big Red'} — $10 Travel Fairness Fee applied.`; }
+      else { fee = 20; note = `Pickup is ${dist.toFixed(1)} mi from ${driverPos ? 'current location' : 'Big Red'} — $20 Travel Fairness Fee applied.`; }
 
       document.getElementById('travelFee').value = fee.toString();
       document.getElementById('fairness-note').innerText = note;
