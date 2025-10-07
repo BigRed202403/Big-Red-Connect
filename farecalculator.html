@@ -25,9 +25,8 @@
     }
     button {
       background-color: #c40000; color: #fff;
-      border: none; padding: 12px 24px;
-      border-radius: 8px; margin-top: 20px;
-      font-weight: bold; font-size: 1.1em;
+      border: none; padding: 12px 24px; border-radius: 8px;
+      margin-top: 20px; font-weight: bold; font-size: 1.1em;
       cursor: pointer; transition: 0.2s ease;
       box-shadow: 0 3px 6px rgba(255,0,0,0.3);
     }
@@ -36,11 +35,8 @@
       background-color: #111; border: 1px solid #c40000;
       border-radius: 10px; padding: 20px; margin-top: 25px;
     }
-    .total { color: #ff4444; font-size: 1.5em; font-weight: bold; }
-    footer {
-      margin-top: 40px; font-size: 0.85em;
-      color: #666; padding-bottom: 30px;
-    }
+    .total { color: #ff4444; font-size: 1.6em; font-weight: bold; }
+    footer { margin-top: 40px; font-size: 0.85em; color: #666; padding-bottom: 30px; }
     footer a { color: #999; text-decoration: none; }
   </style>
 </head>
@@ -100,7 +96,7 @@
       const response = await fetch(proxyUrl);
       const data = await response.json();
       if (data.rows[0].elements[0].status === "OK") {
-        return data.rows[0].elements[0].distance.value / 1609.34; // meters to miles
+        return data.rows[0].elements[0].distance.value / 1609.34;
       } else {
         alert("Unable to find route. Please check addresses.");
         return 0;
@@ -132,8 +128,11 @@
       let cardFee = (payment === "card") ? subtotal * 0.057 : 0;
       let total = subtotal + cardFee;
 
+      // round to nearest dollar
+      total = Math.round(total);
+
       document.getElementById("result").innerHTML = `
-        <div class="total">Estimated Total: $${total.toFixed(2)}</div>
+        <div class="total">Estimated Total: $${total}</div>
         <p>Base: $${baseRate.toFixed(2)}<br>
         Mileage: $${mileageCharge.toFixed(2)} (${miles.toFixed(1)} mi)<br>
         Travel Fee: $${travelFee.toFixed(2)}<br>
