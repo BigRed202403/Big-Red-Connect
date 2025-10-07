@@ -19,25 +19,50 @@
     h1 { color: #c40000; margin-bottom: 20px; font-size: 1.8em; }
     label { display: block; text-align: left; margin-top: 15px; color: #ccc; }
     input, select {
-      width: 100%; padding: 10px; border-radius: 6px;
-      border: 1px solid #333; margin-top: 5px;
-      background-color: #111; color: #fff;
+      width: 100%;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #333;
+      margin-top: 5px;
+      background-color: #111;
+      color: #fff;
     }
     button {
-      background-color: #c40000; color: #fff;
-      border: none; padding: 12px 24px; border-radius: 8px;
-      margin-top: 20px; font-weight: bold; font-size: 1.1em;
-      cursor: pointer; transition: 0.2s ease;
-      box-shadow: 0 3px 6px rgba(255,0,0,0.3);
+      background-color: #c40000;
+      color: #fff;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      margin-top: 20px;
+      font-weight: bold;
+      font-size: 1.1em;
+      cursor: pointer;
+      transition: 0.2s ease;
+      box-shadow: 0 3px 6px rgba(255, 0, 0, 0.3);
     }
     button:hover { background-color: #990000; transform: scale(1.05); }
     #result {
-      background-color: #111; border: 1px solid #c40000;
-      border-radius: 10px; padding: 20px; margin-top: 25px;
+      background-color: #111;
+      border: 1px solid #c40000;
+      border-radius: 10px;
+      padding: 20px;
+      margin-top: 25px;
     }
     .total { color: #ff4444; font-size: 1.6em; font-weight: bold; }
-    footer { margin-top: 40px; font-size: 0.85em; color: #666; padding-bottom: 30px; }
+    footer {
+      margin-top: 40px;
+      font-size: 0.85em;
+      color: #666;
+      padding-bottom: 30px;
+    }
     footer a { color: #999; text-decoration: none; }
+    footer a:hover { text-decoration: underline; color: #fff; }
+    .disclaimer {
+      font-size: 0.9em;
+      color: #999;
+      margin-top: 20px;
+      font-style: italic;
+    }
   </style>
 </head>
 <body>
@@ -82,6 +107,10 @@
 
   <div id="result"></div>
 
+  <div class="disclaimer">
+    *Estimates only. Final total may vary slightly based on route, traffic, or wait time.*
+  </div>
+
   <footer>
     &copy; 2025 Big Red Connect<br>
     <a href="index.html">← Return to Main Page</a>
@@ -90,17 +119,28 @@
   <script>
     const apiKey = "AIzaSyALA9-LR2waqj0rUZ5TJPfeMJ1FoZrjzvo";
 
-    async function calculateDistance(pickup, dropoff) {
-      const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${encodeURIComponent(pickup)}&destinations=${encodeURIComponent(dropoff)}&units=imperial&key=${apiKey}`;
-      const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
-      const response = await fetch(proxyUrl);
+    async function getCoordinates(address) {
+      const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${apiKey}`;
+      const response = await fetch(url);
       const data = await response.json();
-      if (data.rows[0].elements[0].status === "OK") {
-        return data.rows[0].elements[0].distance.value / 1609.34;
+      if (data.status === "OK") {
+        return data.results[0].geometry.location;
       } else {
-        alert("Unable to find route. Please check addresses.");
-        return 0;
+        alert("Address not found: " + address);
+        return null;
       }
+    }
+
+    function calcDistanceMiles(lat1, lon1, lat2, lon2) {
+      const R = 3958.8; // miles
+      const toRad = x => x * Math.PI / 180;
+      const dLat = toRad(lat2 - lat1);
+      const dLon = toRad(lon2 - lon1);
+      const a = Math.sin(dLat / 2) ** 2 +
+                Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+                Math.sin(dLon / 2) ** 2;
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
     }
 
     async function calculateFare() {
@@ -115,9 +155,11 @@
         return;
       }
 
-      const miles = await calculateDistance(pickup, dropoff);
-      if (miles === 0) return;
+      const start = await getCoordinates(pickup);
+      const end = await getCoordinates(dropoff);
+      if (!start || !end) return;
 
+      const miles = calcDistanceMiles(start.lat, start.lng, end.lat, end.lng);
       let baseRate = parseFloat(tripType);
       let mileageCharge = 0;
 
@@ -126,10 +168,7 @@
 
       let subtotal = baseRate + mileageCharge + travelFee;
       let cardFee = (payment === "card") ? subtotal * 0.057 : 0;
-      let total = subtotal + cardFee;
-
-      // round to nearest dollar
-      total = Math.round(total);
+      let total = Math.round(subtotal + cardFee);
 
       document.getElementById("result").innerHTML = `
         <div class="total">Estimated Total: $${total}</div>
@@ -137,7 +176,8 @@
         Mileage: $${mileageCharge.toFixed(2)} (${miles.toFixed(1)} mi)<br>
         Travel Fee: $${travelFee.toFixed(2)}<br>
         Card Fee: $${cardFee.toFixed(2)}</p>
-        <p><a href="https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(pickup)}&destination=${encodeURIComponent(dropoff)}" target="_blank" style="color:#c40000;">📍 View route on Google Maps</a></p>
+        <p><a href="https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(pickup)}&destination=${encodeURIComponent(dropoff)}"
+              target="_blank" style="color:#c40000;">📍 View route on Google Maps</a></p>
         <p>Text “RED” to (405) 378-4024 to plan your connection.</p>
       `;
     }
