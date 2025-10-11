@@ -45,6 +45,28 @@
     footer { margin:28px 0 36px; color:#666; font-size:.9em; }
     footer a { color:#aaa; text-decoration:none; }
     footer a:hover { text-decoration:underline; color:#fff; }
+
+    /* refined remove-stop button */
+    .stop-row button.remove-stop {
+      background:none;
+      border:1px solid #555;
+      color:#aaa;
+      font-size:1em;
+      width:34px;
+      height:34px;
+      border-radius:50%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+      transition:all 0.2s ease;
+    }
+    .stop-row button.remove-stop:hover {
+      color:#fff;
+      border-color:#888;
+      background:#222;
+      transform:scale(1.05);
+    }
   </style>
 </head>
 <body>
@@ -64,7 +86,6 @@
   <label for="dropoff">Drop-off Location:</label>
   <input id="dropoff" type="text" placeholder="Enter drop-off address or place">
 
-  <!-- stops + location buttons -->
   <div id="stopsWrap"></div>
   <button id="addStopBtn" class="btn" type="button" style="margin-top:10px;">➕ Add Stop</button>
 
@@ -79,7 +100,7 @@
   <select id="tripType">
     <option value="10">Standard ($10 base)</option>
     <option value="15">Rush Hour ($15 base)</option>
-    <option value="15">Airport ($15 base)</option>
+    <option value="15_airport">Airport ($15 base)</option>
     <option value="20">Special Event ($20 base)</option>
   </select>
 
@@ -112,9 +133,7 @@
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places,geometry&callback=initGoogle" async defer></script>
 
   <script>
-    const HQ = { lat: 35.2902, lng: -97.5289 }; 
-    const DRIVER_KEY = "bigred_driver_pos";
-    const DRIVER_ACTIVE_KEY = "bigred_driver_active";
+    const HQ = { lat: 35.2902, lng: -97.5289 };
     let driverPos = null, pickupLatLng=null, dropoffLatLng=null;
     let map, geocoder, directionsService, directionsRenderer, pickupMarker, dropoffMarker;
     let stopInputs = [];
@@ -123,15 +142,14 @@
       geocoder = new google.maps.Geocoder();
       directionsService = new google.maps.DirectionsService();
       directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers: true });
-
       map = new google.maps.Map(document.getElementById('map'), {
         center: {lat:35.4676, lng:-97.5164}, zoom: 11,
         mapTypeControl:false, streetViewControl:false
       });
       directionsRenderer.setMap(map);
 
-      const pickupAC=new google.maps.places.Autocomplete(document.getElementById('pickup'));
-      const dropoffAC=new google.maps.places.Autocomplete(document.getElementById('dropoff'));
+      const pickupAC = new google.maps.places.Autocomplete(document.getElementById('pickup'));
+      const dropoffAC = new google.maps.places.Autocomplete(document.getElementById('dropoff'));
       pickupAC.addListener('place_changed',()=>{const p=pickupAC.getPlace();if(p.geometry){pickupLatLng=p.geometry.location;updatePickupMarker();autoApplyFairnessFee();}});
       dropoffAC.addListener('place_changed',()=>{const p=dropoffAC.getPlace();if(p.geometry){dropoffLatLng=p.geometry.location;updateDropoffMarker();}});
 
@@ -139,28 +157,13 @@
       document.getElementById('useLocDrop').addEventListener('click',()=>useMyLocationToField('dropoff'));
       document.getElementById('addStopBtn').addEventListener('click',addStopField);
       document.getElementById('calcBtn').addEventListener('click',calculateFare);
-
-      hydrateDriverPosFromStorage();
-      setInterval(hydrateDriverPosFromStorage, 10000);
     }
 
-    function hydrateDriverPosFromStorage(){
-      try{
-        const active=localStorage.getItem(DRIVER_ACTIVE_KEY)==="1";
-        const raw=localStorage.getItem(DRIVER_KEY);
-        if(!active||!raw){driverPos=null;return;}
-        const obj=JSON.parse(raw);
-        if(obj&&obj.lat&&obj.lng&&obj.ts&&(Date.now()-obj.ts)<5*60*1000){
-          driverPos={lat:obj.lat,lng:obj.lng};
-        }else{driverPos=null;}
-      }catch{driverPos=null;}
-    }
-
-    function updatePickupMarker(){if(pickupMarker) pickupMarker.setMap(null);
+    function updatePickupMarker(){ if(pickupMarker) pickupMarker.setMap(null);
       pickupMarker=new google.maps.Marker({position:pickupLatLng,map,label:'A'});
       map.setCenter(pickupLatLng);map.setZoom(12);
     }
-    function updateDropoffMarker(){if(dropoffMarker) dropoffMarker.setMap(null);
+    function updateDropoffMarker(){ if(dropoffMarker) dropoffMarker.setMap(null);
       dropoffMarker=new google.maps.Marker({position:dropoffLatLng,map,label:'B'});
     }
 
@@ -187,16 +190,33 @@
       });
     }
 
+    /* ---------- Add & Remove Stops ---------- */
     function addStopField(){
       if(stopInputs.length>=3){alert("Limit 3 stops.");return;}
       const id=`stop_${Date.now()}`;stopInputs.push(id);
       const wrap=document.getElementById('stopsWrap');
       const div=document.createElement('div');
-      div.style.marginTop='10px';
-      div.innerHTML=`<label for="${id}">Stop ${stopInputs.length}:</label><input id="${id}" type="text" placeholder="Enter stop address or place">`;
+      div.className="stop-row";
+      div.id=`row_${id}`;
+      div.style.marginTop="10px";
+      div.innerHTML=`
+        <label for="${id}">Stop ${stopInputs.length}:</label>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <input id="${id}" type="text" placeholder="Enter stop address or place" style="flex:1;">
+          <button type="button" class="remove-stop" onclick="removeStopField('${id}')" title="Remove Stop">✖</button>
+        </div>`;
       wrap.appendChild(div);
       new google.maps.places.Autocomplete(document.getElementById(id));
     }
+
+    function removeStopField(id){
+      const row=document.getElementById(`row_${id}`);
+      if(row) row.remove();
+      stopInputs=stopInputs.filter(sid=>sid!==id);
+      const labels=document.querySelectorAll("#stopsWrap label");
+      labels.forEach((lbl,i)=>lbl.textContent=`Stop ${i+1}:`);
+    }
+    /* --------------------------------------- */
 
     function autoApplyFairnessFee(){
       const origin=driverPos||HQ;if(!pickupLatLng)return;
@@ -279,6 +299,58 @@
       if(stops.length)p.set('waypoints',stops.map(s=>s.location).join('|'));
       return `https://www.google.com/maps/dir/?${p.toString()}`;
     }
+
+    /* ---------- Smart Time + Airport Detection (includes stops) ---------- */
+    function smartRideTypeDefault() {
+      let val = "10"; // Standard
+      const h = new Date().getHours();
+      if (h >= 5 && h < 10) val = "15";        // Morning Rush
+      else if (h >= 16 && h < 19) val = "15";  // Evening Rush
+      document.getElementById("tripType").value = val;
+    }
+
+    function detectAirportAndSetType() {
+      const pickupVal = (document.getElementById("pickup").value || "").toLowerCase();
+      const dropVal   = (document.getElementById("dropoff").value || "").toLowerCase();
+
+      let stopVals = "";
+      for (const id of stopInputs) {
+        const val = (document.getElementById(id)?.value || "").toLowerCase();
+        stopVals += " " + val;
+      }
+
+      const combined  = pickupVal + " " + dropVal + " " + stopVals;
+
+      const include = [
+        "airport", "air field", "airfield", "airpark", "air park",
+        "regional", "intl", "international", "municipal",
+        "private hangar", "hangar", "jet center", "airstrip", "heliport"
+      ];
+      const exclude = ["tinker", "air force", "afb", "base", "ang", "army", "naval"];
+
+      const hasInclude = include.some(k => combined.includes(k));
+      const hasExclude = exclude.some(k => combined.includes(k));
+
+      if (hasInclude && !hasExclude) {
+        document.getElementById("tripType").value = "15_airport";
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      smartRideTypeDefault();
+
+      ["pickup", "dropoff"].forEach(id => {
+        const el = document.getElementById(id);
+        el.addEventListener("input", detectAirportAndSetType);
+        el.addEventListener("change", detectAirportAndSetType);
+        el.addEventListener("blur", detectAirportAndSetType);
+      });
+
+      const stopWrap = document.getElementById("stopsWrap");
+      const observer = new MutationObserver(() => detectAirportAndSetType());
+      observer.observe(stopWrap, { childList: true, subtree: true });
+    });
+    /* -------------------------------------------------------------------- */
 
     window.initGoogle=initGoogle;
   </script>
