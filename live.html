@@ -12,14 +12,14 @@
       color: #fff;
       text-align: center;
       padding: 20px;
-      max-width: 600px;
+      max-width: 640px;
       margin: auto;
     }
     .logo {
-      margin: 30px 0 15px 0;
+      margin: 28px 0 16px 0;
     }
     h1 {
-      font-size: 2em;
+      font-size: 1.9em;
       color: #c40000;
       margin-bottom: 10px;
       letter-spacing: 0.5px;
@@ -61,6 +61,25 @@
       background-color: #990000;
       transform: scale(1.05);
     }
+    .status-banner {
+      margin-top: 18px;
+      padding: 12px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 1em;
+      color: #fff;
+      letter-spacing: 0.5px;
+    }
+    .online {
+      background-color: rgba(0, 150, 0, 0.2);
+      border: 1px solid #009900;
+      color: #8eff8e;
+    }
+    .offline-banner {
+      background-color: rgba(255, 0, 0, 0.15);
+      border: 1px solid #c40000;
+      color: #ff9999;
+    }
     footer {
       margin-top: 40px;
       font-size: 0.9em;
@@ -80,34 +99,42 @@
 <body>
 
   <div class="logo">
-    <img src="148D1A08-D537-4A0C-B141-2336DBF68A15.png" alt="Big Red Connect Logo" width="280">
+    <img src="148D1A08-D537-4A0C-B141-2336DBF68A15.png" alt="Big Red Connect Logo" width="260">
   </div>
 
   <h1>Big Red Connect Live Map</h1>
+  <div id="status"></div>
   <div id="content"></div>
 
   <script>
-    /* ====== TOGGLE ONLINE OR OFFLINE BELOW ====== */
+    /* ====== TOGGLE BELOW ====== */
     let mode = "offline";   // change to "online" when live
-    /* ============================================ */
+    /* ========================== */
 
+    const statusDiv = document.getElementById('status');
     const content = document.getElementById('content');
 
     const onlineHTML = `
-      <p>📍 Big Red is currently on the move around the OKC Metro!</p>
+      <div class="status-banner online">🟢 Big Red is LIVE around the OKC Metro</div>
+      <p style="margin-top:8px;">Tap below to see my current movement across Oklahoma City, Moore, Norman, Yukon, and Shawnee.</p>
       <iframe src="https://glympse.com/!bigredconnect?embed=true" allowfullscreen loading="lazy"></iframe>
       <p style="color:#aaa;margin-top:10px;">Location updates active while drive session is live.</p>
     `;
 
     const offlineHTML = `
+      <div class="status-banner offline-banner">🔴 Big Red is currently offline</div>
       <div class="offline">
-        <h2>Big Red is offline right now</h2>
-        <p>Need a connection or want to plan ahead? Text me below.</p>
+        <h2>Plan your connection ahead</h2>
+        <p>I’m off the road for now — but you can line up your next connection anytime.</p>
         <a href="sms:+14053784024" class="button">📲 Text “RED” to (405) 378-4024</a>
       </div>
     `;
 
-    content.innerHTML = (mode === "online") ? onlineHTML : offlineHTML;
+    if (mode === "online") {
+      content.innerHTML = onlineHTML;
+    } else {
+      content.innerHTML = offlineHTML;
+    }
   </script>
 
   <footer>
