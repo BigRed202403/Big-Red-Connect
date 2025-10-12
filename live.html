@@ -1,239 +1,146 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Fare Calculator – Big Red Connect</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live Map – Big Red Connect</title>
   <style>
     body {
-      background:#000; color:#fff;
-      font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
-      margin:0; padding:20px;
-      max-width:640px; margin:auto; text-align:center;
+      margin: 0;
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background-color: #000;
+      color: #fff;
+      text-align: center;
+      padding: 20px;
+      max-width: 640px;
+      margin: auto;
     }
-    .logo { margin:28px 0 16px; }
-    h1 { color:#c40000; font-size:1.9em; margin:0 0 10px; }
-    p.lead { color:#bbb; margin:0 0 18px; }
-    label { display:block; text-align:left; margin:14px 0 6px; color:#ccc; }
-    input,select {
-      width:100%; padding:12px;
-      border-radius:8px; border:1px solid #333;
-      background:#111; color:#fff;
+    .logo {
+      margin: 28px 0 16px 0;
     }
-    .btn {
-      background:#c40000; color:#fff; border:none;
-      padding:12px 22px; border-radius:10px;
-      margin-top:16px; font-weight:700; font-size:1.05em;
-      box-shadow:0 3px 6px rgba(255,0,0,.3); cursor:pointer;
-      transition:.15s;
+    h1 {
+      font-size: 1.9em;
+      color: #c40000;
+      margin-bottom: 10px;
+      letter-spacing: 0.5px;
     }
-    .btn:hover { background:#990000; transform:scale(1.03); }
-    #map {
-      height:250px; width:100%;
-      border:2px solid #c40000;
-      border-radius:10px; margin-top:15px;
+    p {
+      color: #ccc;
+      font-size: 1em;
+      line-height: 1.5em;
     }
-    #result {
-      background:#111; border:1px solid #c40000;
-      border-radius:12px; padding:18px; margin-top:22px;
-      text-align:left;
+    iframe {
+      width: 100%;
+      height: 450px;
+      border: 2px solid #c40000;
+      border-radius: 10px;
+      margin-top: 20px;
+      box-shadow: 0 0 10px rgba(255, 0, 0, 0.2);
     }
-    #result .total { font-size:1.6em; color:#ff4444; font-weight:800; text-align:center; margin:0 0 8px; }
-    #result p { margin:6px 0; }
-    #fairness-note { color:#999; font-size:0.9em; font-style:italic; margin-top:6px; text-align:left; }
-    .disclaimer { font-size:.9em; color:#999; margin:16px 0 28px; font-style:italic; }
-    footer { margin:28px 0 36px; color:#666; font-size:.9em; }
-    footer a { color:#aaa; text-decoration:none; }
-    footer a:hover { text-decoration:underline; color:#fff; }
+    .offline {
+      background: #111;
+      border: 1px solid #c40000;
+      border-radius: 10px;
+      padding: 20px;
+      margin-top: 25px;
+    }
+    .button {
+      display: inline-block;
+      background-color: #c40000;
+      color: #fff;
+      padding: 14px 24px;
+      margin-top: 15px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 1.1em;
+      box-shadow: 0 4px 8px rgba(255, 0, 0, 0.3);
+      transition: transform 0.1s ease, background-color 0.2s ease;
+    }
+    .button:hover {
+      background-color: #990000;
+      transform: scale(1.05);
+    }
+    .status-banner {
+      margin-top: 18px;
+      padding: 12px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 1em;
+      color: #fff;
+      letter-spacing: 0.5px;
+    }
+    .online {
+      background-color: rgba(0, 150, 0, 0.2);
+      border: 1px solid #009900;
+      color: #8eff8e;
+    }
+    .offline-banner {
+      background-color: rgba(255, 0, 0, 0.15);
+      border: 1px solid #c40000;
+      color: #ff9999;
+    }
+    footer {
+      margin-top: 40px;
+      font-size: 0.9em;
+      color: #777;
+      padding-bottom: 30px;
+    }
+    footer a {
+      color: #999;
+      text-decoration: none;
+    }
+    footer a:hover {
+      text-decoration: underline;
+      color: #fff;
+    }
   </style>
 </head>
 <body>
+
   <div class="logo">
-    <img src="148D1A08-D537-4A0C-B141-2336DBF68A15.png" alt="Big Red Connect" width="260">
+    <img src="148D1A08-D537-4A0C-B141-2336DBF68A15.png" alt="Big Red Connect Logo" width="260">
   </div>
 
-  <h1>Big Red Connect Fare Calculator</h1>
-  <p class="lead">
-    Type an address or business (e.g. <em>Walmart</em>, <em>Campus Corner</em>, <em>Riverwind Casino</em>)  
-    — or tap the pin to use your current location.
-  </p>
-
-  <label for="pickup">Pickup Location:</label>
-  <input id="pickup" type="text" placeholder="Enter pickup address or place">
-
-  <label for="dropoff">Drop-off Location:</label>
-  <input id="dropoff" type="text" placeholder="Enter drop-off address or place">
-
-  <div style="display:flex; gap:10px; margin-top:12px;">
-    <button id="useLocPickup" class="btn" type="button">📍 Use My Location for Pickup</button>
-    <button id="useLocDrop" class="btn" type="button">📍 Use My Location for Drop-off</button>
-  </div>
-
-  <div id="map"></div>
-  <div id="fairness-note"></div>
-
-  <label for="tripType">Ride Type:</label>
-  <select id="tripType">
-    <option value="10">Standard ($10 base)</option>
-    <option value="15">Rush Hour ($15 base)</option>
-    <option value="15_airport">Airport ($15 base)</option>
-    <option value="20">Special Event ($20 base)</option>
-  </select>
-
-  <label for="payment">Payment Method:</label>
-  <select id="payment">
-    <option value="cash">Cash / Venmo / Cash App (no fees)</option>
-    <option value="card">Card (+3.3% booking + 2.4% fuel)</option>
-  </select>
-
-  <button class="btn" id="calcBtn">💲 Calculate Fare</button>
-
-  <div id="result" style="display:none;"></div>
-
-  <div class="disclaimer">
-    *Estimates only. Final fare may vary slightly based on route, wait time, or negotiated pricing.
-  </div>
-
-  <footer>
-    &copy; 2025 Big Red Connect — <a href="index.html">Return to Main Page</a>
-  </footer>
-
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places,geometry&callback=initGoogle" async defer></script>
+  <h1>Big Red Connect Live Map</h1>
+  <div id="status"></div>
+  <div id="content"></div>
 
   <script>
-    const HQ = { lat: 35.2902, lng: -97.5289 };
-    let pickupLatLng=null, dropoffLatLng=null;
-    let map, geocoder, directionsService, directionsRenderer, pickupMarker, dropoffMarker;
-    let autoFairness = 0;
+    /* ====== TOGGLE BELOW ====== */
+    let mode = "offline";   // change to "online" when live
+    /* ========================== */
 
-    function initGoogle(){
-      geocoder = new google.maps.Geocoder();
-      directionsService = new google.maps.DirectionsService();
-      directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers: true });
-      map = new google.maps.Map(document.getElementById('map'), {
-        center: {lat:35.4676, lng:-97.5164}, zoom: 11,
-        mapTypeControl:false, streetViewControl:false
-      });
-      directionsRenderer.setMap(map);
+    const statusDiv = document.getElementById('status');
+    const content = document.getElementById('content');
 
-      const pickupAC = new google.maps.places.Autocomplete(document.getElementById('pickup'));
-      const dropoffAC = new google.maps.places.Autocomplete(document.getElementById('dropoff'));
-      pickupAC.addListener('place_changed',()=>{const p=pickupAC.getPlace();if(p.geometry){pickupLatLng=p.geometry.location;updatePickupMarker();autoApplyFairnessFee(p);}});
-      dropoffAC.addListener('place_changed',()=>{const p=dropoffAC.getPlace();if(p.geometry){dropoffLatLng=p.geometry.location;updateDropoffMarker();}});
-      document.getElementById('useLocPickup').addEventListener('click',()=>useMyLocationToField('pickup'));
-      document.getElementById('useLocDrop').addEventListener('click',()=>useMyLocationToField('dropoff'));
-      document.getElementById('calcBtn').addEventListener('click',calculateFare);
+    const onlineHTML = `
+      <div class="status-banner online">🟢 Big Red is LIVE around the OKC Metro</div>
+      <p style="margin-top:8px;">Tap below to see my current movement across Oklahoma City, Moore, Norman, Yukon, and Shawnee.</p>
+      <iframe src="https://glympse.com/!bigredconnect?embed=true" allowfullscreen loading="lazy"></iframe>
+      <p style="color:#aaa;margin-top:10px;">Location updates active while drive session is live.</p>
+    `;
+
+    const offlineHTML = `
+      <div class="status-banner offline-banner">🔴 Big Red is currently offline</div>
+      <div class="offline">
+        <h2>Plan your connection ahead</h2>
+        <p>I’m off the road for now — but you can line up your next connection anytime.</p>
+        <a href="sms:+14053784024" class="button">📲 Text “RED” to (405) 378-4024</a>
+      </div>
+    `;
+
+    if (mode === "online") {
+      content.innerHTML = onlineHTML;
+    } else {
+      content.innerHTML = offlineHTML;
     }
-
-    function updatePickupMarker(){ if(pickupMarker) pickupMarker.setMap(null);
-      pickupMarker=new google.maps.Marker({position:pickupLatLng,map,label:'A'});
-      map.setCenter(pickupLatLng);map.setZoom(12);
-    }
-    function updateDropoffMarker(){ if(dropoffMarker) dropoffMarker.setMap(null);
-      dropoffMarker=new google.maps.Marker({position:dropoffLatLng,map,label:'B'});
-    }
-
-    async function useMyLocationToField(fieldId){
-      if(!navigator.geolocation){alert("Location not supported.");return;}
-      navigator.geolocation.getCurrentPosition(async(pos)=>{
-        const {latitude,longitude}=pos.coords;
-        const latlng={lat:latitude,lng:longitude};
-        const addr=await reverseGeocode(latlng);
-        document.getElementById(fieldId).value=addr;
-        if(fieldId==='pickup'){pickupLatLng=new google.maps.LatLng(latlng.lat,latlng.lng);updatePickupMarker();autoApplyFairnessFee();}
-        else{dropoffLatLng=new google.maps.LatLng(latlng.lat,latlng.lng);updateDropoffMarker();}
-      });
-    }
-
-    function reverseGeocode(latlng){
-      return new Promise((res,rej)=>{
-        geocoder.geocode({location:latlng},(results,status)=>{
-          if(status==='OK'&&results&&results[0])res(results[0].formatted_address);
-          else rej(status);
-        });
-      });
-    }
-
-    async function autoApplyFairnessFee(place){
-      try {
-        const result = place.address_components || [];
-        const cityComp = result.find(c => c.types.includes("locality") || c.types.includes("postal_town"));
-        const city = cityComp ? cityComp.long_name.toLowerCase() : "";
-
-        const zone1 = ["oklahoma city","moore","norman","midwest city","del city"];
-        const zone2 = ["edmond","yukon","mustang","newcastle","tuttle","choctaw","harrah","jones","luther"];
-        const zone3 = ["shawnee","tecumseh","guthrie","blanchard","wellston","seminole","chickasha","goldsby","lexington","noble"];
-
-        if (zone1.includes(city)) autoFairness = 0;
-        else if (zone2.includes(city)) autoFairness = 10;
-        else if (zone3.includes(city)) autoFairness = 20;
-        else autoFairness = 0;
-
-        const msg = autoFairness === 0
-          ? `Pickup in ${city ? city.charAt(0).toUpperCase()+city.slice(1) : 'Metro'} — No Travel Fairness Fee.`
-          : `Pickup in ${city.charAt(0).toUpperCase()+city.slice(1)} — $${autoFairness} Travel Fairness Fee applied.`;
-
-        document.getElementById('fairness-note').innerText = msg;
-      } catch {
-        autoFairness = 0;
-        document.getElementById('fairness-note').innerText = "";
-      }
-    }
-
-    async function calculateFare(){
-      const pickup=document.getElementById('pickup').value.trim();
-      const dropoff=document.getElementById('dropoff').value.trim();
-      if(!pickup||!dropoff)return alert('Please enter both pickup and drop-off.');
-
-      const res=await routeWithWaypoints(pickup,dropoff);
-      const {totalMiles}=summarizeRoute(res);
-
-      const base=parseFloat(document.getElementById('tripType').value);
-      const payment=document.getElementById('payment').value;
-      let fare=base;
-
-      if(totalMiles>10&&totalMiles<=20)fare+=(totalMiles-10)*1.25;
-      else if(totalMiles>20)fare+=(10*1.25)+((totalMiles-20)*1.0);
-      fare+=autoFairness;
-
-      if(payment==='card'){fare+=fare*0.033+fare*0.024;}
-
-      const total=fare.toFixed(2);
-      const payLabel=(payment==='card')?'Card (includes fees)':'Cash / Venmo / Cash App';
-      const r=document.getElementById('result');
-      r.innerHTML=`
-        <div class="total">$${total}</div>
-        <p><strong>Distance:</strong> ${totalMiles.toFixed(1)} mi</p>
-        <p><strong>Ride Type:</strong> $${base.toFixed(2)} base</p>
-        <p><strong>Travel Fairness Fee:</strong> $${autoFairness.toFixed(2)}</p>
-        <p><strong>Payment:</strong> ${payLabel}</p>`;
-      r.style.display='block';
-    }
-
-    function routeWithWaypoints(origin,destination){
-      return new Promise((res,rej)=>{
-        directionsService.route({origin,destination,travelMode:google.maps.TravelMode.DRIVING,optimizeWaypoints:false},
-        (r,s)=>{if(s==='OK'&&r&&r.routes[0]){directionsRenderer.setDirections(r);res(r);}else rej(s);});
-      });
-    }
-
-    function summarizeRoute(res){
-      let meters=0;for(const l of res.routes[0].legs)meters+=(l.distance?.value||0);
-      return {totalMiles:meters/1609.34};
-    }
-
-    /* Smart Rush Hour */
-    function smartRideTypeDefault() {
-      let val = "10";
-      const d = new Date();
-      const day = d.getDay(); // 0=Sun, 6=Sat
-      const h = d.getHours();
-      if (day >= 1 && day <= 5 && ((h >= 5 && h < 10) || (h >= 16 && h < 19))) val = "15";
-      document.getElementById("tripType").value = val;
-    }
-
-    document.addEventListener("DOMContentLoaded", smartRideTypeDefault);
-    window.initGoogle=initGoogle;
   </script>
+
+  <footer>
+    &copy; 2025 Big Red Connect<br>
+    <a href="index.html">← Return to Main Page</a>
+  </footer>
+
 </body>
 </html>
