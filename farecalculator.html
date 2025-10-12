@@ -103,12 +103,7 @@
     <option value="20">Special Event ($20 base)</option>
   </select>
 
-  <label for="travelFee">Travel Fairness Fee:</label>
-  <select id="travelFee">
-    <option value="0">None (within OKC Metro)</option>
-    <option value="10">$10 (short trip outside metro)</option>
-    <option value="20">$20 (long trip outside metro)</option>
-  </select>
+  <!-- Hidden Travel Fairness Fee control -->
   <div id="fairness-note"></div>
 
   <label for="payment">Payment Method:</label>
@@ -136,27 +131,21 @@
     let driverPos = null, pickupLatLng=null, dropoffLatLng=null;
     let map, geocoder, directionsService, directionsRenderer, pickupMarker, dropoffMarker;
     let stopInputs = [];
+    let travelFee = 0;
 
-    // Fetch live driver location from Cloudflare Worker
+    // Cloudflare Worker live location
     async function getDriverLocation(){
       try{
         const res = await fetch("https://falling-night-3e4d.bigredtransportation.workers.dev");
         const data = await res.json();
         if(data.latitude && data.longitude){
           driverPos = { lat: data.latitude, lng: data.longitude };
-          console.log("Driver location via Cloudflare:", driverPos);
-        } else {
-          driverPos = HQ;
-          console.warn("Worker returned no coords; using HQ.");
-        }
-      }catch(e){
-        console.error("Cloudflare Worker fetch failed:", e);
-        driverPos = HQ;
-      }
+        } else driverPos = HQ;
+      }catch{ driverPos = HQ; }
     }
 
     async function initGoogle(){
-      await getDriverLocation(); // fetch driver location first
+      await getDriverLocation();
 
       geocoder = new google.maps.Geocoder();
       directionsService = new google.maps.DirectionsService();
@@ -189,14 +178,13 @@
     async function useMyLocationToField(fieldId){
       if(!navigator.geolocation){alert("Location not supported.");return;}
       navigator.geolocation.getCurrentPosition(async(pos)=>{
-        const {latitude,longitude}=pos.coords;
-        const latlng={lat:latitude,lng:longitude};
+        const latlng={lat:pos.coords.latitude,lng:pos.coords.longitude};
         try{
           const addr=await reverseGeocode(latlng);
           document.getElementById(fieldId).value=addr;
           if(fieldId==='pickup'){pickupLatLng=new google.maps.LatLng(latlng.lat,latlng.lng);updatePickupMarker();autoApplyFairnessFee();}
           else{dropoffLatLng=new google.maps.LatLng(latlng.lat,latlng.lng);updateDropoffMarker();}
-        }catch{document.getElementById(fieldId).value=`${latitude.toFixed(6)},${longitude.toFixed(6)}`;}
+        }catch{document.getElementById(fieldId).value=`${latlng.lat.toFixed(6)},${latlng.lng.toFixed(6)}`;}
       },()=>alert("Could not get location."));
     }
 
@@ -209,14 +197,13 @@
       });
     }
 
-    /* ---------- Add & Remove Stops ---------- */
+    // --- Add / Remove Stops ---
     function addStopField(){
       if(stopInputs.length>=3){alert("Limit 3 stops.");return;}
       const id=`stop_${Date.now()}`;stopInputs.push(id);
       const wrap=document.getElementById('stopsWrap');
       const div=document.createElement('div');
-      div.className="stop-row";
-      div.id=`row_${id}`;
+      div.className="stop-row";div.id=`row_${id}`;
       div.style.marginTop="10px";
       div.innerHTML=`
         <label for="${id}">Stop ${stopInputs.length}:</label>
@@ -227,7 +214,6 @@
       wrap.appendChild(div);
       new google.maps.places.Autocomplete(document.getElementById(id));
     }
-
     function removeStopField(id){
       const row=document.getElementById(`row_${id}`);
       if(row) row.remove();
@@ -235,16 +221,17 @@
       const labels=document.querySelectorAll("#stopsWrap label");
       labels.forEach((lbl,i)=>lbl.textContent=`Stop ${i+1}:`);
     }
-    /* --------------------------------------- */
 
+    // --- Travel Fairness ---
     function autoApplyFairnessFee(){
       const origin=driverPos||HQ;if(!pickupLatLng)return;
       const dist=google.maps.geometry.spherical.computeDistanceBetween(new google.maps.LatLng(origin.lat,origin.lng),pickupLatLng)/1609.34;
-      let fee=0,note='';
-      if(dist<=15){fee=0;note=`Pickup is ${dist.toFixed(1)} mi from your current position — no Travel Fairness Fee.`;}
-      else if(dist<=30){fee=10;note=`Pickup is ${dist.toFixed(1)} mi away — $10 Travel Fairness Fee applied.`;}
-      else{fee=20;note=`Pickup is ${dist.toFixed(1)} mi away — $20 Travel Fairness Fee applied.`;}
-      document.getElementById('travelFee').value=fee.toString();
+      if(dist<=15){travelFee=0;}
+      else if(dist<=30){travelFee=10;}
+      else{travelFee=20;}
+      const note=(travelFee>0)
+        ? `Pickup is ${dist.toFixed(1)} mi away — $${travelFee} Travel Fairness Fee applied.`
+        : `Pickup is ${dist.toFixed(1)} mi from your current position — no Travel Fairness Fee.`;
       document.getElementById('fairness-note').innerText=note;
     }
 
@@ -260,7 +247,6 @@
         const {totalMiles}=summarizeRoute(res);
 
         const base=parseFloat(document.getElementById('tripType').value);
-        const travelFee=parseFloat(document.getElementById('travelFee').value);
         const payment=document.getElementById('payment').value;
 
         let fare=base;
@@ -285,7 +271,7 @@
           <p><strong>Distance:</strong> ${totalMiles.toFixed(1)} mi</p>
           <p><strong>Ride Type:</strong> $${base.toFixed(2)} base</p>
           <p><strong>Stops:</strong> ${stops.length} × $5 = $${(stops.length*5).toFixed(2)}</p>
-          <p><strong>Travel Fee:</strong> $${travelFee.toFixed(2)}</p>
+          <p><strong>Travel Fairness Fee:</strong> $${travelFee.toFixed(2)}</p>
           <p><strong>Payment:</strong> ${payLabel}</p>
           <a href="${gMapsURL}" target="_blank" class="btn" style="display:block;text-align:center;margin-top:12px;">📍 View Route on Google Maps</a>
           <a href="${smsLink}" class="btn" style="display:block;text-align:center;margin-top:12px;background:#28a745;">📱 Text Big Red</a>`;
@@ -296,16 +282,8 @@
     function routeWithWaypoints(origin,destination,waypoints){
       return new Promise((res,rej)=>{
         directionsService.route({origin,destination,waypoints,travelMode:google.maps.TravelMode.DRIVING,optimizeWaypoints:false},
-        (r,s)=>{if(s==='OK'&&r&&r.routes[0]){directionsRenderer.setDirections(r);placeABMarkers(r.routes[0]);res(r);}else rej(s);});
+        (r,s)=>{if(s==='OK'&&r&&r.routes[0]){directionsRenderer.setDirections(r);res(r);}else rej(s);});
       });
-    }
-
-    function placeABMarkers(route){
-      if(pickupMarker)pickupMarker.setMap(null);
-      if(dropoffMarker)dropoffMarker.setMap(null);
-      const leg0=route.legs[0];const lastLeg=route.legs[route.legs.length-1];
-      pickupMarker=new google.maps.Marker({position:leg0.start_location,map,label:'A'});
-      dropoffMarker=new google.maps.Marker({position:lastLeg.end_location,map,label:'B'});
     }
 
     function summarizeRoute(res){
@@ -319,12 +297,14 @@
       return `https://www.google.com/maps/dir/?${p.toString()}`;
     }
 
-    /* ---------- Smart Time + Airport Detection ---------- */
+    // Smart Ride Type – weekday rush hour only
     function smartRideTypeDefault() {
-      let val = "10";
-      const h = new Date().getHours();
-      if (h >= 5 && h < 10) val = "15";
-      else if (h >= 16 && h < 19) val = "15";
+      let val = "10"; 
+      const now = new Date();
+      const h = now.getHours();
+      const day = now.getDay(); // 0=Sun, 6=Sat
+      const weekday = (day >= 1 && day <= 5);
+      if (weekday && ((h >= 5 && h < 10) || (h >= 16 && h < 19))) val = "15";
       document.getElementById("tripType").value = val;
     }
 
@@ -332,4 +312,34 @@
       const pickupVal = (document.getElementById("pickup").value || "").toLowerCase();
       const dropVal   = (document.getElementById("dropoff").value || "").toLowerCase();
       let stopVals = "";
-      for (const id of stopInputs)
+      for (const id of stopInputs) {
+        const val = (document.getElementById(id)?.value || "").toLowerCase();
+        stopVals += " " + val;
+      }
+
+      const combined  = pickupVal + " " + dropVal + " " + stopVals;
+      const include = ["airport","airfield","airpark","intl","international","regional","municipal","hangar","jet center"];
+      const exclude = ["tinker","afb","air force","base","ang"];
+
+      const hasInclude = include.some(k => combined.includes(k));
+      const hasExclude = exclude.some(k => combined.includes(k));
+      if (hasInclude && !hasExclude) document.getElementById("tripType").value = "15_airport";
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      smartRideTypeDefault();
+      ["pickup", "dropoff"].forEach(id => {
+        const el = document.getElementById(id);
+        el.addEventListener("input", detectAirportAndSetType);
+        el.addEventListener("change", detectAirportAndSetType);
+        el.addEventListener("blur", detectAirportAndSetType);
+      });
+      const stopWrap = document.getElementById("stopsWrap");
+      const observer = new MutationObserver(() => detectAirportAndSetType());
+      observer.observe(stopWrap, { childList: true, subtree: true });
+    });
+
+    window.initGoogle=initGoogle;
+  </script>
+</body>
+</html>
