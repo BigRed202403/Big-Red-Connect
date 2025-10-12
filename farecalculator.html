@@ -46,7 +46,6 @@
     footer a { color:#aaa; text-decoration:none; }
     footer a:hover { text-decoration:underline; color:#fff; }
 
-    /* refined remove-stop button */
     .stop-row button.remove-stop {
       background:none;
       border:1px solid #555;
@@ -130,7 +129,7 @@
     &copy; 2025 Big Red Connect — <a href="index.html">Return to Main Page</a>
   </footer>
 
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places,geometry&callback=initGoogle" async defer></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY_HERE&libraries=places,geometry&callback=initGoogle" async defer></script>
 
   <script>
     const HQ = { lat: 35.2902, lng: -97.5289 };
@@ -138,7 +137,27 @@
     let map, geocoder, directionsService, directionsRenderer, pickupMarker, dropoffMarker;
     let stopInputs = [];
 
-    function initGoogle(){
+    // Fetch live driver location from Cloudflare Worker
+    async function getDriverLocation(){
+      try{
+        const res = await fetch("https://falling-night-3e4d.bigredtransportation.workers.dev");
+        const data = await res.json();
+        if(data.latitude && data.longitude){
+          driverPos = { lat: data.latitude, lng: data.longitude };
+          console.log("Driver location via Cloudflare:", driverPos);
+        } else {
+          driverPos = HQ;
+          console.warn("Worker returned no coords; using HQ.");
+        }
+      }catch(e){
+        console.error("Cloudflare Worker fetch failed:", e);
+        driverPos = HQ;
+      }
+    }
+
+    async function initGoogle(){
+      await getDriverLocation(); // fetch driver location first
+
       geocoder = new google.maps.Geocoder();
       directionsService = new google.maps.DirectionsService();
       directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers: true });
@@ -222,9 +241,9 @@
       const origin=driverPos||HQ;if(!pickupLatLng)return;
       const dist=google.maps.geometry.spherical.computeDistanceBetween(new google.maps.LatLng(origin.lat,origin.lng),pickupLatLng)/1609.34;
       let fee=0,note='';
-      if(dist<=15){fee=0;note=`Pickup is ${dist.toFixed(1)} mi from ${driverPos?'current location':'Big Red'} — no Travel Fairness Fee.`;}
-      else if(dist<=30){fee=10;note=`Pickup is ${dist.toFixed(1)} mi from ${driverPos?'current location':'Big Red'} — $10 Travel Fairness Fee applied.`;}
-      else{fee=20;note=`Pickup is ${dist.toFixed(1)} mi from ${driverPos?'current location':'Big Red'} — $20 Travel Fairness Fee applied.`;}
+      if(dist<=15){fee=0;note=`Pickup is ${dist.toFixed(1)} mi from your current position — no Travel Fairness Fee.`;}
+      else if(dist<=30){fee=10;note=`Pickup is ${dist.toFixed(1)} mi away — $10 Travel Fairness Fee applied.`;}
+      else{fee=20;note=`Pickup is ${dist.toFixed(1)} mi away — $20 Travel Fairness Fee applied.`;}
       document.getElementById('travelFee').value=fee.toString();
       document.getElementById('fairness-note').innerText=note;
     }
@@ -300,59 +319,17 @@
       return `https://www.google.com/maps/dir/?${p.toString()}`;
     }
 
-    /* ---------- Smart Time + Airport Detection (includes stops) ---------- */
+    /* ---------- Smart Time + Airport Detection ---------- */
     function smartRideTypeDefault() {
-      let val = "10"; // Standard
+      let val = "10";
       const h = new Date().getHours();
-      if (h >= 5 && h < 10) val = "15";        // Morning Rush
-      else if (h >= 16 && h < 19) val = "15";  // Evening Rush
+      if (h >= 5 && h < 10) val = "15";
+      else if (h >= 16 && h < 19) val = "15";
       document.getElementById("tripType").value = val;
     }
 
     function detectAirportAndSetType() {
       const pickupVal = (document.getElementById("pickup").value || "").toLowerCase();
       const dropVal   = (document.getElementById("dropoff").value || "").toLowerCase();
-
       let stopVals = "";
-      for (const id of stopInputs) {
-        const val = (document.getElementById(id)?.value || "").toLowerCase();
-        stopVals += " " + val;
-      }
-
-      const combined  = pickupVal + " " + dropVal + " " + stopVals;
-
-      const include = [
-        "airport", "air field", "airfield", "airpark", "air park",
-        "regional", "intl", "international", "municipal",
-        "private hangar", "hangar", "jet center", "airstrip", "heliport"
-      ];
-      const exclude = ["tinker", "air force", "afb", "base", "ang", "army", "naval"];
-
-      const hasInclude = include.some(k => combined.includes(k));
-      const hasExclude = exclude.some(k => combined.includes(k));
-
-      if (hasInclude && !hasExclude) {
-        document.getElementById("tripType").value = "15_airport";
-      }
-    }
-
-    document.addEventListener("DOMContentLoaded", () => {
-      smartRideTypeDefault();
-
-      ["pickup", "dropoff"].forEach(id => {
-        const el = document.getElementById(id);
-        el.addEventListener("input", detectAirportAndSetType);
-        el.addEventListener("change", detectAirportAndSetType);
-        el.addEventListener("blur", detectAirportAndSetType);
-      });
-
-      const stopWrap = document.getElementById("stopsWrap");
-      const observer = new MutationObserver(() => detectAirportAndSetType());
-      observer.observe(stopWrap, { childList: true, subtree: true });
-    });
-    /* -------------------------------------------------------------------- */
-
-    window.initGoogle=initGoogle;
-  </script>
-</body>
-</html>
+      for (const id of stopInputs)
