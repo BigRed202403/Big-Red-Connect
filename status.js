@@ -43,7 +43,7 @@ async function loadStatus() {
       // 🔴 Offline
       pill.className = "status status--offline";
       pill.innerHTML = `
-        Big Red is currently offline — I’m off the road for now, but you can line up your next ride connection anytime.<br>
+        Big Red is currently offline<br>I’m off the road for now, but you can line up your next ride connection anytime.<br>
         Text <strong>“RED”</strong> to <a href="sms:+14053784024">405-378-4024</a>
       `;
     }
