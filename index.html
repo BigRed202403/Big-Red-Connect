@@ -1,138 +1,164 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Big Red Connect</title>
-  <link rel="stylesheet" href="style.css" />
-  <meta name="color-scheme" content="dark light">
+
+  <!-- Universal stylesheet (cache-busted) -->
+  <link rel="stylesheet" href="style.css?v=5">
 </head>
 <body>
 
-  <!-- Hero is handled via CSS background -->
-  <header class="hero app-container">
-    <div class="brand">
-      <img class="brand__logo" src="official_logo.jpeg" alt="Big Red Connect logo" />
-      <h1 class="brand__title">Big Red Connect</h1>
-      <p class="brand__tag">Veteran Owned • Affordable Flat Rates • Trusted Local Connections</p>
+  <!-- Hero banner image is applied via CSS to keep pages consistent -->
+  <div class="hero" role="img" aria-label="Big Red Connect vehicles in OKC skyline"></div>
 
-      <!-- Live status (reads from Worker) -->
-      <div class="status status--offline" id="status">
-        <span class="status__dot" aria-hidden="true"></span>
-        <span class="status__text">Checking status…</span>
-      </div>
+  <!-- Logo -->
+  <div class="logo">
+    <!-- Keep your existing filename exactly -->
+    <img src="official_logo.jpeg" alt="Big Red Connect" loading="eager" decoding="async">
+  </div>
 
-      <!-- Primary actions -->
-      <div class="cta-row">
-        <a class="btn btn-primary" href="sms:+14053784024">📲 Text RED</a>
-        <a class="btn btn-secondary" href="tel:+14053784024">📞 Call Big Red</a>
-      </div>
-    </div>
-  </header>
+  <!-- Brand + tagline -->
+  <h1 class="brand">Big Red Connect</h1>
+  <p class="tagline">Veteran Owned • Affordable Flat Rates • Trusted Local Connections</p>
 
-  <main class="app-container">
-    <!-- App-like tiles -->
-    <section class="tile-grid">
-      <a class="tile" href="farecalculator.html">
-        <div class="tile__emoji">💲</div>
-        <div class="tile__title">Fare Calculator</div>
-      </a>
+  <!-- Status pill -->
+  <div id="status-pill" class="status status--loading">Checking status…</div>
 
-      <a class="tile" href="live.html">
-        <div class="tile__emoji">🗺️</div>
-        <div class="tile__title">Live Map</div>
-      </a>
+  <!-- Primary actions -->
+  <div class="cta-row">
+    <a class="btn btn--primary" href="sms:+14053784024">📱 Text RED</a>
+    <a class="btn btn--ghost"   href="tel:+14053784024">📞 Call Big Red</a>
+  </div>
 
-      <a class="tile" href="review.html">
-        <div class="tile__emoji">⭐</div>
-        <div class="tile__title">Rider Reviews</div>
-      </a>
+  <!-- Feature tiles -->
+  <div class="tile-grid">
+    <a class="tile" href="farecalculator.html">
+      <div class="tile__emoji">$</div>
+      <div class="tile__label">Fare Calculator</div>
+    </a>
+    <a class="tile" href="live.html">
+      <div class="tile__emoji">🗺️</div>
+      <div class="tile__label">Live Map</div>
+    </a>
+    <a class="tile" href="review.html">
+      <div class="tile__emoji">⭐</div>
+      <div class="tile__label">Rider Reviews</div>
+    </a>
+    <a class="tile" id="fb-tile" href="#">
+      <div class="tile__emoji">👍</div>
+      <div class="tile__label">Follow on Facebook</div>
+    </a>
+  </div>
 
-      <a class="tile" href="info.html">
-        <div class="tile__emoji">ℹ️</div>
-        <div class="tile__title">FAQ & Info</div>
-      </a>
-
-      <!-- Facebook: try app first, fall back to browser -->
-      <a class="tile" href="https://www.facebook.com/share/1BWCx63CUt/?mibextid=wwXIfr"
-         onclick="return openFacebook(event)"
-         rel="noopener" target="_blank">
-        <div class="tile__emoji">👍</div>
-        <div class="tile__title">Follow on Facebook</div>
-      </a>
-    </section>
-
-    <!-- Content cards -->
-    <section class="card">
-      <h2 class="card__title">What I Do</h2>
-      <p class="card__lead">
-        I provide reliable <strong>ride connections</strong> and <strong>link-ups</strong> across the Oklahoma City metro —
-        from daily commutes to airport runs, OU game days, and late-night returns. Every trip is arranged directly
-        by text for a simple, personal experience.
+  <!-- Sections -->
+  <section class="section">
+    <h2 class="section__title">What I Do</h2>
+    <div class="card">
+      <p>
+        I provide reliable <strong>ride connections</strong> and <strong>link-ups</strong> across the Oklahoma City metro — from daily
+        commutes to airport runs, OU game days, and late-night returns. Every trip is arranged directly by text
+        for a simple, personal experience.
       </p>
-      <ul class="card__list">
+      <ul>
         <li>Work, class, and appointment connections</li>
         <li>Airport and Tinker AFB link-ups at a flat rate</li>
         <li>Weekend and nightlife rides — local, affordable, trusted</li>
         <li>Special events, casinos, and concerts — plan ahead and arrive safe</li>
       </ul>
-    </section>
+    </div>
+  </section>
 
-    <section class="card">
-      <h2 class="card__title">Why Choose Red</h2>
-      <ul class="card__list">
-        <li>Locally owned & veteran operated — every connection is personal.</li>
+  <section class="section">
+    <h2 class="section__title">Why Choose Red</h2>
+    <div class="card">
+      <ul>
+        <li>Locally owned &amp; veteran operated — every connection is personal.</li>
         <li>Flat-rate pricing, consistent and upfront.</li>
         <li>No apps. No random drivers. Just text and go.</li>
       </ul>
-    </section>
+    </div>
+  </section>
 
-    <section class="card">
-      <h2 class="card__title">What Riders Say</h2>
+  <section class="section">
+    <h2 class="section__title">What Riders Say</h2>
+    <div class="review">
+      <div class="review__stars">★★★★★</div>
+      <p class="review__text">“Always dependable and easy to reach. Flat rate, no surprises.”</p>
+      <p class="review__author">— Alex, Norman</p>
+    </div>
+    <div class="review">
+      <div class="review__stars">★★★★★</div>
+      <p class="review__text">“Feels like riding with a friend, not an app. My go-to for nights out.”</p>
+      <p class="review__author">— Taylor, OKC</p>
+    </div>
 
-      <blockquote class="review">
-        <div class="review__stars">★★★★★</div>
-        <p>“Always dependable and easy to reach. Flat rate, no surprises.”</p>
-        <cite>— Alex, Norman</cite>
-      </blockquote>
+    <p class="more-link">
+      <a href="review.html">See more reviews →</a>
+    </p>
+  </section>
 
-      <blockquote class="review">
-        <div class="review__stars">★★★★★</div>
-        <p>“Feels like riding with a friend, not an app. My go-to for nights out.”</p>
-        <cite>— Taylor, OKC</cite>
-      </blockquote>
-
-      <p><a class="link" href="review.html">See more reviews →</a></p>
-    </section>
-  </main>
-
-  <footer class="footer app-container">
+  <footer class="footer">
     <p>© 2025 Big Red Connect</p>
-    <p><a class="link" href="info.html">FAQ & Policies</a> • <a class="link" href="review.html">Leave a Review</a></p>
+    <p><a href="info.html">FAQ &amp; Policies</a> • <a href="review.html">Leave a Review</a></p>
   </footer>
 
-  <script src="status.js"></script>
   <script>
-    // Facebook deep link helper: try app, then fall back to browser
-    function openFacebook(e){
-      const webUrl = "https://www.facebook.com/share/1BWCx63CUt/?mibextid=wwXIfr";
-      const appUrl = "fb://facewebmodal/f?href=" + encodeURIComponent(webUrl);
+    // --- ONLINE / OFFLINE STATUS ---
+    // Expects /status.json like: { "online": true, "updated": "2025-10-13T15:32:00Z" }
+    // (You can keep flipping the flag the same way your live.html does if you already export it.)
+    const STATUS_URL = '/status.json';
+    const pill = document.getElementById('status-pill');
 
-      // iOS/Safari safe attempt
-      const now = Date.now();
-      window.location.href = appUrl;
-
-      // If app isn’t installed, fall back to web after ~800ms
-      setTimeout(function(){
-        if (Date.now() - now < 1500) {
-          window.open(webUrl, "_blank", "noopener");
-        }
-      }, 800);
-
-      // Prevent default <a> navigation; we handle it
-      e.preventDefault();
-      return false;
+    function setStatusUI(online, updatedIso) {
+      if (online) {
+        pill.className = 'status status--online';
+        const when = updatedIso ? new Date(updatedIso).toLocaleString() : 'now';
+        pill.textContent = `Online now — updated ${when}`;
+      } else {
+        pill.className = 'status status--offline';
+        pill.innerHTML =
+          `Big Red is currently offline — I’m off the road for now, but you can line up your next ride connection anytime.<br>
+           Text <strong>“RED”</strong> to <a href="sms:+14053784024">405-378-4024</a>`;
+      }
     }
+
+    async function fetchStatus() {
+      try {
+        const r = await fetch(STATUS_URL, { cache: 'no-store' });
+        if (!r.ok) throw new Error('status fetch failed');
+        const data = await r.json();
+        setStatusUI(Boolean(data.online), data.updated);
+      } catch (e) {
+        pill.className = 'status status--offline';
+        pill.textContent = 'Status unavailable — try again later.';
+      }
+    }
+    fetchStatus();
+
+    // --- FACEBOOK TILE: open app if installed, fallback to your link ---
+    // Your exact link:
+    const FB_FALLBACK = "https://www.facebook.com/share/1BWCx63CUt/?mibextid=wwXIfr";
+    document.getElementById('fb-tile').addEventListener('click', (e) => {
+      e.preventDefault();
+      // Try the FB app scheme (requires user gesture to work on iOS)
+      const appUrl = "fb://facewebmodal/f?href=" + encodeURIComponent(FB_FALLBACK);
+      let opened = false;
+      const t = Date.now();
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.src = appUrl;
+      document.body.appendChild(iframe);
+
+      setTimeout(() => {
+        // If not switched to app within ~1s, go to the web link
+        if (Date.now() - t < 1200) {
+          window.location.href = FB_FALLBACK;
+        }
+        document.body.removeChild(iframe);
+      }, 900);
+    });
   </script>
 </body>
 </html>
