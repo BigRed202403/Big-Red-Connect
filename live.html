@@ -31,13 +31,13 @@
   <div id="away-message" style="display:none;" class="info-section">
     <h2>🟡 Limited Availability</h2>
     <p>
-      I’m on the road with limited availability. Short trips or quick connects may be possible.<br><br>
-      📲 Text <strong>“RED”</strong> to <strong>(405) 378-4024</strong> to check in.
+      I’m on the road with limited availability — short trips or quick connects may be possible.<br><br>
+      📲 Text <strong>“RED”</strong> to <strong>(405) 378-4024</strong> to check availability.
     </p>
   </div>
 
-  <!-- 🗺️ Map Card -->
-  <div id="map-card" class="info-section">
+  <!-- 🗺️ Map Card (shown only when online) -->
+  <div id="map-card" class="info-section" style="display:none;">
     <h2 id="map-status-heading">🟢 Currently Active</h2>
     <div id="map-wrapper">
       <iframe
@@ -62,7 +62,7 @@
   <script>
     // ✏️ Change this before each shift:
     // Options: "online", "away", "offline"
-    const CURRENT_STATUS = "away";  
+    const CURRENT_STATUS = "offline";  
   </script>
 
   <script src="status.js"></script>
