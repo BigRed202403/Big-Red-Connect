@@ -61,7 +61,17 @@ a.btn:hover, .btn:hover {
   background-color: #990000;
   transform: scale(1.05);
 }
+.cta-buttons, .nav-links {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
 
+.btn-secondary {
+  background: #444;
+}
 /* ==== LOGO ==== */
 .logo {
   margin: 30px 0 20px 0;
