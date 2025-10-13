@@ -1,94 +1,179 @@
-/* =====================================================
-   BIG RED CONNECT – GLOBAL STYLES (v1.0)
-   Shared across all pages for visual consistency
-   ===================================================== */
+/* ===========================================================
+   Big Red Connect — Universal Site Stylesheet
+   Version: October 2025
+   Shared across all pages (index, live, farecalculator, info, review)
+   ------------------------------------------------------------
+   Branding: Veteran Owned • Affordable Flat Rates • Trusted Local Connections
+   =========================================================== */
 
-/* ==== PAGE LAYOUT ==== */
+/* 🌆 Core Layout */
 body {
+  margin: 0;
   background: #000;
   color: #fff;
-  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  margin: 0;
-  padding: 20px;
-  max-width: 640px;
-  margin: auto;
+  font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   text-align: center;
+  padding: 25px 14px 60px;
+  max-width: 720px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.55em;
 }
 
-/* ==== HERO IMAGE ==== */
-/* ✅ Change this one line to update every page hero */
+/* 🖼️ Shared Hero Banner (update this image per season/event) */
 .hero {
-  position: relative;
   width: 100%;
-  aspect-ratio: 16 / 9;
-  background: url('059AAE7C-E31D-4780-B0FD-00535D28F120.png') center center / cover no-repeat;
-  border-bottom: 2px solid #c40000;
-  border-radius: 10px;
-  margin-bottom: 24px;
-  box-shadow: 0 0 12px rgba(255, 0, 0, 0.25);
-  overflow: hidden;
+  height: 200px;
+  background: url('059AAE7C-E31D-4780-B0FD-00535D28F120.png') center/cover no-repeat;
+  border-radius: 14px;
+  margin-bottom: 18px;
 }
 
-/* ==== HEADERS & TEXT ==== */
+/* 🚗 Logo */
+.logo img {
+  width: 260px;
+  max-width: 90%;
+  margin: 18px auto 10px;
+  display: block;
+}
+
+/* 🔴 Headings & Text */
 h1 {
-  font-size: 2.2em;
-  margin-bottom: 0.3em;
-  color: #fff;
-  letter-spacing: 0.5px;
-}
-.tagline {
-  font-size: 1.1em;
-  color: #ccc;
-  margin-bottom: 2em;
-  padding: 0 10px;
+  font-size: 2em;
+  margin: 6px 0 6px;
+  color: #e00000;
+  font-weight: 800;
 }
 
-/* ==== BUTTONS ==== */
-a.btn, .btn {
+h2 {
+  color: #e00000;
+  border-bottom: 1px solid #222;
+  padding-bottom: 4px;
+  font-size: 1.3em;
+  text-align: left;
+  margin-top: 36px;
+}
+
+p {
+  color: #ddd;
+  font-size: 0.95em;
+}
+
+/* ✴️ Tagline */
+.tagline {
+  color: #ccc;
+  font-size: 1.05em;
+  margin-bottom: 6px;
+}
+
+/* 🔘 Status Indicator */
+.status {
   display: inline-block;
-  margin: 10px 8px;
-  padding: 14px 30px;
+  padding: 8px 16px;
+  border-radius: 40px;
+  font-size: 0.95em;
+  margin: 10px auto 18px;
+  font-weight: 600;
+  transition: background 0.4s;
+}
+.status.online { background: #023d02; color: #9eff9e; }
+.status.offline { background: #400000; color: #ff9e9e; }
+
+/* 📲 Buttons */
+.btn {
+  display: inline-block;
+  background: #c40000;
+  color: #fff;
+  padding: 13px 22px;
+  border-radius: 10px;
   font-size: 1.1em;
-  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+  margin: 6px 6px;
+  box-shadow: 0 3px 6px rgba(255, 0, 0, 0.3);
+  transition: 0.15s;
+}
+.btn:hover { background: #a00000; transform: scale(1.05); }
+.btn.gray { background: #333; }
+.btn.gray:hover { background: #444; }
+
+/* 📱 Tile Grid for App-Like Layout */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 14px;
+  margin: 26px 0;
+}
+.card {
+  background: #111;
+  border: 1px solid #222;
+  border-radius: 14px;
+  padding: 18px 10px;
+  transition: 0.2s;
+  cursor: pointer;
   text-decoration: none;
   color: #fff;
-  background-color: #c40000;
-  font-weight: bold;
-  box-shadow: 0 4px 6px rgba(255, 0, 0, 0.3);
-  transition: transform 0.1s ease, background-color 0.2s ease;
 }
-a.btn:hover, .btn:hover {
-  background-color: #990000;
-  transform: scale(1.05);
+.card:hover {
+  transform: scale(1.04);
+  background: #181818;
+  border-color: #c40000;
 }
-.cta-buttons, .nav-links {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  margin-top: 16px;
-  flex-wrap: wrap;
+.card span {
+  font-size: 2em;
+  display: block;
+  margin-bottom: 6px;
 }
-
-.btn-secondary {
-  background: #444;
-}
-/* ==== LOGO ==== */
-.logo {
-  margin: 30px 0 20px 0;
+.card p {
+  font-size: 0.95em;
+  color: #ccc;
+  margin: 0;
 }
 
-/* ==== FOOTER ==== */
+/* 📋 Section Layout (used on all subpages) */
+section {
+  text-align: left;
+  margin-top: 40px;
+  padding: 0 4px;
+}
+section p {
+  color: #ddd;
+  font-size: 0.95em;
+  line-height: 1.55em;
+}
+
+/* 💬 Review Blocks */
+.review {
+  background: #111;
+  border: 1px solid #222;
+  border-radius: 12px;
+  padding: 14px;
+  margin: 10px 0;
+  text-align: left;
+}
+.review strong {
+  color: #e00000;
+}
+
+/* 🧭 Footer */
 footer {
   margin-top: 50px;
-  font-size: 0.85em;
-  color: #666;
-  padding-bottom: 30px;
+  color: #888;
+  font-size: 0.9em;
 }
 footer a {
-  color: #999;
+  color: #ccc;
   text-decoration: none;
 }
 footer a:hover {
   color: #fff;
   text-decoration: underline;
+}
+
+/* ☀️ Optional Light Mode */
+@media (prefers-color-scheme: light) {
+  body { background: #fff; color: #000; }
+  .card { background: #f3f3f3; color: #000; }
+  .status.online { background: #c7ffd0; color: #006800; }
+  .status.offline { background: #ffe5e5; color: #a00000; }
 }
