@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Control Panel – Big Red Connect</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      background: #000;
+      color: #fff;
+      text-align: center;
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      padding: 20px;
+    }
+    .hero.small {
+      height: 140px;
+      background: url('fall-hero.png') center/cover no-repeat;
+      border-bottom: 2px solid #c40000;
+      border-radius: 10px;
+      margin-bottom: 25px;
+    }
+    h1 { color: #c40000; font-size: 1.8em; margin-top: 10px; }
+    .tagline { color: #bbb; margin-bottom: 25px; }
+
+    /* Pill styling for feedback */
+    .status-pill {
+      display: inline-block;
+      padding: 10px 22px;
+      border-radius: 50px;
+      font-weight: 600;
+      font-size: 1em;
+      margin-bottom: 15px;
+      transition: all 0.3s ease;
+    }
+    .status-online  { background: #28a745; color: #fff; }
+    .status-away    { background: #ffcc00; color: #000; }
+    .status-offline { background: #c40000; color: #fff; }
+
+    /* Button grid */
+    .status-buttons {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 18px;
+    }
+    .btn {
+      padding: 12px 22px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.05em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .btn:hover { transform: scale(1.05); }
+    .online  { background: #28a745; color: #fff; }
+    .away    { background: #ffcc00; color: #000; }
+    .offline { background: #c40000; color: #fff; }
+    .btn.back { background: #333; color: #fff; margin-top: 30px; }
+
+    footer { margin-top: 40px; color: #777; font-size: 0.9em; }
+  </style>
+</head>
+<body>
+
+  <div class="hero small"></div>
+
+  <h1>Big Red Connect Control Panel</h1>
+  <p class="tagline">Private page to toggle your public status.</p>
+
+  <!-- ✅ Current Status -->
+  <div id="current-status" class="status-pill status-offline">Loading current status…</div>
+
+  <!-- 🕹️ Control Buttons -->
+  <div class="status-buttons">
+    <button class="btn online" onclick="setStatus('online')">🟢 Go Online</button>
+    <button class="btn away" onclick="setStatus('away')">🟡 Set Away</button>
+    <button class="btn offline" onclick="setStatus('offline')">🔴 Go Offline</button>
+  </div>
+
+  <button class="btn back" onclick="window.location.href='live.html'">⬅️ View Live Map</button>
+
+  <footer>
+    <p>Only you should access this page. Do not share this link publicly.</p>
+    <p>&copy; 2025 Big Red Connect</p>
+  </footer>
+
+  <script>
+    // Fetch and display current status
+    async function loadStatus() {
+      try {
+        const res = await fetch("status.json?nocache=" + Date.now());
+        const data = await res.json();
+        const pill = document.getElementById("current-status");
+        const state = data.state || (data.online ? "online" : "offline");
+
+        pill.className = "status-pill status-" + state;
+        pill.textContent =
+          state === "online"  ? "🟢 Currently Online"  :
+          state === "away"    ? "🟡 Limited Availability" :
+                                "🔴 Offline";
+      } catch {
+        document.getElementById("current-status").textContent = "⚠️ Could not read status.";
+      }
+    }
+
+    // Update status.json via Cloudflare Worker (or static PUT if allowed)
+    async function setStatus(state) {
+      try {
+        const res = await fetch("status.json", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            state: state,
+            updated: new Date().toISOString()
+          })
+        });
+
+        if (res.ok) {
+          alert(`✅ Status updated to: ${state.toUpperCase()}`);
+          loadStatus();
+        } else {
+          alert("⚠️ Could not update status. If on GitHub Pages, enable Cloudflare Worker relay.");
+        }
+      } catch (err) {
+        console.error(err);
+        alert("⚠️ Failed to connect to update status.");
+      }
+    }
+
+    loadStatus();
+  </script>
+</body>
+</html>
