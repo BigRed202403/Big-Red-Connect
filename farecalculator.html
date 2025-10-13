@@ -28,6 +28,7 @@
   .stop-row button.remove-stop{background:none;border:1px solid #555;color:#aaa;font-size:1em;width:34px;height:34px;
        border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;}
   .stop-row button.remove-stop:hover{color:#fff;border-color:#888;background:#222;transform:scale(1.05);}
+  #airport-note{color:#00bfff;font-style:italic;font-size:0.95em;margin-top:8px;}
 </style>
 </head>
 <body>
@@ -54,6 +55,7 @@
 
 <div id="map"></div>
 <div id="fairness-note"></div>
+<div id="airport-note"></div>
 
 <label for="tripType">Ride Type:</label>
 <select id="tripType">
@@ -106,9 +108,14 @@ async function initGoogle(){
     pickupPlace=p;pickupLatLng=p.geometry.location;
     map.setCenter(pickupLatLng);map.setZoom(12);
     pickupCity=extractCity(p)||await reverseCity(pickupLatLng);
-    await computeFairnessNote();
+    await computeFairnessNote();detectAirportAndSetType();
   });
-  acDrop.addListener('place_changed',()=>{const p=acDrop.getPlace();if(p.geometry){dropPlace=p;dropoffLatLng=p.geometry.location;map.panTo(dropoffLatLng);detectAirportAndSetType();}});
+  acDrop.addListener('place_changed',()=>{
+    const p=acDrop.getPlace();if(p.geometry){
+      dropPlace=p;dropoffLatLng=p.geometry.location;
+      map.panTo(dropoffLatLng);detectAirportAndSetType();
+    }
+  });
 
   document.getElementById('useLocPickup').onclick=()=>useMyLocation('pickup');
   document.getElementById('useLocDrop').onclick=()=>useMyLocation('dropoff');
@@ -153,8 +160,15 @@ async function computeFairnessNote(){
   const pCity=(pickupCity||"").toLowerCase().trim();const dCity=(driverCity||"").toLowerCase().trim();
   const ref=driverPos||HQ;let fee=0,msg="",src=driverPos?"Live Location":"HQ";
   const inZ1=ZONE1.includes(pCity),inZ2=ZONE2.includes(pCity),inZ3=ZONE3.includes(pCity);
-  if(inZ1){if(driverPos&&!ZONE1.includes(dCity)){const mi=distMi(ref,{lat:pickupLatLng.lat(),lng:pickupLatLng.lng()});fee=distanceFee(mi);msg=`Pickup in Zone 1 (${cap(pCity)}), but you are outside — ${mi.toFixed(1)} mi → $${fee}`;}else msg=`Pickup in Zone 1 (${cap(pCity)}) — no fairness fee.`;}
-  else if(inZ2){fee=(driverPos&&ZONE2.includes(dCity))?0:10;msg=`Pickup in Zone 2 (${cap(pCity)}) → $${fee}`;}
+  if(inZ1){
+    if(driverPos&&!ZONE1.includes(dCity)){
+      const mi=distMi(ref,{lat:pickupLatLng.lat(),lng:pickupLatLng.lng()});
+      fee=distanceFee(mi);
+      msg=`Pickup in Zone 1 (${cap(pCity)}), but you are outside — ${mi.toFixed(1)} mi → $${fee}`;
+    } else {
+      msg=`Pickup in Zone 1 (${cap(pCity)}) — standard local rate applies.`;
+    }
+  } else if(inZ2){fee=(driverPos&&ZONE2.includes(dCity))?0:10;msg=`Pickup in Zone 2 (${cap(pCity)}) → $${fee}`;}
   else if(inZ3){fee=(driverPos&&ZONE3.includes(dCity))?0:20;msg=`Pickup in Zone 3 (${cap(pCity)}) → $${fee}`;}
   else{const mi=distMi(ref,{lat:pickupLatLng.lat(),lng:pickupLatLng.lng()});fee=distanceFee(mi);msg=`Unrecognized city — ${mi.toFixed(1)} mi from ${src} → $${fee}`;}
   document.getElementById('fairness-note').innerHTML=`${msg}<br><span style="color:#777;font-size:0.85em;">Source: ${src}</span>`;
@@ -168,7 +182,7 @@ async function useMyLocation(id){
     const addr=await new Promise(r=>geocoder.geocode({location:latlng},(res,s)=>r((s==="OK"&&res[0])?res[0].formatted_address:`${latlng.lat},${latlng.lng}`)));
     document.getElementById(id).value=addr;
     if(id==="pickup"){pickupLatLng=new google.maps.LatLng(latlng.lat,latlng.lng);pickupCity=await reverseCity(latlng);map.setCenter(pickupLatLng);map.setZoom(12);await computeFairnessNote();}
-    else{dropoffLatLng=new google.maps.LatLng(latlng.lat,latlng.lng);map.panTo(dropoffLatLng);}
+    else{dropoffLatLng=new google.maps.LatLng(latlng.lat,lng:latlng.lng);map.panTo(dropoffLatLng);}
   });
 }
 
@@ -199,7 +213,34 @@ async function calculateFare(){
 }
 
 function smartRideTypeDefault(){let v="10";const d=new Date(),day=d.getDay(),h=d.getHours();if(day>=1&&day<=5&&((h>=5&&h<10)||(h>=16&&h<19)))v="15";document.getElementById("tripType").value=v;}
-function detectAirportAndSetType(){const f=[pickupPlace,dropPlace];const t=f.filter(Boolean).map(p=>(p.formatted_address||"").toLowerCase()).join(" ");const inc=["airport","airfield","air park","airpark","intl","international","regional","municipal","hangar","jet center","heliport"],exc=["tinker","afb","air force","base","ang"];if(inc.some(k=>t.includes(k))&&!exc.some(k=>t.includes(k)))document.getElementById("tripType").value="15_airport";}
+
+// 🛫 Enhanced airport + stop detection
+function detectAirportAndSetType() {
+  let combined = "";
+
+  const places = [pickupPlace, dropPlace].filter(Boolean);
+  for (const p of places) {
+    const name = (p.name || "").toLowerCase();
+    const addr = (p.formatted_address || "").toLowerCase();
+    combined += name + " " + addr + " ";
+  }
+
+  for (const id of stopInputs) {
+    const stopVal = (document.getElementById(id)?.value || "").toLowerCase();
+    combined += stopVal + " ";
+  }
+
+  const include = ["airport","airfield","air park","airpark","intl","international","regional","municipal","hangar","jet center","heliport"];
+  const exclude = ["tinker","afb","air force","base","ang"];
+
+  if (include.some(k => combined.includes(k)) && !exclude.some(k => combined.includes(k))) {
+    document.getElementById("tripType").value = "15_airport";
+    document.getElementById("airport-note").innerHTML = "✈️ Airport ride detected — $15 base applied automatically.";
+  } else {
+    document.getElementById("airport-note").innerHTML = "";
+  }
+}
+
 document.addEventListener("DOMContentLoaded",smartRideTypeDefault);
 window.initGoogle=initGoogle;
 </script>
