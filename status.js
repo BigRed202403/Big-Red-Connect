@@ -1,58 +1,59 @@
-/**
- * Big Red Connect – Shared Status Handler
- * Version: 2025-10-13
- * Purpose: Reads /status.json and updates the #status-pill element on any page.
- */
+/*
+  status.js — Big Red Connect
+  Updated: Oct 2025
 
-const STATUS_URL = "/status.json";
+  ✅ Shared across all pages
+  ✅ Auto updates color/message
+  ✅ Triggers event for other scripts (e.g. hides map)
+*/
 
 async function loadStatus() {
   const pill = document.getElementById("status-pill");
-  if (!pill) return; // Skip if page has no pill element
-
-  pill.className = "status status--loading";
-  pill.textContent = "Checking status…";
+  if (!pill) return;
 
   try {
-    const response = await fetch(STATUS_URL, { cache: "no-store" });
-    if (!response.ok) throw new Error("Failed to load status");
-    const data = await response.json();
+    const res = await fetch("status.json", { cache: "no-store" });
+    const data = await res.json();
 
-    const online = Boolean(data.online);
-    const away = Boolean(data.away);
-    const updated = data.updated ? new Date(data.updated) : null;
-    const updatedText = updated
-      ? updated.toLocaleString([], {
-          hour: "numeric",
-          minute: "2-digit",
-          month: "short",
-          day: "numeric",
-        })
-      : "recently";
+    let status = (data.status || "offline").toLowerCase();
+    let message = "";
+    let emoji = "🚗";
 
-    if (online) {
-      // 🟢 Online
+    // --- Determine text based on status ---
+    if (status === "online") {
       pill.className = "status status--online";
-      pill.textContent = `Online now — updated ${updatedText}`;
-    } else if (away) {
-      // 🟡 Away
+      message = "Big Red is live and accepting ride connections. Text “RED” to (405) 378-4024.";
+      emoji = "🟢";
+    } 
+    else if (status === "away") {
       pill.className = "status status--away";
-      pill.textContent =
-        `Temporarily unavailable — between connections, back shortly. (Updated ${updatedText})`;
-    } else {
-      // 🔴 Offline
+      message = "Big Red is currently away — limited availability. You can still text “RED” to plan your next connection.";
+      emoji = "🟡";
+    } 
+    else {
       pill.className = "status status--offline";
-      pill.innerHTML = `
-        Big Red is currently offline<br>I’m off the road for now, but you can line up your next ride connection anytime.<br>
-        Text <strong>“RED”</strong> to <a href="sms:+14053784024">405-378-4024</a>
-      `;
+      message = "Big Red is currently offline — I’m off the road for now, but you can line up your next ride connection anytime. Text “RED” to (405) 378-4024.";
+      emoji = "🔴";
     }
-  } catch (err) {
-    console.error("Status load error:", err);
-    pill.className = "status status--offline";
-    pill.textContent = "Status unavailable — please refresh later.";
+
+    pill.innerHTML = `${emoji} ${message}`;
+
+    // ✅ Dispatch status change event (for other pages)
+    const evt = new CustomEvent("statusUpdated", { detail: status });
+    document.dispatchEvent(evt);
+
+  } catch (e) {
+    console.error("Status fetch failed:", e);
+    const pill = document.getElementById("status-pill");
+    if (pill) {
+      pill.className = "status status--offline";
+      pill.textContent = "Unable to load live status.";
+    }
+    // still dispatch event so dependent pages can hide map
+    const evt = new CustomEvent("statusUpdated", { detail: "offline" });
+    document.dispatchEvent(evt);
   }
 }
 
-// Run once on page load
+// Run on page load
 document.addEventListener("DOMContentLoaded", loadStatus);
