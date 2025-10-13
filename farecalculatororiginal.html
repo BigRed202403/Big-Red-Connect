@@ -4,193 +4,29 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Fare Calculator – Big Red Connect</title>
-  <style>
-    body {
-      background:#000; color:#fff;
-      font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
-      margin:0; padding:20px;
-      max-width:640px; margin:auto; text-align:center;
-    }
-    .logo { margin:28px 0 16px; }
-    h1 { color:#c40000; font-size:1.9em; margin:0 0 10px; }
-    p.lead { color:#bbb; margin:0 0 18px; }
-    label { display:block; text-align:left; margin:14px 0 6px; color:#ccc; }
-    input,select {
-      width:100%; padding:12px;
-      border-radius:8px; border:1px solid #333;
-      background:#111; color:#fff;
-    }
-    .btn {
-      background:#c40000; color:#fff; border:none;
-      padding:12px 22px; border-radius:10px;
-      margin-top:16px; font-weight:700; font-size:1.05em;
-      box-shadow:0 3px 6px rgba(255,0,0,.3); cursor:pointer;
-      transition:.15s;
-    }
-    .btn:hover { background:#990000; transform:scale(1.03); }
-    #map {
-      height:250px; width:100%;
-      border:2px solid #c40000;
-      border-radius:10px; margin-top:15px;
-    }
-    #result {
-      background:#111; border:1px solid #c40000;
-      border-radius:12px; padding:18px; margin-top:22px;
-      text-align:left;
-    }
-    #result .total { font-size:1.6em; color:#ff4444; font-weight:800; text-align:center; margin:0 0 8px; }
-    #result p { margin:6px 0; }
-    #fairness-note { color:#999; font-size:0.9em; font-style:italic; margin-top:4px; text-align:left; }
-    .disclaimer { font-size:.9em; color:#999; margin:16px 0 28px; font-style:italic; }
-    footer { margin:28px 0 36px; color:#666; font-size:.9em; }
-    footer a { color:#aaa; text-decoration:none; }
-    footer a:hover { text-decoration:underline; color:#fff; }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="logo">
-    <img src="148D1A08-D537-4A0C-B141-2336DBF68A15.png" alt="Big Red Connect" width="260">
-  </div>
 
-  <h1>Big Red Connect Fare Calculator</h1>
+  <div class="hero small"></div>
+  <h1>Fare Calculator</h1>
+  <div id="status-pill" class="status status--loading">Checking status…</div>
+
   <p class="lead">
-    Type an address or business (e.g. <em>Walmart</em>, <em>Campus Corner</em>, <em>Riverwind Casino</em>)  
+    Type an address or business (e.g. <em>Campus Corner</em>, <em>Riverwind Casino</em>)  
     — or tap the pin to use your current location.
   </p>
 
-  <label for="pickup">Pickup Location:</label>
-  <input id="pickup" type="text" placeholder="Enter pickup address or place">
-
-  <label for="dropoff">Drop-off Location:</label>
-  <input id="dropoff" type="text" placeholder="Enter drop-off address or place">
-
-  <div id="map"></div>
-
-  <button id="locateBtn" class="btn">📍 Use My Location</button>
-
-  <label for="tripType">Ride Type:</label>
-  <select id="tripType">
-    <option value="10">Standard ($10 base)</option>
-    <option value="15">Rush Hour ($15 base)</option>
-    <option value="15">Airport ($15 base)</option>
-    <option value="20">Special Event ($20 base)</option>
-  </select>
-
-  <label for="travelFee">Travel Fairness Fee:</label>
-  <select id="travelFee">
-    <option value="0">None (within OKC Metro)</option>
-    <option value="10">$10 (short trip outside metro)</option>
-    <option value="20">$20 (long trip outside metro)</option>
-  </select>
-  <div id="fairness-note"></div>
-
-  <label for="payment">Payment Method:</label>
-  <select id="payment">
-    <option value="cash">Cash / Venmo / Cash App (no fees)</option>
-    <option value="card">Card (+3.3% booking + 2.4% fuel)</option>
-  </select>
-
-  <button class="btn" id="calcBtn">💲 Calculate Fare</button>
-
-  <div id="result" style="display:none;"></div>
-
-  <div class="disclaimer">
-    *Estimates only. Final fare may vary slightly based on route, wait time, or negotiated pricing.
-  </div>
+  <iframe src="farecalc_embed.html" width="100%" height="700" 
+    style="border:2px solid #c40000; border-radius:10px;"></iframe>
 
   <footer>
-    &copy; 2025 Big Red Connect — <a href="index.html">Return to Main Page</a>
+    <p>&copy; 2025 Big Red Connect — 
+      <a href="index.html">Home</a> |
+      <a href="live.html">Live Map</a>
+    </p>
   </footer>
 
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places,geometry&callback=initGoogle" async defer></script>
-
-  <script>
-    const HQ = { lat: 35.2902, lng: -97.5289 }; // SE 149th & Western
-    let driverPos=null, pickupLatLng=null, dropoffLatLng=null;
-    let map, geocoder, distanceService, pickupMarker, dropoffMarker;
-
-    function initGoogle(){
-      geocoder=new google.maps.Geocoder();
-      distanceService=new google.maps.DistanceMatrixService();
-      map=new google.maps.Map(document.getElementById('map'),{
-        center:{lat:35.4676,lng:-97.5164},zoom:11,
-        mapTypeControl:false,streetViewControl:false
-      });
-      const pickupAC=new google.maps.places.Autocomplete(document.getElementById('pickup'));
-      const dropoffAC=new google.maps.places.Autocomplete(document.getElementById('dropoff'));
-      pickupAC.addListener('place_changed',()=>{const p=pickupAC.getPlace();if(p.geometry){pickupLatLng=p.geometry.location;updatePickupMarker();autoApplyFairnessFee();}});
-      dropoffAC.addListener('place_changed',()=>{const p=dropoffAC.getPlace();if(p.geometry){dropoffLatLng=p.geometry.location;updateDropoffMarker();}});
-      document.getElementById('locateBtn').addEventListener('click',getCurrentLocation);
-      document.getElementById('calcBtn').addEventListener('click',calculateFare);
-    }
-
-    function getCurrentLocation(){
-      if(navigator.geolocation){
-        navigator.geolocation.getCurrentPosition(pos=>{
-          driverPos={lat:pos.coords.latitude,lng:pos.coords.longitude};
-          map.setCenter(driverPos);map.setZoom(12);
-          new google.maps.Marker({position:driverPos,map,label:'🚗'});
-          alert('Live location active — Travel Fairness will use your current position.');
-        },()=>alert('Could not get live location; using HQ fallback.'));
-      }else alert('Geolocation not supported; using HQ fallback.');
-    }
-
-    function updatePickupMarker(){ if(pickupMarker) pickupMarker.setMap(null);
-      pickupMarker=new google.maps.Marker({position:pickupLatLng,map,label:'A'});
-      map.setCenter(pickupLatLng);map.setZoom(12);
-    }
-    function updateDropoffMarker(){ if(dropoffMarker) dropoffMarker.setMap(null);
-      dropoffMarker=new google.maps.Marker({position:dropoffLatLng,map,label:'B'});
-    }
-
-    function autoApplyFairnessFee(){
-      const origin=driverPos||HQ; if(!pickupLatLng) return;
-      const dist=google.maps.geometry.spherical.computeDistanceBetween(
-        new google.maps.LatLng(origin.lat,origin.lng),pickupLatLng)/1609.34;
-      let fee=0,note='';
-      if(dist<=15){fee=0;note=`Pickup is ${dist.toFixed(1)} mi from ${driverPos?'current location':'Big Red'} — no Travel Fairness Fee.`;}
-      else if(dist<=30){fee=10;note=`Pickup is ${dist.toFixed(1)} mi from ${driverPos?'current location':'Big Red'} — $10 Travel Fairness Fee applied.`;}
-      else{fee=20;note=`Pickup is ${dist.toFixed(1)} mi from ${driverPos?'current location':'Big Red'} — $20 Travel Fairness Fee applied.`;}
-      document.getElementById('travelFee').value=fee.toString();
-      document.getElementById('fairness-note').innerText=note;
-    }
-
-    function calculateFare(){
-      const pickup=document.getElementById('pickup').value.trim();
-      const dropoff=document.getElementById('dropoff').value.trim();
-      if(!pickup||!dropoff) return alert('Please enter both pickup and drop-off locations.');
-      distanceService.getDistanceMatrix({origins:[pickup],destinations:[dropoff],travelMode:'DRIVING'},
-      (res,status)=>{
-        if(status!=='OK') return alert('Error: '+status);
-        const d=res.rows[0].elements[0]; if(!d||d.status!=='OK') return alert('Could not calculate distance.');
-        const miles=d.distance.value/1609.34;
-        const base=parseFloat(document.getElementById('tripType').value);
-        const travelFee=parseFloat(document.getElementById('travelFee').value);
-        const payment=document.getElementById('payment').value;
-        let fare=base;
-        if(miles>10&&miles<=20) fare+=(miles-10)*1.25;
-        else if(miles>20) fare+=(10*1.25)+((miles-20)*1.0);
-        fare+=travelFee;
-        if(payment==='card'){fare+=fare*0.033+fare*0.024;}
-        const total=fare.toFixed(2);
-        const gMapsURL=`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(pickup)}&destination=${encodeURIComponent(dropoff)}&travelmode=driving`;
-        const payLabel=(payment==='card')?'Card (includes fees)':'Cash / Venmo / Cash App';
-        const smsBody=encodeURIComponent(
-          `Hi Big Red — I’d like a connection from ${pickup} to ${dropoff} (~${miles.toFixed(1)} mi). My estimate shows $${total} (${payLabel}). Route: ${gMapsURL}`
-        );
-        const smsLink=`sms:+14053784024?&body=${smsBody}`;
-        const r=document.getElementById('result');
-        r.innerHTML=`
-          <div class="total">$${total}</div>
-          <p><strong>Distance:</strong> ${miles.toFixed(1)} mi</p>
-          <p><strong>Ride Type:</strong> $${base.toFixed(2)} base</p>
-          <p><strong>Travel Fee:</strong> $${travelFee.toFixed(2)}</p>
-          <p><strong>Payment:</strong> ${payLabel}</p>
-          <a href="${gMapsURL}" target="_blank" class="btn" style="display:block;text-align:center;margin-top:12px;">📍 View Route on Google Maps</a>
-          <a href="${smsLink}" class="btn" style="display:block;text-align:center;margin-top:12px;background:#28a745;">📱 Text Big Red</a>`;
-        r.style.display='block';
-      });
-    }
-  </script>
+  <script src="status.js"></script>
 </body>
 </html>
