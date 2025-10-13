@@ -29,7 +29,7 @@ body{
 /* =========== Hero + Logo =========== */
 .hero{
   /* Keep your existing hero file name set in CSS (easy to swap once) */
-  background: url("hero.jpeg") center / cover no-repeat;
+  background: url("hero.png") center / cover no-repeat;
   width:min(980px, 92vw);
   height: clamp(160px, 28vw, 280px);
   margin: 18px auto 8px;
