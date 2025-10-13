@@ -10,7 +10,6 @@ body {
   padding: 0;
 }
 
-/* Make sure everything stays centered on mobile */
 h1, h2, h3, p {
   margin: 0 auto 10px;
   max-width: 600px;
@@ -27,6 +26,7 @@ h1, h2, h3, p {
   height: 200px;
   border-bottom: 2px solid #c40000;
   border-radius: 0 0 15px 15px;
+  box-shadow: 0 4px 20px rgba(255, 0, 0, 0.1);
 }
 
 .hero.small {
@@ -45,6 +45,7 @@ h1 {
   color: #ff1a1a;
   font-size: 2em;
   margin-top: 10px;
+  letter-spacing: 0.5px;
 }
 
 h2 {
@@ -91,29 +92,61 @@ h2 {
 }
 
 /* ==============================
-   BUTTONS (CTA)
+   BUTTONS (Enhanced)
 ============================== */
 .btn {
   display: inline-block;
-  padding: 10px 18px;
+  padding: 12px 20px;
   margin: 10px 6px;
   border-radius: 10px;
   text-decoration: none;
   font-weight: 600;
   color: #fff;
-  transition: 0.2s ease;
+  transition: all 0.25s ease;
+  box-shadow: 0 3px 10px rgba(255, 0, 0, 0.2);
+  position: relative;
+  overflow: hidden;
 }
 
+/* 🟥 Primary (Text RED) */
 .btn.primary {
-  background-color: #c40000;
+  background: linear-gradient(180deg, #c40000, #9a0000);
+  border: 1px solid #c40000;
 }
 
+/* ⚫ Secondary (Call Big Red) */
 .btn.secondary {
-  background-color: #333;
+  background: linear-gradient(180deg, #333, #111);
+  border: 1px solid #444;
 }
 
+/* 🌟 Hover + Tap Animation */
 .btn:hover {
-  opacity: 0.85;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(255, 0, 0, 0.4);
+  filter: brightness(1.1);
+}
+
+/* 💥 Press (Tap Down) Animation */
+.btn:active {
+  transform: scale(0.96);
+  filter: brightness(0.9);
+  box-shadow: 0 0 8px rgba(255, 0, 0, 0.5) inset;
+}
+
+/* 🩶 Pulse Glow on Primary */
+.btn.primary::after {
+  content: "";
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.3) 10%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.btn.primary:hover::after {
+  opacity: 1;
 }
 
 /* ==============================
