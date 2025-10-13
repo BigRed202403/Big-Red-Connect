@@ -2,135 +2,83 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Control Panel – Big Red Connect</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Big Red Connect – Control Panel</title>
   <style>
     body {
-      background: #000;
-      color: #fff;
-      text-align: center;
-      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-      padding: 20px;
+      background:#000; color:#fff; font-family:'Segoe UI',Roboto,Arial,sans-serif;
+      text-align:center; padding:30px; max-width:500px; margin:auto;
     }
-    .hero.small {
-      height: 140px;
-      background: url('fall-hero.png') center/cover no-repeat;
-      border-bottom: 2px solid #c40000;
-      border-radius: 10px;
-      margin-bottom: 25px;
+    h1 { color:#c40000; margin-bottom:10px; }
+    .subtitle { color:#aaa; margin-bottom:25px; }
+    button {
+      display:block; width:100%; margin:10px 0; padding:14px; font-size:1.1em;
+      border:none; border-radius:8px; color:#fff; cursor:pointer; font-weight:600;
+      transition:transform 0.1s ease;
     }
-    h1 { color: #c40000; font-size: 1.8em; margin-top: 10px; }
-    .tagline { color: #bbb; margin-bottom: 25px; }
-
-    /* Pill styling for feedback */
-    .status-pill {
-      display: inline-block;
-      padding: 10px 22px;
-      border-radius: 50px;
-      font-weight: 600;
-      font-size: 1em;
-      margin-bottom: 15px;
-      transition: all 0.3s ease;
+    button:hover { transform:scale(1.05); }
+    .online { background:#28a745; }
+    .away { background:#ffcc00; color:#000; }
+    .offline { background:#c40000; }
+    .log {
+      margin-top:25px; background:#111; border:1px solid #333; border-radius:8px;
+      padding:15px; font-size:0.95em; color:#ccc; text-align:left;
+      max-height:200px; overflow:auto;
     }
-    .status-online  { background: #28a745; color: #fff; }
-    .status-away    { background: #ffcc00; color: #000; }
-    .status-offline { background: #c40000; color: #fff; }
-
-    /* Button grid */
-    .status-buttons {
-      display: flex;
-      justify-content: center;
-      flex-wrap: wrap;
-      gap: 12px;
-      margin-top: 18px;
+    input {
+      width:100%; margin-bottom:15px; padding:10px; border-radius:6px;
+      border:1px solid #333; background:#111; color:#fff;
     }
-    .btn {
-      padding: 12px 22px;
-      border: none;
-      border-radius: 8px;
-      font-size: 1.05em;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.15s ease;
-    }
-    .btn:hover { transform: scale(1.05); }
-    .online  { background: #28a745; color: #fff; }
-    .away    { background: #ffcc00; color: #000; }
-    .offline { background: #c40000; color: #fff; }
-    .btn.back { background: #333; color: #fff; margin-top: 30px; }
-
-    footer { margin-top: 40px; color: #777; font-size: 0.9em; }
   </style>
 </head>
 <body>
+  <h1>Big Red Connect Control</h1>
+  <div class="subtitle">Update your online / away / offline status</div>
 
-  <div class="hero small"></div>
+  <!-- 🔐 Auth Key (matches Worker secret) -->
+  <input id="auth" type="password" placeholder="Enter control key (BigRedPrivateKey2025)" />
 
-  <h1>Big Red Connect Control Panel</h1>
-  <p class="tagline">Private page to toggle your public status.</p>
+  <!-- 🔘 Status Buttons -->
+  <button class="online" onclick="setStatus('online')">🟢 Go Online</button>
+  <button class="away" onclick="setStatus('away')">🟡 Set Away</button>
+  <button class="offline" onclick="setStatus('offline')">🔴 Go Offline</button>
 
-  <!-- ✅ Current Status -->
-  <div id="current-status" class="status-pill status-offline">Loading current status…</div>
-
-  <!-- 🕹️ Control Buttons -->
-  <div class="status-buttons">
-    <button class="btn online" onclick="setStatus('online')">🟢 Go Online</button>
-    <button class="btn away" onclick="setStatus('away')">🟡 Set Away</button>
-    <button class="btn offline" onclick="setStatus('offline')">🔴 Go Offline</button>
-  </div>
-
-  <button class="btn back" onclick="window.location.href='live.html'">⬅️ View Live Map</button>
-
-  <footer>
-    <p>Only you should access this page. Do not share this link publicly.</p>
-    <p>&copy; 2025 Big Red Connect</p>
-  </footer>
+  <div class="log" id="log">Ready.</div>
 
   <script>
-    // Fetch and display current status
-    async function loadStatus() {
-      try {
-        const res = await fetch("status.json?nocache=" + Date.now());
-        const data = await res.json();
-        const pill = document.getElementById("current-status");
-        const state = data.state || (data.online ? "online" : "offline");
+    const WORKER_URL = "https://bigred-status-relay.YOURSUBDOMAIN.workers.dev"; // replace with your Worker URL
+    const LOG = document.getElementById("log");
 
-        pill.className = "status-pill status-" + state;
-        pill.textContent =
-          state === "online"  ? "🟢 Currently Online"  :
-          state === "away"    ? "🟡 Limited Availability" :
-                                "🔴 Offline";
-      } catch {
-        document.getElementById("current-status").textContent = "⚠️ Could not read status.";
-      }
-    }
+    async function setStatus(mode) {
+      const key = document.getElementById("auth").value.trim();
+      if (!key) return alert("Enter your control key first.");
 
-    // Update status.json via Cloudflare Worker (or static PUT if allowed)
-    async function setStatus(state) {
+      const payload = {
+        online: mode === "online",
+        away: mode === "away",
+        updated: new Date().toISOString()
+      };
+
       try {
-        const res = await fetch("status.json", {
+        const r = await fetch(WORKER_URL, {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            state: state,
-            updated: new Date().toISOString()
-          })
+          headers: {
+            "Content-Type": "application/json",
+            "X-Auth-Token": key
+          },
+          body: JSON.stringify(payload)
         });
 
-        if (res.ok) {
-          alert(`✅ Status updated to: ${state.toUpperCase()}`);
-          loadStatus();
-        } else {
-          alert("⚠️ Could not update status. If on GitHub Pages, enable Cloudflare Worker relay.");
-        }
+        if (!r.ok) throw new Error(await r.text());
+        const data = await r.json();
+        const msg = `✅ Updated to ${mode.toUpperCase()} — ${new Date().toLocaleTimeString()}`;
+        LOG.textContent = msg + "\n" + JSON.stringify(data, null, 2);
+        console.log(msg, data);
       } catch (err) {
+        LOG.textContent = "❌ Update failed: " + err;
         console.error(err);
-        alert("⚠️ Failed to connect to update status.");
       }
     }
-
-    loadStatus();
   </script>
 </body>
 </html>
