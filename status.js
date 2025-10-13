@@ -1,29 +1,39 @@
-/* status.js — shared across all pages */
+/* ===============================
+   Big Red Connect — Status Sync
+   Updated: Oct 2025
+   Works globally across all pages
+=============================== */
 
 document.addEventListener("DOMContentLoaded", () => {
+  // Default to offline if not set
+  let currentState = "offline";
+
+  // ✅ If CURRENT_STATUS exists in the page (from index.html), use it
+  if (typeof CURRENT_STATUS !== "undefined") {
+    currentState = CURRENT_STATUS.trim().toLowerCase();
+  }
+
+  // ✅ Emit event so all pages (like live.html) can react
+  const statusEvent = new CustomEvent("statusUpdated", { detail: currentState });
+  document.dispatchEvent(statusEvent);
+
+  // ✅ Update the pill on the current page
   const pill = document.getElementById("status-pill");
   if (!pill) return;
 
-  // read CURRENT_STATUS from the page or fallback
-  const state = window.CURRENT_STATUS || "offline";
-
-  let text = "";
+  pill.classList.remove("status--loading");
   pill.classList.remove("online", "away", "offline");
 
-  if (state === "online") {
-    text = "🟢 Online";
+  if (currentState === "online") {
+    pill.textContent = "🟢 Online";
     pill.classList.add("online");
-  } else if (state === "away") {
-    text = "🟡 Away";
+  } 
+  else if (currentState === "away") {
+    pill.textContent = "🟡 Away";
     pill.classList.add("away");
-  } else {
-    text = "🔴 Offline";
+  } 
+  else {
+    pill.textContent = "🔴 Offline";
     pill.classList.add("offline");
   }
-
-  pill.textContent = text;
-
-  // Broadcast status event so Live Map & others can react
-  const event = new CustomEvent("statusUpdated", { detail: state });
-  document.dispatchEvent(event);
 });
