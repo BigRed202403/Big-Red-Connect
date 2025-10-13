@@ -1,146 +1,31 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Live Map – Big Red Connect</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-      background-color: #000;
-      color: #fff;
-      text-align: center;
-      padding: 20px;
-      max-width: 640px;
-      margin: auto;
-    }
-    .logo {
-      margin: 28px 0 16px 0;
-    }
-    h1 {
-      font-size: 1.9em;
-      color: #c40000;
-      margin-bottom: 10px;
-      letter-spacing: 0.5px;
-    }
-    p {
-      color: #ccc;
-      font-size: 1em;
-      line-height: 1.5em;
-    }
-    iframe {
-      width: 100%;
-      height: 450px;
-      border: 2px solid #c40000;
-      border-radius: 10px;
-      margin-top: 20px;
-      box-shadow: 0 0 10px rgba(255, 0, 0, 0.2);
-    }
-    .offline {
-      background: #111;
-      border: 1px solid #c40000;
-      border-radius: 10px;
-      padding: 20px;
-      margin-top: 25px;
-    }
-    .button {
-      display: inline-block;
-      background-color: #c40000;
-      color: #fff;
-      padding: 14px 24px;
-      margin-top: 15px;
-      border-radius: 8px;
-      text-decoration: none;
-      font-weight: bold;
-      font-size: 1.1em;
-      box-shadow: 0 4px 8px rgba(255, 0, 0, 0.3);
-      transition: transform 0.1s ease, background-color 0.2s ease;
-    }
-    .button:hover {
-      background-color: #990000;
-      transform: scale(1.05);
-    }
-    .status-banner {
-      margin-top: 18px;
-      padding: 12px;
-      border-radius: 8px;
-      font-weight: 600;
-      font-size: 1em;
-      color: #fff;
-      letter-spacing: 0.5px;
-    }
-    .online {
-      background-color: rgba(0, 150, 0, 0.2);
-      border: 1px solid #009900;
-      color: #8eff8e;
-    }
-    .offline-banner {
-      background-color: rgba(255, 0, 0, 0.15);
-      border: 1px solid #c40000;
-      color: #ff9999;
-    }
-    footer {
-      margin-top: 40px;
-      font-size: 0.9em;
-      color: #777;
-      padding-bottom: 30px;
-    }
-    footer a {
-      color: #999;
-      text-decoration: none;
-    }
-    footer a:hover {
-      text-decoration: underline;
-      color: #fff;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <div class="logo">
-    <img src="148D1A08-D537-4A0C-B141-2336DBF68A15.png" alt="Big Red Connect Logo" width="260">
-  </div>
+  <div class="hero small"></div>
 
-  <h1>Big Red Connect Live Map</h1>
-  <div id="status"></div>
-  <div id="content"></div>
+  <h1>Live Map</h1>
+  <div id="status-pill" class="status status--loading">Checking status…</div>
 
-  <script>
-    /* ====== TOGGLE BELOW ====== */
-    let mode = "offline";   // change to "online" when live
-    /* ========================== */
+  <p class="lead">When I’m online, you can view my live map right here:</p>
 
-    const statusDiv = document.getElementById('status');
-    const content = document.getElementById('content');
-
-    const onlineHTML = `
-      <div class="status-banner online">🟢 Big Red is LIVE around the OKC Metro</div>
-      <p style="margin-top:8px;">Tap below to see my current movement across Oklahoma City, Moore, Norman, Yukon, and Shawnee.</p>
-      <iframe src="https://glympse.com/!bigredconnect?embed=true" allowfullscreen loading="lazy"></iframe>
-      <p style="color:#aaa;margin-top:10px;">Location updates active while drive session is live.</p>
-    `;
-
-    const offlineHTML = `
-      <div class="status-banner offline-banner">🔴 Big Red is currently offline</div>
-      <div class="offline">
-        <h2>Plan your connection ahead</h2>
-        <p>I’m off the road for now — but you can line up your next connection anytime.</p>
-        <a href="sms:+14053784024" class="button">📲 Text “RED” to (405) 378-4024</a>
-      </div>
-    `;
-
-    if (mode === "online") {
-      content.innerHTML = onlineHTML;
-    } else {
-      content.innerHTML = offlineHTML;
-    }
-  </script>
+  <iframe 
+    src="https://glympse.com/!bigredconnect"
+    width="100%" height="400"
+    style="border:2px solid #c40000; border-radius:10px;">
+  </iframe>
 
   <footer>
-    &copy; 2025 Big Red Connect<br>
-    <a href="index.html">← Return to Main Page</a>
+    <p>Need a connection? Text <strong>“RED”</strong> to (405) 378-4024</p>
+    <a href="index.html" class="btn">🏠 Return to Home</a>
   </footer>
 
+  <script src="status.js"></script>
 </body>
 </html>
