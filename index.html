@@ -4,171 +4,223 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Big Red Connect</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="favicon.png">
   <style>
     body {
       margin: 0;
-      font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', sans-serif;
-      background-color: #000;
+      font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #000;
       color: #fff;
       text-align: center;
-      padding: 20px 15px;
-      max-width: 640px;
+      padding: 25px 14px 50px;
+      max-width: 700px;
       margin: auto;
     }
 
-    .hero {
-      background: url('059AAE7C-E31D-4780-B0FD-00535D28F120.png') center/cover no-repeat;
-      height: 220px;
-      border-radius: 12px;
-      border-bottom: 2px solid #c40000;
-      box-shadow: 0 0 12px rgba(255, 0, 0, 0.25);
-      margin-bottom: 24px;
+    .logo img {
+      width: 260px;
+      margin: 20px auto 10px;
+      display: block;
     }
 
-    .logo { margin: 20px 0 10px; }
-    h1 { font-size: 2em; margin-bottom: 0.2em; color: #fff; letter-spacing: 1px; }
-    .tagline { font-size: 1.05em; color: #ccc; margin-bottom: 1.8em; }
+    h1 {
+      font-size: 2em;
+      margin: 6px 0 6px;
+      color: #e00000;
+      font-weight: 800;
+    }
+
+    .tagline {
+      color: #ccc;
+      font-size: 1.05em;
+      margin-bottom: 6px;
+    }
+
+    .status {
+      display: inline-block;
+      padding: 8px 16px;
+      border-radius: 40px;
+      font-size: 0.95em;
+      margin: 10px auto 18px;
+      font-weight: 600;
+      transition: background 0.4s;
+    }
+    .status.online { background: #023d02; color: #9eff9e; }
+    .status.offline { background: #400000; color: #ff9e9e; }
 
     .btn {
       display: inline-block;
-      background-color: #c40000;
+      background: #c40000;
       color: #fff;
-      padding: 14px 28px;
-      margin: 8px;
-      border-radius: 8px;
+      padding: 13px 22px;
+      border-radius: 10px;
+      font-size: 1.1em;
       font-weight: 600;
       text-decoration: none;
-      font-size: 1.05em;
-      box-shadow: 0 4px 8px rgba(255, 0, 0, 0.3);
-      transition: transform 0.15s ease, background-color 0.2s ease;
+      margin: 6px 6px;
+      box-shadow: 0 3px 6px rgba(255, 0, 0, 0.3);
+      transition: 0.15s;
     }
-    .btn:hover { background-color: #990000; transform: scale(1.05); }
+    .btn:hover { background: #a00000; transform: scale(1.05); }
+    .btn.gray { background: #333; }
+    .btn.gray:hover { background: #444; }
 
-    h2 {
-      font-size: 1.4em;
-      color: #ff4444;
-      border-bottom: 1px solid #333;
-      padding-bottom: 6px;
-      margin-top: 2.2em;
+    /* App-style tile grid */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 14px;
+      margin: 26px 0;
+    }
+    .card {
+      background: #111;
+      border: 1px solid #222;
+      border-radius: 14px;
+      padding: 18px 10px;
+      transition: 0.2s;
+      cursor: pointer;
+      text-decoration: none;
+      color: #fff;
+    }
+    .card:hover {
+      transform: scale(1.04);
+      background: #181818;
+      border-color: #c40000;
+    }
+    .card span {
+      font-size: 2em;
+      display: block;
+      margin-bottom: 6px;
+    }
+    .card p {
+      font-size: 0.95em;
+      color: #ccc;
+      margin: 0;
     }
 
-    ul {
-      list-style: none;
-      padding: 0;
-      font-size: 1em;
-      line-height: 1.7em;
+    section {
       text-align: left;
-      display: inline-block;
-      margin: 10px auto 0;
+      margin-top: 40px;
     }
-    li::before {
-      content: "• ";
-      color: #c40000;
+    section h2 {
+      color: #e00000;
+      border-bottom: 1px solid #222;
+      padding-bottom: 4px;
+      font-size: 1.3em;
     }
-
-    .review {
-      margin: 25px 0;
-      padding: 20px;
-      background-color: #111;
-      border-radius: 10px;
-      font-style: italic;
-      font-size: 1em;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    section p {
+      color: #ddd;
+      font-size: 0.95em;
+      line-height: 1.55em;
     }
 
     footer {
-      margin-top: 40px;
+      margin-top: 50px;
+      color: #888;
       font-size: 0.9em;
-      color: #666;
-      padding-bottom: 30px;
     }
-    footer a {
-      color: #999;
-      text-decoration: none;
-      font-weight: 500;
-    }
+    footer a { color: #ccc; text-decoration: none; }
     footer a:hover { color: #fff; text-decoration: underline; }
+
+    @media (prefers-color-scheme: light) {
+      body { background: #fff; color: #000; }
+      .card { background: #f3f3f3; color: #000; }
+      .status.online { background: #c7ffd0; color: #006800; }
+      .status.offline { background: #ffe5e5; color: #a00000; }
+    }
   </style>
 </head>
 
 <body>
-  <!-- 🍁 Shared Hero Image -->
-  <div class="hero"></div>
-
-  <!-- 🚗 Official Big Red Connect Logo -->
+  <!-- Logo -->
   <div class="logo">
-    <img src="official_logo.jpeg" alt="Big Red Connect Logo" width="260">
+    <img src="official_logo.jpeg" alt="Big Red Connect Logo">
   </div>
 
-  <h1>BIG RED CONNECT</h1>
-  <div class="tagline">Veteran Owned • Affordable Flat Rates • Local Ride Connections</div>
+  <h1>Big Red Connect</h1>
+  <div class="tagline">Veteran Owned • Affordable Flat Rates • Trusted Local Connections</div>
+  <div id="statusBadge" class="status offline">🔴 Checking status...</div>
 
-  <a href="sms:+14053784024" class="btn">📲 Text “RED”</a>
-  <a href="tel:+14053784024" class="btn" style="background:#444;">📞 Call Big Red</a>
+  <!-- Quick Action Buttons -->
+  <a href="sms:+14053784024" class="btn">📲 Text RED</a>
+  <a href="tel:+14053784024" class="btn gray">📞 Call Big Red</a>
 
-  <div style="margin-top: 25px;">
-    <a href="live.html" class="btn">🗺️ View Live Map</a>
-    <a href="farecalculator.html" class="btn">💲 Fare Calculator</a>
+  <!-- Tile Grid -->
+  <div class="grid">
+    <a href="farecalculator.html" class="card">
+      <span>💲</span><p>Fare Calculator</p>
+    </a>
+    <a href="live.html" class="card">
+      <span>🗺️</span><p>Live Map</p>
+    </a>
+    <a href="review.html" class="card">
+      <span>⭐</span><p>Rider Reviews</p>
+    </a>
+    <a href="info.html" class="card">
+      <span>ℹ️</span><p>FAQ & Info</p>
+    </a>
+    <a href="https://www.facebook.com/profile.php?id=61577217145544" class="card" target="_blank">
+      <span>👍</span><p>Follow on Facebook</p>
+    </a>
   </div>
 
-  <!-- 🚗 What I Do -->
+  <!-- What I Do -->
   <section>
     <h2>What I Do</h2>
-    <p>I provide trusted ride connections across the Oklahoma City metro — keeping nights out, airport runs, and daily moves easy, local, and affordable. From Moore and Norman to Yukon, Mustang, and nearby communities, every ride link-up is planned directly with me by text.</p>
-    <ul>
-      <li>Reliable ride connections for work, school, or appointments.</li>
-      <li>Airport and Tinker AFB link-ups planned ahead at a flat rate.</li>
-      <li>Weekend ride link-ups for nightlife, events, and OU game days.</li>
-      <li>Concerts, casinos, and special occasions — local, flexible, and trusted.</li>
+    <p>I provide reliable <strong>ride connections</strong> across the Oklahoma City metro — from work commutes to airport runs, OU game days, and weekend nights out. Every link-up is local, flexible, and arranged directly with me by text.</p>
+    <ul style="margin-left:18px; color:#ccc; font-size:0.95em;">
+      <li>Work, class, and appointment connections</li>
+      <li>Airport and Tinker AFB link-ups at a flat rate</li>
+      <li>Weekend and nightlife rides — local, affordable, trusted</li>
+      <li>Special events, casinos, and concerts — plan ahead and arrive safe</li>
     </ul>
-    <p style="margin-top:12px;color:#aaa;">
-      Each connection is personal — one driver, one trusted ride, focused on getting you there safely and affordably.
-    </p>
   </section>
 
-  <!-- ❤️ Why Choose Red -->
+  <!-- Why Choose Red -->
   <section>
     <h2>Why Choose Red</h2>
-    <ul>
-      <li>Locally owned and operated — you always ride with the same driver.</li>
-      <li>Flat-rate pricing — consistent, upfront, and affordable.</li>
-      <li>No apps, no waiting, no random drivers — just text and go.</li>
-      <li>Community-driven — built for OKC riders, by an OKC local.</li>
-    </ul>
+    <p>Locally owned and veteran operated — every connection is personal.  
+    <br>Flat-rate pricing, consistent and upfront.  
+    <br>No apps. No random drivers. Just text and go.</p>
   </section>
 
-  <!-- ⭐ Rider Reviews -->
+  <!-- Reviews -->
   <section>
     <h2>What Riders Say</h2>
-    <div class="review">
-      ⭐⭐⭐⭐⭐<br>
-      "Always dependable and easy to reach. Flat rate, no surprises."<br>
-      — Alex, Norman
-    </div>
-
-    <div class="review">
-      ⭐⭐⭐⭐⭐<br>
-      "Feels like riding with a friend, not an app. My go-to for nights out."<br>
-      — Taylor, OKC
-    </div>
-
-    <div style="margin-top:10px;">
-      <a href="reviewed.html" style="color:#ccc;" target="_blank">See more reviews →</a> |
-      <a href="review.html" style="color:#ccc;" target="_blank">Leave a review</a>
-    </div>
+    <p>⭐️⭐️⭐️⭐️⭐️ “Always dependable and easy to reach. Flat rate, no surprises.” – Alex, Norman</p>
+    <p>⭐️⭐️⭐️⭐️⭐️ “Feels like riding with a friend, not an app. My go-to for nights out.” – Taylor, OKC</p>
+    <p><a href="review.html">See more reviews →</a></p>
   </section>
 
   <footer>
-    <p>Questions or ride connection requests? Text <strong>“RED”</strong> to (405) 378-4024.</p>
-    <p>
-      <a href="https://www.facebook.com/profile.php?id=61577217145544" target="_blank">👍 Follow on Facebook</a> |
-      <a href="https://www.facebook.com/share/g/16XP93KAZV/?mibextid=wwXIfr" target="_blank">👥 Join Our Group</a>
-    </p>
-    <p>&copy; 2025 Big Red Connect<br>
-      <a href="info.html">FAQ & Policies</a> | 
-      <a href="review.html">Leave a Review</a>
-    </p>
+    &copy; 2025 Big Red Connect<br>
+    <a href="info.html">FAQ & Policies</a> |
+    <a href="review.html">Leave a Review</a>
   </footer>
+
+  <!-- Live Status Fetch -->
+  <script>
+    const STATUS_URL = "https://falling-night-3e4d.bigredtransportation.workers.dev/status";
+    async function updateStatus(){
+      try{
+        const res = await fetch(STATUS_URL, { cache: "no-store" });
+        const data = await res.json();
+        const badge = document.getElementById("statusBadge");
+        if(data.status && data.status.toLowerCase() === "online"){
+          badge.className = "status online";
+          badge.innerHTML = "🟢 Big Red is Live — Text RED to (405) 378-4024";
+        } else {
+          badge.className = "status offline";
+          badge.innerHTML = "🔴 Currently Offline — Plan your connection ahead.";
+        }
+      } catch(e){
+        const badge = document.getElementById("statusBadge");
+        badge.className = "status offline";
+        badge.innerHTML = "⚪ Status unavailable — try again later.";
+      }
+    }
+    updateStatus();
+    setInterval(updateStatus, 60000);
+  </script>
 </body>
 </html>
