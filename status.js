@@ -1,41 +1,58 @@
-// Point this to your Cloudflare Worker (existing toggle endpoint)
-const STATUS_URL = "https://falling-night-3e4d.bigredtransportation.workers.dev/status";
-// Expected JSON examples:
-// { status: "online", updatedAt: "2025-10-12T21:03:00Z" }
-// or { online: true, updatedAt: "..." }
+/**
+ * Big Red Connect – Shared Status Handler
+ * Version: 2025-10-13
+ * Purpose: Reads /status.json and updates the #status-pill element on any page.
+ */
 
-const el = document.getElementById("status");
-const text = el.querySelector(".status__text");
+const STATUS_URL = "/status.json";
 
-function setMode(mode, whenText){
-  el.classList.remove("status--online","status--away","status--offline");
-  el.classList.add(`status--${mode}`);
-  const base =
-    mode === "online" ? "Online — text to book now" :
-    mode === "away"   ? "Briefly away — text and I’ll reply" :
-                        "Offline — try again later";
-  text.textContent = whenText ? `${base} • ${whenText}` : base;
-}
+async function loadStatus() {
+  const pill = document.getElementById("status-pill");
+  if (!pill) return; // Skip if page has no pill element
 
-async function refreshStatus(){
-  try{
-    const r = await fetch(STATUS_URL, { cache: "no-store" });
-    const j = await r.json();
+  pill.className = "status status--loading";
+  pill.textContent = "Checking status…";
 
-    // Normalize
-    const mode = (j.status || (j.online ? "online" : "offline")).toLowerCase();
-    const updated = j.updatedAt ? new Date(j.updatedAt) : null;
-    const whenText = updated ? `updated ${updated.toLocaleTimeString()}` : "";
+  try {
+    const response = await fetch(STATUS_URL, { cache: "no-store" });
+    if (!response.ok) throw new Error("Failed to load status");
+    const data = await response.json();
 
-    if (["online","away","offline"].includes(mode)){
-      setMode(mode, whenText);
+    const online = Boolean(data.online);
+    const away = Boolean(data.away);
+    const updated = data.updated ? new Date(data.updated) : null;
+    const updatedText = updated
+      ? updated.toLocaleString([], {
+          hour: "numeric",
+          minute: "2-digit",
+          month: "short",
+          day: "numeric",
+        })
+      : "recently";
+
+    if (online) {
+      // 🟢 Online
+      pill.className = "status status--online";
+      pill.textContent = `Online now — updated ${updatedText}`;
+    } else if (away) {
+      // 🟡 Away
+      pill.className = "status status--away";
+      pill.textContent =
+        `Temporarily unavailable — between connections, back shortly. (Updated ${updatedText})`;
     } else {
-      setMode(j.online ? "online" : "offline", whenText);
+      // 🔴 Offline
+      pill.className = "status status--offline";
+      pill.innerHTML = `
+        Big Red is currently offline — I’m off the road for now, but you can line up your next ride connection anytime.<br>
+        Text <strong>“RED”</strong> to <a href="sms:+14053784024">405-378-4024</a>
+      `;
     }
-  }catch(e){
-    setMode("offline", "status unavailable");
+  } catch (err) {
+    console.error("Status load error:", err);
+    pill.className = "status status--offline";
+    pill.textContent = "Status unavailable — please refresh later.";
   }
 }
 
-refreshStatus();
-setInterval(refreshStatus, 60_000);
+// Run once on page load
+document.addEventListener("DOMContentLoaded", loadStatus);
