@@ -5,32 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Live Map – Big Red Connect</title>
   <link rel="stylesheet" href="style.css">
-  <style>
-    /* Control panel styling */
-    .status-buttons {
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin: 12px 0 24px;
-    }
-    .status-buttons .btn {
-      padding: 10px 20px;
-      font-size: 1em;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: 600;
-      transition: transform 0.1s ease, opacity 0.2s ease;
-    }
-    .status-buttons .btn:hover {
-      transform: scale(1.05);
-      opacity: 0.9;
-    }
-    .online { background: #28a745; color: #fff; }
-    .away { background: #ffcc00; color: #000; }
-    .offline { background: #c40000; color: #fff; }
-  </style>
 </head>
 <body>
 
@@ -38,20 +12,13 @@
   <div class="hero small"></div>
 
   <!-- 🚗 Header -->
-  <h1>Live Map & Control</h1>
-  <p class="tagline">Monitor and manage your live availability below.</p>
+  <h1>Live Map</h1>
+  <p class="tagline">Check my live availability and location updates below.</p>
 
   <!-- ✅ Status Pill -->
   <div id="status-pill" class="status status--loading">Checking status…</div>
 
-  <!-- 🕹️ Control Panel -->
-  <div class="status-buttons">
-    <button class="btn online" onclick="setStatus('online')">🟢 Go Online</button>
-    <button class="btn away" onclick="setStatus('away')">🟡 Set Away</button>
-    <button class="btn offline" onclick="setStatus('offline')">🔴 Go Offline</button>
-  </div>
-
-  <!-- 🔴 Offline Message -->
+  <!-- 🔴 Offline Message (shown when offline) -->
   <div id="offline-message" style="display:none;" class="info-section">
     <h2>🔴 Big Red is Currently Offline</h2>
     <p>
@@ -69,10 +36,10 @@
         src="https://glympse.com/!bigredconnect"
         width="100%"
         height="400"
-        style="border:2px solid #c40000; border-radius:10px;">
+        style="border:2px solid #c40000;border-radius:10px;">
       </iframe>
     </div>
-    <p style="text-align:center; margin-top:10px; color:#999;">
+    <p style="text-align:center;margin-top:10px;color:#999;">
       Live map refreshes automatically when online.
     </p>
   </div>
@@ -82,63 +49,46 @@
     <a href="index.html" class="btn">🏠 Return to Home</a>
   </footer>
 
-  <!-- 🔗 Status script -->
+  <!-- Shared Status Script -->
   <script src="status.js"></script>
-
   <script>
-    // 🕹️ Update status.json when a button is clicked
-    async function setStatus(state) {
-      try {
-        const res = await fetch("status.json", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            state: state,
-            updated: new Date().toISOString()
-          })
-        });
-
-        if (res.ok) {
-          alert(`✅ Status updated to: ${state.toUpperCase()}`);
-          location.reload();
-        } else {
-          alert("⚠️ Could not update status. Make sure GitHub Pages allows the PUT (if not, use your worker relay).");
-        }
-      } catch (err) {
-        console.error(err);
-        alert("⚠️ Failed to connect. Your site may be static only — use the worker relay instead.");
-      }
-    }
-
-    // 🔄 React to updates from status.js
+    /* 🔄 Adjust display based on current status */
     document.addEventListener("statusUpdated", (e) => {
       const state = e.detail;
-      const pill = document.getElementById("status-pill");
       const mapCard = document.getElementById("map-card");
       const offlineMsg = document.getElementById("offline-message");
       const mapTitle = document.getElementById("map-status-heading");
+      const pill = document.getElementById("status-pill");
 
       if (state === "online") {
-        pill.textContent = "🟢 Online";
-        pill.className = "status status--online";
         mapCard.style.display = "block";
         offlineMsg.style.display = "none";
         mapTitle.textContent = "🟢 Currently Active";
         mapTitle.style.color = "#4CAF50";
-      } else if (state === "away") {
-        pill.textContent = "🟡 Away";
-        pill.className = "status status--away";
-        mapCard.style.display = "block";
-        offlineMsg.style.display = "none";
-        mapTitle.textContent = "🟡 Limited Availability";
-        mapTitle.style.color = "#ffcc00";
-      } else {
-        pill.textContent = "🔴 Offline";
-        pill.className = "status status--offline";
+        pill.textContent = "🟢 Online";
+        pill.className = "status status--online";
+      } 
+      else if (state === "away") {
         mapCard.style.display = "none";
         offlineMsg.style.display = "block";
+        offlineMsg.querySelector("h2").textContent = "🟡 Limited Availability";
+        offlineMsg.querySelector("p").innerHTML =
+          "I’m on limited availability right now, but you can still plan your next connection.<br><br>📲 Text <strong>“RED”</strong> to <strong>(405) 378-4024</strong>.";
+        mapTitle.textContent = "🟡 Limited Availability";
+        mapTitle.style.color = "#ffcc00";
+        pill.textContent = "🟡 Away";
+        pill.className = "status status--away";
+      } 
+      else {
+        mapCard.style.display = "none";
+        offlineMsg.style.display = "block";
+        offlineMsg.querySelector("h2").textContent = "🔴 Big Red is Currently Offline";
+        offlineMsg.querySelector("p").innerHTML =
+          "I’m off the road for now, but you can line up your next ride connection anytime.<br><br>📲 Text <strong>“RED”</strong> to <strong>(405) 378-4024</strong> to plan ahead.";
         mapTitle.textContent = "🔴 Offline";
         mapTitle.style.color = "#ff4444";
+        pill.textContent = "🔴 Offline";
+        pill.className = "status status--offline";
       }
     });
   </script>
