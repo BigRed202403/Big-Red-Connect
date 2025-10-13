@@ -18,12 +18,21 @@
   <!-- ✅ Status Pill -->
   <div id="status-pill" class="status status--loading">Checking status…</div>
 
-  <!-- 🔴 Offline Message (shown when offline) -->
+  <!-- 🔴 Offline Message -->
   <div id="offline-message" style="display:none;" class="info-section">
     <h2>🔴 Big Red is Currently Offline</h2>
     <p>
       I’m off the road for now, but you can line up your next ride connection anytime.<br><br>
       📲 Text <strong>“RED”</strong> to <strong>(405) 378-4024</strong> to plan ahead.
+    </p>
+  </div>
+
+  <!-- 🟡 Away Message -->
+  <div id="away-message" style="display:none;" class="info-section">
+    <h2>🟡 Limited Availability</h2>
+    <p>
+      I’m on the road with limited availability. Short trips or quick connects may be possible.<br><br>
+      📲 Text <strong>“RED”</strong> to <strong>(405) 378-4024</strong> to check in.
     </p>
   </div>
 
@@ -36,10 +45,10 @@
         src="https://glympse.com/!bigredconnect"
         width="100%"
         height="400"
-        style="border:2px solid #c40000;border-radius:10px;">
+        style="border:2px solid #c40000; border-radius:10px;">
       </iframe>
     </div>
-    <p style="text-align:center;margin-top:10px;color:#999;">
+    <p style="text-align:center; margin-top:10px; color:#999;">
       Live map refreshes automatically when online.
     </p>
   </div>
@@ -49,48 +58,13 @@
     <a href="index.html" class="btn">🏠 Return to Home</a>
   </footer>
 
-  <!-- Shared Status Script -->
-  <script src="status.js"></script>
+  <!-- 🔧 Manual Status Control -->
   <script>
-    /* 🔄 Adjust display based on current status */
-    document.addEventListener("statusUpdated", (e) => {
-      const state = e.detail;
-      const mapCard = document.getElementById("map-card");
-      const offlineMsg = document.getElementById("offline-message");
-      const mapTitle = document.getElementById("map-status-heading");
-      const pill = document.getElementById("status-pill");
-
-      if (state === "online") {
-        mapCard.style.display = "block";
-        offlineMsg.style.display = "none";
-        mapTitle.textContent = "🟢 Currently Active";
-        mapTitle.style.color = "#4CAF50";
-        pill.textContent = "🟢 Online";
-        pill.className = "status status--online";
-      } 
-      else if (state === "away") {
-        mapCard.style.display = "none";
-        offlineMsg.style.display = "block";
-        offlineMsg.querySelector("h2").textContent = "🟡 Limited Availability";
-        offlineMsg.querySelector("p").innerHTML =
-          "I’m on limited availability right now, but you can still plan your next connection.<br><br>📲 Text <strong>“RED”</strong> to <strong>(405) 378-4024</strong>.";
-        mapTitle.textContent = "🟡 Limited Availability";
-        mapTitle.style.color = "#ffcc00";
-        pill.textContent = "🟡 Away";
-        pill.className = "status status--away";
-      } 
-      else {
-        mapCard.style.display = "none";
-        offlineMsg.style.display = "block";
-        offlineMsg.querySelector("h2").textContent = "🔴 Big Red is Currently Offline";
-        offlineMsg.querySelector("p").innerHTML =
-          "I’m off the road for now, but you can line up your next ride connection anytime.<br><br>📲 Text <strong>“RED”</strong> to <strong>(405) 378-4024</strong> to plan ahead.";
-        mapTitle.textContent = "🔴 Offline";
-        mapTitle.style.color = "#ff4444";
-        pill.textContent = "🔴 Offline";
-        pill.className = "status status--offline";
-      }
-    });
+    // ✏️ Change this before each shift:
+    // Options: "online", "away", "offline"
+    const CURRENT_STATUS = "offline";  
   </script>
+
+  <script src="status.js"></script>
 </body>
 </html>
