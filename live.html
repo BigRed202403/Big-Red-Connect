@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Live Map – Big Red Connect</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
@@ -13,13 +13,13 @@
 
   <!-- 🚗 Header -->
   <h1>Live Map</h1>
-  <p class="tagline">Check my live availability and location updates below.</p>
+  <p class="tagline">Check my current status and live availability below.</p>
 
-  <!-- ✅ Status Pill -->
+  <!-- 🟢 Status Pill -->
   <div id="status-pill" class="status status--loading">Checking status…</div>
 
   <!-- 🔴 Offline Message -->
-  <div id="offline-message" style="display:none;" class="info-section">
+  <div id="offline-message" class="info-section" style="display:none;">
     <h2>🔴 Big Red is Currently Offline</h2>
     <p>
       I’m off the road for now, but you can line up your next ride connection anytime.<br><br>
@@ -28,16 +28,16 @@
   </div>
 
   <!-- 🟡 Away Message -->
-  <div id="away-message" style="display:none;" class="info-section">
+  <div id="away-message" class="info-section" style="display:none;">
     <h2>🟡 Limited Availability</h2>
     <p>
-      I’m on the road with limited availability — short trips or quick connects may be possible.<br><br>
-      📲 Text <strong>“RED”</strong> to <strong>(405) 378-4024</strong> to check availability.
+      I’m currently in between runs or outside my usual area.<br><br>
+      You can still text <strong>“RED”</strong> to <strong>(405) 378-4024</strong> to check availability or plan ahead.
     </p>
   </div>
 
-  <!-- 🗺️ Map Card (shown only when online) -->
-  <div id="map-card" class="info-section" style="display:none;">
+  <!-- 🗺️ Map Section -->
+  <div id="map-card" class="info-section">
     <h2 id="map-status-heading">🟢 Currently Active</h2>
     <div id="map-wrapper">
       <iframe
@@ -49,22 +49,42 @@
       </iframe>
     </div>
     <p style="text-align:center; margin-top:10px; color:#999;">
-      Live map refreshes automatically when online.
+      This map auto-refreshes when online.
     </p>
   </div>
 
+  <!-- 🦶 Footer -->
   <footer>
     <p>Need a connection? Text <strong>“RED”</strong> to (405) 378-4024.</p>
     <a href="index.html" class="btn">🏠 Return to Home</a>
   </footer>
 
-  <!-- 🔧 Manual Status Control -->
+  <!-- 🔧 Shared Status Logic -->
+  <script src="status.js"></script>
   <script>
-    // ✏️ Change this before each shift:
-    // Options: "online", "away", "offline"
-    const CURRENT_STATUS = "away";  
+    document.addEventListener("statusUpdated", (e) => {
+      const state = e.detail;
+      const mapCard = document.getElementById("map-card");
+      const offlineMsg = document.getElementById("offline-message");
+      const awayMsg = document.getElementById("away-message");
+      const mapTitle = document.getElementById("map-status-heading");
+
+      // Hide all to start clean
+      offlineMsg.style.display = "none";
+      awayMsg.style.display = "none";
+      mapCard.style.display = "none";
+
+      if (state === "online") {
+        mapCard.style.display = "block";
+        mapTitle.textContent = "🟢 Currently Active";
+        mapTitle.style.color = "#4CAF50";
+      } else if (state === "away") {
+        awayMsg.style.display = "block";
+      } else {
+        offlineMsg.style.display = "block";
+      }
+    });
   </script>
 
-  <script src="status.js"></script>
 </body>
 </html>
