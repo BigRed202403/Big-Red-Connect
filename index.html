@@ -77,7 +77,7 @@
   <section class="info-section">
     <h2>Why Choose Red</h2>
     <ul>
-      <li>Veteran owned and operated — every connection is personal.</li>
+      <li>Veteran-owned and operated — every connection is personal.</li>
       <li>Flat-rate, fair pricing with zero surprises.</li>
       <li>One trusted driver — no random apps or surge pricing.</li>
     </ul>
@@ -101,17 +101,29 @@
   <footer>
     <p>Questions or ride connection requests? Text <strong>“RED”</strong> to (405) 378-4024.</p>
     <p>
-      <a href="faq.html">FAQ & Policies</a> |
+      <a href="faq.html">FAQ & Policies</a> | 
       <a href="reviews.html">Leave a Review</a>
     </p>
     <p>&copy; 2025 Big Red Connect</p>
   </footer>
 
-  <!-- 🔧 Manual Status Control -->
+  <!-- 🔧 Manual Status Control (must load before status.js) -->
   <script>
     // Update this before or after each shift:
     // Choices: "online", "away", or "offline"
-    const CURRENT_STATUS = "online";
+    window.CURRENT_STATUS = "online";
+
+    // Auto-reset helper (prevents cached statuses after updates)
+    const siteVer = "2025-10-14";
+    if (sessionStorage.getItem("brc_ver") !== siteVer) {
+      sessionStorage.clear();
+      sessionStorage.setItem("brc_ver", siteVer);
+    }
+
+    // Ensure session has a live status value
+    if (!sessionStorage.getItem("bigred_status")) {
+      sessionStorage.setItem("bigred_status", window.CURRENT_STATUS);
+    }
   </script>
 
   <!-- 🔧 Status Handler -->
@@ -129,7 +141,9 @@
     function goToFare(e) {
       e.preventDefault();
       const dest = document.getElementById("quickWhere").value.trim();
-      if (dest) window.location.href = `farecalculator.html?dropoff=${encodeURIComponent(dest)}`;
+      if (dest) {
+        window.location.href = `farecalculator.html?dropoff=${encodeURIComponent(dest)}`;
+      }
     }
     window.onload = initQuickSearch;
   </script>
