@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Leave a Review • Big Red Connect</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- 🍁 Hero Banner -->
+  <div class="hero small"></div>
+
+  <!-- 🚗 Header -->
+  <h1>Leave a Review</h1>
+  <p class="tagline">We’d love to hear about your experience with Big Red Connect.</p>
+
+  <!-- 🟢 Status Pill -->
+  <div id="status-pill" class="status status--loading">Checking status…</div>
+
+  <!-- 📝 Google Form -->
+  <section class="info-section" style="text-align:center;">
+    <iframe 
+      src="https://docs.google.com/forms/d/e/1FAIpQLSeq6WCnkrG417rWCGwN56i7FplWpNTHlg1lpGuC-IETDEkEHw/viewform?embedded=true"
+      width="100%" height="700" style="border:none; border-radius:10px;">
+    </iframe>
+  </section>
+
+  <!-- 📱 QR Option -->
+  <div class="info-section" style="text-align:center;">
+    <p>Prefer to use your phone? Scan here:</p>
+    <img src="review-qr.png" alt="Scan to leave a review" style="max-width:200px;">
+    <p style="color:#aaa; margin-top:10px;">Your feedback goes directly to Big Red Connect. Thank you for supporting local!</p>
+  </div>
+
+  <!-- 🦶 Footer -->
+  <footer>
+    <p>Need a connection? Text <strong>“RED”</strong> to (405) 378-4024.</p>
+    <a href="index.html" class="btn">🏠 Return to Home</a>
+  </footer>
+
+  <script src="status.js"></script>
+</body>
+</html>
