@@ -1,44 +1,62 @@
-/* ===============================
-   Big Red Connect — Unified Status Logic
-   Updated: Oct 2025
-   One source of truth = index.html
-=============================== */
+/* ==========================================================
+   Big Red Connect – Shared Status Script (Hybrid Display)
+   Version: October 2025 (Final)
+   One-line control in index.html:
+     const CURRENT_STATUS = "online" | "away" | "offline"
+   Applies everywhere via sessionStorage
+========================================================== */
 
-document.addEventListener("DOMContentLoaded", async () => {
-  let currentState = "offline";
+document.addEventListener("DOMContentLoaded", () => {
+  const pill = document.getElementById("status-pill");
+  if (!pill) return;
 
-  try {
-    // 🔍 Fetch CURRENT_STATUS from index.html directly
-    const response = await fetch("index.html", { cache: "no-store" });
-    const text = await response.text();
+  // Load status from index.html or previous session
+  let status = window.CURRENT_STATUS || "offline";
+  const stored = sessionStorage.getItem("bigred_status");
+  if (stored) status = stored;
 
-    // Regex match to grab CURRENT_STATUS from the script tag
-    const match = text.match(/CURRENT_STATUS\s*=\s*["'](online|away|offline)["']/i);
-    if (match && match[1]) {
-      currentState = match[1].toLowerCase();
-    }
-  } catch (err) {
-    console.warn("Could not read status from index.html. Defaulting to offline.", err);
-  }
+  // Save current for use on other pages
+  sessionStorage.setItem("bigred_status", status);
 
-  // ✅ Fire statusUpdated event for all pages (like live.html)
-  const statusEvent = new CustomEvent("statusUpdated", { detail: currentState });
-  document.dispatchEvent(statusEvent);
+  // Update pill content + styling
+  updateStatusDisplay(status);
 
-  // ✅ Update the pill (if it exists)
+  // Notify other scripts (e.g. live map)
+  const evt = new CustomEvent("statusUpdated", { detail: status });
+  document.dispatchEvent(evt);
+});
+
+function updateStatusDisplay(status) {
   const pill = document.getElementById("status-pill");
   if (!pill) return;
 
   pill.classList.remove("status--loading", "online", "away", "offline");
 
-  if (currentState === "online") {
-    pill.textContent = "🟢 Online";
-    pill.classList.add("online");
-  } else if (currentState === "away") {
-    pill.textContent = "🟡 Away";
-    pill.classList.add("away");
-  } else {
-    pill.textContent = "🔴 Offline";
-    pill.classList.add("offline");
+  let main = "";
+  let sub = "";
+
+  switch (status) {
+    case "online":
+      pill.classList.add("online");
+      main = "🟢 Online";
+      sub = "Active and available for local connections";
+      break;
+
+    case "away":
+      pill.classList.add("away");
+      main = "🟡 Away";
+      sub = "Limited availability — may respond with delay";
+      break;
+
+    default:
+      pill.classList.add("offline");
+      main = "🔴 Offline";
+      sub = "Plan your next ride ahead — text “RED” anytime";
+      break;
   }
-});
+
+  pill.innerHTML = `
+    <div style="font-weight:600;font-size:1.05em;margin-bottom:2px;">${main}</div>
+    <div style="font-size:0.85em;color:#bbb;">${sub}</div>
+  `;
+}
