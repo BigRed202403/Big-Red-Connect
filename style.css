@@ -17,22 +17,35 @@ h1, h2, h3, p {
 }
 
 /* ==============================
-   HERO + LOGO
+   HEADER / HERO LOGIC (Unified)
 ============================== */
+
+/* Hero (index only) */
 .hero {
-  background-image: url("37263759-BD32-4E50-883A-0A5BE2F71928.png");
+  background-image: url("fall-okc-hero.png");
   background-size: cover;
   background-position: center;
-  height: 200px;
+  height: 220px;
   border-bottom: 2px solid #c40000;
   border-radius: 0 0 15px 15px;
-  box-shadow: 0 4px 20px rgba(255, 0, 0, 0.1);
+  box-shadow: 0 4px 20px rgba(255, 0, 0, 0.15);
 }
 
-.hero.small {
-  height: 160px;
+/* Hide hero on subpages */
+.hero.small { display: none; }
+
+/* Logo header for all subpages */
+.logo-header {
+  text-align: center;
+  margin: 25px 0 10px 0;
+}
+.logo-header img {
+  width: 200px;
+  max-width: 80%;
+  height: auto;
 }
 
+/* Homepage logo */
 .main-logo {
   width: 220px;
   margin-top: -40px;
@@ -41,24 +54,9 @@ h1, h2, h3, p {
 /* ==============================
    HEADINGS + TAGLINE
 ============================== */
-h1 {
-  color: #ff1a1a;
-  font-size: 2em;
-  margin-top: 10px;
-  letter-spacing: 0.5px;
-}
-
-h2 {
-  color: #ff1a1a;
-  font-size: 1.4em;
-  margin-top: 30px;
-}
-
-.tagline {
-  color: #ccc;
-  font-size: 1em;
-  margin-bottom: 20px;
-}
+h1 { color: #ff1a1a; font-size: 2em; margin-top: 10px; letter-spacing: 0.5px; }
+h2 { color: #ff1a1a; font-size: 1.4em; margin-top: 30px; }
+.tagline { color: #ccc; font-size: 1em; margin-bottom: 20px; }
 
 /* ==============================
    STATUS PILL
@@ -72,32 +70,13 @@ h2 {
   text-align: center;
   max-width: 90%;
 }
-
-.status.online {
-  background-color: rgba(76, 175, 80, 0.15);
-  color: #4CAF50;
-  border: 1px solid #4CAF50;
-}
-
-.status.away {
-  background-color: rgba(255, 204, 0, 0.15);
-  color: #ffcc00;
-  border: 1px solid #ffcc00;
-}
-
-.status.offline {
-  background-color: rgba(255, 68, 68, 0.15);
-  color: #ff4c4c;
-  border: 1px solid #ff4c4c;
-}
+.status.online { background: rgba(76,175,80,0.15); color: #4CAF50; border: 1px solid #4CAF50; }
+.status.away { background: rgba(255,204,0,0.15); color: #ffcc00; border: 1px solid #ffcc00; }
+.status.offline { background: rgba(255,68,68,0.15); color: #ff4c4c; border: 1px solid #ff4c4c; }
 
 /* ==============================
-   BUTTONS (Enhanced)
+   BUTTONS
 ============================== */
-.btn {
-  max-width: 95%;
-  box-sizing: border-box;
-}
 .cta-group {
   display: flex;
   flex-wrap: wrap;
@@ -118,62 +97,24 @@ h2 {
   overflow: hidden;
   white-space: nowrap;
 }
-
-/* 🟥 Primary (Text RED) */
-.btn.primary {
-  background: linear-gradient(180deg, #c40000, #9a0000);
-  border: 1px solid #c40000;
-}
-
-/* ⚫ Secondary (Call Big Red / Alternate) */
-.btn.secondary {
-  background: linear-gradient(180deg, #333, #111);
-  border: 1px solid #444;
-}
-
-/* 🌟 Hover + Tap Animation */
-.btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(255, 0, 0, 0.4);
-  filter: brightness(1.1);
-}
-
-/* 💥 Press (Tap Down) Animation */
-.btn:active {
-  transform: scale(0.96);
-  filter: brightness(0.9);
-  box-shadow: 0 0 8px rgba(255, 0, 0, 0.5) inset;
-}
-
-/* 🩶 Pulse Glow on Primary */
-.btn.primary::after {
-  content: "";
-  position: absolute;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.3) 10%, transparent 70%);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.btn.primary:hover::after {
-  opacity: 1;
-}
+.btn.primary { background: linear-gradient(180deg,#c40000,#9a0000); border: 1px solid #c40000; }
+.btn.secondary { background: linear-gradient(180deg,#333,#111); border: 1px solid #444; }
+.btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(255,0,0,0.4); filter: brightness(1.1); }
+.btn:active { transform: scale(0.96); filter: brightness(0.9); box-shadow: 0 0 8px rgba(255,0,0,0.5) inset; }
 
 /* ==============================
    TILE GRID
 ============================== */
 .tile-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  grid-template-columns: repeat(auto-fit,minmax(120px,1fr));
   gap: 15px;
   max-width: 550px;
   margin: 30px auto;
   padding: 0 20px;
 }
-
 .tile {
-  background-color: #111;
+  background: #111;
   border: 1px solid #222;
   border-radius: 10px;
   padding: 15px;
@@ -181,52 +122,34 @@ h2 {
   text-decoration: none;
   font-size: 0.95em;
   transition: all 0.25s ease;
-  box-shadow: 0 2px 6px rgba(255, 0, 0, 0.1);
+  box-shadow: 0 2px 6px rgba(255,0,0,0.1);
 }
-
-.tile:hover {
-  transform: translateY(-2px);
-  border-color: #c40000;
-  box-shadow: 0 0 10px rgba(255, 0, 0, 0.3);
-}
+.tile:hover { transform: translateY(-2px); border-color: #c40000; box-shadow: 0 0 10px rgba(255,0,0,0.3); }
 
 /* ==============================
-   INFO SECTIONS
+   INFO SECTIONS + REVIEWS
 ============================== */
 .info-section {
-  background-color: #111;
+  background: #111;
   border-radius: 10px;
   padding: 20px;
   margin: 25px auto;
   max-width: 650px;
   text-align: left;
-  box-shadow: 0 2px 10px rgba(255, 0, 0, 0.15);
+  box-shadow: 0 2px 10px rgba(255,0,0,0.15);
 }
+.info-section h2 { text-align: center; }
+.info-section ul { text-align: left; padding-left: 20px; }
+.info-section li { margin-bottom: 8px; }
 
-.info-section h2 {
-  text-align: center;
-}
-
-.info-section ul {
-  text-align: left;
-  padding-left: 20px;
-}
-
-.info-section li {
-  margin-bottom: 8px;
-}
-
-/* ==============================
-   REVIEW CARDS
-============================== */
 .review-card {
-  background-color: #1a1a1a;
+  background: #1a1a1a;
   border-radius: 10px;
   padding: 15px;
   margin: 10px auto;
   color: #fff;
   max-width: 600px;
-  box-shadow: 0 0 6px rgba(255, 0, 0, 0.25);
+  box-shadow: 0 0 6px rgba(255,0,0,0.25);
   border: 1px solid #333;
 }
 
@@ -238,145 +161,15 @@ footer {
   font-size: 0.85em;
   color: #aaa;
 }
-
-footer a {
-  color: #c40000;
-  text-decoration: none;
-}
-
-footer a:hover {
-  text-decoration: underline;
-}
+footer a { color: #c40000; text-decoration: none; }
+footer a:hover { text-decoration: underline; }
 
 /* ==============================
-   RESPONSIVE TWEAKS (Base)
+   RESPONSIVE
 ============================== */
-@media (max-width: 600px) {
-  h1 { font-size: 1.7em; }
-  .main-logo { width: 180px; margin-top: -20px; }
-  .tile-grid { gap: 10px; }
-  .info-section { padding: 15px; margin: 15px; }
-}
-
-/* ==============================
-   RESPONSIVE + LAYOUT PATCH (Fare Calculator)
-   Added Oct 2025
-============================== */
-
-.info-section input,
-.info-section select {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 12px;
-  margin: 6px 0 14px;
-  background-color: #111;
-  border: 1px solid #333;
-  border-radius: 8px;
-  color: #fff;
-  font-size: 1em;
-}
-
-#stopsWrap {
-  margin-top: 10px;
-}
-
-#addStopBtn {
-  display: inline-block;
-  margin-top: 8px;
-  margin-bottom: 12px;
-}
-
-#map {
-  width: 100%;
-  height: 250px;
-  border: 2px solid #c40000;
-  border-radius: 10px;
-  margin: 16px 0;
-}
-
-#fairness-note, #airport-note {
-  text-align: left;
-  color: #ccc;
-  font-size: 0.95em;
-  margin-bottom: 10px;
-}
-
-#airport-note {
-  color: #ffcc00;
-  font-weight: 500;
-}
-
-#result {
-  background: #111;
-  border: 1px solid #c40000;
-  border-radius: 12px;
-  padding: 18px;
-  margin-top: 22px;
-  text-align: left;
-  max-width: 600px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-#result .total {
-  font-size: 1.6em;
-  color: #ff4444;
-  font-weight: 800;
-  text-align: center;
-  margin: 0 0 8px;
-}
-
-/* ==============================
-   BUTTON + GRID FIXES
-============================== */
-.btn {
-  white-space: nowrap;
-}
-
-.info-section button {
-  width: auto;
-}
-
-@media (max-width: 768px) {
-  .info-section {
-    padding: 18px;
-    margin: 15px;
-  }
-
-  #map {
-    height: 200px;
-  }
-
-  #addStopBtn {
-    width: 100%;
-  }
-
-  .info-section div[style*="display:flex"] {
-    flex-direction: column;
-    gap: 8px !important;
-  }
-
-  .btn {
-    width: 100%;
-  }
-}
-
-@media (max-width: 480px) {
-  .info-section {
-    padding: 14px;
-    margin: 10px;
-  }
-
-  h1 {
-    font-size: 1.6em;
-  }
-
-  #map {
-    height: 180px;
-  }
-
-  footer {
-    margin-top: 35px;
-    font-size: 0.85em;
-  }
+@media (max-width:600px){
+  h1{font-size:1.7em;}
+  .main-logo{width:180px;margin-top:-20px;}
+  .tile-grid{gap:10px;}
+  .info-section{padding:15px;margin:15px;}
 }
