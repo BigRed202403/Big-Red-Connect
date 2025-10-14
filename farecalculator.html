@@ -8,19 +8,19 @@
 </head>
 <body>
 
-  <!-- 🍁 Hero Banner -->
-  <div class="hero small"></div>
+  <!-- 🚗 Logo Header -->
+  <div class="logo-header">
+    <img src="official_logo.jpeg" alt="Big Red Connect Logo">
+  </div>
 
   <!-- 🏷️ Header -->
   <h1>Fare Calculator</h1>
-  <p class="tagline">
-    Plan your next ride connection — quick, simple, and local.
-  </p>
+  <p class="tagline">Plan your next ride connection — quick, simple, and local.</p>
 
   <!-- 🟢 Status Pill -->
   <div id="status-pill" class="status status--loading">Checking status…</div>
 
-  <!-- 🧮 Fare Calculator -->
+  <!-- 🧮 Fare Calculator Section -->
   <section class="info-section" style="text-align:center;">
     <label for="pickup">Pickup Location:</label>
     <input id="pickup" type="text" placeholder="Enter pickup address or place">
@@ -56,7 +56,7 @@
 
     <button class="btn primary" id="calcBtn">💲 Calculate Fare</button>
 
-    <!-- Default Text RED fallback (before calculation) -->
+    <!-- Default Text RED fallback -->
     <p style="margin-top:10px;">
       <a href="sms:+14053784024?&body=Hey%20Big%20Red%20—%20I’d%20like%20to%20plan%20a%20ride%20connection." class="btn secondary">
         📲 Text RED
@@ -68,20 +68,23 @@
     <p class="disclaimer">*Estimates only. Final fare may vary slightly based on route or wait time.</p>
   </section>
 
+  <!-- 🦶 Footer -->
   <footer>
     <p>&copy; 2025 Big Red Connect — <a href="index.html">Return to Home</a></p>
     <p style="font-size:0.8em;color:#777;margin-top:10px;line-height:1.4;">
-    Vehicle imagery features actual Big Red Connect fleet vehicles.<br>
-    Some backgrounds created with AI-assisted design tools for illustrative purposes only.<br>
-    Brand names (Chevrolet® and GMC®) are property of their respective owners and used descriptively.
+      Vehicle imagery features actual Big Red Connect fleet vehicles.<br>
+      Some backgrounds created with AI-assisted design tools for illustrative purposes only.<br>
+      Brand names (Chevrolet® and GMC®) are property of their respective owners and used descriptively.
     </p>
   </footer>
 
   <!-- 🗺️ Google Maps API -->
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places,geometry&callback=initGoogle" async defer></script>
 
+  <!-- 🟢 Shared Status Sync -->
   <script src="status.js"></script>
 
+  <!-- 🧭 Fare Calculator Logic -->
   <script>
   const HQ={lat:35.2902,lng:-97.5289};
   const WORKER_URL="https://falling-night-3e4d.bigredtransportation.workers.dev";
@@ -128,7 +131,7 @@
     await getDriverLocation();
     if(driverPos)driverCity=await reverseCity(driverPos);
 
-    // Auto-fill dropoff from ?dropoff= query
+    // Autofill dropoff from ?dropoff= query
     const params=new URLSearchParams(window.location.search);
     const dest=params.get('dropoff');
     if(dest){
@@ -153,6 +156,7 @@
     wrap.appendChild(div);
     new google.maps.places.Autocomplete(document.getElementById(id));
   }
+
   function removeStop(id){
     document.getElementById(`row_${id}`)?.remove();
     stopInputs=stopInputs.filter(s=>s!==id);
@@ -187,7 +191,7 @@
       const addr=await new Promise(r=>geocoder.geocode({location:latlng},(res,s)=>r((s==="OK"&&res[0])?res[0].formatted_address:`${latlng.lat},${latlng.lng}`)));
       document.getElementById(id).value=addr;
       if(id==="pickup"){pickupLatLng=new google.maps.LatLng(latlng.lat,latlng.lng);pickupCity=await reverseCity(latlng);map.setCenter(pickupLatLng);map.setZoom(12);await computeFairnessNote();}
-      else{dropoffLatLng=new google.maps.LatLng(latlng.lat,latlng.lng);map.panTo(dropoffLatLng);}
+      else{dropoffLatLng=new google.maps.LatLng(latlng.lat(),lng:latlng.lng());map.panTo(dropoffLatLng);}
     },()=>alert("Could not get your location permission."));
   }
 
