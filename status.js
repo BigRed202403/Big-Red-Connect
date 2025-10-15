@@ -1,62 +1,35 @@
-/* ==========================================================
-   Big Red Connect – Shared Status Script (Hybrid Display)
-   Version: October 2025 (Final)
-   One-line control in index.html:
-     const CURRENT_STATUS = "online" | "away" | "offline"
-   Applies everywhere via sessionStorage
-========================================================== */
+// status.js — v2025.10.15
+(function(){
+  const pill = document.getElementById('status-pill');
+  if(!pill) return;
 
-document.addEventListener("DOMContentLoaded", () => {
-  const pill = document.getElementById("status-pill");
-  if (!pill) return;
+  // 🟢 Read last-known status or set default
+  const current = sessionStorage.getItem('bigred_status') || 'offline';
+  updatePill(current);
 
-  // Load status from index.html or previous session
-  let status = window.CURRENT_STATUS || "offline";
-  const stored = sessionStorage.getItem("bigred_status");
-  if (stored) status = stored;
+  // 🔄 Listen for status changes between tabs or pages
+  document.addEventListener('statusUpdated', e => updatePill(e.detail));
+  window.addEventListener('storage', e => {
+    if (e.key === 'bigred_status') updatePill(e.newValue);
+  });
 
-  // Save current for use on other pages
-  sessionStorage.setItem("bigred_status", status);
+  // ✳️ Allow manual update from console or other scripts
+  window.setBigRedStatus = function(state) {
+    sessionStorage.setItem('bigred_status', state);
+    localStorage.setItem('bigred_status', state);
+    updatePill(state);
+    document.dispatchEvent(new CustomEvent("statusUpdated", { detail: state }));
+  };
 
-  // Update pill content + styling
-  updateStatusDisplay(status);
-
-  // Notify other scripts (e.g. live map)
-  const evt = new CustomEvent("statusUpdated", { detail: status });
-  document.dispatchEvent(evt);
-});
-
-function updateStatusDisplay(status) {
-  const pill = document.getElementById("status-pill");
-  if (!pill) return;
-
-  pill.classList.remove("status--loading", "online", "away", "offline");
-
-  let main = "";
-  let sub = "";
-
-  switch (status) {
-    case "online":
-      pill.classList.add("online");
-      main = "🟢 Online";
-      sub = "Active and available for local connections";
-      break;
-
-    case "away":
-      pill.classList.add("away");
-      main = "🟡 Away";
-      sub = "Limited availability — may respond with delay";
-      break;
-
-    default:
-      pill.classList.add("offline");
-      main = "🔴 Offline";
-      sub = "Plan your next ride ahead — text “RED” anytime";
-      break;
+  // 🎨 Update the pill UI
+  function updatePill(state){
+    const map = {
+      online: ['🟢 Big Red is Live', 'status online'],
+      away: ['🟡 Limited Availability', 'status away'],
+      offline: ['🔴 Offline', 'status offline']
+    };
+    const [text, cls] = map[state] || map.offline;
+    pill.textContent = text;
+    pill.className = cls;
   }
-
-  pill.innerHTML = `
-    <div style="font-weight:600;font-size:1.05em;margin-bottom:2px;">${main}</div>
-    <div style="font-size:0.85em;color:#bbb;">${sub}</div>
-  `;
-}
+})();
