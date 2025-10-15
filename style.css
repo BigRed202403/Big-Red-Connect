@@ -394,5 +394,26 @@ body.reviews-page {
   .reviews-page iframe {
     height: 600px;
   }
+/* ==============================
+   MOBILE VIEWPORT FIXES (Oct 2025)
+============================== */
+
+/* Prevent map and footer from clipping under system bars */
+html, body {
+  height: 100%;
+  overflow-x: hidden;
 }
+
+#map {
+  margin-bottom: 20px;
+}
+
+/* Add breathing room at bottom for iOS dynamic bar */
+footer {
+  padding-bottom: env(safe-area-inset-bottom, 24px);
+}
+
+/* Ensure bottom CTA buttons don't touch edges */
+.btn {
+  margin-bottom: 8px;
 }
