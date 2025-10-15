@@ -2,56 +2,98 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Live Map – Big Red Connect</title>
+
+  <!-- 🚫 No caching -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
+
+  <!-- 🎨 Styles -->
   <link rel="stylesheet" href="style.css" />
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=geometry" async defer></script>
+
+  <!-- ✈️ Google Maps fallback (only loads if Glympse unavailable) -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I"></script>
+
+  <style>
+    #glympse-frame, #fallback-map {
+      width: 100%;
+      height: 500px;
+      border: none;
+      border-radius: 10px;
+      margin-top: 10px;
+    }
+  </style>
 </head>
 <body>
 
+  <!-- 🚗 Header -->
   <div class="logo-header">
     <img src="official_logo.jpeg" alt="Big Red Connect Logo" />
   </div>
 
   <h1>Live Map</h1>
-  <p class="tagline">Tracking the OKC Metro — see current coverage zones.</p>
+  <p class="tagline">See where Big Red Connect is rolling — local and surge-free.</p>
 
+  <!-- 🟢 Status Pill -->
   <div id="status-pill" class="status status--loading">Checking status…</div>
 
+  <!-- 🗺️ Live Map Section -->
   <section class="info-section">
-    <div id="map" style="height:70vh;width:100%;border-radius:10px;margin-bottom:15px;"></div>
-    <p style="font-size:0.9em;color:#888;">This map shows Big Red Connect’s general service area — live driver position updates available when online.</p>
+    <h2>Real-Time Location</h2>
+    <p>Watch the live Glympse feed below (auto-updates every few seconds). If unavailable, a fallback map will appear.</p>
+
+    <!-- Glympse Embed -->
+    <iframe 
+      id="glympse-frame"
+      src="https://glympse.com/!bigredconnect"
+      title="Big Red Connect Live Map"
+      loading="lazy"
+      allowfullscreen>
+    </iframe>
+
+    <!-- Fallback Google Map -->
+    <div id="fallback-map" style="display:none;"></div>
   </section>
 
+  <!-- 🦶 Footer -->
   <footer>
     <p>&copy; 2025 Big Red Connect — <a href="index.html">Return to Home</a></p>
+    <p style="font-size:0.8em;color:#777;margin-top:10px;line-height:1.4;">
+      Vehicle imagery features actual Big Red Connect fleet vehicles.<br>
+      Some backgrounds created with AI-assisted design tools for illustrative purposes only.<br>
+      Brand names (Chevrolet® and GMC®) are property of their respective owners and used descriptively.
+    </p>
   </footer>
 
+  <!-- 🔧 Status Sync -->
   <script src="status.js"></script>
+
+  <!-- 🗺️ Fallback Handler -->
   <script>
-  const HQ={lat:35.4676,lng:-97.5164};
-  let map, marker;
-
-  function initMap(){
-    map=new google.maps.Map(document.getElementById('map'),{center:HQ,zoom:10,mapTypeControl:false,streetViewControl:false});
-    marker=new google.maps.Marker({map,position:HQ,title:"Big Red HQ"});
-  }
-
-  window.addEventListener("load",async()=>{
-    if(window.google&&google.maps)initMap();
-    try{
-      const res=await fetch("https://falling-night-3e4d.bigredtransportation.workers.dev",{cache:"no-store"});
-      const j=await res.json();
-      if(j.latitude){
-        const pos={lat:+j.latitude,lng:+j.longitude};
-        marker.setPosition(pos);
-        map.setCenter(pos);
-        map.setZoom(12);
+  // If Glympse doesn't load properly, display a fallback Google Map.
+  window.addEventListener("load", () => {
+    const iframe = document.getElementById("glympse-frame");
+    const fallback = document.getElementById("fallback-map");
+    setTimeout(() => {
+      // If the Glympse iframe failed (e.g., no network or expired link)
+      if (!iframe.contentDocument || iframe.contentDocument.body.innerHTML.length === 0) {
+        iframe.style.display = "none";
+        fallback.style.display = "block";
+        const map = new google.maps.Map(fallback, {
+          center: { lat: 35.4676, lng: -97.5164 },
+          zoom: 10,
+          mapTypeControl: false,
+          streetViewControl: false
+        });
+        new google.maps.Marker({
+          position: { lat: 35.4676, lng: -97.5164 },
+          map,
+          title: "Big Red Connect (Default Coverage Area)"
+        });
       }
-    }catch{}
+    }, 3500);
   });
   </script>
 </body>
