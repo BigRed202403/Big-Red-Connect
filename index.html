@@ -20,6 +20,23 @@
   <!-- ✈️ Google Maps / Places -->
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places"></script>
 </head>
+  <script>
+  // 🚫 Force reload every visit (no cache retained)
+  (async function() {
+    if ('caches' in window) {
+      const keys = await caches.keys();
+      for (const key of keys) await caches.delete(key);
+    }
+    sessionStorage.clear();
+    localStorage.clear();
+    // Append random query to force a new request each time
+    const currentUrl = window.location.href.split('?')[0];
+    if (!window.location.search.includes('freshReload')) {
+      const rand = Math.floor(Math.random() * 999999);
+      window.location.replace(`${currentUrl}?freshReload=${rand}`);
+    }
+  })();
+</script>
 <body>
 
   <!-- 🍁 Hero Banner -->
