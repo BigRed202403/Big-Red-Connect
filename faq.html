@@ -2,107 +2,87 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>FAQs • Big Red Connect</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-  <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #000;
-      color: #fff;
-      margin: 0;
-      padding: 0;
-      text-align: center;
-    }
-
-    .wrapper {
-      max-width: 500px;
-      margin: 0 auto;
-      padding: 40px 20px;
-      background-color: #1a1a1a;
-      border: 4px solid #cc0000;
-      border-radius: 12px;
-    }
-
-    h1 {
-      font-size: 28px;
-      margin-bottom: 20px;
-      color: #cc0000;
-    }
-
-    .faq-item {
-      text-align: left;
-      margin-bottom: 20px;
-      padding: 10px 15px;
-      background-color: #262626;
-      border-radius: 8px;
-    }
-
-    .faq-item h2 {
-      font-size: 18px;
-      color: #fff;
-      margin-bottom: 10px;
-    }
-
-    .faq-item p {
-      font-size: 16px;
-      line-height: 1.5;
-      color: #ccc;
-    }
-
-    a.back-link {
-      display: inline-block;
-      margin-top: 30px;
-      color: #cc0000;
-      font-weight: bold;
-      text-decoration: none;
-    }
-
-    a.back-link:hover {
-      text-decoration: underline;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css" />
 </head>
-<body>
-  <div class="wrapper">
-    <h1>Frequently Asked Questions</h1>
+<body class="faq-page">
 
-    <div class="faq-item">
-      <h2>How do I get around with Big Red?</h2>
-      <p>Just text me at <strong>405-378-4024</strong> and I’ll let you know if I’m available. No app, no surge pricing—just local, friendly service.</p>
-    </div>
+  <!-- 🍁 Hero Banner -->
+  <div class="hero small"></div>
 
-    <div class="faq-item">
-      <h2>How much does it cost?</h2>
-      <p>Standard rides start at <strong>$10</strong> (includes up to 10 miles).<br>
+  <!-- 🚗 Header -->
+  <h1>Frequently Asked Questions</h1>
+  <p class="tagline">Everything you need to know before you plan your connection.</p>
+
+  <!-- 🟢 Status Pill -->
+  <div id="status-pill" class="status status--loading">Checking status…</div>
+
+  <!-- 💬 FAQ Section -->
+  <section class="info-section">
+    <h2>How do I get around with Big Red?</h2>
+    <p>
+      Just text me at <strong>405-378-4024</strong> and I’ll let you know if I’m available.  
+      No app, no surge pricing — just local, friendly service.
+    </p>
+  </section>
+
+  <section class="info-section">
+    <h2>How much does it cost?</h2>
+    <p>
+      Standard rides start at <strong>$10</strong> (includes up to 10 miles).<br>
       Longer trips are <strong>$1.25 per mile for miles 11–20</strong> and <strong>$1.00 per mile</strong> beyond 20.<br><br>
       Rush Hour and Airport base fares are <strong>$15</strong>, and Special Events are <strong>$20</strong>.<br><br>
-      <strong>Travel Fairness Rule:</strong> A $10 travel fee may apply for pickups 1–15 miles outside my local area, or $20 for 16+ miles. Long trips already covering distance don’t incur this fee.</p>
-    </div>
+      <strong>Travel Fairness Rule:</strong> A $10 travel fee may apply for pickups 1–15 miles outside my local area,  
+      or $20 for 16 miles or more. Long trips already covering distance don’t incur this fee.
+    </p>
+  </section>
 
-    <div class="faq-item">
-      <h2>Do you record video inside the vehicle?</h2>
-      <p>Yes, for safety and accountability. Dash cams record both inside and outside the vehicle. Riders are notified by in-car display and in the <a href="RiderAgreement.html" style="color:#cc0000;">Rider Agreement</a>.</p>
-    </div>
+  <section class="info-section">
+    <h2>Do you record video inside the vehicle?</h2>
+    <p>
+      Yes — for safety and accountability. Dash cams record both inside and outside the vehicle.  
+      Riders are notified by in-car display and in the 
+      <a href="RiderAgreement.html" style="color:#ff1a1a;">Rider Agreement</a>.
+    </p>
+  </section>
 
-    <div class="faq-item">
-      <h2>Do I need to sign anything?</h2>
-      <p>First-time riders agree to a one-time <a href="RiderAgreement.html" style="color:#cc0000;">Rider Agreement</a>. You don’t need to sign again unless something changes or it’s for a special event.</p>
-    </div>
+  <section class="info-section">
+    <h2>Do I need to sign anything?</h2>
+    <p>
+      First-time riders agree to a one-time 
+      <a href="RiderAgreement.html" style="color:#ff1a1a;">Rider Agreement</a>.  
+      You don’t need to sign again unless something changes or it’s for a special event.
+    </p>
+  </section>
 
-    <div class="faq-item">
-      <h2>Where do you operate?</h2>
-      <p>Local Zone (no travel fee): Moore, Norman, Oklahoma City, Midwest City, Del City, Mustang, and Yukon.<br><br>
-      Extended Coverage: Shawnee, Harrah, Edmond, Guthrie, El Reno (outer), Tuttle, Purcell, Seminole, and Stillwater.<br><br>
-      *Flat $10 or $20 travel fee may apply outside the Local Zone.*</p>
-    </div>
+  <section class="info-section">
+    <h2>Where do you operate?</h2>
+    <p>
+      <strong>Local Zone (no travel fee):</strong> Moore, Norman, Oklahoma City, Midwest City, Del City, Mustang, and Yukon.<br><br>
+      <strong>Extended Coverage:</strong> Shawnee, Harrah, Edmond, Guthrie, El Reno (outer), Tuttle, Purcell, Seminole, and Stillwater.<br><br>
+      *Flat $10 or $20 travel fee may apply outside the Local Zone.*
+    </p>
+  </section>
 
-    <div class="faq-item">
-      <h2>Can I bring food or drinks?</h2>
-      <p>Sure—just be respectful and tidy. If you need help carrying something, I’ve got you.</p>
-    </div>
+  <section class="info-section">
+    <h2>Can I bring food or drinks?</h2>
+    <p>
+      Sure — just be respectful and tidy. If you need help carrying something, I’ve got you.
+    </p>
+  </section>
 
-    <a href="index.html" class="back-link">&larr; Back to Main Page</a>
-  </div>
+  <!-- 🦶 Footer -->
+  <footer>
+    <p>Need a connection? Text <strong>“RED”</strong> to (405) 378-4024.</p>
+    <a href="index.html" class="btn">🏠 Return to Home</a>
+    <p style="font-size:0.8em;color:#777;margin-top:10px;line-height:1.4;">
+      Vehicle imagery features actual Big Red Connect fleet vehicles.<br>
+      Some backgrounds created with AI-assisted design tools for illustrative purposes only.<br>
+      Brand names (Chevrolet® and GMC®) are property of their respective owners and used descriptively.
+    </p>
+  </footer>
+
+  <script src="status.js"></script>
 </body>
 </html>
