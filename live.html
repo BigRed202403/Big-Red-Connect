@@ -4,137 +4,55 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Live Map – Big Red Connect</title>
-
-  <!-- 🚫 Force fresh reloads after publishing -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-
   <link rel="stylesheet" href="style.css" />
-
-  <!-- ▸ Shimmer/Splash (once per session) -->
-  <style>
-    #shimmer {
-      position: fixed; inset: 0; background:#000; z-index:10000;
-      display:flex; flex-direction:column; align-items:center; justify-content:center;
-    }
-    #shimmer .logo {
-      width: 160px; max-width: 50vw; height:auto;
-      animation:pulse 1.2s infinite ease-in-out;
-    }
-    #shimmer .msg {
-      color:#bbb; margin-top:14px; font-size:0.95em; letter-spacing:.3px;
-    }
-    @keyframes pulse {
-      0%{opacity:.5; transform:scale(.98)}
-      50%{opacity:1; transform:scale(1)}
-      100%{opacity:.5; transform:scale(.98)}
-    }
-  </style>
-
-  <script>
-    window.SPLASH_MESSAGE = "Loading Live Map…";
-    (function(){
-      if (sessionStorage.getItem("brc_splash_shown")) return;
-      const w=document.createElement("div");
-      w.id="shimmer";
-      w.innerHTML = '<img class="logo" src="official_logo.jpeg" alt="Big Red Connect Logo"><div class="msg">'+(window.SPLASH_MESSAGE||"Loading…")+'</div>';
-      document.addEventListener("DOMContentLoaded", ()=>document.body.appendChild(w));
-      window.addEventListener("load", ()=>{
-        setTimeout(()=>{
-          w.style.transition="opacity .35s"; w.style.opacity="0";
-          setTimeout(()=>{ w.remove(); sessionStorage.setItem("brc_splash_shown","1"); }, 350);
-        }, 350);
-      });
-    })();
-  </script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=geometry" async defer></script>
 </head>
 <body>
 
-  <!-- 🚗 Logo Header -->
   <div class="logo-header">
     <img src="official_logo.jpeg" alt="Big Red Connect Logo" />
   </div>
 
-  <!-- 🗺️ Header -->
   <h1>Live Map</h1>
-  <p class="tagline">Check my current status and live availability below.</p>
+  <p class="tagline">Tracking the OKC Metro — see current coverage zones.</p>
 
-  <!-- 🟢 Status Pill -->
   <div id="status-pill" class="status status--loading">Checking status…</div>
 
-  <!-- 🔴 Offline Message -->
-  <div id="offline-message" class="info-section" style="display:none;">
-    <h2>🔴 Big Red is Currently Offline</h2>
-    <p>
-      I’m off the road for now, but you can line up your next ride connection anytime.<br><br>
-      📲 Text <strong>“RED”</strong> to <strong>(405) 378-4024</strong> to plan ahead.
-    </p>
-  </div>
+  <section class="info-section">
+    <div id="map" style="height:70vh;width:100%;border-radius:10px;margin-bottom:15px;"></div>
+    <p style="font-size:0.9em;color:#888;">This map shows Big Red Connect’s general service area — live driver position updates available when online.</p>
+  </section>
 
-  <!-- 🟡 Away Message -->
-  <div id="away-message" class="info-section" style="display:none;">
-    <h2>🟡 Limited Availability</h2>
-    <p>
-      I’m currently in between runs or outside my usual area.<br><br>
-      You can still text <strong>“RED”</strong> to <strong>(405) 378-4024</strong> to check availability or plan ahead.
-    </p>
-  </div>
-
-  <!-- 🟢 Online Map -->
-  <div id="map-card" class="info-section" style="display:none;">
-    <h2 id="map-status-heading">🟢 Currently Active</h2>
-    <div id="map-wrapper">
-      <iframe
-        id="glympse-map"
-        src="https://glympse.com/!bigredconnect"
-        width="100%"
-        height="400"
-        style="border:2px solid #c40000; border-radius:10px;">
-      </iframe>
-    </div>
-    <p style="text-align:center; margin-top:10px; color:#999;">
-      This map auto-refreshes when online.
-    </p>
-  </div>
-
-  <!-- 🦶 Footer -->
   <footer>
-    <p>Need a connection? Text <strong>“RED”</strong> to (405) 378-4024.</p>
-    <a href="index.html" class="btn">🏠 Return to Home</a>
-    <p style="font-size:0.8em;color:#777;margin-top:10px;line-height:1.4;">
-      Vehicle imagery features actual Big Red Connect fleet vehicles.<br>
-      Some backgrounds created with AI-assisted design tools for illustrative purposes only.<br>
-      Brand names (Chevrolet® and GMC®) are property of their respective owners and used descriptively.
-    </p>
+    <p>&copy; 2025 Big Red Connect — <a href="index.html">Return to Home</a></p>
   </footer>
 
-  <!-- 🧩 Status Script -->
   <script src="status.js"></script>
   <script>
-    document.addEventListener("statusUpdated", (e) => {
-      const state = e.detail;
-      const mapCard = document.getElementById("map-card");
-      const offlineMsg = document.getElementById("offline-message");
-      const awayMsg = document.getElementById("away-message");
-      const mapTitle = document.getElementById("map-status-heading");
+  const HQ={lat:35.4676,lng:-97.5164};
+  let map, marker;
 
-      // Reset visibility
-      offlineMsg.style.display = "none";
-      awayMsg.style.display = "none";
-      mapCard.style.display = "none";
+  function initMap(){
+    map=new google.maps.Map(document.getElementById('map'),{center:HQ,zoom:10,mapTypeControl:false,streetViewControl:false});
+    marker=new google.maps.Marker({map,position:HQ,title:"Big Red HQ"});
+  }
 
-      if (state === "online") {
-        mapCard.style.display = "block";
-        mapTitle.textContent = "🟢 Currently Active";
-        mapTitle.style.color = "#4CAF50";
-      } else if (state === "away") {
-        awayMsg.style.display = "block";
-      } else {
-        offlineMsg.style.display = "block";
+  window.addEventListener("load",async()=>{
+    if(window.google&&google.maps)initMap();
+    try{
+      const res=await fetch("https://falling-night-3e4d.bigredtransportation.workers.dev",{cache:"no-store"});
+      const j=await res.json();
+      if(j.latitude){
+        const pos={lat:+j.latitude,lng:+j.longitude};
+        marker.setPosition(pos);
+        map.setCenter(pos);
+        map.setZoom(12);
       }
-    });
+    }catch{}
+  });
   </script>
-
 </body>
 </html>
