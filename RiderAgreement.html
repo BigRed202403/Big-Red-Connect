@@ -4,22 +4,68 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Rider Agreement • Big Red Connect</title>
+
+  <!-- 🚫 Force fresh reloads -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <!-- ▸ Shimmer/Splash (once per session) -->
+  <style>
+    #shimmer {
+      position: fixed; inset: 0; background:#000; z-index:10000;
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+    }
+    #shimmer .logo {
+      width: 160px; max-width: 50vw; height:auto;
+      animation:pulse 1.2s infinite ease-in-out;
+    }
+    #shimmer .msg {
+      color:#bbb; margin-top:14px; font-size:0.95em; letter-spacing:.3px;
+    }
+    @keyframes pulse {
+      0%{opacity:.5; transform:scale(.98)}
+      50%{opacity:1; transform:scale(1)}
+      100%{opacity:.5; transform:scale(.98)}
+    }
+  </style>
+
+  <script>
+    window.SPLASH_MESSAGE = "Loading Rider Agreement…";
+    (function(){
+      if (sessionStorage.getItem("brc_splash_shown")) return;
+      const w=document.createElement("div");
+      w.id="shimmer";
+      w.innerHTML = '<img class="logo" src="official_logo.jpeg" alt="Big Red Connect Logo"><div class="msg">'+(window.SPLASH_MESSAGE||"Loading…")+'</div>';
+      document.addEventListener("DOMContentLoaded", ()=>document.body.appendChild(w));
+      window.addEventListener("load", ()=>{
+        setTimeout(()=>{
+          w.style.transition="opacity .35s"; w.style.opacity="0";
+          setTimeout(()=>{ w.remove(); sessionStorage.setItem("brc_splash_shown","1"); }, 350);
+        }, 350);
+      });
+    })();
+  </script>
 </head>
+
 <body class="agreement-page">
 
-  <!-- 🍁 Hero Banner -->
-  <div class="hero small"></div>
+  <!-- 🚗 Logo Header -->
+  <div class="logo-header">
+    <img src="official_logo.jpeg" alt="Big Red Connect Logo" />
+  </div>
 
-  <!-- 🚗 Header -->
+  <!-- 🏷️ Header -->
   <h1>Rider Agreement</h1>
   <p class="tagline">Transparency, safety, and fairness — the Big Red Connect way.</p>
 
   <!-- 🟢 Status Pill -->
   <div id="status-pill" class="status status--loading">Checking status…</div>
 
-  <!-- 📜 Rider Agreement Content -->
+  <!-- 📜 Agreement Content -->
   <section id="agreement-content" class="info-section" style="text-align:left; max-width:700px; margin:auto;">
     <p>
       By riding with Big Red Connect, you agree to the following policies.  
@@ -30,30 +76,25 @@
       <li><strong>Payment:</strong> Due as agreed. Missed or late payments may result in refusal of service.</li>
       <li><strong>Cancellation:</strong> Cancel at least 3 hours in advance for refund eligibility.</li>
       <li><strong>No-Shows:</strong> $5 fee applies after a 5-minute wait.</li>
-      <li><strong>Stops/Changes:</strong> Additional $5 per extra stop or significant detour.</li>
-      <li><strong>Damage or Mess:</strong> Cleaning or repair fees (up to $200) may apply if needed.</li>
+      <li><strong>Stops/Changes:</strong> $5 per extra stop or significant detour.</li>
+      <li><strong>Damage or Mess:</strong> Cleaning or repair fees (up to $200) may apply.</li>
       <li><strong>Group Responsibility:</strong> The booking party is responsible for the conduct and costs of all group members.</li>
       <li><strong>Insurance Disclaimer:</strong> Rides are offered by an independent operator under a personal auto policy with a rideshare endorsement.  
           This is not a licensed commercial taxi service. Limited liability applies.</li>
-      <li><strong>Dash Cam Notice:</strong> Audio and video may be recorded inside the vehicle for safety and liability purposes.  
-          Riding implies consent.</li>
-      <li><strong>Voluntary Participation:</strong> All rides are voluntary and at your own risk.  
-          Big Red Connect is not liable for loss, injury, or damages unless caused by gross negligence or willful misconduct.</li>
-      <li><strong>Travel Fairness Rule:</strong> A flat travel fee may apply for pickups outside the local service area — $10 for 1–15 miles beyond,  
-          $20 for 16 miles or more. Long trips that already cover travel time and mileage do not incur extra fees.</li>
-      <li><strong>Loyalty Consistency:</strong> If you receive a quoted fare (e.g., $10 local) and request a return trip within the same night,  
-          that same rate will normally be honored for fairness and consistency.  
-          However, if the return occurs during a <em>special-rate period</em> (Rush Hour, Airport, or Special Event),  
-          the applicable base rate may apply. You’ll always be quoted up front before confirming your return ride.</li>
+      <li><strong>Dash Cam Notice:</strong> Audio and video may be recorded inside the vehicle for safety and liability purposes. Riding implies consent.</li>
+      <li><strong>Voluntary Participation:</strong> All rides are voluntary and at your own risk. Big Red Connect is not liable for loss, injury, or damages unless caused by gross negligence or willful misconduct.</li>
+      <li><strong>Travel Fairness Rule:</strong> A flat travel fee may apply for pickups outside the local service area — $10 for 1–15 miles beyond, $20 for 16 miles or more. Long trips that already cover travel time and mileage do not incur extra fees.</li>
+      <li><strong>Loyalty Consistency:</strong> If you receive a quoted fare (e.g., $10 local) and request a return trip within the same night, that same rate will normally be honored for fairness and consistency.  
+          However, if the return occurs during a <em>special-rate period</em> (Rush Hour, Airport, or Special Event), the applicable base rate may apply. You’ll always be quoted up front before confirming your return ride.</li>
     </ul>
 
     <div style="background:#111;border:1px solid #ffcc00;border-radius:8px;padding:14px;margin-top:18px;">
-      <strong>By accepting a ride, you agree to these terms.</strong><br />
+      <strong>By accepting a ride, you agree to these terms.</strong><br>
       No physical signature is required for standard or recurring rides.
     </div>
 
     <p style="margin-top:18px;">
-      Need a signed copy for a group, employer, or event?  
+      Need a signed copy for a group, employer, or event?<br>
       Complete the verified rider form below:
     </p>
 
@@ -65,14 +106,14 @@
       </a>
     </p>
 
-    <!-- 📄 PDF Download Button -->
+    <!-- 📄 PDF Download -->
     <p style="text-align:center; margin-top:20px;">
       <button id="downloadPdfBtn" class="btn secondary">📄 Download Official PDF Copy</button>
     </p>
 
     <p style="margin-top:30px;font-size:0.9em;color:#aaa;text-align:center;">
-      This document is publicly available at:<br />
-      <strong>bigred202403.github.io/Big-Red-Connect/RiderAgreement.html</strong><br />
+      This document is publicly available at:<br>
+      <strong>bigred202403.github.io/Big-Red-Connect/RiderAgreement.html</strong><br>
       For questions, text <strong>405-378-4024</strong>.
     </p>
   </section>
@@ -95,34 +136,30 @@
       const date = new Date().toLocaleDateString();
       const opt = {
         margin: 0.5,
-        filename: `BigRedConnect_RiderAgreement_${date.replace(/\//g, '-')}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
+        filename: `BigRedConnect_RiderAgreement_${date.replace(/\//g,'-')}.pdf`,
+        image: { type:'jpeg', quality:0.98 },
+        html2canvas: { scale:2, useCORS:true },
+        jsPDF: { unit:'in', format:'letter', orientation:'portrait' }
       };
 
-      // Clone content and build custom PDF structure
       const clone = element.cloneNode(true);
       const wrapper = document.createElement('div');
       wrapper.innerHTML = `
-        <div style="text-align:center; margin-bottom:20px;">
+        <div style="text-align:center;margin-bottom:20px;">
           <img src="official_logo.jpeg" alt="Big Red Connect Logo" style="width:150px;margin-bottom:10px;">
-          <h2 style="color:#b30000; margin:0;">Big Red Connect</h2>
+          <h2 style="color:#b30000;margin:0;">Big Red Connect</h2>
           <p style="color:#666;margin:0;">Veteran Owned • Affordable • Local • Trusted</p>
           <p style="font-size:0.85em;color:#999;">Generated on ${date}</p>
-          <hr style="border:1px solid #c40000; margin:10px 0;">
-        </div>
-      `;
+          <hr style="border:1px solid #c40000;margin:10px 0;">
+        </div>`;
       wrapper.appendChild(clone);
-
       const footer = document.createElement('div');
       footer.innerHTML = `
-        <hr style="border:1px solid #c40000; margin:20px 0;">
-        <p style="font-size:0.8em; color:#777; text-align:center;">
+        <hr style="border:1px solid #c40000;margin:20px 0;">
+        <p style="font-size:0.8em;color:#777;text-align:center;">
           Veteran Owned. Affordable. Local. Trusted.<br>
           Text “RED” to (405) 378-4024 • bigred202403.github.io/Big-Red-Connect
-        </p>
-      `;
+        </p>`;
       wrapper.appendChild(footer);
 
       html2pdf().set(opt).from(wrapper).save();
