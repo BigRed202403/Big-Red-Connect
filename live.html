@@ -16,19 +16,21 @@
   <style>
     iframe {
       width: 100%;
-      height: 500px;
+      height: 480px;
       border: none;
       border-radius: 10px;
       margin-top: 10px;
     }
-    #offline-box {
+    #status-message {
       background: #111;
       border: 1px solid #ffcc00;
       border-radius: 8px;
-      padding: 14px;
+      padding: 20px 16px;
       text-align: center;
       color: #ccc;
-      margin-top: 15px;
+      font-size: 1em;
+      margin-top: 20px;
+      line-height: 1.5;
     }
   </style>
 </head>
@@ -45,13 +47,8 @@
   <!-- 🟢 Status Pill -->
   <div id="status-pill" class="status status--loading">Checking status…</div>
 
-  <!-- 🗺️ Live Map Section -->
+  <!-- 🗺️ Live Map / Status Message -->
   <section class="info-section">
-    <h2>Real-Time Location</h2>
-    <p>When Big Red is online, the live Glympse map will appear below.  
-      If I’m away or offline, a message will be shown instead.</p>
-
-    <!-- Glympse Embed -->
     <div id="map-container">
       <iframe 
         id="glympse-frame"
@@ -62,11 +59,7 @@
       </iframe>
     </div>
 
-    <!-- Offline message placeholder -->
-    <div id="offline-box" style="display:none;">
-      <strong>Big Red Connect is not currently live.</strong><br>
-      The map will return once I’m back online and sharing my location.
-    </div>
+    <div id="status-message" style="display:none;"></div>
   </section>
 
   <!-- 🦶 Footer -->
@@ -82,36 +75,34 @@
   <!-- 🔧 Status Sync -->
   <script src="status.js"></script>
 
-  <!-- 🧭 Map Visibility Logic -->
+  <!-- 🧭 Dynamic Map + Message Logic -->
   <script>
   document.addEventListener("DOMContentLoaded", () => {
-    const state = sessionStorage.getItem("bigred_status") || "offline";
-    const glympse = document.getElementById("glympse-frame");
-    const offlineBox = document.getElementById("offline-box");
+    const frame = document.getElementById("glympse-frame");
+    const msgBox = document.getElementById("status-message");
 
-    // Hide Glympse if away or offline
-    if (state === "away" || state === "offline") {
-      glympse.style.display = "none";
-      offlineBox.style.display = "block";
-    } else {
-      glympse.style.display = "block";
-      offlineBox.style.display = "none";
+    function updateView(state) {
+      if (state === "online") {
+        frame.style.display = "block";
+        msgBox.style.display = "none";
+      } else {
+        frame.style.display = "none";
+        msgBox.style.display = "block";
+        msgBox.innerHTML =
+          state === "away"
+            ? `<strong>🟡 Limited Availability</strong><br>
+               I’m between runs or outside my usual area right now.<br>
+               You can still text <strong>“RED”</strong> to <strong>(405) 378-4024</strong> to plan ahead.`
+            : `<strong>🔴 Currently Offline</strong><br>
+               I’m off the road for now, but I’ll be back soon.<br>
+               You can still line up your next connection anytime.`;
+      }
     }
-  });
 
-  // Also react to live status changes without page reload
-  document.addEventListener("statusUpdated", (e) => {
-    const state = e.detail;
-    const glympse = document.getElementById("glympse-frame");
-    const offlineBox = document.getElementById("offline-box");
+    const initState = sessionStorage.getItem("bigred_status") || "offline";
+    updateView(initState);
 
-    if (state === "away" || state === "offline") {
-      glympse.style.display = "none";
-      offlineBox.style.display = "block";
-    } else {
-      glympse.style.display = "block";
-      offlineBox.style.display = "none";
-    }
+    document.addEventListener("statusUpdated", (e) => updateView(e.detail));
   });
   </script>
 
