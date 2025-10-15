@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Fare Calculator – Big Red Connect</title>
 
-  <!-- 🚫 Force fresh reloads after publishing -->
+  <!-- 🚫 No caching -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
@@ -13,7 +13,7 @@
   <!-- 🎨 Styles -->
   <link rel="stylesheet" href="style.css" />
 
-  <!-- ▸ Shimmer/Splash (once per session) -->
+  <!-- ▸ Shimmer/Splash -->
   <style>
     #shimmer {
       position: fixed; inset: 0; background:#000; z-index:10000;
@@ -32,6 +32,7 @@
       100%{opacity:.5; transform:scale(.98)}
     }
   </style>
+
   <script>
     window.SPLASH_MESSAGE = "Loading Fare Calculator…";
     (function(){
@@ -49,12 +50,12 @@
     })();
   </script>
 
-  <!-- ✈️ Google Maps JS -->
+  <!-- ✈️ Google Maps -->
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places,geometry&callback=initGoogle" async defer></script>
 </head>
 <body>
 
-  <!-- 🚗 Logo Header (no hero on subpages) -->
+  <!-- 🚗 Logo Header -->
   <div class="logo-header">
     <img src="official_logo.jpeg" alt="Big Red Connect Logo" />
   </div>
@@ -101,13 +102,12 @@
 
     <button class="btn primary" id="calcBtn">💲 Calculate Fare</button>
 
-    <!-- Default Text RED fallback -->
+    <!-- Default Text RED -->
     <div id="text-red-wrapper" style="margin-top:10px;">
       <a href="sms:+14053784024?&body=Hey%20Big%20Red%20—%20I’d%20like%20to%20plan%20a%20ride%20connection." class="btn secondary">📲 Text RED</a>
     </div>
 
     <div id="result" style="display:none;"></div>
-
     <p class="disclaimer">*Estimates only. Final fare may vary slightly based on route or wait time.</p>
   </section>
 
@@ -121,21 +121,25 @@
     </p>
   </footer>
 
-  <!-- 🔧 Status + Cache Sync -->
-  <script src="status.js"></script>
+  <!-- 🔧 Auto-Versioned Cache + Status Sync -->
   <script>
+  const BRC_VERSION = "2025.10.15.01"; // change to force global refresh
   document.addEventListener("DOMContentLoaded", async () => {
-    // 🟢 Preserve status before clearing cache
+    // 🟢 Preserve driver status
     const savedStatus = sessionStorage.getItem("bigred_status");
 
-    // 🧹 Clear caches safely
-    if ("caches" in window) {
-      const keys = await caches.keys();
-      for (const key of keys) await caches.delete(key);
+    // 🧹 Clear caches if version changed
+    const lastVer = localStorage.getItem("brc_ver");
+    if (lastVer !== BRC_VERSION) {
+      if ("caches" in window) {
+        const keys = await caches.keys();
+        for (const key of keys) await caches.delete(key);
+      }
+      localStorage.clear();
+      sessionStorage.clear();
+      if (savedStatus) sessionStorage.setItem("bigred_status", savedStatus);
+      localStorage.setItem("brc_ver", BRC_VERSION);
     }
-    localStorage.clear();
-    sessionStorage.clear();
-    if (savedStatus) sessionStorage.setItem("bigred_status", savedStatus);
 
     // 🧭 Sync status pill
     const pill = document.getElementById("status-pill");
@@ -152,10 +156,18 @@
       document.dispatchEvent(new CustomEvent("statusUpdated", { detail: state }));
     }
 
-    // 🚫 Force a fresh reload every visit
-    if (!window.location.search.includes("freshReload")) {
-      const rand = Math.floor(Math.random() * 999999);
-      window.location.replace(`${window.location.pathname}?freshReload=${rand}`);
+    // 🚫 Append version tag to linked assets
+    const verTag = `v=${BRC_VERSION}`;
+    const cacheBust = (url) => url.includes("?") ? `${url}&${verTag}` : `${url}?${verTag}`;
+    document.querySelectorAll('link[rel="stylesheet"]').forEach(l => l.href = cacheBust(l.href));
+    document.querySelectorAll('script[src]').forEach(s => {
+      if (!s.src.includes("maps.googleapis")) s.src = cacheBust(s.src);
+    });
+
+    // 🌀 Ensure page reloads once per new version
+    if (!window.location.search.includes("ver=" + BRC_VERSION)) {
+      const base = window.location.pathname.split("?")[0];
+      window.location.replace(`${base}?ver=${BRC_VERSION}`);
     }
   });
   </script>
@@ -203,7 +215,6 @@
     document.getElementById('addStopBtn').onclick=addStopField;
     document.getElementById('calcBtn').onclick=calculateFare;
 
-    // Prefill from query param
     const params=new URLSearchParams(window.location.search);
     const dest=params.get('dropoff');
     if(dest){
