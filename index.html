@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Big Red Connect</title>
 
-  <!-- 🚫 Force fresh reload after publishing -->
+  <!-- 🛑 Disable caching -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
@@ -20,23 +20,6 @@
   <!-- ✈️ Google Maps / Places -->
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places"></script>
 </head>
-  <script>
-  // 🚫 Force reload every visit (no cache retained)
-  (async function() {
-    if ('caches' in window) {
-      const keys = await caches.keys();
-      for (const key of keys) await caches.delete(key);
-    }
-    sessionStorage.clear();
-    localStorage.clear();
-    // Append random query to force a new request each time
-    const currentUrl = window.location.href.split('?')[0];
-    if (!window.location.search.includes('freshReload')) {
-      const rand = Math.floor(Math.random() * 999999);
-      window.location.replace(`${currentUrl}?freshReload=${rand}`);
-    }
-  })();
-</script>
 <body>
 
   <!-- 🍁 Hero Banner -->
@@ -132,12 +115,17 @@
 
   <!-- ⚙️ Session + Status -->
   <script>
+    // Default availability
     window.CURRENT_STATUS = "away";
-    const siteVer = "2025-10-15.02";
+    const siteVer = "2025-10-10";
+
+    // Version tag
     if (sessionStorage.getItem("brc_ver") !== siteVer) {
       sessionStorage.clear();
       sessionStorage.setItem("brc_ver", siteVer);
     }
+
+    // Store current status if missing
     if (!sessionStorage.getItem("bigred_status")) {
       sessionStorage.setItem("bigred_status", window.CURRENT_STATUS);
     }
