@@ -2,83 +2,131 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Rider Agreement – Big Red Connect</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f9f9f9;
-      padding: 20px;
-      max-width: 800px;
-      margin: auto;
-      color: #333;
-    }
-    h1 {
-      color: #b30000;
-    }
-    ul {
-      margin-left: 20px;
-    }
-    a.button {
-      display: inline-block;
-      margin-top: 20px;
-      padding: 10px 18px;
-      background-color: #b30000;
-      color: white;
-      text-decoration: none;
-      border-radius: 5px;
-    }
-    a.button:hover {
-      background-color: #990000;
-    }
-    .notice {
-      background: #fff3cd;
-      color: #856404;
-      padding: 12px;
-      border: 1px solid #ffeeba;
-      border-radius: 4px;
-      margin-top: 20px;
-    }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rider Agreement • Big Red Connect</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
-<body>
-  <h1>Rider Agreement – Big Red Connect</h1>
-  <p>By riding with Big Red Connect, you agree to the following policies. These are displayed in-vehicle, on our website, and shared at time of booking:</p>
+<body class="agreement-page">
 
-  <ul>
-    <li><strong>Payment:</strong> Due as agreed. Missed or late payment may result in refusal of service.</li>
-    <li><strong>Cancellation:</strong> Cancel at least 3 hours in advance for refund eligibility.</li>
-    <li><strong>No-Shows:</strong> $5 fee after 5-minute wait.</li>
-    <li><strong>Stops/Changes:</strong> May result in a $5 fee per extra stop or major detour.</li>
-    <li><strong>Damage or Mess:</strong> Fees up to $200 may apply for required cleaning or repairs.</li>
-    <li><strong>Group Responsibility:</strong> The booking party is responsible for the behavior and costs of all group members.</li>
-    <li><strong>Insurance Disclaimer:</strong> Rides are offered by an independent operator under a personal auto policy with a rideshare endorsement. This is not a licensed commercial or taxi service. Limited liability applies.</li>
-    <li><strong>Dash Cam Notice:</strong> Audio and video may be recorded inside the vehicle for safety and liability purposes. Riding implies consent.</li>
-    <li><strong>Voluntary Participation:</strong> All rides are voluntary and at your own risk. Big Red Connect is not liable for loss, injury, or damages unless caused by gross negligence or willful misconduct.</li>
-    <li><strong>Travel Fairness Rule:</strong> A flat travel fee may apply for pickups outside the local service area — $10 for 1–15 miles beyond, $20 for 16 miles or more. Long trips that already cover travel time and mileage do not incur additional fees.</li>
-    <li><strong>Loyalty Consistency:</strong> If you receive a quoted fare (e.g., $10 local) and request a return trip within the same night, that same rate will normally be honored for fairness and consistency. However, if the return trip occurs during a <em>special rate period</em> (Rush Hour, Airport, or Special Event / Concert traffic), the applicable base rate for that period may apply. You will always be quoted up front before confirming your return ride.</li>
-  </ul>
+  <!-- 🍁 Hero Banner -->
+  <div class="hero small"></div>
 
-  <div class="notice">
-    <strong>By accepting a ride, you agree to these terms.</strong><br />
-    No physical signature is required for single or routine rides.
-  </div>
+  <!-- 🚗 Header -->
+  <h1>Rider Agreement</h1>
+  <p class="tagline">Transparency, safety, and fairness — the Big Red Connect way.</p>
 
-  <p>If you need a formal record (e.g., for a group, special event, or employer), you may complete the signed agreement form below:</p>
+  <!-- 🟢 Status Pill -->
+  <div id="status-pill" class="status status--loading">Checking status…</div>
 
-  <a class="button" href="https://docs.google.com/forms/d/e/1FAIpQLSe9qLWuv1fF8PLVs8QCVJUNr9o-YlytixhDi1Rcz5St5e6hlw/viewform?usp=dialog" target="_blank">
-    Complete Signed Rider Form
-  </a>
+  <!-- 📜 Rider Agreement Content -->
+  <section id="agreement-content" class="info-section" style="text-align:left; max-width:700px; margin:auto;">
+    <p>
+      By riding with Big Red Connect, you agree to the following policies.  
+      These terms are displayed in-vehicle, on our website, and shared when booking.
+    </p>
 
-  <p style="margin-top: 40px; font-size: 0.9em; color: #666;">
-    This document is publicly available at <strong>bigred202403.github.io/Big-Red-Connect/RiderAgreement.html</strong><br />
-    For questions, text us at <strong>405-378-4024</strong>.
-  </p>
+    <ul>
+      <li><strong>Payment:</strong> Due as agreed. Missed or late payments may result in refusal of service.</li>
+      <li><strong>Cancellation:</strong> Cancel at least 3 hours in advance for refund eligibility.</li>
+      <li><strong>No-Shows:</strong> $5 fee applies after a 5-minute wait.</li>
+      <li><strong>Stops/Changes:</strong> Additional $5 per extra stop or significant detour.</li>
+      <li><strong>Damage or Mess:</strong> Cleaning or repair fees (up to $200) may apply if needed.</li>
+      <li><strong>Group Responsibility:</strong> The booking party is responsible for the conduct and costs of all group members.</li>
+      <li><strong>Insurance Disclaimer:</strong> Rides are offered by an independent operator under a personal auto policy with a rideshare endorsement.  
+          This is not a licensed commercial taxi service. Limited liability applies.</li>
+      <li><strong>Dash Cam Notice:</strong> Audio and video may be recorded inside the vehicle for safety and liability purposes.  
+          Riding implies consent.</li>
+      <li><strong>Voluntary Participation:</strong> All rides are voluntary and at your own risk.  
+          Big Red Connect is not liable for loss, injury, or damages unless caused by gross negligence or willful misconduct.</li>
+      <li><strong>Travel Fairness Rule:</strong> A flat travel fee may apply for pickups outside the local service area — $10 for 1–15 miles beyond,  
+          $20 for 16 miles or more. Long trips that already cover travel time and mileage do not incur extra fees.</li>
+      <li><strong>Loyalty Consistency:</strong> If you receive a quoted fare (e.g., $10 local) and request a return trip within the same night,  
+          that same rate will normally be honored for fairness and consistency.  
+          However, if the return occurs during a <em>special-rate period</em> (Rush Hour, Airport, or Special Event),  
+          the applicable base rate may apply. You’ll always be quoted up front before confirming your return ride.</li>
+    </ul>
 
-  <div style="text-align: center; margin-top: 40px;">
-    <a href="index.html" style="padding: 10px 20px; background-color: #b30000; color: white; text-decoration: none; border-radius: 5px;">
-      ← Return to Main Page
-    </a>
-  </div>
+    <div style="background:#111;border:1px solid #ffcc00;border-radius:8px;padding:14px;margin-top:18px;">
+      <strong>By accepting a ride, you agree to these terms.</strong><br />
+      No physical signature is required for standard or recurring rides.
+    </div>
+
+    <p style="margin-top:18px;">
+      Need a signed copy for a group, employer, or event?  
+      Complete the verified rider form below:
+    </p>
+
+    <p style="text-align:center;">
+      <a href="https://docs.google.com/forms/d/e/1FAIpQLSe9qLWuv1fF8PLVs8QCVJUNr9o-YlytixhDi1Rcz5St5e6hlw/viewform?usp=dialog"
+         target="_blank"
+         class="btn primary">
+         📝 Complete Signed Rider Form
+      </a>
+    </p>
+
+    <!-- 📄 PDF Download Button -->
+    <p style="text-align:center; margin-top:20px;">
+      <button id="downloadPdfBtn" class="btn secondary">📄 Download Official PDF Copy</button>
+    </p>
+
+    <p style="margin-top:30px;font-size:0.9em;color:#aaa;text-align:center;">
+      This document is publicly available at:<br />
+      <strong>bigred202403.github.io/Big-Red-Connect/RiderAgreement.html</strong><br />
+      For questions, text <strong>405-378-4024</strong>.
+    </p>
+  </section>
+
+  <!-- 🦶 Footer -->
+  <footer>
+    <p>Need a connection? Text <strong>“RED”</strong> to (405) 378-4024.</p>
+    <a href="index.html" class="btn">🏠 Return to Home</a>
+    <p style="font-size:0.8em;color:#777;margin-top:10px;line-height:1.4;">
+      Vehicle imagery features actual Big Red Connect fleet vehicles.<br>
+      Some backgrounds created with AI-assisted design tools for illustrative purposes only.<br>
+      Brand names (Chevrolet® and GMC®) are property of their respective owners and used descriptively.
+    </p>
+  </footer>
+
+  <script src="status.js"></script>
+  <script>
+    document.getElementById("downloadPdfBtn").addEventListener("click", () => {
+      const element = document.getElementById("agreement-content");
+      const date = new Date().toLocaleDateString();
+      const opt = {
+        margin: 0.5,
+        filename: `BigRedConnect_RiderAgreement_${date.replace(/\//g, '-')}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
+      };
+
+      // Clone content and build custom PDF structure
+      const clone = element.cloneNode(true);
+      const wrapper = document.createElement('div');
+      wrapper.innerHTML = `
+        <div style="text-align:center; margin-bottom:20px;">
+          <img src="official_logo.jpeg" alt="Big Red Connect Logo" style="width:150px;margin-bottom:10px;">
+          <h2 style="color:#b30000; margin:0;">Big Red Connect</h2>
+          <p style="color:#666;margin:0;">Veteran Owned • Affordable • Local • Trusted</p>
+          <p style="font-size:0.85em;color:#999;">Generated on ${date}</p>
+          <hr style="border:1px solid #c40000; margin:10px 0;">
+        </div>
+      `;
+      wrapper.appendChild(clone);
+
+      const footer = document.createElement('div');
+      footer.innerHTML = `
+        <hr style="border:1px solid #c40000; margin:20px 0;">
+        <p style="font-size:0.8em; color:#777; text-align:center;">
+          Veteran Owned. Affordable. Local. Trusted.<br>
+          Text “RED” to (405) 378-4024 • bigred202403.github.io/Big-Red-Connect
+        </p>
+      `;
+      wrapper.appendChild(footer);
+
+      html2pdf().set(opt).from(wrapper).save();
+    });
+  </script>
 </body>
 </html>
