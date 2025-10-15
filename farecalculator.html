@@ -223,7 +223,7 @@
 
     const route=await new Promise((res,rej)=>directionsService.route({origin:pickup,destination:dropoff,waypoints:stops,travelMode:"DRIVING"},(r,s)=>s==="OK"?res(r):rej(s)));
     const miles=route.routes[0].legs.reduce((m,l)=>m+(l.distance?.value||0),0)/1609.34;
-    const duration=route.routes[0].legs.reduce((t,l)=>t+(l.duration?.value||0),0)/60; // minutes
+    const duration=route.routes[0].legs.reduce((t,l)=>t+(l.duration?.value||0),0)/60;
 
     // ⏱️ Estimate time to pickup (from live or HQ)
     let pickupETA="—";
@@ -232,7 +232,7 @@
         new google.maps.LatLng(driverPos.lat,driverPos.lng),
         pickupLatLng
       )/1609.34;
-      const mins=pickupDist<=1?2:Math.ceil((pickupDist/30)*60); // ~30 mph average
+      const mins=pickupDist<=1?2:Math.ceil((pickupDist/30)*60);
       pickupETA=`${mins} min`;
     }
 
@@ -240,11 +240,14 @@
 
     const val=document.getElementById("tripType").value;
     const base=(val==="15_airport")?15:parseFloat(val);
-    let fare=base;
-    if(miles>10&&miles<=20)fare+=(miles-10)*1.25;
-    else if(miles>20)fare+=(10*1.25)+((miles-20)*1.0);
-    fare+=(stops.length*5)+fairnessFee;
 
+    // 💲Mileage rate breakdown
+    let mileageRate=0, mileageSubtotal=0;
+    if(miles>10&&miles<=20){mileageRate=1.25;mileageSubtotal=(miles-10)*1.25;}
+    else if(miles>20){mileageRate=1.00;mileageSubtotal=(10*1.25)+((miles-20)*1.00);}
+    else {mileageRate=0;mileageSubtotal=0;}
+
+    let fare=base+mileageSubtotal+(stops.length*5)+fairnessFee;
     const pay=document.getElementById("payment").value;
     if(pay==="card")fare+=fare*0.033+fare*0.024;
 
@@ -257,6 +260,7 @@
       <div class="duration">⏱️ Estimated Trip Time: ${Math.round(duration)} min</div>
       <div class="pickup">🚗 Estimated Pickup ETA: ${pickupETA}</div>
       <p><strong>Base Rate:</strong> $${base.toFixed(2)}</p>
+      <p><strong>Distance Rate:</strong> $${mileageRate.toFixed(2)}/mi → $${mileageSubtotal.toFixed(2)}</p>
       <p><strong>Stops:</strong> ${stops.length} × $5 = $${(stops.length*5).toFixed(2)}</p>
       <p><strong>Travel Fairness Fee:</strong> $${fairnessFee.toFixed(2)}</p>
       <p><strong>Payment:</strong> ${pay==="card"?"Card (includes fees)":"Cash / Venmo / Cash App"}</p>
