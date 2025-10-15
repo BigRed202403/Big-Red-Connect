@@ -22,6 +22,19 @@
       font-size: 0.95em;
       animation: fadeIn 0.6s ease-in-out;
     }
+    #result .total {
+      font-size: 1.8em;
+      color: #00ff99;
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 6px;
+    }
+    #result .miles, #result .duration, #result .pickup {
+      text-align: center;
+      color: #aaa;
+      font-size: 0.95em;
+      margin-bottom: 6px;
+    }
     @keyframes fadeIn { from {opacity: 0;} to {opacity: 1;} }
   </style>
 </head>
@@ -163,7 +176,6 @@
     return fee;
   }
 
-  // 🧮 Add / remove stops (auto-hide after 3)
   function addStopField(){
     if(stopInputs.length>=3)return;
     const id=`stop_${Date.now()}`;
@@ -211,6 +223,18 @@
 
     const route=await new Promise((res,rej)=>directionsService.route({origin:pickup,destination:dropoff,waypoints:stops,travelMode:"DRIVING"},(r,s)=>s==="OK"?res(r):rej(s)));
     const miles=route.routes[0].legs.reduce((m,l)=>m+(l.distance?.value||0),0)/1609.34;
+    const duration=route.routes[0].legs.reduce((t,l)=>t+(l.duration?.value||0),0)/60; // minutes
+
+    // ⏱️ Estimate time to pickup (from live or HQ)
+    let pickupETA="—";
+    if(pickupLatLng){
+      const pickupDist=google.maps.geometry.spherical.computeDistanceBetween(
+        new google.maps.LatLng(driverPos.lat,driverPos.lng),
+        pickupLatLng
+      )/1609.34;
+      const mins=pickupDist<=1?2:Math.ceil((pickupDist/30)*60); // ~30 mph average
+      pickupETA=`${mins} min`;
+    }
 
     smartRideTypeDefault();detectAirportAndSetType();
 
@@ -229,7 +253,9 @@
 
     document.getElementById("result").innerHTML=`
       <div class="total">$${total}</div>
-      <p><strong>Distance:</strong> ${miles.toFixed(1)} mi</p>
+      <div class="miles">📏 Trip Distance: ${miles.toFixed(1)} miles</div>
+      <div class="duration">⏱️ Estimated Trip Time: ${Math.round(duration)} min</div>
+      <div class="pickup">🚗 Estimated Pickup ETA: ${pickupETA}</div>
       <p><strong>Base Rate:</strong> $${base.toFixed(2)}</p>
       <p><strong>Stops:</strong> ${stops.length} × $5 = $${(stops.length*5).toFixed(2)}</p>
       <p><strong>Travel Fairness Fee:</strong> $${fairnessFee.toFixed(2)}</p>
