@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Fare Calculator – Big Red Connect</title>
 
-  <!-- 🚫 No caching -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
@@ -23,10 +22,7 @@
       font-size: 0.95em;
       animation: fadeIn 0.6s ease-in-out;
     }
-    @keyframes fadeIn {
-      from {opacity: 0;}
-      to {opacity: 1;}
-    }
+    @keyframes fadeIn { from {opacity: 0;} to {opacity: 1;} }
   </style>
 </head>
 <body>
@@ -101,6 +97,7 @@
   const WORKER_URL="https://falling-night-3e4d.bigredtransportation.workers.dev";
   let map,geocoder,directionsService,directionsRenderer;
   let pickupLatLng,dropoffLatLng,pickupPlace,dropPlace,driverPos=null;
+  let stopInputs=[];
 
   window.initGoogle=async function(){
     geocoder=new google.maps.Geocoder();
@@ -116,18 +113,22 @@
     const dest=params.get("dropoff");
     if(dest){document.getElementById("dropoff").value=decodeURIComponent(dest);}
 
-    acPickup.addListener("place_changed",async()=>{const p=acPickup.getPlace();if(!p.geometry)return;
+    acPickup.addListener("place_changed",async()=>{
+      const p=acPickup.getPlace();if(!p.geometry)return;
       pickupPlace=p;pickupLatLng=p.geometry.location;map.setCenter(pickupLatLng);
       await computeFairnessNote();detectAirportAndSetType();
     });
-    acDrop.addListener("place_changed",()=>{const p=acDrop.getPlace();if(p.geometry){dropPlace=p;dropoffLatLng=p.geometry.location;map.panTo(dropoffLatLng);detectAirportAndSetType();}});
+    acDrop.addListener("place_changed",()=>{const p=acDrop.getPlace();
+      if(p.geometry){dropPlace=p;dropoffLatLng=p.geometry.location;map.panTo(dropoffLatLng);detectAirportAndSetType();}
+    });
 
     document.getElementById("useLocPickup").onclick=()=>useMyLocation("pickup");
     document.getElementById("useLocDrop").onclick=()=>useMyLocation("dropoff");
     document.getElementById("calcBtn").onclick=calculateFare;
+    document.getElementById("addStopBtn").onclick=addStopField;
 
     await getDriverLocation();
-    smartRideTypeDefault(); // now includes rush-hour message
+    smartRideTypeDefault();
   };
 
   function smartRideTypeDefault(){
@@ -162,6 +163,32 @@
     return fee;
   }
 
+  // 🧮 Add / remove stops (auto-hide after 3)
+  function addStopField(){
+    if(stopInputs.length>=3)return;
+    const id=`stop_${Date.now()}`;
+    stopInputs.push(id);
+    const div=document.createElement("div");
+    div.className="stop-row";
+    div.id=`row_${id}`;
+    div.innerHTML=`<label for="${id}">Stop ${stopInputs.length}</label>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <input id="${id}" type="text" placeholder="Enter stop address" style="flex:1;">
+        <button type="button" class="remove-stop" onclick="removeStop('${id}')">✖</button>
+      </div>`;
+    document.getElementById("stopsWrap").appendChild(div);
+    new google.maps.places.Autocomplete(document.getElementById(id));
+
+    if(stopInputs.length>=3) document.getElementById("addStopBtn").style.display="none";
+  }
+
+  function removeStop(id){
+    document.getElementById(`row_${id}`)?.remove();
+    stopInputs=stopInputs.filter(s=>s!==id);
+    document.querySelectorAll("#stopsWrap label").forEach((l,i)=>l.textContent=`Stop ${i+1}`);
+    if(stopInputs.length<3) document.getElementById("addStopBtn").style.display="inline-block";
+  }
+
   async function useMyLocation(id){
     if(!navigator.geolocation)return alert("Location not supported.");
     navigator.geolocation.getCurrentPosition(async(p)=>{
@@ -179,28 +206,32 @@
     if(!pickup||!dropoff)return alert("Please enter both pickup and drop-off.");
     const fairnessFee=await computeFairnessNote();
 
-    const route=await new Promise((res,rej)=>directionsService.route({origin:pickup,destination:dropoff,travelMode:"DRIVING"},(r,s)=>s==="OK"?res(r):rej(s)));
+    const stops=[];
+    for(const id of stopInputs){const v=document.getElementById(id)?.value.trim();if(v)stops.push({location:v,stopover:true});}
+
+    const route=await new Promise((res,rej)=>directionsService.route({origin:pickup,destination:dropoff,waypoints:stops,travelMode:"DRIVING"},(r,s)=>s==="OK"?res(r):rej(s)));
     const miles=route.routes[0].legs.reduce((m,l)=>m+(l.distance?.value||0),0)/1609.34;
 
-    smartRideTypeDefault();
-    detectAirportAndSetType();
+    smartRideTypeDefault();detectAirportAndSetType();
 
     const val=document.getElementById("tripType").value;
     const base=(val==="15_airport")?15:parseFloat(val);
     let fare=base;
     if(miles>10&&miles<=20)fare+=(miles-10)*1.25;
     else if(miles>20)fare+=(10*1.25)+((miles-20)*1.0);
-    fare+=fairnessFee;
+    fare+=(stops.length*5)+fairnessFee;
 
     const pay=document.getElementById("payment").value;
     if(pay==="card")fare+=fare*0.033+fare*0.024;
 
     const total=fare.toFixed(2);
     const smsBody=encodeURIComponent(`Hey Big Red — I'm heading from ${pickup} to ${dropoff}. Estimated $${total} flat rate.`);
+
     document.getElementById("result").innerHTML=`
       <div class="total">$${total}</div>
       <p><strong>Distance:</strong> ${miles.toFixed(1)} mi</p>
       <p><strong>Base Rate:</strong> $${base.toFixed(2)}</p>
+      <p><strong>Stops:</strong> ${stops.length} × $5 = $${(stops.length*5).toFixed(2)}</p>
       <p><strong>Travel Fairness Fee:</strong> $${fairnessFee.toFixed(2)}</p>
       <p><strong>Payment:</strong> ${pay==="card"?"Card (includes fees)":"Cash / Venmo / Cash App"}</p>
       <p style="text-align:center;margin-top:15px;">
@@ -212,7 +243,8 @@
   function detectAirportAndSetType(){
     const text=[
       document.getElementById("pickup").value.toLowerCase(),
-      document.getElementById("dropoff").value.toLowerCase()
+      document.getElementById("dropoff").value.toLowerCase(),
+      ...stopInputs.map(id=>(document.getElementById(id)?.value||"").toLowerCase())
     ].join(" ");
     const include=["airport","intl","international","regional","municipal","jet","hangar","airfield","airpark"];
     const exclude=["tinker","afb","air force","base","ang"];
