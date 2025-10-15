@@ -1,61 +1,297 @@
 /* ==============================
-   MOBILE + LAYOUT ENHANCEMENTS (Oct 2025)
+   GLOBAL LAYOUT
 ============================== */
+body {
+  margin: 0;
+  font-family: "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", sans-serif;
+  background-color: #000;
+  color: #fff;
+  text-align: center;
+  padding: 0;
+}
 
-/* General vertical rhythm */
+h1, h2, h3, p {
+  margin: 0 auto 10px;
+  max-width: 600px;
+  line-height: 1.5;
+}
+
+/* ==============================
+   HERO + LOGO LOGIC
+============================== */
+.hero {
+  background-image: url("fall-okc-hero.png"); /* Replace with your fall hero image */
+  background-size: cover;
+  background-position: center;
+  height: 220px;
+  border-bottom: 2px solid #c40000;
+  border-radius: 0 0 15px 15px;
+  box-shadow: 0 4px 20px rgba(255, 0, 0, 0.15);
+}
+
+.hero.small { display: none; }
+
+.logo-header {
+  text-align: center;
+  margin: 25px 0 10px 0;
+}
+
+.logo-header img {
+  width: 200px;
+  max-width: 80%;
+  height: auto;
+}
+
+.main-logo {
+  width: 220px;
+  margin-top: -40px;
+}
+
+/* ==============================
+   HEADINGS + TAGLINE
+============================== */
 h1 {
+  color: #ff1a1a;
+  font-size: 2em;
   margin-top: 10px;
-  margin-bottom: 4px;
+  letter-spacing: 0.5px;
+}
+
+h2 {
+  color: #ff1a1a;
+  font-size: 1.4em;
+  margin-top: 30px;
 }
 
 .tagline {
-  margin-bottom: 18px;
-}
-
-/* Status pill spacing */
-.status {
-  margin-top: 12px;
+  color: #ccc;
+  font-size: 1em;
   margin-bottom: 20px;
 }
 
-/* Calculator layout */
-.calculator label {
-  display: block;
-  text-align: left;
+/* ==============================
+   STATUS PILL
+============================== */
+.status {
+  display: inline-block;
+  padding: 10px 16px;
+  border-radius: 25px;
+  font-size: 0.95em;
+  margin: 10px auto 20px;
+  text-align: center;
+  max-width: 90%;
+}
+
+.status.online {
+  background-color: rgba(76, 175, 80, 0.15);
+  color: #4CAF50;
+  border: 1px solid #4CAF50;
+}
+
+.status.away {
+  background-color: rgba(255, 204, 0, 0.15);
+  color: #ffcc00;
+  border: 1px solid #ffcc00;
+}
+
+.status.offline {
+  background-color: rgba(255, 68, 68, 0.15);
+  color: #ff4c4c;
+  border: 1px solid #ff4c4c;
+}
+
+/* ==============================
+   BUTTONS
+============================== */
+.btn {
+  display: inline-block;
+  padding: 12px 20px;
+  margin: 10px 6px;
+  border-radius: 10px;
+  text-decoration: none;
   font-weight: 600;
-  margin: 10px auto 4px;
-  max-width: 600px;
-}
-
-.calculator input,
-.calculator select {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 12px;
-  margin-bottom: 12px;
-  border: 1px solid #333;
-  border-radius: 8px;
-  background: #111;
   color: #fff;
+  transition: all 0.25s ease;
+  box-shadow: 0 3px 10px rgba(255, 0, 0, 0.2);
+  position: relative;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
-/* Button grouping (location buttons) */
-.location-buttons {
+.cta-group {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 8px;
-  margin: 14px 0 18px;
+  gap: 10px;
 }
+
+.btn.primary {
+  background: linear-gradient(180deg, #c40000, #9a0000);
+  border: 1px solid #c40000;
+}
+
+.btn.secondary {
+  background: linear-gradient(180deg, #333, #111);
+  border: 1px solid #444;
+}
+
+/* 🪶 Hover / Focus */
+.btn:hover,
+.btn:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(255, 0, 0, 0.4);
+  filter: brightness(1.1);
+  outline: none;
+}
+
+/* 💥 Press (Tap Down) */
+.btn:active {
+  transform: scale(0.96);
+  filter: brightness(0.9);
+  box-shadow: 0 0 8px rgba(255, 0, 0, 0.5) inset;
+}
+
+/* 🌟 Pulse Glow */
+.btn.primary::after {
+  content: "";
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.3) 10%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.btn.primary:hover::after { opacity: 1; }
+
+/* ==============================
+   TILE GRID
+============================== */
+.tile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 15px;
+  max-width: 550px;
+  margin: 30px auto;
+  padding: 0 20px;
+}
+
+.tile {
+  background-color: #111;
+  border: 1px solid #222;
+  border-radius: 10px;
+  padding: 15px;
+  color: #fff;
+  text-decoration: none;
+  font-size: 0.95em;
+  transition: all 0.25s ease;
+  box-shadow: 0 2px 6px rgba(255, 0, 0, 0.1);
+}
+
+.tile:hover {
+  transform: translateY(-2px);
+  border-color: #c40000;
+  box-shadow: 0 0 10px rgba(255, 0, 0, 0.3);
+}
+
+/* ==============================
+   INFO SECTIONS
+============================== */
+.info-section {
+  background-color: #111;
+  border-radius: 10px;
+  padding: 20px;
+  margin: 25px auto;
+  max-width: 650px;
+  text-align: left;
+  box-shadow: 0 2px 10px rgba(255, 0, 0, 0.15);
+}
+
+.info-section h2 { text-align: center; }
+
+.info-section ul {
+  text-align: left;
+  padding-left: 20px;
+}
+
+.info-section li { margin-bottom: 8px; }
+
+/* ==============================
+   REVIEW CARDS
+============================== */
+.review-card {
+  background-color: #1a1a1a;
+  border-radius: 10px;
+  padding: 15px;
+  margin: 10px auto;
+  color: #fff;
+  max-width: 600px;
+  box-shadow: 0 0 6px rgba(255, 0, 0, 0.25);
+  border: 1px solid #333;
+}
+
+/* ==============================
+   FOOTER
+============================== */
+footer {
+  margin: 40px 0 30px;
+  font-size: 0.85em;
+  color: #aaa;
+}
+
+footer a {
+  color: #c40000;
+  text-decoration: none;
+}
+
+footer a:hover { text-decoration: underline; }
+
+/* ==============================
+   RESPONSIVE BASE
+============================== */
+@media (max-width: 600px) {
+  h1 { font-size: 1.7em; }
+  .main-logo { width: 180px; margin-top: -20px; }
+  .tile-grid { gap: 10px; }
+  .info-section { padding: 15px; margin: 15px; }
+}
+
+/* ==============================
+   RESPONSIVE + LAYOUT PATCH (Fare Calculator)
+============================== */
+.info-section input,
+.info-section select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px;
+  margin: 6px 0 14px;
+  background-color: #111;
+  border: 1px solid #333;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 1em;
+}
+
+#stopsWrap { margin-top: 10px; }
+#addStopBtn { margin: 8px 0 12px; }
 
 #map {
-  height: 260px;
+  width: 100%;
+  height: 250px;
   border: 2px solid #c40000;
   border-radius: 10px;
-  margin: 10px 0 18px;
+  margin: 16px 0;
 }
 
-/* Result block formatting */
+#fairness-note, #airport-note {
+  text-align: left;
+  color: #ccc;
+  font-size: 0.95em;
+  margin-bottom: 10px;
+}
+
+#airport-note { color: #ffcc00; font-weight: 500; }
+
 #result {
   background: #111;
   border: 1px solid #c40000;
@@ -68,24 +304,39 @@ h1 {
   margin-right: auto;
 }
 
-/* Mobile optimization */
+#result .total {
+  font-size: 1.6em;
+  color: #ff4444;
+  font-weight: 800;
+  text-align: center;
+  margin: 0 0 8px;
+}
+
+/* ==============================
+   MOBILE / NIGHT MODE PATCH
+============================== */
 @media (max-width: 600px) {
   .calculator input,
-  .calculator select {
-    font-size: 1em;
-  }
+  .calculator select { font-size: 1em; }
+  .btn { width: 100%; font-size: 1em; }
+  .location-buttons { flex-direction: column; gap: 10px; }
+  #map { height: 200px; }
+}
 
-  .btn {
-    width: 100%;
-    font-size: 1em;
+/* 🌙 Apple Night-Shift / Dark-Mode Lock */
+@supports (color-scheme: light dark) {
+  :root {
+    color-scheme: only dark;
   }
-
-  .location-buttons {
-    flex-direction: column;
-    gap: 10px;
+  .btn.primary,
+  .status.online,
+  .status.away,
+  .status.offline {
+    -webkit-text-fill-color: inherit !important;
+    color: inherit !important;
   }
-
-  #map {
-    height: 200px;
+  .btn.primary,
+  .btn.secondary {
+    background-blend-mode: normal !important;
   }
 }
