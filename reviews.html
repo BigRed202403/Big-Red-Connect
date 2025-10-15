@@ -4,25 +4,71 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Leave a Review • Big Red Connect</title>
+
+  <!-- 🚫 Force fresh reloads after publishing -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+
   <link rel="stylesheet" href="style.css" />
+
+  <!-- ▸ Shimmer/Splash (once per session) -->
+  <style>
+    #shimmer {
+      position: fixed; inset: 0; background:#000; z-index:10000;
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+    }
+    #shimmer .logo {
+      width: 160px; max-width: 50vw; height:auto;
+      animation:pulse 1.2s infinite ease-in-out;
+    }
+    #shimmer .msg {
+      color:#bbb; margin-top:14px; font-size:0.95em; letter-spacing:.3px;
+    }
+    @keyframes pulse {
+      0%{opacity:.5; transform:scale(.98)}
+      50%{opacity:1; transform:scale(1)}
+      100%{opacity:.5; transform:scale(.98)}
+    }
+  </style>
+
+  <script>
+    window.SPLASH_MESSAGE = "Loading Reviews…";
+    (function(){
+      if (sessionStorage.getItem("brc_splash_shown")) return;
+      const w=document.createElement("div");
+      w.id="shimmer";
+      w.innerHTML = '<img class="logo" src="official_logo.jpeg" alt="Big Red Connect Logo"><div class="msg">'+(window.SPLASH_MESSAGE||"Loading…")+'</div>';
+      document.addEventListener("DOMContentLoaded", ()=>document.body.appendChild(w));
+      window.addEventListener("load", ()=>{
+        setTimeout(()=>{
+          w.style.transition="opacity .35s"; w.style.opacity="0";
+          setTimeout(()=>{ w.remove(); sessionStorage.setItem("brc_splash_shown","1"); }, 350);
+        }, 350);
+      });
+    })();
+  </script>
 </head>
+
 <body class="reviews-page">
 
-  <!-- 🍁 Hero Banner -->
-  <div class="hero small"></div>
+  <!-- 🚗 Logo Header (no hero banner) -->
+  <div class="logo-header">
+    <img src="official_logo.jpeg" alt="Big Red Connect Logo" />
+  </div>
 
-  <!-- 🚗 Header -->
+  <!-- 🏷️ Header -->
   <h1>Leave a Review</h1>
   <p class="tagline">We’d love to hear about your experience with Big Red Connect.</p>
 
   <!-- 🟢 Status Pill -->
   <div id="status-pill" class="status status--loading">Checking status…</div>
 
-  <!-- 📝 Google Form -->
+  <!-- 📝 Google Form Embed -->
   <section class="info-section" style="text-align:center;">
     <iframe 
       src="https://docs.google.com/forms/d/e/1FAIpQLSeq6WCnkrG417rWCGwN56i7FplWpNTHlg1lpGuC-IETDEkEHw/viewform?embedded=true"
-      allowfullscreen>
+      width="100%" height="700" style="border:none; border-radius:10px;" allowfullscreen>
     </iframe>
   </section>
 
@@ -30,12 +76,15 @@
   <section class="info-section" style="text-align:center;">
     <p>Prefer to use your phone? Scan here:</p>
 
-    <!-- ✅ QR Image is now clickable -->
+    <!-- ✅ Clickable QR -->
     <a href="https://docs.google.com/forms/d/e/1FAIpQLSeq6WCnkrG417rWCGwN56i7FplWpNTHlg1lpGuC-IETDEkEHw/viewform?usp=sf_link" target="_blank">
-      <img src="Review-qr.png" alt="Scan to leave a review" />
+      <img src="Review-qr.png" alt="Scan to leave a review" style="max-width:200px; border-radius:8px;" />
     </a>
 
-    <p class="note">Your feedback goes directly to Big Red Connect. Thank you for supporting local!</p>
+    <p class="note" style="color:#aaa; margin-top:10px;">
+      Your feedback goes directly to Big Red Connect.<br>
+      Thank you for supporting local!
+    </p>
   </section>
 
   <!-- 🦶 Footer -->
