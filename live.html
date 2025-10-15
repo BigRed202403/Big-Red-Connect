@@ -48,8 +48,8 @@
   <!-- 🗺️ Live Map Section -->
   <section class="info-section">
     <h2>Real-Time Location</h2>
-    <p>Watch Big Red Connect’s live movement when available.  
-      When I’m offline, a message will appear below.</p>
+    <p>When Big Red is online, the live Glympse map will appear below.  
+      If I’m away or offline, a message will be shown instead.</p>
 
     <!-- Glympse Embed -->
     <div id="map-container">
@@ -64,8 +64,8 @@
 
     <!-- Offline message placeholder -->
     <div id="offline-box" style="display:none;">
-      <strong>Big Red Connect is currently offline.</strong><br>
-      The live map will appear here once I’m back online and sharing.
+      <strong>Big Red Connect is not currently live.</strong><br>
+      The map will return once I’m back online and sharing my location.
     </div>
   </section>
 
@@ -89,7 +89,23 @@
     const glympse = document.getElementById("glympse-frame");
     const offlineBox = document.getElementById("offline-box");
 
-    if (state === "offline") {
+    // Hide Glympse if away or offline
+    if (state === "away" || state === "offline") {
+      glympse.style.display = "none";
+      offlineBox.style.display = "block";
+    } else {
+      glympse.style.display = "block";
+      offlineBox.style.display = "none";
+    }
+  });
+
+  // Also react to live status changes without page reload
+  document.addEventListener("statusUpdated", (e) => {
+    const state = e.detail;
+    const glympse = document.getElementById("glympse-frame");
+    const offlineBox = document.getElementById("offline-box");
+
+    if (state === "away" || state === "offline") {
       glympse.style.display = "none";
       offlineBox.style.display = "block";
     } else {
