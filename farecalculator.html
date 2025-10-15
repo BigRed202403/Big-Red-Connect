@@ -10,6 +10,7 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
 
+  <!-- 🎨 Styles -->
   <link rel="stylesheet" href="style.css" />
 
   <!-- ▸ Shimmer/Splash (once per session) -->
@@ -51,45 +52,6 @@
   <!-- ✈️ Google Maps JS -->
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places,geometry&callback=initGoogle" async defer></script>
 </head>
-  <script>
-  // 🚫 Force reload every visit (no cache retained)
-  (async function() {
-    const savedStatus = sessionStorage.getItem('bigred_status'); // preserve driver status
-    if ('caches' in window) {
-      const keys = await caches.keys();
-      for (const key of keys) await caches.delete(key);
-    }
-    localStorage.clear();
-    sessionStorage.clear();
-    if (savedStatus) sessionStorage.setItem('bigred_status', savedStatus); // restore after clear
-
-    // Append random query to force a new request each time
-    const currentUrl = window.location.href.split('?')[0];
-    if (!window.location.search.includes('freshReload')) {
-      const rand = Math.floor(Math.random() * 999999);
-      window.location.replace(`${currentUrl}?freshReload=${rand}`);
-    }
-  })();
-</script>
-  <script>
-  // 🔄 Sync current status from sessionStorage (set by index.html)
-  document.addEventListener('DOMContentLoaded', () => {
-    const pill = document.getElementById('status-pill');
-    const state = sessionStorage.getItem('bigred_status') || 'offline';
-    const map = {
-      online: ['🟢 Big Red is Live', 'status online'],
-      away: ['🟡 Limited Availability', 'status away'],
-      offline: ['🔴 Offline', 'status offline']
-    };
-    const [text, cls] = map[state];
-    pill.textContent = text;
-    pill.className = cls;
-
-    // keep status.js hooks functional
-    const evt = new CustomEvent("statusUpdated", { detail: state });
-    document.dispatchEvent(evt);
-  });
-</script>
 <body>
 
   <!-- 🚗 Logo Header (no hero on subpages) -->
@@ -159,8 +121,44 @@
     </p>
   </footer>
 
-  <!-- 🔧 Status Pill Logic -->
+  <!-- 🔧 Status + Cache Sync -->
   <script src="status.js"></script>
+  <script>
+  document.addEventListener("DOMContentLoaded", async () => {
+    // 🟢 Preserve status before clearing cache
+    const savedStatus = sessionStorage.getItem("bigred_status");
+
+    // 🧹 Clear caches safely
+    if ("caches" in window) {
+      const keys = await caches.keys();
+      for (const key of keys) await caches.delete(key);
+    }
+    localStorage.clear();
+    sessionStorage.clear();
+    if (savedStatus) sessionStorage.setItem("bigred_status", savedStatus);
+
+    // 🧭 Sync status pill
+    const pill = document.getElementById("status-pill");
+    if (pill) {
+      const state = sessionStorage.getItem("bigred_status") || "offline";
+      const map = {
+        online: ["🟢 Big Red is Live", "status online"],
+        away: ["🟡 Limited Availability", "status away"],
+        offline: ["🔴 Offline", "status offline"]
+      };
+      const [text, cls] = map[state];
+      pill.textContent = text;
+      pill.className = cls;
+      document.dispatchEvent(new CustomEvent("statusUpdated", { detail: state }));
+    }
+
+    // 🚫 Force a fresh reload every visit
+    if (!window.location.search.includes("freshReload")) {
+      const rand = Math.floor(Math.random() * 999999);
+      window.location.replace(`${window.location.pathname}?freshReload=${rand}`);
+    }
+  });
+  </script>
 
   <!-- 🚗 Fare Calculator Logic -->
   <script>
@@ -213,7 +211,6 @@
       document.getElementById('dropoff').value=decoded;
       dropPlace={formatted_address:decoded,name:decoded};
       detectAirportAndSetType();
-      // Auto pickup as current device location
       setTimeout(()=>useMyLocation('pickup'),600);
     }
 
