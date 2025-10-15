@@ -27,7 +27,7 @@ h1, h2, h3, p {
 
 /* Homepage hero only */
 .hero {
-  background-image: url("images/37263759-BD32-4E50-883A-0A5BE2F71928.png");
+  background-image: url("37263759-BD32-4E50-883A-0A5BE2F71928.png");
   background-size: cover;
   background-position: center;
   height: 220px;
