@@ -4,25 +4,71 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>FAQs • Big Red Connect</title>
+
+  <!-- 🚫 Force fresh reloads after publishing -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+
   <link rel="stylesheet" href="style.css" />
+
+  <!-- ▸ Shimmer/Splash (once per session) -->
+  <style>
+    #shimmer {
+      position: fixed; inset: 0; background:#000; z-index:10000;
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+    }
+    #shimmer .logo {
+      width: 160px; max-width: 50vw; height:auto;
+      animation:pulse 1.2s infinite ease-in-out;
+    }
+    #shimmer .msg {
+      color:#bbb; margin-top:14px; font-size:0.95em; letter-spacing:.3px;
+    }
+    @keyframes pulse {
+      0%{opacity:.5; transform:scale(.98)}
+      50%{opacity:1; transform:scale(1)}
+      100%{opacity:.5; transform:scale(.98)}
+    }
+  </style>
+
+  <script>
+    window.SPLASH_MESSAGE = "Loading FAQs…";
+    (function(){
+      if (sessionStorage.getItem("brc_splash_shown")) return;
+      const w=document.createElement("div");
+      w.id="shimmer";
+      w.innerHTML = '<img class="logo" src="official_logo.jpeg" alt="Big Red Connect Logo"><div class="msg">'+(window.SPLASH_MESSAGE||"Loading…")+'</div>';
+      document.addEventListener("DOMContentLoaded", ()=>document.body.appendChild(w));
+      window.addEventListener("load", ()=>{
+        setTimeout(()=>{
+          w.style.transition="opacity .35s"; w.style.opacity="0";
+          setTimeout(()=>{ w.remove(); sessionStorage.setItem("brc_splash_shown","1"); }, 350);
+        }, 350);
+      });
+    })();
+  </script>
 </head>
+
 <body class="faq-page">
 
-  <!-- 🍁 Hero Banner -->
-  <div class="hero small"></div>
+  <!-- 🚗 Logo Header -->
+  <div class="logo-header">
+    <img src="official_logo.jpeg" alt="Big Red Connect Logo" />
+  </div>
 
-  <!-- 🚗 Header -->
+  <!-- 🏷️ Header -->
   <h1>Frequently Asked Questions</h1>
   <p class="tagline">Everything you need to know before you plan your connection.</p>
 
   <!-- 🟢 Status Pill -->
   <div id="status-pill" class="status status--loading">Checking status…</div>
 
-  <!-- 💬 FAQ Section -->
+  <!-- 💬 FAQ Content -->
   <section class="info-section">
     <h2>How do I get around with Big Red?</h2>
     <p>
-      Just text me at <strong>405-378-4024</strong> and I’ll let you know if I’m available.  
+      Just text me at <strong>405-378-4024</strong> and I’ll let you know if I’m available.<br>
       No app, no surge pricing — just local, friendly service.
     </p>
   </section>
@@ -41,7 +87,7 @@
   <section class="info-section">
     <h2>Do you record video inside the vehicle?</h2>
     <p>
-      Yes — for safety and accountability. Dash cams record both inside and outside the vehicle.  
+      Yes — for safety and accountability. Dash cams record both inside and outside the vehicle.<br>
       Riders are notified by in-car display and in the 
       <a href="RiderAgreement.html" style="color:#ff1a1a;">Rider Agreement</a>.
     </p>
@@ -51,7 +97,7 @@
     <h2>Do I need to sign anything?</h2>
     <p>
       First-time riders agree to a one-time 
-      <a href="RiderAgreement.html" style="color:#ff1a1a;">Rider Agreement</a>.  
+      <a href="RiderAgreement.html" style="color:#ff1a1a;">Rider Agreement</a>.<br>
       You don’t need to sign again unless something changes or it’s for a special event.
     </p>
   </section>
