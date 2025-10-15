@@ -1,3 +1,8 @@
+/* ==========================================================
+   BIG RED CONNECT – Global Stylesheet
+   Version: October 2025 (Unified + Shimmer Compatible)
+========================================================== */
+
 /* ==============================
    GLOBAL LAYOUT
 ============================== */
@@ -17,10 +22,12 @@ h1, h2, h3, p {
 }
 
 /* ==============================
-   HERO + LOGO LOGIC
+   HERO + LOGO HEADER
 ============================== */
+
+/* Homepage hero only */
 .hero {
-  background-image: url("37263759-BD32-4E50-883A-0A5BE2F71928.png"); /* Replace with your fall hero image */
+  background-image: url("images/fall-okc-hero.png");
   background-size: cover;
   background-position: center;
   height: 220px;
@@ -29,19 +36,23 @@ h1, h2, h3, p {
   box-shadow: 0 4px 20px rgba(255, 0, 0, 0.15);
 }
 
-.hero.small { display: none; }
+/* Hide hero on subpages */
+.hero.small {
+  display: none;
+}
 
+/* Subpage logo header */
 .logo-header {
   text-align: center;
   margin: 25px 0 10px 0;
 }
-
 .logo-header img {
   width: 200px;
   max-width: 80%;
   height: auto;
 }
 
+/* Main logo (used on homepage under hero) */
 .main-logo {
   width: 220px;
   margin-top: -40px;
@@ -56,13 +67,11 @@ h1 {
   margin-top: 10px;
   letter-spacing: 0.5px;
 }
-
 h2 {
   color: #ff1a1a;
   font-size: 1.4em;
   margin-top: 30px;
 }
-
 .tagline {
   color: #ccc;
   font-size: 1em;
@@ -81,19 +90,16 @@ h2 {
   text-align: center;
   max-width: 90%;
 }
-
 .status.online {
   background-color: rgba(76, 175, 80, 0.15);
   color: #4CAF50;
   border: 1px solid #4CAF50;
 }
-
 .status.away {
   background-color: rgba(255, 204, 0, 0.15);
   color: #ffcc00;
   border: 1px solid #ffcc00;
 }
-
 .status.offline {
   background-color: rgba(255, 68, 68, 0.15);
   color: #ff4c4c;
@@ -103,6 +109,12 @@ h2 {
 /* ==============================
    BUTTONS
 ============================== */
+.cta-group {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
 .btn {
   display: inline-block;
   padding: 12px 20px;
@@ -116,53 +128,43 @@ h2 {
   position: relative;
   overflow: hidden;
   white-space: nowrap;
+  max-width: 95%;
+  box-sizing: border-box;
 }
-
-.cta-group {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 10px;
-}
-
+/* Primary */
 .btn.primary {
   background: linear-gradient(180deg, #c40000, #9a0000);
   border: 1px solid #c40000;
 }
-
+/* Secondary */
 .btn.secondary {
   background: linear-gradient(180deg, #333, #111);
   border: 1px solid #444;
 }
-
-/* 🪶 Hover / Focus */
-.btn:hover,
-.btn:focus-visible {
+/* Hover + Tap */
+.btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 5px 15px rgba(255, 0, 0, 0.4);
   filter: brightness(1.1);
-  outline: none;
 }
-
-/* 💥 Press (Tap Down) */
 .btn:active {
   transform: scale(0.96);
   filter: brightness(0.9);
   box-shadow: 0 0 8px rgba(255, 0, 0, 0.5) inset;
 }
-
-/* 🌟 Pulse Glow */
+/* Pulse glow */
 .btn.primary::after {
   content: "";
   position: absolute;
   top: 0; left: 0;
   width: 100%; height: 100%;
-  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.3) 10%, transparent 70%);
+  background: radial-gradient(circle at center, rgba(255,255,255,0.3) 10%, transparent 70%);
   opacity: 0;
   transition: opacity 0.3s ease;
 }
-
-.btn.primary:hover::after { opacity: 1; }
+.btn.primary:hover::after {
+  opacity: 1;
+}
 
 /* ==============================
    TILE GRID
@@ -175,7 +177,6 @@ h2 {
   margin: 30px auto;
   padding: 0 20px;
 }
-
 .tile {
   background-color: #111;
   border: 1px solid #222;
@@ -187,7 +188,6 @@ h2 {
   transition: all 0.25s ease;
   box-shadow: 0 2px 6px rgba(255, 0, 0, 0.1);
 }
-
 .tile:hover {
   transform: translateY(-2px);
   border-color: #c40000;
@@ -206,15 +206,16 @@ h2 {
   text-align: left;
   box-shadow: 0 2px 10px rgba(255, 0, 0, 0.15);
 }
-
-.info-section h2 { text-align: center; }
-
+.info-section h2 {
+  text-align: center;
+}
 .info-section ul {
   text-align: left;
   padding-left: 20px;
 }
-
-.info-section li { margin-bottom: 8px; }
+.info-section li {
+  margin-bottom: 8px;
+}
 
 /* ==============================
    REVIEW CARDS
@@ -231,67 +232,50 @@ h2 {
 }
 
 /* ==============================
-   FOOTER
+   CALCULATOR + MAP
 ============================== */
-footer {
-  margin: 40px 0 30px;
-  font-size: 0.85em;
-  color: #aaa;
+.calculator label {
+  display: block;
+  text-align: left;
+  font-weight: 600;
+  margin: 10px auto 4px;
+  max-width: 600px;
 }
-
-footer a {
-  color: #c40000;
-  text-decoration: none;
-}
-
-footer a:hover { text-decoration: underline; }
-
-/* ==============================
-   RESPONSIVE BASE
-============================== */
-@media (max-width: 600px) {
-  h1 { font-size: 1.7em; }
-  .main-logo { width: 180px; margin-top: -20px; }
-  .tile-grid { gap: 10px; }
-  .info-section { padding: 15px; margin: 15px; }
-}
-
-/* ==============================
-   RESPONSIVE + LAYOUT PATCH (Fare Calculator)
-============================== */
-.info-section input,
-.info-section select {
+.calculator input,
+.calculator select {
   width: 100%;
   box-sizing: border-box;
   padding: 12px;
-  margin: 6px 0 14px;
-  background-color: #111;
+  margin-bottom: 12px;
   border: 1px solid #333;
   border-radius: 8px;
+  background: #111;
   color: #fff;
-  font-size: 1em;
 }
-
-#stopsWrap { margin-top: 10px; }
-#addStopBtn { margin: 8px 0 12px; }
-
+.location-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin: 14px 0 18px;
+}
 #map {
-  width: 100%;
-  height: 250px;
+  height: 260px;
   border: 2px solid #c40000;
   border-radius: 10px;
-  margin: 16px 0;
+  margin: 10px 0 18px;
 }
-
-#fairness-note, #airport-note {
+#fairness-note,
+#airport-note {
   text-align: left;
   color: #ccc;
   font-size: 0.95em;
   margin-bottom: 10px;
 }
-
-#airport-note { color: #ffcc00; font-weight: 500; }
-
+#airport-note {
+  color: #ffcc00;
+  font-weight: 500;
+}
 #result {
   background: #111;
   border: 1px solid #c40000;
@@ -303,7 +287,6 @@ footer a:hover { text-decoration: underline; }
   margin-left: auto;
   margin-right: auto;
 }
-
 #result .total {
   font-size: 1.6em;
   color: #ff4444;
@@ -313,107 +296,39 @@ footer a:hover { text-decoration: underline; }
 }
 
 /* ==============================
-   MOBILE / NIGHT MODE PATCH
+   FOOTER
+============================== */
+footer {
+  margin: 40px 0 30px;
+  font-size: 0.85em;
+  color: #aaa;
+}
+footer a {
+  color: #c40000;
+  text-decoration: none;
+}
+footer a:hover {
+  text-decoration: underline;
+}
+
+/* ==============================
+   RESPONSIVE ADJUSTMENTS
 ============================== */
 @media (max-width: 600px) {
-  .calculator input,
-  .calculator select { font-size: 1em; }
+  h1 { font-size: 1.7em; }
+  .main-logo { width: 180px; margin-top: -20px; }
+  .tile-grid { gap: 10px; }
+  .info-section { padding: 15px; margin: 15px; }
+  #map { height: 200px; }
   .btn { width: 100%; font-size: 1em; }
   .location-buttons { flex-direction: column; gap: 10px; }
-  #map { height: 200px; }
+}
+@media (max-width: 480px) {
+  .info-section { padding: 14px; margin: 10px; }
+  h1 { font-size: 1.6em; }
+  footer { margin-top: 35px; font-size: 0.85em; }
 }
 
-/* 🌙 Apple Night-Shift / Dark-Mode Lock */
-@supports (color-scheme: light dark) {
-  :root {
-    color-scheme: only dark;
-  }
-  .btn.primary,
-  .status.online,
-  .status.away,
-  .status.offline {
-    -webkit-text-fill-color: inherit !important;
-    color: inherit !important;
-  }
-  .btn.primary,
-  .btn.secondary {
-    background-blend-mode: normal !important;
-  }
-   /* ==============================
-   REVIEW PAGE EXTENSION
-   (Google Form visual match)
-   Added Oct 2025
-============================== */
-
-body.reviews-page {
-  background-color: #000;
-  color: #fff;
-}
-
-.reviews-page h1 {
-  color: #ff1a1a;
-}
-
-.reviews-page .description {
-  color: #ccc;
-  margin-bottom: 1.5rem;
-}
-
-/* Frame container */
-.reviews-page iframe {
-  width: 100%;
-  height: 720px;
-  border: 2px solid #c40000;
-  border-radius: 10px;
-  background-color: #111;
-  box-shadow: 0 4px 20px rgba(255, 0, 0, 0.2);
-}
-
-/* QR + Note styling */
-.reviews-page .qr-container {
-  text-align: center;
-  margin-top: 1.8rem;
-}
-
-.reviews-page .qr-container img {
-  max-width: 180px;
-  border: 2px solid #c40000;
-  border-radius: 10px;
-  padding: 6px;
-  background-color: #111;
-}
-
-.reviews-page .note {
-  color: #888;
-  font-size: 0.9em;
-  margin-top: 1rem;
-}
-
-/* Responsive tweak */
-@media (max-width: 600px) {
-  .reviews-page iframe {
-    height: 600px;
-  }
-/* ==============================
-   MOBILE VIEWPORT FIXES (Oct 2025)
-============================== */
-
-/* Prevent map and footer from clipping under system bars */
-html, body {
-  height: 100%;
-  overflow-x: hidden;
-}
-
-#map {
-  margin-bottom: 20px;
-}
-
-/* Add breathing room at bottom for iOS dynamic bar */
-footer {
-  padding-bottom: env(safe-area-inset-bottom, 24px);
-}
-
-/* Ensure bottom CTA buttons don't touch edges */
-.btn {
-  margin-bottom: 8px;
-}
+/* ==========================================================
+   END OF FILE
+========================================================== */
