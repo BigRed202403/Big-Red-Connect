@@ -51,6 +51,25 @@
   <!-- ✈️ Google Maps JS -->
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places,geometry&callback=initGoogle" async defer></script>
 </head>
+  <script>
+  // 🔄 Sync current status from sessionStorage (set by index.html)
+  document.addEventListener('DOMContentLoaded', () => {
+    const pill = document.getElementById('status-pill');
+    const state = sessionStorage.getItem('bigred_status') || 'offline';
+    const map = {
+      online: ['🟢 Big Red is Live', 'status online'],
+      away: ['🟡 Limited Availability', 'status away'],
+      offline: ['🔴 Offline', 'status offline']
+    };
+    const [text, cls] = map[state];
+    pill.textContent = text;
+    pill.className = cls;
+
+    // keep status.js hooks functional
+    const evt = new CustomEvent("statusUpdated", { detail: state });
+    document.dispatchEvent(evt);
+  });
+</script>
 <body>
 
   <!-- 🚗 Logo Header (no hero on subpages) -->
