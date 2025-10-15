@@ -4,6 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Fare Calculator – Big Red Connect</title>
+
+  <!-- 🚫 Force fresh reloads after publishing -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+
   <link rel="stylesheet" href="style.css" />
 
   <!-- ▸ Shimmer/Splash (once per session) -->
@@ -12,44 +18,53 @@
       position: fixed; inset: 0; background:#000; z-index:10000;
       display:flex; flex-direction:column; align-items:center; justify-content:center;
     }
-    #shimmer .logo { width: 160px; max-width: 50vw; height:auto; animation:pulse 1.2s infinite ease-in-out; }
-    #shimmer .msg { color:#bbb; margin-top:14px; font-size:0.95em; letter-spacing:.3px; }
-    @keyframes pulse { 0%{opacity:.5; transform:scale(.98)} 50%{opacity:1; transform:scale(1)} 100%{opacity:.5; transform:scale(.98)} }
+    #shimmer .logo {
+      width: 160px; max-width: 50vw; height:auto;
+      animation:pulse 1.2s infinite ease-in-out;
+    }
+    #shimmer .msg {
+      color:#bbb; margin-top:14px; font-size:0.95em; letter-spacing:.3px;
+    }
+    @keyframes pulse {
+      0%{opacity:.5; transform:scale(.98)}
+      50%{opacity:1; transform:scale(1)}
+      100%{opacity:.5; transform:scale(.98)}
+    }
   </style>
   <script>
     window.SPLASH_MESSAGE = "Loading Fare Calculator…";
     (function(){
       if (sessionStorage.getItem("brc_splash_shown")) return;
-      var w=document.createElement("div");
+      const w=document.createElement("div");
       w.id="shimmer";
-      w.innerHTML = '<img class="logo" src="images/official_logo.jpeg" alt="Big Red Connect Logo"><div class="msg">'+(window.SPLASH_MESSAGE||"Loading…")+'</div>';
+      w.innerHTML = '<img class="logo" src="official_logo.jpeg" alt="Big Red Connect Logo"><div class="msg">'+(window.SPLASH_MESSAGE||"Loading…")+'</div>';
       document.addEventListener("DOMContentLoaded", ()=>document.body.appendChild(w));
-      window.addEventListener("load", ()=> {
+      window.addEventListener("load", ()=>{
         setTimeout(()=>{
           w.style.transition="opacity .35s"; w.style.opacity="0";
-          setTimeout(()=>{ w.remove(); sessionStorage.setItem("brc_splash_shown","1"); }, 350);
-        }, 350);
+          setTimeout(()=>{ w.remove(); sessionStorage.setItem("brc_splash_shown","1"); },350);
+        },350);
       });
     })();
   </script>
 
-  <!-- Google Maps JS (kept async) -->
+  <!-- ✈️ Google Maps JS -->
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places,geometry&callback=initGoogle" async defer></script>
 </head>
 <body>
 
-  <!-- Logo header (no hero on subpages) -->
+  <!-- 🚗 Logo Header (no hero on subpages) -->
   <div class="logo-header">
-    <img src="images/official_logo.jpeg" alt="Big Red Connect Logo" />
+    <img src="official_logo.jpeg" alt="Big Red Connect Logo" />
   </div>
 
   <h1>Fare Calculator</h1>
   <p class="tagline">Plan your next ride connection — quick, simple, and local.</p>
 
-  <!-- Status pill -->
+  <!-- 🟢 Status Pill -->
   <div id="status-pill" class="status status--loading">Checking status…</div>
 
-  <!-- Calculator -->
+  <!-- 🧮 Fare Calculator -->
   <section class="info-section calculator">
     <label for="pickup">Pickup Location</label>
     <input id="pickup" type="text" placeholder="Enter pickup address or place">
@@ -85,11 +100,9 @@
 
     <button class="btn primary" id="calcBtn">💲 Calculate Fare</button>
 
-    <!-- Default Text RED fallback (before calculation) -->
+    <!-- Default Text RED fallback -->
     <div id="text-red-wrapper" style="margin-top:10px;">
-      <a href="sms:+14053784024?&body=Hey%20Big%20Red%20—%20I’d%20like%20to%20plan%20a%20ride%20connection." class="btn secondary">
-        📲 Text RED
-      </a>
+      <a href="sms:+14053784024?&body=Hey%20Big%20Red%20—%20I’d%20like%20to%20plan%20a%20ride%20connection." class="btn secondary">📲 Text RED</a>
     </div>
 
     <div id="result" style="display:none;"></div>
@@ -97,7 +110,7 @@
     <p class="disclaimer">*Estimates only. Final fare may vary slightly based on route or wait time.</p>
   </section>
 
-  <!-- Footer -->
+  <!-- 🦶 Footer -->
   <footer>
     <p>&copy; 2025 Big Red Connect — <a href="index.html">Return to Home</a></p>
     <p style="font-size:0.8em;color:#777;margin-top:10px;line-height:1.4;">
@@ -107,14 +120,13 @@
     </p>
   </footer>
 
-  <!-- Status pill logic -->
+  <!-- 🔧 Status Pill Logic -->
   <script src="status.js"></script>
 
-  <!-- Fare logic -->
+  <!-- 🚗 Fare Calculator Logic -->
   <script>
   const HQ={lat:35.2902,lng:-97.5289};
   const WORKER_URL="https://falling-night-3e4d.bigredtransportation.workers.dev";
-
   const ZONE1=["oklahoma city","moore","norman","midwest city","del city"];
   const ZONE2=["edmond","yukon","mustang","newcastle","tuttle","choctaw","harrah","jones","luther","far east norman","east norman"];
   const ZONE3=["shawnee","tecumseh","guthrie","blanchard","wellston","seminole","chickasha","goldsby","lexington","noble"];
@@ -162,7 +174,7 @@
       document.getElementById('dropoff').value=decoded;
       dropPlace={formatted_address:decoded,name:decoded};
       detectAirportAndSetType();
-      // try to prefill pickup with current device location
+      // Auto pickup as current device location
       setTimeout(()=>useMyLocation('pickup'),600);
     }
 
@@ -185,6 +197,7 @@
     wrap.appendChild(div);
     new google.maps.places.Autocomplete(document.getElementById(id));
   }
+
   function removeStop(id){
     document.getElementById(`row_${id}`)?.remove();
     stopInputs=stopInputs.filter(s=>s!==id);
@@ -210,9 +223,7 @@
         const mi=distMi(ref,{lat:pickupLatLng.lat(),lng:pickupLatLng.lng()});
         fee=distanceFee(mi);
         msg=`Pickup in Zone 1 (${cap(pCity)}) — ${mi.toFixed(1)} mi away → $${fee}`;
-      } else {
-        msg=`Pickup in Zone 1 (${cap(pCity)}) — standard local rate.`;
-      }
+      } else { msg=`Pickup in Zone 1 (${cap(pCity)}) — standard local rate.`; }
     } else if(inZ2){fee=(driverPos&&ZONE2.includes(dCity))?0:10;msg=`Pickup in Zone 2 (${cap(pCity)}) → $${fee}`;}
     else if(inZ3){fee=(driverPos&&ZONE3.includes(dCity))?0:20;msg=`Pickup in Zone 3 (${cap(pCity)}) → $${fee}`;}
     else{
@@ -234,7 +245,7 @@
         pickupCity=await reverseCity(latlng);
         map.setCenter(pickupLatLng);map.setZoom(12);
         await computeFairnessNote();
-      }else{
+      } else {
         dropoffLatLng=new google.maps.LatLng(latlng.lat,latlng.lng);
         map.panTo(dropoffLatLng);
       }
@@ -251,9 +262,7 @@
     try{
       const route=await new Promise((res,rej)=>directionsService.route({origin:pickup,destination:dropoff,waypoints:stops,travelMode:"DRIVING"},(r,s)=>{if(s==="OK")res(r);else rej(s);}));
       const miles=route.routes[0].legs.reduce((m,l)=>m+(l.distance?.value||0),0)/1609.34;
-
-      smartRideTypeDefault();
-      detectAirportAndSetType();
+      smartRideTypeDefault();detectAirportAndSetType();
 
       const tripVal=document.getElementById('tripType').value;
       const base=(tripVal==="15_airport")?15:parseFloat(tripVal);
@@ -286,7 +295,7 @@
   function smartRideTypeDefault(){
     let v="10";
     const d=new Date(),day=d.getDay(),h=d.getHours();
-    if(day>=1&&day<=5&&((h>=5&&h<10)||(h>=16&&h<19)))v="15"; // rush hour Mon–Fri
+    if(day>=1&&day<=5&&((h>=5&&h<10)||(h>=16&&h<19)))v="15";
     document.getElementById("tripType").value=v;
   }
 
