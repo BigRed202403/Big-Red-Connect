@@ -4,10 +4,37 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Big Red Connect</title>
-  <!-- ✅ Corrected stylesheet path for GitHub Pages -->
-  <link rel="stylesheet" href="/Big-Red-Connect/style.css" />
-  <!-- ✅ Load Google Places -->
+  <link rel="stylesheet" href="style.css" />
+  <!-- Google Places (for the “Where to?” box) -->
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places"></script>
+
+  <!-- ▸ Shimmer/Splash (once per session) -->
+  <style>
+    #shimmer {
+      position: fixed; inset: 0; background:#000; z-index:10000;
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+    }
+    #shimmer .logo { width: 160px; max-width: 50vw; height:auto; animation:pulse 1.2s infinite ease-in-out; }
+    #shimmer .msg { color:#bbb; margin-top:14px; font-size:0.95em; letter-spacing:.3px; }
+    @keyframes pulse { 0%{opacity:.5; transform:scale(.98)} 50%{opacity:1; transform:scale(1)} 100%{opacity:.5; transform:scale(.98)} }
+  </style>
+  <script>
+    // Custom per-page message:
+    window.SPLASH_MESSAGE = "Loading Big Red Connect…";
+    (function(){
+      if (sessionStorage.getItem("brc_splash_shown")) return;
+      var w=document.createElement("div");
+      w.id="shimmer";
+      w.innerHTML = '<img class="logo" src="images/official_logo.jpeg" alt="Big Red Connect Logo"><div class="msg">'+(window.SPLASH_MESSAGE||"Loading…")+'</div>';
+      document.addEventListener("DOMContentLoaded", ()=>document.body.appendChild(w));
+      window.addEventListener("load", ()=> {
+        setTimeout(()=>{
+          w.style.transition="opacity .35s"; w.style.opacity="0";
+          setTimeout(()=>{ w.remove(); sessionStorage.setItem("brc_splash_shown","1"); }, 350);
+        }, 350);
+      });
+    })();
+  </script>
 </head>
 <body>
 
@@ -15,7 +42,7 @@
   <div class="hero"></div>
 
   <!-- 🚗 Logo -->
-  <img src="/Big-Red-Connect/images/official_logo.jpeg" alt="Big Red Connect Logo" class="main-logo" />
+  <img src="images/official_logo.jpeg" alt="Big Red Connect Logo" class="main-logo" />
 
   <!-- 🏷️ Tagline -->
   <p class="tagline">
@@ -31,11 +58,11 @@
     <a href="tel:14053784024" class="btn secondary">📞 Call Big Red</a>
   </div>
 
-  <!-- 🧭 Quick Destination -->
+  <!-- 🧭 “Where To?” Smart Destination Box -->
   <div class="info-section" style="text-align:center; margin-top:20px;">
     <h2 style="margin-bottom:10px;">Plan Your Connection</h2>
     <form id="quickDestination" onsubmit="goToFare(event)" style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
-      <input id="quickWhere" type="text" placeholder="Where to?" required 
+      <input id="quickWhere" type="text" placeholder="Where to?" required
              style="flex:1;min-width:220px;max-width:400px;padding:12px;border-radius:10px;border:1px solid #333;background:#111;color:#fff;">
       <button type="submit" class="btn primary">➡️ Next</button>
     </form>
@@ -46,10 +73,10 @@
 
   <!-- 🔗 Navigation Tiles -->
   <div class="tile-grid">
-    <a href="/Big-Red-Connect/farecalculator.html" class="tile">💲<br>Fare Calculator</a>
-    <a href="/Big-Red-Connect/live.html" class="tile">🗺️<br>Live Map</a>
-    <a href="/Big-Red-Connect/reviews.html" class="tile">⭐<br>Rider Reviews</a>
-    <a href="/Big-Red-Connect/faq.html" class="tile">ℹ️<br>FAQ & Info</a>
+    <a href="farecalculator.html" class="tile">💲<br>Fare Calculator</a>
+    <a href="live.html" class="tile">🗺️<br>Live Map</a>
+    <a href="reviews.html" class="tile">⭐<br>Rider Reviews</a>
+    <a href="faq.html" class="tile">ℹ️<br>FAQ & Info</a>
     <a href="https://www.facebook.com/share/1BWCx63CUt/?mibextid=wwXIfr" target="_blank" class="tile">👍<br>Follow on Facebook</a>
   </div>
 
@@ -90,13 +117,13 @@
       ⭐⭐⭐⭐⭐ “Feels like riding with a friend, not an app. My go-to for nights out.”<br>
       — <strong>Taylor, OKC</strong>
     </div>
-    <p><a href="/Big-Red-Connect/reviews.html">See more reviews →</a></p>
+    <p><a href="reviews.html">See more reviews →</a></p>
   </section>
 
   <!-- 🦶 Footer -->
   <footer>
     <p>Questions or ride connection requests?<br>Text <strong>“RED”</strong> to (405) 378-4024.</p>
-    <p><a href="/Big-Red-Connect/faq.html">FAQ & Policies</a> | <a href="/Big-Red-Connect/reviews.html">Leave a Review</a></p>
+    <p><a href="faq.html">FAQ & Policies</a> | <a href="reviews.html">Leave a Review</a></p>
     <p>&copy; 2025 Big Red Connect</p>
     <p style="font-size:0.8em;color:#777;margin-top:10px;line-height:1.4;">
       Vehicle imagery features actual Big Red Connect fleet vehicles.<br>
@@ -105,10 +132,11 @@
     </p>
   </footer>
 
-  <!-- 🔧 Manual Status -->
+  <!-- Manual status (control panel lives here) -->
   <script>
-    window.CURRENT_STATUS = "away";
+    window.CURRENT_STATUS = "offline";  // "online" | "away" | "offline"
 
+    // Versioned session reset helper
     const siteVer = "2025-10-15";
     if (sessionStorage.getItem("brc_ver") !== siteVer) {
       sessionStorage.clear();
@@ -119,9 +147,10 @@
     }
   </script>
 
-  <script src="/Big-Red-Connect/status.js"></script>
+  <!-- Status pill logic (shared) -->
+  <script src="status.js"></script>
 
-  <!-- ✈️ Fixed redirect + autocomplete -->
+  <!-- “Where To?” logic -->
   <script>
     let whereAuto;
     function initQuickSearch() {
@@ -130,20 +159,15 @@
         { fields: ["formatted_address", "name"] }
       );
     }
-
     function goToFare(e) {
       e.preventDefault();
       const dest = document.getElementById("quickWhere").value.trim();
       if (dest) {
-        const base = window.location.pathname.includes("/Big-Red-Connect/")
-          ? "/Big-Red-Connect/"
-          : "/";
-        window.location.href = `${base}farecalculator.html?dropoff=${encodeURIComponent(dest)}`;
+        // relative path keeps this working on GitHub Pages and locally
+        window.location.href = 'farecalculator.html?dropoff=' + encodeURIComponent(dest);
       }
     }
-
     window.onload = initQuickSearch;
   </script>
-
 </body>
 </html>
