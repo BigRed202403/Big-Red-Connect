@@ -54,12 +54,15 @@
   <script>
   // 🚫 Force reload every visit (no cache retained)
   (async function() {
+    const savedStatus = sessionStorage.getItem('bigred_status'); // preserve driver status
     if ('caches' in window) {
       const keys = await caches.keys();
       for (const key of keys) await caches.delete(key);
     }
-    sessionStorage.clear();
     localStorage.clear();
+    sessionStorage.clear();
+    if (savedStatus) sessionStorage.setItem('bigred_status', savedStatus); // restore after clear
+
     // Append random query to force a new request each time
     const currentUrl = window.location.href.split('?')[0];
     if (!window.location.search.includes('freshReload')) {
