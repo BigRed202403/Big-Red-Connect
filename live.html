@@ -13,16 +13,22 @@
   <!-- 🎨 Styles -->
   <link rel="stylesheet" href="style.css" />
 
-  <!-- ✈️ Google Maps fallback (only loads if Glympse unavailable) -->
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I"></script>
-
   <style>
-    #glympse-frame, #fallback-map {
+    iframe {
       width: 100%;
       height: 500px;
       border: none;
       border-radius: 10px;
       margin-top: 10px;
+    }
+    #offline-box {
+      background: #111;
+      border: 1px solid #ffcc00;
+      border-radius: 8px;
+      padding: 14px;
+      text-align: center;
+      color: #ccc;
+      margin-top: 15px;
     }
   </style>
 </head>
@@ -42,19 +48,25 @@
   <!-- 🗺️ Live Map Section -->
   <section class="info-section">
     <h2>Real-Time Location</h2>
-    <p>Watch the live Glympse feed below (auto-updates every few seconds). If unavailable, a fallback map will appear.</p>
+    <p>Watch Big Red Connect’s live movement when available.  
+      When I’m offline, a message will appear below.</p>
 
     <!-- Glympse Embed -->
-    <iframe 
-      id="glympse-frame"
-      src="https://glympse.com/!bigredconnect"
-      title="Big Red Connect Live Map"
-      loading="lazy"
-      allowfullscreen>
-    </iframe>
+    <div id="map-container">
+      <iframe 
+        id="glympse-frame"
+        src="https://glympse.com/!bigredconnect"
+        title="Big Red Connect Live Map"
+        loading="lazy"
+        allowfullscreen>
+      </iframe>
+    </div>
 
-    <!-- Fallback Google Map -->
-    <div id="fallback-map" style="display:none;"></div>
+    <!-- Offline message placeholder -->
+    <div id="offline-box" style="display:none;">
+      <strong>Big Red Connect is currently offline.</strong><br>
+      The live map will appear here once I’m back online and sharing.
+    </div>
   </section>
 
   <!-- 🦶 Footer -->
@@ -70,31 +82,22 @@
   <!-- 🔧 Status Sync -->
   <script src="status.js"></script>
 
-  <!-- 🗺️ Fallback Handler -->
+  <!-- 🧭 Map Visibility Logic -->
   <script>
-  // If Glympse doesn't load properly, display a fallback Google Map.
-  window.addEventListener("load", () => {
-    const iframe = document.getElementById("glympse-frame");
-    const fallback = document.getElementById("fallback-map");
-    setTimeout(() => {
-      // If the Glympse iframe failed (e.g., no network or expired link)
-      if (!iframe.contentDocument || iframe.contentDocument.body.innerHTML.length === 0) {
-        iframe.style.display = "none";
-        fallback.style.display = "block";
-        const map = new google.maps.Map(fallback, {
-          center: { lat: 35.4676, lng: -97.5164 },
-          zoom: 10,
-          mapTypeControl: false,
-          streetViewControl: false
-        });
-        new google.maps.Marker({
-          position: { lat: 35.4676, lng: -97.5164 },
-          map,
-          title: "Big Red Connect (Default Coverage Area)"
-        });
-      }
-    }, 3500);
+  document.addEventListener("DOMContentLoaded", () => {
+    const state = sessionStorage.getItem("bigred_status") || "offline";
+    const glympse = document.getElementById("glympse-frame");
+    const offlineBox = document.getElementById("offline-box");
+
+    if (state === "offline") {
+      glympse.style.display = "none";
+      offlineBox.style.display = "block";
+    } else {
+      glympse.style.display = "block";
+      offlineBox.style.display = "none";
+    }
   });
   </script>
+
 </body>
 </html>
