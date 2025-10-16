@@ -66,7 +66,6 @@
 
     <button class="btn primary" id="calcBtn">💲 Calculate Fare</button>
 
-    <!-- Default Text RED -->
     <div id="text-red-wrapper" style="margin-top:10px;">
       <a href="sms:+14053784024?&body=Hey%20Big%20Red%20—%20I’d%20like%20to%20plan%20a%20ride%20connection." class="btn secondary">📲 Text RED</a>
     </div>
@@ -90,7 +89,7 @@
   const HQ={lat:35.2902,lng:-97.5289};
   const WORKER_URL="https://falling-night-3e4d.bigredtransportation.workers.dev";
   const ZONE1=["oklahoma city","moore","norman","midwest city","del city"];
-  const ZONE2=["edmond","yukon","mustang","newcastle","tuttle","choctaw","harrah","jones","luther","far east norman","east norman"];
+  const ZONE2=["edmond","yukon","mustang","newcastle","tuttle","choctaw","harrah","jones","luther"];
   const ZONE3=["shawnee","tecumseh","guthrie","blanchard","wellston","seminole","chickasha","goldsby","lexington","noble"];
 
   let map,geocoder,directionsService,directionsRenderer;
@@ -128,7 +127,7 @@
     document.getElementById('addStopBtn').onclick=addStopField;
     document.getElementById('calcBtn').onclick=calculateFare;
 
-    // Prefill from main page
+    // Prefill from index.html
     const params=new URLSearchParams(window.location.search);
     const dest=params.get('dropoff');
     if(dest){
@@ -170,7 +169,6 @@
 
   async function getDriverLocation(){try{const r=await fetch(WORKER_URL,{cache:"no-store"});const j=await r.json();if(j.latitude)driverPos={lat:+j.latitude,lng:+j.longitude};}catch{}}
   function distMi(a,b){return google.maps.geometry.spherical.computeDistanceBetween(new google.maps.LatLng(a.lat,a.lng),new google.maps.LatLng(b.lat,b.lng))/1609.34;}
-  function distanceFee(mi){return mi<=15?0:mi<=30?10:20;}
   function cap(s){return s?s.charAt(0).toUpperCase()+s.slice(1):s;}
 
   async function computeFairnessNote(){
@@ -178,19 +176,28 @@
     const pCity=(pickupCity||"").toLowerCase().trim();
     const dCity=(driverCity||"").toLowerCase().trim();
     const ref=driverPos||HQ;let fee=0,msg="",src=driverPos?"Live Location":"HQ";
+
+    const mi=distMi(ref,{lat:pickupLatLng.lat(),lng:pickupLatLng.lng()});
     const inZ1=ZONE1.includes(pCity),inZ2=ZONE2.includes(pCity),inZ3=ZONE3.includes(pCity);
-    if(inZ1){
-      if(driverPos&&!ZONE1.includes(dCity)){
-        const mi=distMi(ref,{lat:pickupLatLng.lat(),lng:pickupLatLng.lng()});
-        fee=distanceFee(mi);
-        msg=`Pickup in Zone 1 (${cap(pCity)}) — ${mi.toFixed(1)} mi away → $${fee}`;
-      } else { msg=`Pickup in Zone 1 (${cap(pCity)}) — standard local rate.`; }
-    } else if(inZ2){fee=(driverPos&&ZONE2.includes(dCity))?0:10;msg=`Pickup in Zone 2 (${cap(pCity)}) → $${fee}`;}
-    else if(inZ3){fee=(driverPos&&ZONE3.includes(dCity))?0:20;msg=`Pickup in Zone 3 (${cap(pCity)}) → $${fee}`;}
-    else{
-      const mi=distMi(ref,{lat:pickupLatLng.lat(),lng:pickupLatLng.lng()});
-      fee=distanceFee(mi);msg=`Unrecognized city — ${mi.toFixed(1)} mi from ${src} → $${fee}`;
+
+    // Base message
+    if(inZ1||inZ2||inZ3){
+      // Only apply fee for short/local trips far from base
+      if(mi>20 && mi<=50){
+        msg=`Pickup in ${cap(pCity)} (${mi.toFixed(1)} mi from ${src}) — long-distance trip likely fair; no travel fee.`;
+        fee=0;
+      } else if(mi>50){
+        fee=20;msg=`Pickup in ${cap(pCity)} — very distant (${mi.toFixed(1)} mi from ${src}) → $${fee} travel fairness fee.`;
+      } else {
+        msg=`Pickup in ${cap(pCity)} — standard local rate.`;
+      }
+    } else {
+      // Unrecognized city
+      if(mi<=25){msg=`Unrecognized city (${mi.toFixed(1)} mi) — standard local rate.`;}
+      else if(mi>25 && mi<=50){msg=`Unrecognized area (${mi.toFixed(1)} mi) — long trip, fairly covered.`;}
+      else {fee=20;msg=`Unrecognized distant area (${mi.toFixed(1)} mi from ${src}) → $${fee} travel fairness fee.`;}
     }
+
     document.getElementById('fairness-note').innerHTML=`${msg}<br><span style="color:#777;font-size:0.85em;">Source: ${src}</span>`;
     return fee;
   }
@@ -236,7 +243,7 @@
         map.setCenter(pickupLatLng);map.setZoom(12);
         await computeFairnessNote();
       } else {
-        dropoffLatLng=new google.maps.LatLng(latlng.lat,latlng.lng);
+        dropoffLatLng=new google.maps.LatLng(latlng.lat(),latlng.lng());
         map.panTo(dropoffLatLng);
       }
     },()=>alert("Could not get your location permission."));
@@ -273,7 +280,6 @@
     let tier3=Math.max(0,miles-20)*1.00;
     const mileageSubtotal=tier2+tier3;
 
-    // Fare total
     let fare=base+mileageSubtotal+(stops.length*5)+fairnessFee;
     const pay=document.getElementById('payment').value;
     if(pay==="card")fare+=fare*0.033+fare*0.024;
@@ -301,8 +307,7 @@
   }
   </script>
 
-  <!-- 🔄 Sync Status Across Pages -->
+  <!-- 🔄 Sync Status -->
   <script src="status.js"></script>
-
 </body>
 </html>
