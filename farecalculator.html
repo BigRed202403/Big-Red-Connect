@@ -88,9 +88,11 @@
   <script>
   const HQ={lat:35.2902,lng:-97.5289};
   const WORKER_URL="https://falling-night-3e4d.bigredtransportation.workers.dev";
+  
+  // ✅ Updated Zones
   const ZONE1=["oklahoma city","moore","norman","midwest city","del city"];
-  const ZONE2=["edmond","yukon","mustang","newcastle","tuttle","choctaw","harrah","jones","luther"];
-  const ZONE3=["shawnee","tecumseh","guthrie","blanchard","wellston","seminole","chickasha","goldsby","lexington","noble"];
+  const ZONE2=["edmond","yukon","mustang","newcastle","tuttle","choctaw","harrah","jones","luther","noble","far east norman","east norman"];
+  const ZONE3=["shawnee","tecumseh","guthrie","blanchard","wellston","seminole","chickasha","goldsby","lexington","purcell"];
 
   let map,geocoder,directionsService,directionsRenderer;
   let pickupLatLng=null,dropoffLatLng=null,pickupPlace=null,dropPlace=null;
@@ -180,9 +182,7 @@
     const mi=distMi(ref,{lat:pickupLatLng.lat(),lng:pickupLatLng.lng()});
     const inZ1=ZONE1.includes(pCity),inZ2=ZONE2.includes(pCity),inZ3=ZONE3.includes(pCity);
 
-    // Base message
     if(inZ1||inZ2||inZ3){
-      // Only apply fee for short/local trips far from base
       if(mi>20 && mi<=50){
         msg=`Pickup in ${cap(pCity)} (${mi.toFixed(1)} mi from ${src}) — long-distance trip likely fair; no travel fee.`;
         fee=0;
@@ -192,7 +192,6 @@
         msg=`Pickup in ${cap(pCity)} — standard local rate.`;
       }
     } else {
-      // Unrecognized city
       if(mi<=25){msg=`Unrecognized city (${mi.toFixed(1)} mi) — standard local rate.`;}
       else if(mi>25 && mi<=50){msg=`Unrecognized area (${mi.toFixed(1)} mi) — long trip, fairly covered.`;}
       else {fee=20;msg=`Unrecognized distant area (${mi.toFixed(1)} mi from ${src}) → $${fee} travel fairness fee.`;}
@@ -243,7 +242,7 @@
         map.setCenter(pickupLatLng);map.setZoom(12);
         await computeFairnessNote();
       } else {
-        dropoffLatLng=new google.maps.LatLng(latlng.lat(),latlng.lng());
+        dropoffLatLng=new google.maps.LatLng(latlng.lat,latlng.lng);
         map.panTo(dropoffLatLng);
       }
     },()=>alert("Could not get your location permission."));
@@ -275,7 +274,6 @@
     const tripVal=document.getElementById('tripType').value;
     const base=(tripVal==="15_airport")?15:parseFloat(tripVal);
 
-    // Mileage logic
     let tier2=Math.max(0,Math.min(10,miles-10))*1.25;
     let tier3=Math.max(0,miles-20)*1.00;
     const mileageSubtotal=tier2+tier3;
