@@ -5,8 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Fare Calculator (Embedded) – Big Red Connect</title>
   <link rel="stylesheet" href="style.css">
-
-  <!-- ✈️ Google Maps -->
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places,geometry" async defer></script>
 </head>
 <body>
@@ -53,11 +51,7 @@
 
   <script>
   const HQ = { lat: 35.31953, lng: -97.51199 };
-  let refPoint = HQ;
-  let refLabel = "HQ (Offline Mode)";
-  let stopInputs = [];
 
-  // 📍 Distance helper
   function distMi(a,b){
     return google.maps.geometry
       ? google.maps.geometry.spherical.computeDistanceBetween(
@@ -67,32 +61,31 @@
       : 0;
   }
 
-  // 🧭 Reference selector
-  async function getDriverReference() {
+  async function getReferencePoint(){
     const status = localStorage.getItem("bigred_status") || "offline";
-    let ref = null, refLabel = "HQ (Offline Mode)";
+    let ref = null;
+    let label = "HQ (Offline Mode)";
+
     try {
       const lat = parseFloat(localStorage.getItem("brc_ref_lat"));
       const lng = parseFloat(localStorage.getItem("brc_ref_lng"));
       if (status === "online" && !isNaN(lat) && !isNaN(lng)) {
-        ref = { lat, lng };
-        refLabel = "Live Location";
+        const live = { lat, lng };
+        const dist = distMi(HQ, live);
+        if (dist < 100) {
+          ref = live;
+          label = "Live Location";
+        }
       }
-    } catch (e) { console.warn("⚠️ read error", e); }
+    } catch(e){ console.warn("Live location check failed:", e); }
 
     if (!ref) ref = HQ;
-    else if (distMi(HQ, ref) > 100) {
-      console.warn("⚠️ Out-of-range live coords — using HQ fallback");
-      ref = HQ; refLabel = "HQ (Offline Mode)";
-    }
-
-    localStorage.setItem("brc_ref_lat", ref.lat);
-    localStorage.setItem("brc_ref_lng", ref.lng);
-    document.getElementById("source-note").textContent = `📍 Source: ${refLabel}`;
-    return { ref, refLabel };
+    document.getElementById("source-note").textContent = `📍 Source: ${label}`;
+    return { ref, label };
   }
 
-  // ➕ Stop field
+  let stopInputs = [];
+
   function addStopField(){
     if(stopInputs.length>=3){alert("Limit 3 stops.");return;}
     const id=`stop_${Date.now()}`;stopInputs.push(id);
@@ -114,9 +107,8 @@
     document.querySelectorAll("#stopsWrap label").forEach((l,i)=>l.textContent=`Stop ${i+1}`);
   }
 
-  // 🚀 Initialize Google Maps + calculator
   window.initGoogle = async function(){
-    const { ref, refLabel } = await getDriverReference();
+    const { ref, label } = await getReferencePoint();
 
     const geocoder = new google.maps.Geocoder();
     const directionsService = new google.maps.DirectionsService();
@@ -159,13 +151,11 @@
       const distToPickup=distMi(ref,pickupCoords);
       const etaMins=distToPickup<=1?2:Math.round((distToPickup/30)*60);
 
-      // Rush Hour logic
       const h=new Date().getHours();
       const rush=(h>=5&&h<9)||(h>=15&&h<19);
       document.getElementById("rushhour-note").innerHTML=
         rush?"🚦 Rush Hour pricing in effect (5–9 AM & 3–7 PM)": "";
 
-      // Airport detection
       const dropLower=dropoff.toLowerCase();
       const airport=/airport|intl|regional|jet center|hangar/.test(dropLower)
                    && !/tinker|afb|air force|base|ang/.test(dropLower);
@@ -173,21 +163,15 @@
         airport?"✈️ Airport ride detected — $15 base applied automatically.":"";
 
       let base=airport?15:rush?15:10;
-
-      // Mileage tiers
       const tier2=Math.max(0,Math.min(10,miles-10))*1.25;
       const tier3=Math.max(0,miles-20)*1.00;
       const mileageSubtotal=tier2+tier3;
 
-      // Fairness fee
       let fairnessFee=0;
       if(distToPickup>50)fairnessFee=20;
       else if(distToPickup>25)fairnessFee=10;
 
-      // Stops
       const stopsCost=stops.length*5;
-
-      // Payment
       const pay=document.getElementById("payment").value;
       let fare=base+mileageSubtotal+fairnessFee+stopsCost;
       if(pay==="card")fare+=fare*0.033+fare*0.024;
@@ -205,7 +189,7 @@
         <p><strong>Stops:</strong> ${stops.length} × $5 = $${stopsCost.toFixed(2)}</p>
         <p><strong>Travel Fairness Fee:</strong> $${fairnessFee.toFixed(2)}</p>
         <p><strong>Payment:</strong> ${pay==="card"?"Card (includes fees)":"Cash / Venmo / Cash App"}</p>
-        <p style="margin-top:10px;color:#777;">Source: ${refLabel}</p>
+        <p style="margin-top:10px;color:#777;">Source: ${label}</p>
         <p style="text-align:center;color:#888;margin-top:10px;">No surprises. Just solid local moves.</p>`;
       document.getElementById("result").style.display="block";
     };
