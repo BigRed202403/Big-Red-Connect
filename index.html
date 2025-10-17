@@ -116,8 +116,20 @@
   <!-- ⚙️ Session + Status -->
   <script>
     // Default availability
-    window.CURRENT_STATUS = "away";
-    const siteVer = "2025-10-17.02";
+    window.CURRENT_STATUS = "away"; // change to "online" or "offline" as needed
+    const siteVer = "2025-10-17.03";
+
+    // 🕒 Auto-sync localStorage with timestamp (includes date)
+    const now = new Date();
+    const formatted = now.toLocaleString([], { 
+      month: 'short', day: 'numeric', 
+      hour: 'numeric', minute: '2-digit'
+    });
+
+    localStorage.setItem("bigred_status", window.CURRENT_STATUS);
+    localStorage.setItem("bigred_status_time", now.toISOString());
+    localStorage.setItem("bigred_status_displaytime", formatted);
+    sessionStorage.setItem("bigred_status", window.CURRENT_STATUS);
 
     // Version tag
     if (sessionStorage.getItem("brc_ver") !== siteVer) {
@@ -125,9 +137,11 @@
       sessionStorage.setItem("brc_ver", siteVer);
     }
 
-    // Store current status if missing
-    if (!sessionStorage.getItem("bigred_status")) {
-      sessionStorage.setItem("bigred_status", window.CURRENT_STATUS);
+    // Safeguard for first-load users
+    if (!localStorage.getItem("bigred_status")) {
+      localStorage.setItem("bigred_status", window.CURRENT_STATUS);
+      localStorage.setItem("bigred_status_time", now.toISOString());
+      localStorage.setItem("bigred_status_displaytime", formatted);
     }
   </script>
 
