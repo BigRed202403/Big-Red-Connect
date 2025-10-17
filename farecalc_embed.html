@@ -13,7 +13,6 @@
     <label for="pickup">Pickup Location</label>
     <input id="pickup" type="text" placeholder="Enter pickup address or place">
 
-    <div id="stopsWrap"></div>
     <button id="addStopBtn" class="btn primary" type="button">➕ Add Stop</button>
 
     <label for="dropoff">Drop-off Location</label>
@@ -52,6 +51,7 @@
   <script>
   const HQ = { lat: 35.31953, lng: -97.51199 };
 
+  // 📏 Miles between two points
   function distMi(a,b){
     return google.maps.geometry
       ? google.maps.geometry.spherical.computeDistanceBetween(
@@ -61,10 +61,10 @@
       : 0;
   }
 
+  // 🧭 Choose correct reference point (HQ vs live)
   async function getReferencePoint(){
     const status = localStorage.getItem("bigred_status") || "offline";
-    let ref = null;
-    let label = "HQ (Offline Mode)";
+    let ref = null, label = "HQ (Offline Mode)";
 
     try {
       const lat = parseFloat(localStorage.getItem("brc_ref_lat"));
@@ -72,43 +72,31 @@
       if (status === "online" && !isNaN(lat) && !isNaN(lng)) {
         const live = { lat, lng };
         const dist = distMi(HQ, live);
+        // Only accept if within 100 miles of HQ
         if (dist < 100) {
           ref = live;
           label = "Live Location";
+        } else {
+          console.warn(`Discarded stale live coords (${dist.toFixed(1)} mi from HQ)`);
         }
       }
-    } catch(e){ console.warn("Live location check failed:", e); }
+    } catch(e){ console.warn("Live location read error:", e); }
 
-    if (!ref) ref = HQ;
+    // Fallback to HQ if no valid live ref
+    if (!ref) {
+      ref = HQ;
+      label = "HQ (Offline Mode)";
+      localStorage.setItem("brc_ref_lat", HQ.lat);
+      localStorage.setItem("brc_ref_lng", HQ.lng);
+    }
+
     document.getElementById("source-note").textContent = `📍 Source: ${label}`;
-    return { ref, label };
+    return ref;
   }
 
-  let stopInputs = [];
-
-  function addStopField(){
-    if(stopInputs.length>=3){alert("Limit 3 stops.");return;}
-    const id=`stop_${Date.now()}`;stopInputs.push(id);
-    const wrap=document.getElementById('stopsWrap');
-    const div=document.createElement('div');
-    div.className="stop-row";div.id=`row_${id}`;
-    div.innerHTML=`<label for="${id}">Stop ${stopInputs.length}</label>
-      <div style="display:flex;gap:6px;align-items:center;">
-        <input id="${id}" type="text" placeholder="Enter stop address or place" style="flex:1;">
-        <button type="button" class="remove-stop" onclick="removeStop('${id}')">✖</button>
-      </div>`;
-    wrap.appendChild(div);
-    new google.maps.places.Autocomplete(document.getElementById(id));
-  }
-
-  function removeStop(id){
-    document.getElementById(`row_${id}`)?.remove();
-    stopInputs=stopInputs.filter(s=>s!==id);
-    document.querySelectorAll("#stopsWrap label").forEach((l,i)=>l.textContent=`Stop ${i+1}`);
-  }
-
+  // 🚀 Google Init
   window.initGoogle = async function(){
-    const { ref, label } = await getReferencePoint();
+    const ref = await getReferencePoint();
 
     const geocoder = new google.maps.Geocoder();
     const directionsService = new google.maps.DirectionsService();
@@ -123,21 +111,13 @@
     acPickup.addListener('place_changed',()=>{const p=acPickup.getPlace();if(p.geometry) map.setCenter(p.geometry.location);});
     acDrop.addListener('place_changed',()=>{const p=acDrop.getPlace();if(p.geometry) map.panTo(p.geometry.location);});
 
-    document.getElementById('addStopBtn').onclick=addStopField;
-
     document.getElementById('calcBtn').onclick=async function(){
       const pickup=document.getElementById('pickup').value.trim();
       const dropoff=document.getElementById('dropoff').value.trim();
       if(!pickup||!dropoff){alert("Please enter both pickup and drop-off.");return;}
 
-      const stops=[];
-      for(const id of stopInputs){
-        const v=document.getElementById(id)?.value.trim();
-        if(v)stops.push({location:v,stopover:true});
-      }
-
       const route=await new Promise((res,rej)=>
-        directionsService.route({origin:pickup,destination:dropoff,waypoints:stops,travelMode:"DRIVING"},
+        directionsService.route({origin:pickup,destination:dropoff,travelMode:"DRIVING"},
           (r,s)=>s==="OK"?res(r):rej(s))
       );
 
@@ -171,9 +151,8 @@
       if(distToPickup>50)fairnessFee=20;
       else if(distToPickup>25)fairnessFee=10;
 
-      const stopsCost=stops.length*5;
       const pay=document.getElementById("payment").value;
-      let fare=base+mileageSubtotal+fairnessFee+stopsCost;
+      let fare=base+mileageSubtotal+fairnessFee;
       if(pay==="card")fare+=fare*0.033+fare*0.024;
       const total=fare.toFixed(2);
 
@@ -184,13 +163,10 @@
         <div class="pickup">🚗 Pickup ETA ≈ ${etaMins} min</div>
         <hr style="margin:8px 0;border-color:#333;">
         <p><strong>Base Rate:</strong> $${base.toFixed(2)}</p>
-        <p><strong>Mileage Subtotal:</strong> $${mileageSubtotal.toFixed(2)} 
-          <span style="color:#777;">($1.25/mi after 10 mi & $1.00 after 20 mi)</span></p>
-        <p><strong>Stops:</strong> ${stops.length} × $5 = $${stopsCost.toFixed(2)}</p>
+        <p><strong>Mileage Subtotal:</strong> $${mileageSubtotal.toFixed(2)}</p>
         <p><strong>Travel Fairness Fee:</strong> $${fairnessFee.toFixed(2)}</p>
         <p><strong>Payment:</strong> ${pay==="card"?"Card (includes fees)":"Cash / Venmo / Cash App"}</p>
-        <p style="margin-top:10px;color:#777;">Source: ${label}</p>
-        <p style="text-align:center;color:#888;margin-top:10px;">No surprises. Just solid local moves.</p>`;
+        <p style="margin-top:10px;color:#777;">Source: ${document.getElementById("source-note").textContent.replace("📍 ","")}</p>`;
       document.getElementById("result").style.display="block";
     };
   };
