@@ -57,28 +57,42 @@
   let refLabel = "HQ (Offline Mode)";
   let stopInputs = [];
 
-  async function initReference() {
-    const storedLat = localStorage.getItem("brc_ref_lat");
-    const storedLng = localStorage.getItem("brc_ref_lng");
-    const status = localStorage.getItem("bigred_status") || "offline";
-
-    if (status === "online" && storedLat && storedLng) {
-      refPoint = { lat: +storedLat, lng: +storedLng };
-      refLabel = "Live Location";
-    } else {
-      refPoint = HQ;
-      refLabel = "HQ (Offline Mode)";
-    }
-    document.getElementById("source-note").textContent = `📍 Source: ${refLabel}`;
-  }
-
+  // 📍 Distance helper
   function distMi(a,b){
-    return google.maps.geometry.spherical.computeDistanceBetween(
-      new google.maps.LatLng(a.lat,a.lng),
-      new google.maps.LatLng(b.lat,b.lng)
-    )/1609.34;
+    return google.maps.geometry
+      ? google.maps.geometry.spherical.computeDistanceBetween(
+          new google.maps.LatLng(a.lat,a.lng),
+          new google.maps.LatLng(b.lat,b.lng)
+        ) / 1609.34
+      : 0;
   }
 
+  // 🧭 Reference selector
+  async function getDriverReference() {
+    const status = localStorage.getItem("bigred_status") || "offline";
+    let ref = null, refLabel = "HQ (Offline Mode)";
+    try {
+      const lat = parseFloat(localStorage.getItem("brc_ref_lat"));
+      const lng = parseFloat(localStorage.getItem("brc_ref_lng"));
+      if (status === "online" && !isNaN(lat) && !isNaN(lng)) {
+        ref = { lat, lng };
+        refLabel = "Live Location";
+      }
+    } catch (e) { console.warn("⚠️ read error", e); }
+
+    if (!ref) ref = HQ;
+    else if (distMi(HQ, ref) > 100) {
+      console.warn("⚠️ Out-of-range live coords — using HQ fallback");
+      ref = HQ; refLabel = "HQ (Offline Mode)";
+    }
+
+    localStorage.setItem("brc_ref_lat", ref.lat);
+    localStorage.setItem("brc_ref_lng", ref.lng);
+    document.getElementById("source-note").textContent = `📍 Source: ${refLabel}`;
+    return { ref, refLabel };
+  }
+
+  // ➕ Stop field
   function addStopField(){
     if(stopInputs.length>=3){alert("Limit 3 stops.");return;}
     const id=`stop_${Date.now()}`;stopInputs.push(id);
@@ -100,30 +114,25 @@
     document.querySelectorAll("#stopsWrap label").forEach((l,i)=>l.textContent=`Stop ${i+1}`);
   }
 
+  // 🚀 Initialize Google Maps + calculator
   window.initGoogle = async function(){
-    await initReference();
+    const { ref, refLabel } = await getDriverReference();
 
     const geocoder = new google.maps.Geocoder();
     const directionsService = new google.maps.DirectionsService();
     const directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers:true });
     const map = new google.maps.Map(document.getElementById('map'), {
-      center: refPoint, zoom:11, mapTypeControl:false, streetViewControl:false
+      center: ref, zoom:11, mapTypeControl:false, streetViewControl:false
     });
     directionsRenderer.setMap(map);
 
     const acPickup = new google.maps.places.Autocomplete(document.getElementById('pickup'));
     const acDrop = new google.maps.places.Autocomplete(document.getElementById('dropoff'));
-
-    acPickup.addListener('place_changed',()=>{
-      const p=acPickup.getPlace();
-      if(p.geometry) map.setCenter(p.geometry.location);
-    });
-    acDrop.addListener('place_changed',()=>{
-      const p=acDrop.getPlace();
-      if(p.geometry) map.panTo(p.geometry.location);
-    });
+    acPickup.addListener('place_changed',()=>{const p=acPickup.getPlace();if(p.geometry) map.setCenter(p.geometry.location);});
+    acDrop.addListener('place_changed',()=>{const p=acDrop.getPlace();if(p.geometry) map.panTo(p.geometry.location);});
 
     document.getElementById('addStopBtn').onclick=addStopField;
+
     document.getElementById('calcBtn').onclick=async function(){
       const pickup=document.getElementById('pickup').value.trim();
       const dropoff=document.getElementById('dropoff').value.trim();
@@ -147,16 +156,16 @@
         lat:route.routes[0].legs[0].start_location.lat(),
         lng:route.routes[0].legs[0].start_location.lng()
       };
-      const distToPickup=distMi(refPoint,pickupCoords);
+      const distToPickup=distMi(ref,pickupCoords);
       const etaMins=distToPickup<=1?2:Math.round((distToPickup/30)*60);
 
-      // Rush hour
+      // Rush Hour logic
       const h=new Date().getHours();
       const rush=(h>=5&&h<9)||(h>=15&&h<19);
       document.getElementById("rushhour-note").innerHTML=
-        rush?"🚦 Rush Hour pricing in effect (5–9 AM & 3–7 PM)":"";
+        rush?"🚦 Rush Hour pricing in effect (5–9 AM & 3–7 PM)": "";
 
-      // Airport
+      // Airport detection
       const dropLower=dropoff.toLowerCase();
       const airport=/airport|intl|regional|jet center|hangar/.test(dropLower)
                    && !/tinker|afb|air force|base|ang/.test(dropLower);
@@ -175,7 +184,7 @@
       if(distToPickup>50)fairnessFee=20;
       else if(distToPickup>25)fairnessFee=10;
 
-      // Stops cost
+      // Stops
       const stopsCost=stops.length*5;
 
       // Payment
