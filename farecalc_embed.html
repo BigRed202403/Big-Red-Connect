@@ -13,8 +13,6 @@
     <label for="pickup">Pickup Location</label>
     <input id="pickup" type="text" placeholder="Enter pickup address or place">
 
-    <button id="addStopBtn" class="btn primary" type="button">➕ Add Stop</button>
-
     <label for="dropoff">Drop-off Location</label>
     <input id="dropoff" type="text" placeholder="Enter drop-off address or place">
 
@@ -39,7 +37,7 @@
     <label for="payment">Payment Method</label>
     <select id="payment">
       <option value="cash">Cash / Venmo / Cash App (no fees)</option>
-      <option value="card">Card (+3.3% booking + 2.4% fuel)</option>
+      <option value="card">Card (+3.3 % booking + 2.4 % fuel)</option>
     </select>
 
     <button class="btn primary" id="calcBtn">💲 Calculate Fare</button>
@@ -51,7 +49,6 @@
   <script>
   const HQ = { lat: 35.31953, lng: -97.51199 };
 
-  // 📏 Miles between two points
   function distMi(a,b){
     return google.maps.geometry
       ? google.maps.geometry.spherical.computeDistanceBetween(
@@ -61,31 +58,27 @@
       : 0;
   }
 
-  // 🧭 Choose correct reference point (HQ vs live)
   async function getReferencePoint(){
     const status = localStorage.getItem("bigred_status") || "offline";
-    let ref = null, label = "HQ (Offline Mode)";
+    let ref = HQ, label = "HQ (Offline Mode)";
 
-    try {
-      const lat = parseFloat(localStorage.getItem("brc_ref_lat"));
-      const lng = parseFloat(localStorage.getItem("brc_ref_lng"));
-      if (status === "online" && !isNaN(lat) && !isNaN(lng)) {
-        const live = { lat, lng };
-        const dist = distMi(HQ, live);
-        // Only accept if within 100 miles of HQ
-        if (dist < 100) {
-          ref = live;
-          label = "Live Location";
-        } else {
-          console.warn(`Discarded stale live coords (${dist.toFixed(1)} mi from HQ)`);
-        }
+    // read any stored live coords
+    const lat = parseFloat(localStorage.getItem("brc_ref_lat"));
+    const lng = parseFloat(localStorage.getItem("brc_ref_lng"));
+
+    if(status === "online" && !isNaN(lat) && !isNaN(lng)){
+      const live = { lat, lng };
+      const d = distMi(HQ, live);
+      if(d < 100){
+        ref = live;
+        label = "Live Location";
+      } else {
+        // too far → reset storage
+        localStorage.removeItem("brc_ref_lat");
+        localStorage.removeItem("brc_ref_lng");
       }
-    } catch(e){ console.warn("Live location read error:", e); }
-
-    // Fallback to HQ if no valid live ref
-    if (!ref) {
-      ref = HQ;
-      label = "HQ (Offline Mode)";
+    } else if(status !== "online") {
+      // ensure HQ stored for offline/away
       localStorage.setItem("brc_ref_lat", HQ.lat);
       localStorage.setItem("brc_ref_lng", HQ.lng);
     }
@@ -94,7 +87,6 @@
     return ref;
   }
 
-  // 🚀 Google Init
   window.initGoogle = async function(){
     const ref = await getReferencePoint();
 
@@ -166,7 +158,7 @@
         <p><strong>Mileage Subtotal:</strong> $${mileageSubtotal.toFixed(2)}</p>
         <p><strong>Travel Fairness Fee:</strong> $${fairnessFee.toFixed(2)}</p>
         <p><strong>Payment:</strong> ${pay==="card"?"Card (includes fees)":"Cash / Venmo / Cash App"}</p>
-        <p style="margin-top:10px;color:#777;">Source: ${document.getElementById("source-note").textContent.replace("📍 ","")}</p>`;
+        <p style="margin-top:10px;color:#777;">${document.getElementById("source-note").textContent}</p>`;
       document.getElementById("result").style.display="block";
     };
   };
