@@ -113,39 +113,48 @@
     </p>
   </footer>
 
-  <!-- ⚙️ Session + Status -->
-  <script>
-    // Default availability
-    window.CURRENT_STATUS = "away"; // change to "online" or "offline" as needed
-    const siteVer = "2025-10-17.05";
+<!-- ⚙️ Session + Status -->
+<script>
+  // Default availability (set manually)
+  window.CURRENT_STATUS = "away"; // change to "online" or "offline" when needed
+  const siteVer = "2025-10-17.04";
 
-    // 🕒 Auto-sync localStorage with timestamp (includes date)
-    const now = new Date();
-    const formatted = now.toLocaleString([], { 
-      month: 'short', day: 'numeric', 
+  // 🕒 Format time once for new updates
+  function formatTime(d = new Date()) {
+    return d.toLocaleString([], {
+      month: 'short', day: 'numeric',
       hour: 'numeric', minute: '2-digit'
     });
+  }
 
+  const storedStatus = localStorage.getItem("bigred_status");
+  const now = new Date();
+
+  // ✅ Only update timestamp if status actually changed
+  if (storedStatus !== window.CURRENT_STATUS) {
+    const formatted = formatTime(now);
     localStorage.setItem("bigred_status", window.CURRENT_STATUS);
     localStorage.setItem("bigred_status_time", now.toISOString());
     localStorage.setItem("bigred_status_displaytime", formatted);
     sessionStorage.setItem("bigred_status", window.CURRENT_STATUS);
+  }
 
-    // Version tag
-    if (sessionStorage.getItem("brc_ver") !== siteVer) {
-      sessionStorage.clear();
-      sessionStorage.setItem("brc_ver", siteVer);
-    }
+  // Maintain version tagging for session cleanup
+  if (sessionStorage.getItem("brc_ver") !== siteVer) {
+    sessionStorage.clear();
+    sessionStorage.setItem("brc_ver", siteVer);
+  }
 
-    // Safeguard for first-load users
-    if (!localStorage.getItem("bigred_status")) {
-      localStorage.setItem("bigred_status", window.CURRENT_STATUS);
-      localStorage.setItem("bigred_status_time", now.toISOString());
-      localStorage.setItem("bigred_status_displaytime", formatted);
-    }
-  </script>
+  // Safeguard for first-time visits
+  if (!localStorage.getItem("bigred_status")) {
+    const formatted = formatTime(now);
+    localStorage.setItem("bigred_status", window.CURRENT_STATUS);
+    localStorage.setItem("bigred_status_time", now.toISOString());
+    localStorage.setItem("bigred_status_displaytime", formatted);
+  }
+</script>
 
-  <script src="status.js"></script>
+<script src="status.js"></script>
 
   <!-- ✈️ “Where To?” Autocomplete -->
   <script>
