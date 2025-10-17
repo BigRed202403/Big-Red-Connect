@@ -4,10 +4,16 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Fare Calculator – Big Red Connect</title>
+
+  <!-- 🎨 Styles -->
   <link rel="stylesheet" href="style.css">
+
+  <!-- ✈️ Google Maps -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places,geometry" async defer></script>
 </head>
 <body>
 
+  <!-- 🔻 Header -->
   <div class="hero small"></div>
   <h1>Fare Calculator</h1>
   <div id="status-pill" class="status status--loading">Checking status…</div>
@@ -17,9 +23,11 @@
     — or tap the pin to use your current location.
   </p>
 
-  <iframe src="farecalc_embed.html" width="100%" height="700" 
+  <!-- 🧮 Embedded calculator -->
+  <iframe src="farecalc_embed.html" width="100%" height="700"
     style="border:2px solid #c40000; border-radius:10px;"></iframe>
 
+  <!-- 🦶 Footer -->
   <footer>
     <p>&copy; 2025 Big Red Connect — 
       <a href="index.html">Home</a> |
@@ -27,6 +35,45 @@
     </p>
   </footer>
 
+  <!-- 🔄 Status Script -->
   <script src="status.js"></script>
+
+  <!-- 🧭 Smart Default Location Logic -->
+  <script>
+    (function(){
+      // Big Red HQ coordinates
+      const HQ = { lat: 35.2902, lng: -97.5289 };
+
+      // Try to fetch driver live location from Cloudflare Worker
+      async function getDriverLocation() {
+        try {
+          const r = await fetch("https://falling-night-3e4d.bigredtransportation.workers.dev", { cache: "no-store" });
+          const j = await r.json();
+          if (j.latitude) return { lat: +j.latitude, lng: +j.longitude };
+        } catch (e) {
+          console.warn("⚠️ Could not fetch live location:", e);
+        }
+        return null;
+      }
+
+      // Determine which reference point to use
+      async function getActiveReference() {
+        const status = localStorage.getItem("bigred_status") || "offline";
+        if (status === "online") {
+          const live = await getDriverLocation();
+          if (live) return live;
+        }
+        return HQ;
+      }
+
+      // Store reference for the iframe (so farecalc_embed.html can read it)
+      (async () => {
+        const ref = await getActiveReference();
+        localStorage.setItem("brc_ref_lat", ref.lat);
+        localStorage.setItem("brc_ref_lng", ref.lng);
+      })();
+    })();
+  </script>
+
 </body>
 </html>
