@@ -170,14 +170,27 @@
   function extractCity(p){const c=p.address_components||[];const f=c.find(x=>x.types.includes("locality")||x.types.includes("postal_town")||x.types.includes("administrative_area_level_3"));return f?f.long_name:"";}
   function reverseCity(latlng){return new Promise(r=>geocoder.geocode({location:latlng},(res,s)=>{if(s==="OK"&&res[0]){const c=res[0].address_components||[];const f=c.find(x=>x.types.includes("locality")||x.types.includes("postal_town")||x.types.includes("administrative_area_level_3"));r(f?f.long_name:"");}else r("");}));}
 
+  // ✅ Updated Worker fetch with HQ fallback
   async function getDriverLocation(){
-    try{
-      const r=await fetch(WORKER_URL,{cache:"no-store"});
-      const j=await r.json();
-      if(j.latitude&&j.longitude){
-        driverPos={lat:+j.latitude,lng:+j.longitude};
+    try {
+      const r = await fetch(WORKER_URL,{cache:"no-store"});
+      const j = await r.json();
+
+      const lat = parseFloat(j.latitude);
+      const lng = parseFloat(j.longitude);
+      const valid = !isNaN(lat) && !isNaN(lng) && lat > 34 && lat < 37 && lng < -94 && lng > -99;
+
+      if (valid && j.source === "Live") {
+        driverPos = { lat, lng };
+        console.log("✅ Using live location:", driverPos);
+      } else {
+        driverPos = null;
+        console.warn("ℹ️ Worker returned HQ or invalid data, defaulting to HQ.");
       }
-    }catch{driverPos=null;}
+    } catch (err) {
+      driverPos = null;
+      console.warn("⚠️ Could not fetch live location, using HQ fallback:", err);
+    }
   }
 
   function distMi(a,b){
@@ -186,6 +199,7 @@
       new google.maps.LatLng(b.lat,b.lng)
     )/1609.34;
   }
+
   function cap(s){return s?s.charAt(0).toUpperCase()+s.slice(1):s;}
 
   async function computeFairnessNote(){
@@ -196,21 +210,25 @@
 
     let fee=0,msg="";
     const mi=distMi(ref,{lat:pickupLatLng.lat(),lng:pickupLatLng.lng()});
+
+    if(mi>100){fee=0;msg=`Pickup distance unrealistic (${mi.toFixed(1)} mi) — defaulting to HQ.`;}
+
     const inZ1=ZONE1.includes(pCity),inZ2=ZONE2.includes(pCity),inZ3=ZONE3.includes(pCity);
 
-    if(inZ1||inZ2||inZ3){
-      if(mi>20&&mi<=50){
-        msg=`Pickup in ${cap(pCity)} (${mi.toFixed(1)} mi from ${src}) — long-distance trip likely fair; no travel fee.`;
-        fee=0;
-      }else if(mi>50){
-        fee=20;msg=`Pickup in ${cap(pCity)} — very distant (${mi.toFixed(1)} mi from ${src}) → $${fee} travel fairness fee.`;
+    if(!msg){
+      if(inZ1||inZ2||inZ3){
+        if(mi>20&&mi<=50){
+          msg=`Pickup in ${cap(pCity)} (${mi.toFixed(1)} mi from ${src}) — long-distance trip likely fair; no travel fee.`;
+        }else if(mi>50){
+          fee=20;msg=`Pickup in ${cap(pCity)} — very distant (${mi.toFixed(1)} mi from ${src}) → $${fee} travel fairness fee.`;
+        }else{
+          msg=`Pickup in ${cap(pCity)} — standard local rate.`;
+        }
       }else{
-        msg=`Pickup in ${cap(pCity)} — standard local rate.`;
+        if(mi<=25){msg=`Unrecognized city (${mi.toFixed(1)} mi) — standard local rate.`;}
+        else if(mi>25&&mi<=50){msg=`Unrecognized area (${mi.toFixed(1)} mi) — long trip, fairly covered.`;}
+        else{fee=20;msg=`Unrecognized distant area (${mi.toFixed(1)} mi from ${src}) → $${fee} travel fairness fee.`;}
       }
-    }else{
-      if(mi<=25){msg=`Unrecognized city (${mi.toFixed(1)} mi) — standard local rate.`;}
-      else if(mi>25&&mi<=50){msg=`Unrecognized area (${mi.toFixed(1)} mi) — long trip, fairly covered.`;}
-      else{fee=20;msg=`Unrecognized distant area (${mi.toFixed(1)} mi from ${src}) → $${fee} travel fairness fee.`;}
     }
 
     document.getElementById('fairness-note').innerHTML=`${msg}<br><span style="color:#777;font-size:0.85em;">Source: ${src}</span>`;
@@ -311,7 +329,8 @@
       </div>
 
       <p><strong>Base Rate:</strong> $${base.toFixed(2)}</p>
-      <p><strong>Mileage Subtotal:</strong> $${mileageSubtotal.toFixed(2)} <span style="color:#777;">(includes $1.25/mi after 10 mi & $1.00/mi beyond 20 mi)</span></p>
+      <p><strong>Mileage Subtotal:</strong> $${mileageSubtotal.toFixed
+            <p><strong>Mileage Subtotal:</strong> $${mileageSubtotal.toFixed(2)} <span style="color:#777;">(includes $1.25/mi after 10 mi & $1.00/mi beyond 20 mi)</span></p>
       <p><strong>Stops:</strong> ${stops.length} × $5 = $${(stops.length*5).toFixed(2)}</p>
       <p><strong>Travel Fairness Fee:</strong> $${fairnessFee.toFixed(2)}</p>
       <p><strong>Payment:</strong> ${pay==="card"?"Card (includes fees)":"Cash / Venmo / Cash App"}</p>
@@ -319,8 +338,9 @@
       <p style="text-align:center;margin-top:15px;">
         <a href="sms:+14053784024?&body=${smsBody}" class="btn primary">📲 Text RED with Trip Details</a>
       </p>
-      <p style="text-align:center;color:#888;margin-top:10px;">No surprises. Just solid local moves.</p>`;
-    document.getElementById('result').style.display="block";
+      <p style="text-align:center;color:#888;margin-top:10px;">No surprises. Just solid local moves.</p>
+    `;
+    document.getElementById('result').style.display = "block";
   }
   </script>
 
