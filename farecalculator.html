@@ -97,6 +97,7 @@
 
   function isValidCoords(obj){return obj && typeof obj.lat==="number" && typeof obj.lng==="number";}
 
+  // ✅ MAIN INITIALIZER
   window.initGoogle = async function(){
     geocoder=new google.maps.Geocoder();
     directionsService=new google.maps.DirectionsService();
@@ -122,6 +123,7 @@
       }
     });
 
+    // ✅ Handle destination from index.html
     const params=new URLSearchParams(window.location.search);
     const dest=params.get("dropoff");
     if(dest){
@@ -129,16 +131,18 @@
       document.getElementById("dropoff").value=decoded;
       dropPlace={formatted_address:decoded,name:decoded};
       detectAirportAndSetType();
-      setTimeout(()=>useMyLocation("pickup"),1000);
+      // 🧭 Wait until window load for location access
+      window.addEventListener("load",()=>useMyLocation("pickup"));
     }
 
-    document.getElementById('useLocPickup').onclick=()=>useMyLocation('pickup');
-    document.getElementById('useLocDrop').onclick=()=>useMyLocation('dropoff');
-    document.getElementById('addStopBtn').onclick=addStopField;
-    document.getElementById('calcBtn').onclick=calculateFare;
+    document.getElementById('useLocPickup').addEventListener("click",()=>useMyLocation('pickup'));
+    document.getElementById('useLocDrop').addEventListener("click",()=>useMyLocation('dropoff'));
+    document.getElementById('addStopBtn').addEventListener("click",addStopField);
+    document.getElementById('calcBtn').addEventListener("click",calculateFare);
 
     smartRideTypeDefault();
     await getDriverLocation();
+    document.dispatchEvent(new CustomEvent("statusUpdated",{detail:"online"})); // ✅ Update status pill
   };
 
   function extractCity(p){const c=p.address_components||[];const f=c.find(x=>x.types.includes("locality"));return f?f.long_name:"";}
@@ -181,14 +185,14 @@
   }
 
   async function useMyLocation(id){
-    if(!navigator.geolocation)return alert("Location not supported.");
+    if(!navigator.geolocation){alert("Location not supported.");return;}
     navigator.geolocation.getCurrentPosition(async(p)=>{
       const latlng={lat:p.coords.latitude,lng:p.coords.longitude};
       const addr=await new Promise(r=>geocoder.geocode({location:latlng},(res,s)=>r((s==="OK"&&res[0])?res[0].formatted_address:`${latlng.lat},${latlng.lng}`)));
       document.getElementById(id).value=addr;
       if(id==="pickup"){pickupLatLng=new google.maps.LatLng(latlng.lat,latlng.lng);pickupCity=await reverseCity(latlng);await computeFairnessNote();}
       else{dropoffLatLng=new google.maps.LatLng(latlng.lat,latlng.lng);}
-    });
+    },()=>alert("Could not get your location permission."));
   }
 
   async function calculateFare(){
@@ -233,5 +237,8 @@
     document.getElementById('result').style.display="block";
   }
   </script>
+
+  <!-- 🔄 Status Sync -->
+  <script src="status.js"></script>
 </body>
 </html>
