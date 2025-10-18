@@ -99,10 +99,15 @@
       }
     }
 
-    const initState = sessionStorage.getItem("bigred_status") || "offline";
+    // ✅ Read from localStorage instead of sessionStorage
+    const initState = localStorage.getItem("bigred_status") || "offline";
     updateView(initState);
 
+    // Listen for live status updates
     document.addEventListener("statusUpdated", (e) => updateView(e.detail));
+    window.addEventListener("storage", (e) => {
+      if (e.key === "bigred_status") updateView(e.newValue);
+    });
   });
   </script>
 
