@@ -4,11 +4,16 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Fare Calculator (Embedded) – Big Red Connect</title>
+
+  <!-- 🎨 Styles -->
   <link rel="stylesheet" href="style.css">
+  
+  <!-- ✈️ Google Maps -->
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places,geometry" async defer></script>
 </head>
 <body>
 
+  <!-- 🧮 Fare Calculator -->
   <section class="info-section calculator">
     <label for="pickup">Pickup Location</label>
     <input id="pickup" type="text" placeholder="Enter pickup address or place">
@@ -37,7 +42,7 @@
     <label for="payment">Payment Method</label>
     <select id="payment">
       <option value="cash">Cash / Venmo / Cash App (no fees)</option>
-      <option value="card">Card (+3.3 % booking + 2.4 % fuel)</option>
+      <option value="card">Card (+3.3% booking + 2.4% fuel)</option>
     </select>
 
     <button class="btn primary" id="calcBtn">💲 Calculate Fare</button>
@@ -46,9 +51,12 @@
     <p class="disclaimer">*Estimates only. Final fare may vary slightly based on route or wait time.</p>
   </section>
 
+  <!-- ⚙️ Script -->
   <script>
   const HQ = { lat: 35.31953, lng: -97.51199 };
+  const WORKER_URL = "https://falling-night-3e4d.bigredtransportation.workers.dev";
 
+  // 📏 Compute miles between coordinates
   function distMi(a,b){
     return google.maps.geometry
       ? google.maps.geometry.spherical.computeDistanceBetween(
@@ -58,35 +66,39 @@
       : 0;
   }
 
+  // 🧭 Pick live vs HQ depending on status
   async function getReferencePoint(){
     const status = localStorage.getItem("bigred_status") || "offline";
     let ref = HQ, label = "HQ (Offline Mode)";
 
-    // read any stored live coords
-    const lat = parseFloat(localStorage.getItem("brc_ref_lat"));
-    const lng = parseFloat(localStorage.getItem("brc_ref_lng"));
-
-    if(status === "online" && !isNaN(lat) && !isNaN(lng)){
-      const live = { lat, lng };
-      const d = distMi(HQ, live);
-      if(d < 100){
-        ref = live;
-        label = "Live Location";
-      } else {
-        // too far → reset storage
-        localStorage.removeItem("brc_ref_lat");
-        localStorage.removeItem("brc_ref_lng");
+    if(status === "online"){
+      try {
+        const r = await fetch(WORKER_URL, { cache: "no-store" });
+        const j = await r.json();
+        if(j.latitude && j.longitude){
+          const live = { lat:+j.latitude, lng:+j.longitude };
+          const d = distMi(HQ, live);
+          if(d < 100){
+            ref = live;
+            label = "Live Location";
+          } else {
+            console.warn("Discarded stale Worker data:", d.toFixed(1), "mi away");
+          }
+        }
+      } catch(e){
+        console.warn("Worker fetch failed:", e);
       }
-    } else if(status !== "online") {
-      // ensure HQ stored for offline/away
-      localStorage.setItem("brc_ref_lat", HQ.lat);
-      localStorage.setItem("brc_ref_lng", HQ.lng);
     }
+
+    // Always overwrite to avoid stale data
+    localStorage.setItem("brc_ref_lat", ref.lat);
+    localStorage.setItem("brc_ref_lng", ref.lng);
 
     document.getElementById("source-note").textContent = `📍 Source: ${label}`;
     return ref;
   }
 
+  // 🚀 Initialize Google Maps
   window.initGoogle = async function(){
     const ref = await getReferencePoint();
 
@@ -108,6 +120,7 @@
       const dropoff=document.getElementById('dropoff').value.trim();
       if(!pickup||!dropoff){alert("Please enter both pickup and drop-off.");return;}
 
+      // Calculate route
       const route=await new Promise((res,rej)=>
         directionsService.route({origin:pickup,destination:dropoff,travelMode:"DRIVING"},
           (r,s)=>s==="OK"?res(r):rej(s))
@@ -116,6 +129,7 @@
       const miles=route.routes[0].legs.reduce((m,l)=>m+(l.distance?.value||0),0)/1609.34;
       const duration=route.routes[0].legs.reduce((t,l)=>t+(l.duration?.value||0),0)/60;
 
+      // Pickup ETA
       const pickupCoords={
         lat:route.routes[0].legs[0].start_location.lat(),
         lng:route.routes[0].legs[0].start_location.lng()
@@ -123,31 +137,37 @@
       const distToPickup=distMi(ref,pickupCoords);
       const etaMins=distToPickup<=1?2:Math.round((distToPickup/30)*60);
 
+      // Smart defaults
       const h=new Date().getHours();
       const rush=(h>=5&&h<9)||(h>=15&&h<19);
       document.getElementById("rushhour-note").innerHTML=
         rush?"🚦 Rush Hour pricing in effect (5–9 AM & 3–7 PM)": "";
 
+      // Detect airport trips
       const dropLower=dropoff.toLowerCase();
       const airport=/airport|intl|regional|jet center|hangar/.test(dropLower)
                    && !/tinker|afb|air force|base|ang/.test(dropLower);
       document.getElementById("airport-note").innerHTML=
         airport?"✈️ Airport ride detected — $15 base applied automatically.":"";
 
+      // Calculate base & mileage tiers
       let base=airport?15:rush?15:10;
       const tier2=Math.max(0,Math.min(10,miles-10))*1.25;
       const tier3=Math.max(0,miles-20)*1.00;
       const mileageSubtotal=tier2+tier3;
 
+      // Travel Fairness Fee
       let fairnessFee=0;
       if(distToPickup>50)fairnessFee=20;
       else if(distToPickup>25)fairnessFee=10;
 
+      // Payment adjustment
       const pay=document.getElementById("payment").value;
       let fare=base+mileageSubtotal+fairnessFee;
       if(pay==="card")fare+=fare*0.033+fare*0.024;
       const total=fare.toFixed(2);
 
+      // Output
       document.getElementById("result").innerHTML=`
         <div class="total">💰 Estimated Fare $${total}</div>
         <div class="miles">📏 Distance ${miles.toFixed(1)} mi</div>
