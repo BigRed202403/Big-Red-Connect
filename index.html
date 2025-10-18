@@ -113,48 +113,13 @@
     </p>
   </footer>
 
-<!-- ⚙️ Session + Status -->
-<script>
-  // Default availability (set manually)
-  window.CURRENT_STATUS = "online"; // change to "online" or "offline" when needed
-  const siteVer = "2025-10-17.08";
-
-  // 🕒 Format time once for new updates
-  function formatTime(d = new Date()) {
-    return d.toLocaleString([], {
-      month: 'short', day: 'numeric',
-      hour: 'numeric', minute: '2-digit'
-    });
-  }
-
-  const storedStatus = localStorage.getItem("bigred_status");
-  const now = new Date();
-
-  // ✅ Only update timestamp if status actually changed
-  if (storedStatus !== window.CURRENT_STATUS) {
-    const formatted = formatTime(now);
-    localStorage.setItem("bigred_status", window.CURRENT_STATUS);
-    localStorage.setItem("bigred_status_time", now.toISOString());
-    localStorage.setItem("bigred_status_displaytime", formatted);
-    sessionStorage.setItem("bigred_status", window.CURRENT_STATUS);
-  }
-
-  // Maintain version tagging for session cleanup
-  if (sessionStorage.getItem("brc_ver") !== siteVer) {
-    sessionStorage.clear();
-    sessionStorage.setItem("brc_ver", siteVer);
-  }
-
-  // Safeguard for first-time visits
-  if (!localStorage.getItem("bigred_status")) {
-    const formatted = formatTime(now);
-    localStorage.setItem("bigred_status", window.CURRENT_STATUS);
-    localStorage.setItem("bigred_status_time", now.toISOString());
-    localStorage.setItem("bigred_status_displaytime", formatted);
-  }
-</script>
-
-<script src="status.js"></script>
+  <!-- ⚙️ Simple Status Logic -->
+  <script>
+    const CURRENT_STATUS = "online"; // or "away" / "offline"
+    localStorage.setItem("bigred_status", CURRENT_STATUS);
+    localStorage.setItem("bigred_status_time", new Date().toISOString());
+  </script>
+  <script src="status.js"></script>
 
   <!-- ✈️ “Where To?” Autocomplete -->
   <script>
