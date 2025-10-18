@@ -1,72 +1,39 @@
-// status.js — v2025.10.17b
+// status.js — v2025.10.17 • Simplified Stable Build
 (function(){
   const pill = document.getElementById('status-pill');
   if(!pill) return;
 
-  // 🕒 Format local date/time (fallback)
-  function formatTime(d = new Date()){
-    return d.toLocaleString([], {
-      month: 'short', day: 'numeric',
-      hour: 'numeric', minute: '2-digit'
-    });
-  }
+  // 🟢 Default status if none stored
+  const state = localStorage.getItem('bigred_status') || 'offline';
+  updatePill(state);
 
-  // 🟢 Load last-known status & display time
-  const current = localStorage.getItem('bigred_status') || 'offline';
-  const displayTime = localStorage.getItem('bigred_status_displaytime');
-  const isoTime = localStorage.getItem('bigred_status_time');
-  updatePill(current, displayTime, isoTime);
-
-  // 🔄 Sync between tabs/pages
-  document.addEventListener('statusUpdated', e => updatePill(e.detail));
+  // 🔄 Listen for manual changes between pages/tabs
   window.addEventListener('storage', e => {
-    if (e.key === 'bigred_status') {
-      updatePill(
-        e.newValue,
-        localStorage.getItem('bigred_status_displaytime'),
-        localStorage.getItem('bigred_status_time')
-      );
-    }
+    if (e.key === 'bigred_status') updatePill(e.newValue);
   });
 
-  // ✳️ Allow manual update (for console or index control)
+  // ✳️ Manual control from console (e.g. setBigRedStatus('online'))
   window.setBigRedStatus = function(state) {
-    const now = new Date();
-    const formatted = formatTime(now);
     localStorage.setItem('bigred_status', state);
-    localStorage.setItem('bigred_status_time', now.toISOString());
-    localStorage.setItem('bigred_status_displaytime', formatted);
     sessionStorage.setItem('bigred_status', state);
-    updatePill(state, formatted, now.toISOString());
+    updatePill(state);
     document.dispatchEvent(new CustomEvent("statusUpdated", { detail: state }));
   };
 
-  // 🎨 Update pill UI
-  function updatePill(state, formatted, iso){
+  // 🎨 Pill display logic
+  function updatePill(state){
     const map = {
       online:  ['🟢 On the road', 'status online'],
       away:    ['🟡 Away for now', 'status away'],
       offline: ['🔴 Offline', 'status offline']
     };
     const [label, cls] = map[state] || map.offline;
-
-    let showTime = '';
-    if (formatted) {
-      showTime = ` — updated ${formatted}`;
-    } else if (iso) {
-      showTime = ` — updated ${formatTime(new Date(iso))}`;
-    }
-
-    pill.textContent = `${label}${showTime}`;
+    pill.textContent = label;
     pill.className = cls;
   }
 
-  // 🚀 Initialize default if missing
+  // 🚀 Initialize baseline
   if (!localStorage.getItem('bigred_status')) {
-    const now = new Date();
     localStorage.setItem('bigred_status', 'offline');
-    localStorage.setItem('bigred_status_time', now.toISOString());
-    localStorage.setItem('bigred_status_displaytime', formatTime(now));
-    updatePill('offline', formatTime(now), now.toISOString());
   }
 })();
