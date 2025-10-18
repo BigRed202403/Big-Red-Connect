@@ -101,6 +101,7 @@
     return obj && typeof obj.lat==="number" && typeof obj.lng==="number" && !isNaN(obj.lat) && !isNaN(obj.lng);
   }
 
+  // ✅ Initialize Google Maps + Autocomplete + dropoff parameter
   window.initGoogle = async function(){
     geocoder=new google.maps.Geocoder();
     directionsService=new google.maps.DirectionsService();
@@ -125,6 +126,17 @@
         map.panTo(dropoffLatLng);detectAirportAndSetType();
       }
     });
+
+    // 🚀 Handle ?dropoff= from index.html
+    const params=new URLSearchParams(window.location.search);
+    const dest=params.get("dropoff");
+    if(dest){
+      const decoded=decodeURIComponent(dest);
+      document.getElementById("dropoff").value=decoded;
+      dropPlace={formatted_address:decoded,name:decoded};
+      detectAirportAndSetType();
+      setTimeout(()=>useMyLocation("pickup"),1000);
+    }
 
     document.getElementById('useLocPickup').onclick=()=>useMyLocation('pickup');
     document.getElementById('useLocDrop').onclick=()=>useMyLocation('dropoff');
