@@ -86,13 +86,11 @@
 
   <!-- 🔧 Fare Calculator Logic -->
   <script>
-  const HQ={lat:35.2902,lng:-97.5289};
+  const HQ={lat:35.31953,lng:-97.51199};
   const WORKER_URL="https://falling-night-3e4d.bigredtransportation.workers.dev";
-  
-  // ✅ Updated Zones
   const ZONE1=["oklahoma city","moore","norman","midwest city","del city"];
-  const ZONE2=["edmond","yukon","mustang","newcastle","tuttle","choctaw","harrah","jones","luther","noble","far east norman","east norman"];
-  const ZONE3=["shawnee","tecumseh","guthrie","blanchard","wellston","seminole","chickasha","goldsby","lexington","purcell"];
+  const ZONE2=["edmond","yukon","mustang","newcastle","tuttle","choctaw","harrah","jones","luther"];
+  const ZONE3=["shawnee","tecumseh","guthrie","blanchard","wellston","seminole","chickasha","goldsby","lexington","noble","purcell"];
 
   let map,geocoder,directionsService,directionsRenderer;
   let pickupLatLng=null,dropoffLatLng=null,pickupPlace=null,dropPlace=null;
@@ -129,7 +127,6 @@
     document.getElementById('addStopBtn').onclick=addStopField;
     document.getElementById('calcBtn').onclick=calculateFare;
 
-    // Prefill from index.html
     const params=new URLSearchParams(window.location.search);
     const dest=params.get('dropoff');
     if(dest){
@@ -176,7 +173,6 @@
   async function computeFairnessNote(){
     if(!pickupLatLng){document.getElementById('fairness-note').innerText="";return 0;}
     const pCity=(pickupCity||"").toLowerCase().trim();
-    const dCity=(driverCity||"").toLowerCase().trim();
     const ref=driverPos||HQ;let fee=0,msg="",src=driverPos?"Live Location":"HQ";
 
     const mi=distMi(ref,{lat:pickupLatLng.lat(),lng:pickupLatLng.lng()});
