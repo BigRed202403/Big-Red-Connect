@@ -66,7 +66,7 @@
       <option value="card">Card (+3.3% booking + 2.4% fuel)</option>
     </select>
 
-    <button class="btn primary" id="calcBtn" style="display:block;margin:20px auto;">💲 Calculate Fare</button>
+    <button id="calcBtn" class="btn primary" style="display:block;margin:20px auto;">💲 Calculate Fare</button>
 
     <div id="result" style="display:none;"></div>
     <p class="disclaimer">*Estimates only. Final fare may vary slightly based on route or wait time.</p>
@@ -89,14 +89,15 @@
   const ZONES = ["oklahoma city","moore","norman","midwest city","del city","edmond","yukon","mustang","newcastle","tuttle","choctaw","harrah","jones","luther","shawnee","tecumseh","guthrie","blanchard","wellston","seminole","chickasha","goldsby","lexington","noble","purcell"];
 
   let map, geocoder, directionsService, directionsRenderer;
-  let pickupLatLng, dropoffLatLng, pickupPlace, dropPlace, pickupCity="", driverPos=null;
+  let pickupLatLng, dropoffLatLng, pickupPlace, dropPlace, pickupCity="", driverPos=HQ;
   let stopInputs=[];
 
+  // ✅ Safe Google Maps initialization
   function initGoogle(){
     geocoder = new google.maps.Geocoder();
     directionsService = new google.maps.DirectionsService();
     directionsRenderer = new google.maps.DirectionsRenderer({suppressMarkers:true});
-    map = new google.maps.Map(document.getElementById('map'), {center:{lat:35.4676,lng:-97.5164}, zoom:11});
+    map = new google.maps.Map(document.getElementById('map'), {center:HQ, zoom:11});
     directionsRenderer.setMap(map);
 
     const acPickup = new google.maps.places.Autocomplete(document.getElementById('pickup'));
@@ -117,7 +118,7 @@
       }
     });
 
-    // Handle dropoff parameter from index.html
+    // Handle ?dropoff= from index.html
     const params = new URLSearchParams(window.location.search);
     const dest = params.get("dropoff");
     if(dest){
@@ -133,20 +134,30 @@
     document.getElementById("calcBtn").onclick=calculateFare;
 
     smartRideTypeDefault();
-    getDriverLocation();
+    getDriverLocation(); // now safely wrapped
+  }
+
+  // ✅ Cloudflare Worker Fallback Logic
+  async function getDriverLocation(){
+    try{
+      const r = await fetch(WORKER_URL,{cache:"no-store"});
+      const j = await r.json();
+      const lat=parseFloat(j.latitude),lng=parseFloat(j.longitude);
+      if(!isNaN(lat)&&!isNaN(lng)&&lat>34&&lat<37&&lng<-94&&lng>-99){
+        driverPos = {lat,lng};
+        console.log("✅ Using live driver position:", driverPos);
+      } else {
+        driverPos = HQ;
+        console.warn("⚠️ Invalid or missing Worker data. Using HQ.");
+      }
+    }catch(e){
+      driverPos = HQ;
+      console.warn("⚠️ Cloudflare Worker unavailable. Defaulting to HQ:", e);
+    }
   }
 
   function extractCity(p){const c=p.address_components||[];const f=c.find(x=>x.types.includes("locality"));return f?f.long_name:"";}
   function reverseCity(latlng){return new Promise(r=>geocoder.geocode({location:latlng},(res,s)=>{if(s==="OK"&&res[0]){const c=res[0].address_components||[];const f=c.find(x=>x.types.includes("locality"));r(f?f.long_name:"");}else r("");}));}
-
-  async function getDriverLocation(){
-    try{
-      const r=await fetch(WORKER_URL,{cache:"no-store"});
-      const j=await r.json();
-      const lat=parseFloat(j.latitude),lng=parseFloat(j.longitude);
-      if(!isNaN(lat)&&!isNaN(lng)) driverPos={lat,lng};
-    }catch(e){driverPos=null;}
-  }
 
   function distMi(a,b){return google.maps.geometry.spherical.computeDistanceBetween(new google.maps.LatLng(a.lat,a.lng),new google.maps.LatLng(b.lat,b.lng))/1609.34;}
 
