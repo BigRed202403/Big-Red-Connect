@@ -129,26 +129,15 @@
     });
 
     // 🚀 Handle ?dropoff= from index.html
-    const params = new URLSearchParams(window.location.search);
-    const dest = params.get("dropoff");
-    if (dest) {
-      const decoded = decodeURIComponent(dest);
-      document.getElementById("dropoff").value = decoded;
-      dropPlace = { formatted_address: decoded, name: decoded };
+    const params=new URLSearchParams(window.location.search);
+    const dest=params.get("dropoff");
+    if(dest){
+      const decoded=decodeURIComponent(dest);
+      document.getElementById("dropoff").value=decoded;
+      dropPlace={formatted_address:decoded,name:decoded};
       detectAirportAndSetType();
-
-      // ✅ Reliable auto-pickup (wait for Google Maps + geocoder ready)
-      let attempts = 0;
-      const tryPickup = () => {
-        if (typeof google !== "undefined" && geocoder && map) {
-          useMyLocation("pickup");
-        } else if (attempts < 10) {
-          attempts++;
-          setTimeout(tryPickup, 500);
-        }
-      };
-      // Wait an extra moment for mobile Safari permissions
-      setTimeout(tryPickup, 1500);
+      // Wait for maps to fully load before requesting location
+      setTimeout(()=>useMyLocation("pickup"),1000);
     }
 
     document.getElementById('addStopBtn').onclick=addStopField;
@@ -204,8 +193,8 @@
     const inZ1=ZONE1.includes(pCity)||ZONE2.includes(pCity)||ZONE3.includes(pCity);
     if(inZ1){
       if(mi>50){fee=20;msg=`Pickup in ${cap(pCity)} — ${mi.toFixed(1)} mi away → $${fee} travel fairness fee.`;}
-      else msg=`Pickup in ${cap(pCity)} — local rate.`;}
-    else if(mi>50){fee=20;msg=`Unrecognized area (${mi.toFixed(1)} mi) → $${fee} travel fairness fee.`;}
+      else msg=`Pickup in ${cap(pCity)} — local rate.`;
+    }else if(mi>50){fee=20;msg=`Unrecognized area (${mi.toFixed(1)} mi) → $${fee} travel fairness fee.`;}
     else msg=`Standard local rate.`;
     document.getElementById('fairness-note').innerHTML=msg;
     return fee;
