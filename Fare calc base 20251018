@@ -18,7 +18,7 @@
 </head>
 <body>
 
-  <!-- 🚗 Header -->
+  <!-- 🚗 Header (tap logo = home) -->
   <div class="logo-header">
     <a href="index.html" title="Return to Home">
       <img src="official_logo.jpeg" alt="Big Red Connect Logo" style="cursor:pointer;" />
@@ -68,6 +68,7 @@
 
     <button class="btn primary" id="calcBtn" style="display:block;margin:20px auto;">💲 Calculate Fare</button>
 
+    <!-- (Optional quick link you already had; unchanged) -->
     <div id="text-red-wrapper" style="margin-top:10px;text-align:center;">
       <a href="sms:+14053784024?&body=Hey%20Big%20Red%20—%20I’d%20like%20to%20plan%20a%20ride%20connection." class="btn secondary">📲 Text RED</a>
     </div>
@@ -128,6 +129,7 @@
       }
     });
 
+    // Carry over dropoff from index.html if present
     const params=new URLSearchParams(window.location.search);
     const dest=params.get("dropoff");
     if(dest){
@@ -246,6 +248,7 @@
     const fairnessFee=await computeFairnessNote();
     const stops=[];
     for(const id of stopInputs){const v=document.getElementById(id)?.value.trim();if(v)stops.push({location:v,stopover:true});}
+
     const route=await new Promise((res,rej)=>directionsService.route({origin:pickup,destination:dropoff,waypoints:stops,travelMode:"DRIVING"},(r,s)=>{if(s==="OK")res(r);else rej(s);}));
     const miles=route.routes[0].legs.reduce((m,l)=>m+(l.distance?.value||0),0)/1609.34;
     const duration=route.routes[0].legs.reduce((t,l)=>t+(l.duration?.value||0),0)/60;
@@ -265,10 +268,13 @@
     const pay=document.getElementById('payment').value;
     if(pay==="card")fare+=fare*0.033+fare*0.024;
     const total=fare.toFixed(2);
-    const smsBody=encodeURIComponent(`Hey Big Red — I'm heading from ${pickup} to ${dropoff}. Estimated $${total} flat rate.`);
 
-    document.getElementById('result').innerHTML=`
-      <div class="total">$${total}</div>
+    // Build a single waypoints param (Google expects "wp1|wp2|...")
+    const wayStr = stops.length ? stops.map(s=>s.location).join("|") : "";
+    const routeLink = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(pickup)}&destination=${encodeURIComponent(dropoff)}${wayStr?`&waypoints=${encodeURIComponent(wayStr)}`:""}`;
+
+    // Build result box
+    let html=`<div class="total">$${total}</div>
       <div class="miles">📏 Distance: ${miles.toFixed(1)} mi</div>
       <div class="duration">⏱️ Est. Trip Time: ${Math.round(duration)} min</div>
       <div class="pickup">🚗 Pickup ETA: ${pickupETA}<br>
@@ -280,10 +286,20 @@
       <p><strong>Travel Fairness Fee:</strong> $${fairnessFee.toFixed(2)}</p>
       <p><strong>Payment:</strong> ${pay==="card"?"Card (incl. fees)":"Cash / Venmo / Cash App"}</p>
       <p style="text-align:center;margin-top:15px;">
-        <a href="sms:+14053784024?&body=${smsBody}" class="btn primary">📲 Text RED with Trip Details</a>
+        <button class="btn primary" id="textRedBtn">📲 Text RED with Trip Details</button>
       </p>
       <p style="text-align:center;color:#888;margin-top:10px;">No surprises. Just solid local moves.</p>`;
-    document.getElementById('result').style.display="block";
+
+    const resultDiv=document.getElementById('result');
+    resultDiv.innerHTML=html;
+    resultDiv.style.display="block";
+
+    // Prompt name ONLY when sending text; include route link
+    document.getElementById("textRedBtn").onclick=()=>{
+      const name=prompt("Hey there! Please enter your name for the message to Big Red:");
+      const smsBody=encodeURIComponent(`Hey Big Red — this is ${name||"a rider"} heading from ${pickup} to ${dropoff}. Estimated $${total} flat rate. View Route: ${routeLink}`);
+      window.location.href=`sms:+14053784024?&body=${smsBody}`;
+    };
   }
   </script>
 
