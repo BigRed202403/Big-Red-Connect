@@ -13,12 +13,32 @@
   <!-- 🎨 Styles -->
   <link rel="stylesheet" href="style.css" />
 
+  <style>
+    /* 🔒 Auto-hide styling for empty elements */
+    #fairness-note:empty,
+    #airport-note:empty,
+    #rushhour-note:empty,
+    #result:empty {
+      display: none;
+    }
+    #map {
+      min-height: 250px;
+      display: none; /* hidden until used */
+      margin-top: 15px;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    #map.visible {
+      display: block;
+    }
+  </style>
+
   <!-- ✈️ Google Maps -->
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places,geometry&callback=initGoogle" async defer></script>
 </head>
 <body>
 
-  <!-- 🚗 Header (tap logo = home) -->
+  <!-- 🚗 Header -->
   <div class="logo-header">
     <a href="index.html" title="Return to Home">
       <img src="official_logo.jpeg" alt="Big Red Connect Logo" style="cursor:pointer;" />
@@ -68,12 +88,11 @@
 
     <button class="btn primary" id="calcBtn" style="display:block;margin:20px auto;">💲 Calculate Fare</button>
 
-    <!-- (Optional quick link you already had; unchanged) -->
     <div id="text-red-wrapper" style="margin-top:10px;text-align:center;">
       <a href="sms:+14053784024?&body=Hey%20Big%20Red%20—%20I’d%20like%20to%20plan%20a%20ride%20connection." class="btn secondary">📲 Text RED</a>
     </div>
 
-    <div id="result" style="display:none;"></div>
+    <div id="result"></div>
     <p class="disclaimer">*Estimates only. Final fare may vary slightly based on route or wait time.</p>
   </section>
 
@@ -118,6 +137,7 @@
     acPickup.addListener('place_changed',async()=>{
       const p=acPickup.getPlace();if(!p.geometry)return;
       pickupPlace=p;pickupLatLng=p.geometry.location;
+      document.getElementById("map").classList.add("visible");
       map.setCenter(pickupLatLng);map.setZoom(12);
       pickupCity=extractCity(p)||await reverseCity(pickupLatLng);
       await computeFairnessNote();detectAirportAndSetType();
@@ -125,11 +145,11 @@
     acDrop.addListener('place_changed',()=>{
       const p=acDrop.getPlace();if(p.geometry){
         dropPlace=p;dropoffLatLng=p.geometry.location;
+        document.getElementById("map").classList.add("visible");
         map.panTo(dropoffLatLng);detectAirportAndSetType();
       }
     });
 
-    // Carry over dropoff from index.html if present
     const params=new URLSearchParams(window.location.search);
     const dest=params.get("dropoff");
     if(dest){
@@ -235,6 +255,7 @@
     navigator.geolocation.getCurrentPosition(async(p)=>{
       const latlng={lat:p.coords.latitude,lng:p.coords.longitude};
       const addr=await new Promise(r=>geocoder.geocode({location:latlng},(res,s)=>r((s==="OK"&&res[0])?res[0].formatted_address:`${latlng.lat},${latlng.lng}`)));
+      document.getElementById("map").classList.add("visible");
       document.getElementById(id).value=addr;
       if(id==="pickup"){pickupLatLng=new google.maps.LatLng(latlng.lat,latlng.lng);pickupCity=await reverseCity(latlng);map.setCenter(pickupLatLng);map.setZoom(12);await computeFairnessNote();}
       else{dropoffLatLng=new google.maps.LatLng(latlng.lat,latlng.lng);map.panTo(dropoffLatLng);}
@@ -248,7 +269,6 @@
     const fairnessFee=await computeFairnessNote();
     const stops=[];
     for(const id of stopInputs){const v=document.getElementById(id)?.value.trim();if(v)stops.push({location:v,stopover:true});}
-
     const route=await new Promise((res,rej)=>directionsService.route({origin:pickup,destination:dropoff,waypoints:stops,travelMode:"DRIVING"},(r,s)=>{if(s==="OK")res(r);else rej(s);}));
     const miles=route.routes[0].legs.reduce((m,l)=>m+(l.distance?.value||0),0)/1609.34;
     const duration=route.routes[0].legs.reduce((t,l)=>t+(l.duration?.value||0),0)/60;
@@ -268,13 +288,10 @@
     const pay=document.getElementById('payment').value;
     if(pay==="card")fare+=fare*0.033+fare*0.024;
     const total=fare.toFixed(2);
+    const smsBody=encodeURIComponent(`Hey Big Red — I'm heading from ${pickup} to ${dropoff}. Estimated $${total} flat rate.`);
 
-    // Build a single waypoints param (Google expects "wp1|wp2|...")
-    const wayStr = stops.length ? stops.map(s=>s.location).join("|") : "";
-    const routeLink = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(pickup)}&destination=${encodeURIComponent(dropoff)}${wayStr?`&waypoints=${encodeURIComponent(wayStr)}`:""}`;
-
-    // Build result box
-    let html=`<div class="total">$${total}</div>
+    document.getElementById('result').innerHTML=`
+      <div class="total">$${total}</div>
       <div class="miles">📏 Distance: ${miles.toFixed(1)} mi</div>
       <div class="duration">⏱️ Est. Trip Time: ${Math.round(duration)} min</div>
       <div class="pickup">🚗 Pickup ETA: ${pickupETA}<br>
@@ -286,24 +303,13 @@
       <p><strong>Travel Fairness Fee:</strong> $${fairnessFee.toFixed(2)}</p>
       <p><strong>Payment:</strong> ${pay==="card"?"Card (incl. fees)":"Cash / Venmo / Cash App"}</p>
       <p style="text-align:center;margin-top:15px;">
-        <button class="btn primary" id="textRedBtn">📲 Text RED with Trip Details</button>
+        <a href="sms:+14053784024?&body=${smsBody}" class="btn primary">📲 Text RED with Trip Details</a>
       </p>
       <p style="text-align:center;color:#888;margin-top:10px;">No surprises. Just solid local moves.</p>`;
-
-    const resultDiv=document.getElementById('result');
-    resultDiv.innerHTML=html;
-    resultDiv.style.display="block";
-
-    // Prompt name ONLY when sending text; include route link
-    document.getElementById("textRedBtn").onclick=()=>{
-      const name=prompt("Hey there! Please enter your name for the message to Big Red:");
-      const smsBody=encodeURIComponent(`Hey Big Red — this is ${name||"a rider"} heading from ${pickup} to ${dropoff}. Estimated $${total} flat rate. View Route: ${routeLink}`);
-      window.location.href=`sms:+14053784024?&body=${smsBody}`;
-    };
+    document.getElementById('result').style.display="block";
   }
   </script>
 
-  <!-- 🔄 Sync Status -->
   <script src="status.js"></script>
 </body>
 </html>
