@@ -99,7 +99,6 @@
     return obj && typeof obj.lat==="number" && typeof obj.lng==="number" && !isNaN(obj.lat) && !isNaN(obj.lng);
   }
 
-  // ✅ Initialize Google Maps
   window.initGoogle = async function(){
     geocoder=new google.maps.Geocoder();
     directionsService=new google.maps.DirectionsService();
@@ -217,15 +216,6 @@
     }
   }
 
-  function detectAirportAndSetType(){
-    let combined="";
-    const places=[pickupPlace,dropPlace].filter(Boolean);
-    for(const p of places){const name=(p?.name||"").toLowerCase();const addr=(p?.formatted_address||"").toLowerCase();combined+=name+" "+addr+" ";}
-    const include=["airport","airfield","intl","international","regional","municipal","jet center","hangar"];
-    const exclude=["tinker","afb","air force","base","ang"];
-    if(include.some(k=>combined.includes(k))&&!exclude.some(k=>combined.includes(k))){document.getElementById("tripType").value="15_airport";document.getElementById("airport-note").innerHTML="✈️ Airport ride detected — $15 base applied automatically.";}else{document.getElementById("airport-note").innerHTML="";}
-  }
-
   async function useMyLocation(id){
     if(!navigator.geolocation){alert("Location not supported.");return;}
     navigator.geolocation.getCurrentPosition(async(p)=>{
@@ -244,6 +234,7 @@
     const fairnessFee=await computeFairnessNote();
     const stops=[];
     for(const id of stopInputs){const v=document.getElementById(id)?.value.trim();if(v)stops.push({location:v,stopover:true});}
+
     const route=await new Promise((res,rej)=>directionsService.route({origin:pickup,destination:dropoff,waypoints:stops,travelMode:"DRIVING"},(r,s)=>{if(s==="OK")res(r);else rej(s);}));
     const miles=route.routes[0].legs.reduce((m,l)=>m+(l.distance?.value||0),0)/1609.34;
     const duration=route.routes[0].legs.reduce((t,l)=>t+(l.duration?.value||0),0)/60;
@@ -264,30 +255,36 @@
     if(pay==="card")fare+=fare*0.033+fare*0.024;
     const total=fare.toFixed(2);
 
-    const name=prompt("Hey there! Please enter your name for the message to Big Red:");
-    const smsBody=encodeURIComponent(`Hey Big Red — this is ${name||"a rider"} heading from ${pickup} to ${dropoff}. Estimated $${total} flat rate.`);
+    const routeLink=`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(pickup)}&destination=${encodeURIComponent(dropoff)}${stops.map(s=>`&waypoints=${encodeURIComponent(s.location)}`).join("")}`;
 
-    document.getElementById('result').innerHTML=`
-      <div class="total">$${total}</div>
-      <div class="miles">📏 Distance: ${miles.toFixed(1)} mi</div>
-      <div class="duration">⏱️ Est. Trip Time: ${Math.round(duration)} min</div>
-      <div class="pickup">🚗 Pickup ETA: ${pickupETA}<br>
-        <span style="color:#777;font-size:0.85em;">Based on current source: ${src}</span>
-      </div>
-      <p><strong>Base Rate:</strong> $${base.toFixed(2)}</p>
-      <p><strong>Mileage Subtotal:</strong> $${mileageSubtotal.toFixed(2)}</p>
-      <p><strong>Stops:</strong> ${stops.length} × $5 = $${(stops.length*5).toFixed(2)}</p>
-      <p><strong>Travel Fairness Fee:</strong> $${fairnessFee.toFixed(2)}</p>
-      <p><strong>Payment:</strong> ${pay==="card"?"Card (incl. fees)":"Cash / Venmo / Cash App"}</p>
+    let html=`<div class="total">$${total}</div>`;
+    html+=`<p><strong>Base Rate:</strong> $${base.toFixed(2)}</p>`;
+    if(mileageSubtotal>0)html+=`<p><strong>Mileage:</strong> $${mileageSubtotal.toFixed(2)}</p>`;
+    if(stops.length>0)html+=`<p><strong>Stops:</strong> ${stops.length} × $5 = $${(stops.length*5).toFixed(2)}</p>`;
+    if(fairnessFee>0)html+=`<p><strong>Travel Fairness Fee:</strong> $${fairnessFee.toFixed(2)}</p>`;
+    html+=`<p><strong>Payment:</strong> ${pay==="card"?"Card (incl. fees)":"Cash / Venmo / Cash App"}</p>`;
+
+    // Build Text RED button with name prompt when clicked
+    html+=`
       <p style="text-align:center;margin-top:15px;">
-        <a href="sms:+14053784024?&body=${smsBody}" class="btn primary">📲 Text RED with Trip Details</a>
+        <button class="btn primary" id="textRedBtn">📲 Text RED with Trip Details</button>
       </p>
       <p style="text-align:center;color:#888;margin-top:10px;">No surprises. Just solid local moves.</p>`;
-    document.getElementById('result').style.display="block";
+
+    const resultDiv=document.getElementById('result');
+    resultDiv.innerHTML=html;
+    resultDiv.style.display="block";
+
+    // attach click handler for Text RED
+    document.getElementById("textRedBtn").onclick=()=>{
+      const name=prompt("Hey there! Please enter your name for the message to Big Red:");
+      const smsBody=encodeURIComponent(`Hey Big Red — this is ${name||"a rider"} heading from ${pickup} to ${dropoff}. Estimated $${total} flat rate. View Route: ${routeLink}`);
+      window.location.href=`sms:+14053784024?&body=${smsBody}`;
+    };
   }
   </script>
 
-  <!-- 🔄 Sync Status -->
+  <!-- 🔄  Status -->
   <script src="status.js"></script>
 </body>
 </html>
