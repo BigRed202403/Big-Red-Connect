@@ -14,10 +14,7 @@
   <link rel="stylesheet" href="style.css" />
 
   <!-- ✈️ Google Maps -->
-  <script
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places,geometry"
-    defer
-  ></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places,geometry&callback=initGoogle" async defer></script>
 </head>
 <body>
 
@@ -69,7 +66,7 @@
       <option value="card">Card (+3.3% booking + 2.4% fuel)</option>
     </select>
 
-    <button id="calcBtn" class="btn primary" style="display:block;margin:20px auto;">💲 Calculate Fare</button>
+    <button class="btn primary" id="calcBtn" style="display:block;margin:20px auto;">💲 Calculate Fare</button>
 
     <div id="result" style="display:none;"></div>
     <p class="disclaimer">*Estimates only. Final fare may vary slightly based on route or wait time.</p>
@@ -85,6 +82,7 @@
     </p>
   </footer>
 
+  <!-- ⚙️ Fare Calculator Logic -->
   <script>
   const HQ = { lat: 35.31953, lng: -97.51199 };
   const WORKER_URL = "https://falling-night-3e4d.bigredtransportation.workers.dev";
@@ -119,7 +117,7 @@
       }
     });
 
-    // Handle dropoff parameter
+    // Handle dropoff parameter from index.html
     const params = new URLSearchParams(window.location.search);
     const dest = params.get("dropoff");
     if(dest){
@@ -127,8 +125,6 @@
       document.getElementById("dropoff").value = decoded;
       dropPlace = { formatted_address: decoded, name: decoded };
       detectAirportAndSetType();
-      // Auto pickup
-      setTimeout(()=>useMyLocation("pickup"), 1500);
     }
 
     document.getElementById("useLocPickup").onclick=()=>useMyLocation("pickup");
@@ -197,6 +193,7 @@
 
     const route=await new Promise((res,rej)=>directionsService.route({origin:pickup,destination:dropoff,waypoints:stops,travelMode:"DRIVING"},(r,s)=>s==="OK"?res(r):rej(s)));
     const miles=route.routes[0].legs.reduce((m,l)=>m+(l.distance?.value||0),0)/1609.34;
+    const duration=route.routes[0].legs.reduce((t,l)=>t+(l.duration?.value||0),0)/60;
     const baseVal=document.getElementById("tripType").value;
     const base=(baseVal==="15_airport")?15:parseFloat(baseVal);
     const tier2=Math.max(0,Math.min(10,miles-10))*1.25;
@@ -208,18 +205,17 @@
     if(pay==="card")fare+=fare*0.033+fare*0.024;
     const total=fare.toFixed(2);
 
-    const name=prompt("Hey there! Please enter your name for the message to Big Red:");
-    const routeLink=`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(pickup)}&destination=${encodeURIComponent(dropoff)}${stops.map(s=>`&waypoints=${encodeURIComponent(s.location)}`).join("")}`;
-    const smsBody=encodeURIComponent(`Hey Big Red — this is ${name||"a rider"} heading from ${pickup} to ${dropoff}. Estimated $${total} flat rate. View Route: ${routeLink}`);
-
-    let html=`<div class="total">$${total}</div>`;
-    html+=`<p><strong>Base Rate:</strong> $${base.toFixed(2)}</p>`;
-    if(mileageSubtotal>0)html+=`<p><strong>Mileage:</strong> $${mileageSubtotal.toFixed(2)}</p>`;
-    if(stopsTotal>0)html+=`<p><strong>Stops:</strong> $${stopsTotal.toFixed(2)}</p>`;
-    if(fairnessFee>0)html+=`<p><strong>Travel Fairness Fee:</strong> $${fairnessFee.toFixed(2)}</p>`;
-    html+=`<p><strong>Payment:</strong> ${pay==="card"?"Card (incl. fees)":"Cash / Venmo / Cash App"}</p>`;
-    html+=`<p style="text-align:center;margin-top:15px;"><a href="sms:+14053784024?&body=${smsBody}" class="btn primary">📲 Text RED with Trip Details</a></p><p style="text-align:center;color:#888;margin-top:10px;">No surprises. Just solid local moves.</p>`;
-
+    const smsBody=encodeURIComponent(`Hey Big Red — I'm heading from ${pickup} to ${dropoff}. Estimated $${total} flat rate.`);
+    let html=`<div class="total">$${total}</div>
+      <div class="miles">📏 Distance: ${miles.toFixed(1)} mi</div>
+      <div class="duration">⏱️ Est. Trip Time: ${Math.round(duration)} min</div>
+      <p><strong>Base Rate:</strong> $${base.toFixed(2)}</p>
+      <p><strong>Mileage:</strong> $${mileageSubtotal.toFixed(2)}</p>
+      <p><strong>Stops:</strong> $${stopsTotal.toFixed(2)}</p>
+      <p><strong>Travel Fairness Fee:</strong> $${fairnessFee.toFixed(2)}</p>
+      <p><strong>Payment:</strong> ${pay==="card"?"Card (incl. fees)":"Cash / Venmo / Cash App"}</p>
+      <p style="text-align:center;margin-top:15px;"><a href="sms:+14053784024?&body=${smsBody}" class="btn primary">📲 Text RED with Trip Details</a></p>
+      <p style="text-align:center;color:#888;margin-top:10px;">No surprises. Just solid local moves.</p>`;
     document.getElementById('result').innerHTML=html;
     document.getElementById('result').style.display="block";
   }
