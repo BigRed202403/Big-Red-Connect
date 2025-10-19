@@ -20,7 +20,9 @@
 
   <!-- 🚗 Header -->
   <div class="logo-header">
-    <img src="official_logo.jpeg" alt="Big Red Connect Logo" />
+    <a href="index.html" title="Return to Home">
+      <img src="official_logo.jpeg" alt="Big Red Connect Logo" style="cursor:pointer;" />
+    </a>
   </div>
 
   <h1>Fare Calculator</h1>
@@ -101,7 +103,6 @@
     return obj && typeof obj.lat==="number" && typeof obj.lng==="number" && !isNaN(obj.lat) && !isNaN(obj.lng);
   }
 
-  // ✅ Initialize Google Maps + Autocomplete + dropoff parameter
   window.initGoogle = async function(){
     geocoder=new google.maps.Geocoder();
     directionsService=new google.maps.DirectionsService();
@@ -127,7 +128,6 @@
       }
     });
 
-    // 🚀 Handle ?dropoff= from index.html
     const params=new URLSearchParams(window.location.search);
     const dest=params.get("dropoff");
     if(dest){
