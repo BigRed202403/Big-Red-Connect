@@ -129,15 +129,27 @@
     });
 
     // 🚀 Handle ?dropoff= from index.html
-    const params=new URLSearchParams(window.location.search);
-    const dest=params.get("dropoff");
-    if(dest){
-      const decoded=decodeURIComponent(dest);
-      document.getElementById("dropoff").value=decoded;
-      dropPlace={formatted_address:decoded,name:decoded};
+    // 🚀 Handle ?dropoff= from index.html
+    const params = new URLSearchParams(window.location.search);
+    const dest = params.get("dropoff");
+    if (dest) {
+      const decoded = decodeURIComponent(dest);
+      document.getElementById("dropoff").value = decoded;
+      dropPlace = { formatted_address: decoded, name: decoded };
       detectAirportAndSetType();
-      // Wait for maps to fully load before requesting location
-      setTimeout(()=>useMyLocation("pickup"),1000);
+    
+      // ✅ Reliable auto-pickup (wait for Google Maps + geocoder ready)
+      let attempts = 0;
+      const tryPickup = () => {
+        if (typeof google !== "undefined" && geocoder && map) {
+          useMyLocation("pickup");
+        } else if (attempts < 10) {
+          attempts++;
+          setTimeout(tryPickup, 500);
+        }
+      };
+      // Wait an extra moment for mobile Safari permissions
+      setTimeout(tryPickup, 1500);
     }
 
     document.getElementById('addStopBtn').onclick=addStopField;
