@@ -89,7 +89,7 @@
     <button class="btn primary" id="calcBtn" style="display:block;margin:20px auto;">💲 Calculate Fare</button>
 
     <div id="text-red-wrapper" style="margin-top:10px;text-align:center;">
-      <a href="sms:+14053784024?&body=Hey%20Big%20Red%20—%20I’d%20like%20to%20plan%20a%20ride%20connection." class="btn secondary">📲 Text RED</a>
+      <a id="textRedBtn" href="#" class="btn secondary">📲 Text RED with Trip Details</a>
     </div>
 
     <div id="result"></div>
@@ -117,7 +117,7 @@
   let map, geocoder, directionsService, directionsRenderer;
   let pickupLatLng=null, dropoffLatLng=null, pickupPlace=null, dropPlace=null;
   let pickupCity="", driverPos=null, driverCity="";
-  let stopInputs=[];
+  let stopInputs=[], pickupMarker=null, dropoffMarker=null;
 
   function isValidCoords(obj){
     return obj && typeof obj.lat==="number" && typeof obj.lng==="number" && !isNaN(obj.lat) && !isNaN(obj.lng);
@@ -140,13 +140,18 @@
       document.getElementById("map").classList.add("visible");
       map.setCenter(pickupLatLng);map.setZoom(12);
       pickupCity=extractCity(p)||await reverseCity(pickupLatLng);
+      if(pickupMarker) pickupMarker.setMap(null);
+      pickupMarker = new google.maps.Marker({position: pickupLatLng, map, label:"P"});
       await computeFairnessNote();detectAirportAndSetType();
     });
     acDrop.addListener('place_changed',()=>{
       const p=acDrop.getPlace();if(p.geometry){
         dropPlace=p;dropoffLatLng=p.geometry.location;
         document.getElementById("map").classList.add("visible");
-        map.panTo(dropoffLatLng);detectAirportAndSetType();
+        map.panTo(dropoffLatLng);
+        if(dropoffMarker) dropoffMarker.setMap(null);
+        dropoffMarker = new google.maps.Marker({position: dropoffLatLng, map, label:"D"});
+        detectAirportAndSetType();
       }
     });
 
@@ -169,27 +174,6 @@
     await getDriverLocation();
     if(driverPos)driverCity=await reverseCity(driverPos);
   };
-
-  function addStopField(){
-    if(stopInputs.length>=3){alert("Limit 3 stops.");return;}
-    const id=`stop_${Date.now()}`;stopInputs.push(id);
-    const wrap=document.getElementById('stopsWrap');
-    const div=document.createElement('div');
-    div.className="stop-row";div.id=`row_${id}`;
-    div.innerHTML=`<label for="${id}">Stop ${stopInputs.length}</label>
-      <div style="display:flex;gap:6px;align-items:center;">
-        <input id="${id}" type="text" placeholder="Enter stop address or place" style="flex:1;">
-        <button type="button" class="remove-stop" onclick="removeStop('${id}')">✖</button>
-      </div>`;
-    wrap.appendChild(div);
-    new google.maps.places.Autocomplete(document.getElementById(id));
-  }
-
-  function removeStop(id){
-    document.getElementById(`row_${id}`)?.remove();
-    stopInputs=stopInputs.filter(s=>s!==id);
-    document.querySelectorAll("#stopsWrap label").forEach((l,i)=>l.textContent=`Stop ${i+1}`);
-  }
 
   function extractCity(p){const c=p.address_components||[];const f=c.find(x=>x.types.includes("locality")||x.types.includes("postal_town")||x.types.includes("administrative_area_level_3"));return f?f.long_name:"";}
   function reverseCity(latlng){return new Promise(r=>geocoder.geocode({location:latlng},(res,s)=>{if(s==="OK"&&res[0]){const c=res[0].address_components||[];const f=c.find(x=>x.types.includes("locality")||x.types.includes("postal_town")||x.types.includes("administrative_area_level_3"));r(f?f.long_name:"");}else r("");}));}
@@ -231,10 +215,11 @@
   }
 
   function smartRideTypeDefault(){
-    const d=new Date(),h=d.getHours();
-    if((h>=5&&h<9)||(h>=15&&h<19)){
+    const d=new Date(),h=d.getHours(),day=d.getDay();
+    // Only weekdays
+    if(day>=1 && day<=5 && ((h>=5&&h<9)||(h>=15&&h<19))){
       document.getElementById("tripType").value="15";
-      document.getElementById("rushhour-note").innerHTML="🚦 Rush Hour pricing in effect (5–9 AM & 3–7 PM)";
+      document.getElementById("rushhour-note").innerHTML="🚦 Weekday Rush Hour pricing (5–9 AM / 3–7 PM)";
     }else{
       document.getElementById("tripType").value="10";
       document.getElementById("rushhour-note").innerHTML="";
@@ -247,7 +232,12 @@
     for(const p of places){const name=(p?.name||"").toLowerCase();const addr=(p?.formatted_address||"").toLowerCase();combined+=name+" "+addr+" ";}
     const include=["airport","airfield","intl","international","regional","municipal","jet center","hangar"];
     const exclude=["tinker","afb","air force","base","ang"];
-    if(include.some(k=>combined.includes(k))&&!exclude.some(k=>combined.includes(k))){document.getElementById("tripType").value="15_airport";document.getElementById("airport-note").innerHTML="✈️ Airport ride detected — $15 base applied automatically.";}else{document.getElementById("airport-note").innerHTML="";}
+    if(include.some(k=>combined.includes(k))&&!exclude.some(k=>combined.includes(k))){
+      document.getElementById("tripType").value="15_airport";
+      document.getElementById("airport-note").innerHTML="✈️ Airport ride detected — $15 base applied automatically.";
+    } else {
+      document.getElementById("airport-note").innerHTML="";
+    }
   }
 
   async function useMyLocation(id){
@@ -257,8 +247,19 @@
       const addr=await new Promise(r=>geocoder.geocode({location:latlng},(res,s)=>r((s==="OK"&&res[0])?res[0].formatted_address:`${latlng.lat},${latlng.lng}`)));
       document.getElementById("map").classList.add("visible");
       document.getElementById(id).value=addr;
-      if(id==="pickup"){pickupLatLng=new google.maps.LatLng(latlng.lat,latlng.lng);pickupCity=await reverseCity(latlng);map.setCenter(pickupLatLng);map.setZoom(12);await computeFairnessNote();}
-      else{dropoffLatLng=new google.maps.LatLng(latlng.lat,latlng.lng);map.panTo(dropoffLatLng);}
+      if(id==="pickup"){
+        pickupLatLng=new google.maps.LatLng(latlng.lat,latlng.lng);
+        pickupCity=await reverseCity(latlng);
+        map.setCenter(pickupLatLng);map.setZoom(12);
+        if(pickupMarker) pickupMarker.setMap(null);
+        pickupMarker=new google.maps.Marker({position:pickupLatLng,map,label:"P"});
+        await computeFairnessNote();
+      } else {
+        dropoffLatLng=new google.maps.LatLng(latlng.lat,latlng.lng);
+        map.panTo(dropoffLatLng);
+        if(dropoffMarker) dropoffMarker.setMap(null);
+        dropoffMarker=new google.maps.Marker({position:dropoffLatLng,map,label:"D"});
+      }
     },()=>alert("Could not get your location permission."));
   }
 
@@ -273,39 +274,31 @@
     const miles=route.routes[0].legs.reduce((m,l)=>m+(l.distance?.value||0),0)/1609.34;
     const duration=route.routes[0].legs.reduce((t,l)=>t+(l.duration?.value||0),0)/60;
 
-    let pickupETA="—";
-    const ref=(isValidCoords(driverPos)?driverPos:HQ);
-    const src=(isValidCoords(driverPos)?"Live Location":"HQ");
-    if(pickupLatLng){const pickupDist=distMi(ref,{lat:pickupLatLng.lat(),lng:pickupLatLng.lng()});const mins=Math.max(2,Math.min(60,Math.ceil((pickupDist/30)*60)));pickupETA=`${mins} min`;}
-
     smartRideTypeDefault();detectAirportAndSetType();
     const tripVal=document.getElementById('tripType').value;
     const base=(tripVal==="15_airport")?15:parseFloat(tripVal);
     const tier2=Math.max(0,Math.min(10,miles-10))*1.25;
     const tier3=Math.max(0,miles-20)*1.00;
     const mileageSubtotal=tier2+tier3;
-    let fare=base+mileageSubtotal+(stops.length*5)+fairnessFee;
+    const stopsTotal=stops.length*5;
+    let fare=base+mileageSubtotal+stopsTotal+fairnessFee;
     const pay=document.getElementById('payment').value;
     if(pay==="card")fare+=fare*0.033+fare*0.024;
     const total=fare.toFixed(2);
-    const smsBody=encodeURIComponent(`Hey Big Red — I'm heading from ${pickup} to ${dropoff}. Estimated $${total} flat rate.`);
 
-    document.getElementById('result').innerHTML=`
-      <div class="total">$${total}</div>
-      <div class="miles">📏 Distance: ${miles.toFixed(1)} mi</div>
-      <div class="duration">⏱️ Est. Trip Time: ${Math.round(duration)} min</div>
-      <div class="pickup">🚗 Pickup ETA: ${pickupETA}<br>
-        <span style="color:#777;font-size:0.85em;">Based on current source: ${src}</span>
-      </div>
-      <p><strong>Base Rate:</strong> $${base.toFixed(2)}</p>
-      <p><strong>Mileage Subtotal:</strong> $${mileageSubtotal.toFixed(2)} <span style="color:#777;">(+$1.25/mi after 10 mi, +$1.00/mi beyond 20)</span></p>
-      <p><strong>Stops:</strong> ${stops.length} × $5 = $${(stops.length*5).toFixed(2)}</p>
-      <p><strong>Travel Fairness Fee:</strong> $${fairnessFee.toFixed(2)}</p>
-      <p><strong>Payment:</strong> ${pay==="card"?"Card (incl. fees)":"Cash / Venmo / Cash App"}</p>
-      <p style="text-align:center;margin-top:15px;">
-        <a href="sms:+14053784024?&body=${smsBody}" class="btn primary">📲 Text RED with Trip Details</a>
-      </p>
-      <p style="text-align:center;color:#888;margin-top:10px;">No surprises. Just solid local moves.</p>`;
+    // Create route link
+    const routeLink=`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(pickup)}&destination=${encodeURIComponent(dropoff)}${stops.map(s=>`&waypoints=${encodeURIComponent(s.location)}`).join("")}`;
+    const smsBody=encodeURIComponent(`Hey Big Red — I'm heading from ${pickup} to ${dropoff}. Estimated $${total} flat rate.\n🗺️ Tap here to view your route map:\n${routeLink}`);
+
+    let html=`<div class="total">$${total}</div>`;
+    html+=`<p><strong>Base Rate:</strong> $${base.toFixed(2)}</p>`;
+    if(mileageSubtotal>0)html+=`<p><strong>Mileage:</strong> $${mileageSubtotal.toFixed(2)}</p>`;
+    if(stopsTotal>0)html+=`<p><strong>Stops:</strong> $${stopsTotal.toFixed(2)}</p>`;
+    if(fairnessFee>0)html+=`<p><strong>Travel Fairness Fee:</strong> $${fairnessFee.toFixed(2)}</p>`;
+    html+=`<p><strong>Payment:</strong> ${pay==="card"?"Card (incl. fees)":"Cash / Venmo / Cash App"}</p>`;
+    html+=`<p style="text-align:center;margin-top:15px;"><a id="textRedBtnFinal" href="sms:+14053784024?&body=${smsBody}" class="btn primary">📲 Text RED with Trip Details</a></p>`;
+    html+=`<p style="text-align:center;color:#888;margin-top:10px;">No surprises. Just solid local moves.</p>`;
+    document.getElementById('result').innerHTML=html;
     document.getElementById('result').style.display="block";
   }
   </script>
