@@ -1,34 +1,35 @@
-// status.js — v2025.10.20 • Adds timestamp to pill display
+// status.js — v2025.10.19 • persistent last-change timestamp
 (function(){
   const pill = document.getElementById('status-pill');
   if(!pill) return;
 
-  // 🟢 Default status if none stored
-  const state = localStorage.getItem('bigred_status') || 'offline';
-  const time  = localStorage.getItem('bigred_status_time');
-  updatePill(state, time);
+  // 🟢 default fallback
+  if (!localStorage.getItem('bigred_status')) {
+    localStorage.setItem('bigred_status', 'offline');
+    localStorage.setItem('bigred_status_time', new Date().toISOString());
+  }
 
-  // 🔄 Listen for manual changes between pages/tabs
+  updatePill(localStorage.getItem('bigred_status'));
+
+  // 🔄 listen for cross-tab changes
   window.addEventListener('storage', e => {
-    if (e.key === 'bigred_status' || e.key === 'bigred_status_time') {
-      const newState = localStorage.getItem('bigred_status');
-      const newTime  = localStorage.getItem('bigred_status_time');
-      updatePill(newState, newTime);
-    }
+    if (e.key === 'bigred_status') updatePill(e.newValue);
   });
 
-  // ✳️ Manual control from console (e.g. setBigRedStatus('online'))
-  window.setBigRedStatus = function(state) {
-    const now = new Date();
-    localStorage.setItem('bigred_status', state);
-    localStorage.setItem('bigred_status_time', now.toISOString());
-    sessionStorage.setItem('bigred_status', state);
-    updatePill(state, now.toISOString());
-    document.dispatchEvent(new CustomEvent("statusUpdated", { detail: state }));
+  // ✳️ manual override (from console or index.html)
+  window.setBigRedStatus = function(state){
+    const current = localStorage.getItem('bigred_status');
+    if (state !== current) {
+      localStorage.setItem('bigred_status', state);
+      localStorage.setItem('bigred_status_time', new Date().toISOString());
+      sessionStorage.setItem('bigred_status', state);
+      updatePill(state);
+      document.dispatchEvent(new CustomEvent("statusUpdated", { detail: state }));
+    }
   };
 
-  // 🎨 Pill display logic
-  function updatePill(state, timeIso){
+  // 🎨 build the pill text
+  function updatePill(state){
     const map = {
       online:  ['🟢 On the road', 'status online'],
       away:    ['🟡 Away for now', 'status away'],
@@ -36,27 +37,16 @@
     };
     const [label, cls] = map[state] || map.offline;
 
-    // 🕒 Format timestamp if available
-    let timeDisplay = '';
-    if (timeIso) {
-      const d = new Date(timeIso);
-      timeDisplay = d.toLocaleString([], {
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit"
-      });
+    // format last-change timestamp
+    const iso = localStorage.getItem('bigred_status_time');
+    let timeText = '';
+    if (iso) {
+      const d = new Date(iso);
+      const options = { month:'short', day:'numeric', year:'numeric', hour:'numeric', minute:'2-digit' };
+      timeText = `\n(Last updated: ${d.toLocaleString(undefined, options)})`;
     }
 
-    pill.textContent = timeDisplay
-      ? `${label} — Updated ${timeDisplay}`
-      : label;
+    pill.textContent = `${label}${timeText}`;
     pill.className = cls;
-  }
-
-  // 🚀 Initialize baseline if none set
-  if (!localStorage.getItem('bigred_status')) {
-    localStorage.setItem('bigred_status', 'offline');
-    localStorage.setItem('bigred_status_time', new Date().toISOString());
   }
 })();
