@@ -68,10 +68,6 @@
 
     <button class="btn primary" id="calcBtn" style="display:block;margin:20px auto;">💲 Calculate Fare</button>
 
-    <div id="text-red-wrapper" style="margin-top:10px;text-align:center;">
-      <a href="sms:+14053784024?&body=Hey%20Big%20Red%20—%20I’d%20like%20to%20plan%20a%20ride%20connection." class="btn secondary">📲 Text RED</a>
-    </div>
-
     <div id="result" style="display:none;"></div>
     <p class="disclaimer">*Estimates only. Final fare may vary slightly based on route or wait time.</p>
   </section>
@@ -103,6 +99,7 @@
     return obj && typeof obj.lat==="number" && typeof obj.lng==="number" && !isNaN(obj.lat) && !isNaN(obj.lng);
   }
 
+  // ✅ Initialize Google Maps
   window.initGoogle = async function(){
     geocoder=new google.maps.Geocoder();
     directionsService=new google.maps.DirectionsService();
@@ -121,6 +118,7 @@
       pickupCity=extractCity(p)||await reverseCity(pickupLatLng);
       await computeFairnessNote();detectAirportAndSetType();
     });
+
     acDrop.addListener('place_changed',()=>{
       const p=acDrop.getPlace();if(p.geometry){
         dropPlace=p;dropoffLatLng=p.geometry.location;
@@ -265,7 +263,9 @@
     const pay=document.getElementById('payment').value;
     if(pay==="card")fare+=fare*0.033+fare*0.024;
     const total=fare.toFixed(2);
-    const smsBody=encodeURIComponent(`Hey Big Red — I'm heading from ${pickup} to ${dropoff}. Estimated $${total} flat rate.`);
+
+    const name=prompt("Hey there! Please enter your name for the message to Big Red:");
+    const smsBody=encodeURIComponent(`Hey Big Red — this is ${name||"a rider"} heading from ${pickup} to ${dropoff}. Estimated $${total} flat rate.`);
 
     document.getElementById('result').innerHTML=`
       <div class="total">$${total}</div>
@@ -275,7 +275,7 @@
         <span style="color:#777;font-size:0.85em;">Based on current source: ${src}</span>
       </div>
       <p><strong>Base Rate:</strong> $${base.toFixed(2)}</p>
-      <p><strong>Mileage Subtotal:</strong> $${mileageSubtotal.toFixed(2)} <span style="color:#777;">(+$1.25/mi after 10 mi, +$1.00/mi beyond 20)</span></p>
+      <p><strong>Mileage Subtotal:</strong> $${mileageSubtotal.toFixed(2)}</p>
       <p><strong>Stops:</strong> ${stops.length} × $5 = $${(stops.length*5).toFixed(2)}</p>
       <p><strong>Travel Fairness Fee:</strong> $${fairnessFee.toFixed(2)}</p>
       <p><strong>Payment:</strong> ${pay==="card"?"Card (incl. fees)":"Cash / Venmo / Cash App"}</p>
