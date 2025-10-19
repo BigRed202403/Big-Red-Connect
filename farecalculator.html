@@ -43,8 +43,8 @@
     <input id="dropoff" type="text" placeholder="Enter drop-off address or place" />
 
     <div class="location-buttons">
-      <button id="useLocPickup" class="btn primary" type="button">📍 Use My Location for Pickup</button>
-      <button id="useLocDrop" class="btn secondary" type="button">📍 Use My Location for Drop-off</button>
+      <button onclick="useMyLocation('pickup')" class="btn primary" type="button">📍 Use My Location for Pickup</button>
+      <button onclick="useMyLocation('dropoff')" class="btn secondary" type="button">📍 Use My Location for Drop-off</button>
     </div>
 
     <div id="map"></div>
@@ -97,12 +97,17 @@
 
   function isValidCoords(obj){return obj && typeof obj.lat==="number" && typeof obj.lng==="number";}
 
-  // ✅ MAIN INITIALIZER
+  // ✅ Initialize Google Maps + Autocomplete
   window.initGoogle = async function(){
     geocoder=new google.maps.Geocoder();
     directionsService=new google.maps.DirectionsService();
     directionsRenderer=new google.maps.DirectionsRenderer({suppressMarkers:true});
-    map=new google.maps.Map(document.getElementById('map'),{center:{lat:35.4676,lng:-97.5164},zoom:11});
+    map=new google.maps.Map(document.getElementById('map'),{
+      center:{lat:35.4676,lng:-97.5164},
+      zoom:11,
+      mapTypeControl:false,
+      streetViewControl:false
+    });
     directionsRenderer.setMap(map);
 
     const acPickup=new google.maps.places.Autocomplete(document.getElementById('pickup'));
@@ -123,7 +128,7 @@
       }
     });
 
-    // ✅ Handle destination from index.html
+    // 🚀 Handle ?dropoff= from index.html
     const params=new URLSearchParams(window.location.search);
     const dest=params.get("dropoff");
     if(dest){
@@ -131,19 +136,37 @@
       document.getElementById("dropoff").value=decoded;
       dropPlace={formatted_address:decoded,name:decoded};
       detectAirportAndSetType();
-      // 🧭 Wait until window load for location access
-      window.addEventListener("load",()=>useMyLocation("pickup"));
+      // Wait for maps to fully load before requesting location
+      setTimeout(()=>useMyLocation("pickup"),1000);
     }
 
-    document.getElementById('useLocPickup').addEventListener("click",()=>useMyLocation('pickup'));
-    document.getElementById('useLocDrop').addEventListener("click",()=>useMyLocation('dropoff'));
-    document.getElementById('addStopBtn').addEventListener("click",addStopField);
-    document.getElementById('calcBtn').addEventListener("click",calculateFare);
+    document.getElementById('addStopBtn').onclick=addStopField;
+    document.getElementById('calcBtn').onclick=calculateFare;
 
     smartRideTypeDefault();
     await getDriverLocation();
-    document.dispatchEvent(new CustomEvent("statusUpdated",{detail:"online"})); // ✅ Update status pill
   };
+
+  function addStopField(){
+    if(stopInputs.length>=3){alert("Limit 3 stops.");return;}
+    const id=`stop_${Date.now()}`;stopInputs.push(id);
+    const wrap=document.getElementById('stopsWrap');
+    const div=document.createElement('div');
+    div.className="stop-row";div.id=`row_${id}`;
+    div.innerHTML=`<label for="${id}">Stop ${stopInputs.length}</label>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <input id="${id}" type="text" placeholder="Enter stop address or place" style="flex:1;">
+        <button type="button" class="remove-stop" onclick="removeStop('${id}')">✖</button>
+      </div>`;
+    wrap.appendChild(div);
+    new google.maps.places.Autocomplete(document.getElementById(id));
+  }
+
+  function removeStop(id){
+    document.getElementById(`row_${id}`)?.remove();
+    stopInputs=stopInputs.filter(s=>s!==id);
+    document.querySelectorAll("#stopsWrap label").forEach((l,i)=>l.textContent=`Stop ${i+1}`);
+  }
 
   function extractCity(p){const c=p.address_components||[];const f=c.find(x=>x.types.includes("locality"));return f?f.long_name:"";}
   function reverseCity(latlng){return new Promise(r=>geocoder.geocode({location:latlng},(res,s)=>{if(s==="OK"&&res[0]){const c=res[0].address_components||[];const f=c.find(x=>x.types.includes("locality"));r(f?f.long_name:"");}else r("");}));}
@@ -167,8 +190,8 @@
     const ref=isValidCoords(driverPos)?driverPos:HQ;
     let fee=0,msg="";
     const mi=distMi(ref,{lat:pickupLatLng.lat(),lng:pickupLatLng.lng()});
-    const inZ1=ZONE1.includes(pCity),inZ2=ZONE2.includes(pCity),inZ3=ZONE3.includes(pCity);
-    if(inZ1||inZ2||inZ3){
+    const inZ1=ZONE1.includes(pCity)||ZONE2.includes(pCity)||ZONE3.includes(pCity);
+    if(inZ1){
       if(mi>50){fee=20;msg=`Pickup in ${cap(pCity)} — ${mi.toFixed(1)} mi away → $${fee} travel fairness fee.`;}
       else msg=`Pickup in ${cap(pCity)} — local rate.`;
     }else if(mi>50){fee=20;msg=`Unrecognized area (${mi.toFixed(1)} mi) → $${fee} travel fairness fee.`;}
@@ -185,13 +208,13 @@
   }
 
   async function useMyLocation(id){
-    if(!navigator.geolocation){alert("Location not supported.");return;}
+    if(!navigator.geolocation)return alert("Location not supported.");
     navigator.geolocation.getCurrentPosition(async(p)=>{
       const latlng={lat:p.coords.latitude,lng:p.coords.longitude};
       const addr=await new Promise(r=>geocoder.geocode({location:latlng},(res,s)=>r((s==="OK"&&res[0])?res[0].formatted_address:`${latlng.lat},${latlng.lng}`)));
       document.getElementById(id).value=addr;
-      if(id==="pickup"){pickupLatLng=new google.maps.LatLng(latlng.lat,latlng.lng);pickupCity=await reverseCity(latlng);await computeFairnessNote();}
-      else{dropoffLatLng=new google.maps.LatLng(latlng.lat,latlng.lng);}
+      if(id==="pickup"){pickupLatLng=new google.maps.LatLng(latlng.lat,latlng.lng);pickupCity=await reverseCity(latlng);map.setCenter(pickupLatLng);map.setZoom(12);await computeFairnessNote();}
+      else{dropoffLatLng=new google.maps.LatLng(latlng.lat,latlng.lng);map.panTo(dropoffLatLng);}
     },()=>alert("Could not get your location permission."));
   }
 
@@ -238,7 +261,7 @@
   }
   </script>
 
-  <!-- 🔄 Status Sync -->
+  <!-- 🔄 Sync Status -->
   <script src="status.js"></script>
 </body>
 </html>
