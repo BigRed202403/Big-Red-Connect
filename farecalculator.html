@@ -116,7 +116,6 @@
       }
     });
 
-    // Carry over destination
     const params=new URLSearchParams(window.location.search);
     const dest=params.get("dropoff");
     if(dest){
@@ -158,6 +157,9 @@
 
   function extractCity(p){const c=p.address_components||[];const f=c.find(x=>x.types.includes("locality")||x.types.includes("postal_town"));return f?f.long_name:"";}
   function reverseCity(latlng){return new Promise(r=>geocoder.geocode({location:latlng},(res,s)=>{if(s==="OK"&&res[0]){const c=res[0].address_components||[];const f=c.find(x=>x.types.includes("locality")||x.types.includes("postal_town"));r(f?f.long_name:"");}else r("");}));}
+  function distMi(a,b){return google.maps.geometry.spherical.computeDistanceBetween(new google.maps.LatLng(a.lat,a.lng),new google.maps.LatLng(b.lat,b.lng))/1609.34;}
+  function cap(s){return s?s.charAt(0).toUpperCase()+s.slice(1):s;}
+  function getZone(city){city=city.toLowerCase();if(ZONE1.includes(city))return 1;if(ZONE2.includes(city))return 2;if(ZONE3.includes(city))return 3;return 0;}
 
   async function getDriverLocation(){
     try{
@@ -169,18 +171,26 @@
     }catch{driverPos=null;}
   }
 
-  function distMi(a,b){return google.maps.geometry.spherical.computeDistanceBetween(new google.maps.LatLng(a.lat,a.lng),new google.maps.LatLng(b.lat,b.lng))/1609.34;}
-  function cap(s){return s?s.charAt(0).toUpperCase()+s.slice(1):s;}
-
-  async function computeFairnessNote(){
+  async function computeFairnessNote(totalTripMiles=0){
     if(!pickupLatLng){document.getElementById('fairness-note').innerText="";return 0;}
     const pCity=(pickupCity||"").toLowerCase().trim();
     const ref=(isValidCoords(driverPos)?driverPos:HQ);
     const src=(isValidCoords(driverPos)?"Live Location":"HQ");
+    const driverCity=await reverseCity(ref);
+    const dropCity=dropPlace?(await reverseCity(dropoffLatLng)):"";
+    const pZone=getZone(pCity),dZone=getZone(driverCity||""),dropZone=getZone(dropCity||"");
+    const distFromDriver=distMi(ref,{lat:pickupLatLng.lat(),lng:pickupLatLng.lng()});
     let fee=0,msg="";
-    const mi=distMi(ref,{lat:pickupLatLng.lat(),lng:pickupLatLng.lng()});
-    if(mi>50){fee=20;msg=`Pickup (${mi.toFixed(1)} mi from ${src}) → $${fee} travel fairness fee.`;}
-    else msg=`Pickup in ${cap(pCity)||"local area"} — standard local rate.`;
+
+    if(pZone===dZone&&dropZone===dZone){
+      msg=`Pickup in ${cap(pCity)} — same zone as driver (${cap(driverCity)}).`;
+    }else if(totalTripMiles>=25){
+      msg=`Out-of-zone connection (${cap(pCity)} ↔ ${cap(dropCity)}), but distance fairly covered (${totalTripMiles.toFixed(1)} mi).`;
+    }else{
+      fee = distFromDriver > 50 ? 20 : 10;
+      msg=`Out-of-zone pickup (${cap(pCity)} vs driver in ${cap(driverCity)}), ${distFromDriver.toFixed(1)} mi away → $${fee} travel fairness fee.`;
+    }
+
     document.getElementById('fairness-note').innerHTML=`${msg}<br><span style="color:#777;font-size:0.85em;">Source: ${src}</span>`;
     return fee;
   }
@@ -232,7 +242,6 @@
     const dropoff=document.getElementById('dropoff').value.trim();
     if(!pickup||!dropoff){alert("Please enter both pickup and drop-off.");return;}
 
-    const fairnessFee=await computeFairnessNote();
     const stops=[];for(const id of stopInputs){const v=document.getElementById(id)?.value.trim();if(v)stops.push({location:v,stopover:true});}
 
     const route=await new Promise((res,rej)=>directionsService.route({origin:pickup,destination:dropoff,waypoints:stops,travelMode:"DRIVING"},(r,s)=>s==="OK"?res(r):rej(s)));
@@ -240,6 +249,7 @@
 
     const miles=route.routes[0].legs.reduce((m,l)=>m+(l.distance?.value||0),0)/1609.34;
     const duration=route.routes[0].legs.reduce((t,l)=>t+(l.duration?.value||0),0)/60;
+    const fairnessFee=await computeFairnessNote(miles);
     const ref=(isValidCoords(driverPos)?driverPos:HQ);
     const pickupETA=Math.max(2,Math.min(60,Math.ceil((distMi(ref,{lat:pickupLatLng?.lat(),lng:pickupLatLng?.lng()})/30)*60)))+" min";
 
@@ -274,7 +284,6 @@
     resultDiv.innerHTML=html;
     resultDiv.style.display="block";
 
-    // hide any $0 lines for clarity
     resultDiv.querySelectorAll("p").forEach(p=>{
       if(p.textContent.match(/\$0(\.00)?/))p.style.display="none";
     });
