@@ -5,16 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Fare Calculator – Big Red Connect</title>
 
+  <!-- No caching -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
 
   <link rel="stylesheet" href="style.css" />
 
+  <!-- Google Maps -->
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places,geometry&callback=initGoogle" async defer></script>
 </head>
 <body>
 
+  <!-- Header -->
   <div class="logo-header">
     <a href="index.html" title="Return to Home">
       <img src="official_logo.jpeg" alt="Big Red Connect Logo" style="cursor:pointer;" />
@@ -24,10 +27,17 @@
   <h1>Fare Calculator</h1>
   <p class="tagline">Plan your next ride connection — quick, simple, and local.</p>
 
-  <!-- ✅ Restored visible status pill (controlled only by status.js) -->
+  <!-- Visible status pill remains driven by status.js -->
   <div id="status-pill" class="status">Checking status…</div>
 
   <section class="info-section calculator">
+
+    <!-- 🔀 Ride Mode Toggle -->
+    <div class="ride-mode-toggle">
+      <button id="rideNowBtn" class="btn btn-toggle active">⚡ Ride Now</button>
+      <button id="reserveBtn" class="btn btn-toggle">🕒 Reserve</button>
+    </div>
+
     <label for="pickup">Pickup Location</label>
     <input id="pickup" type="text" placeholder="Enter pickup address or place" />
 
@@ -76,12 +86,24 @@
   </footer>
 
   <script>
-  const HQ={lat:35.31953,lng:-97.51199};
+  // =========================
+  // Config & Zones
+  // =========================
+  // HQ = 19th & S Santa Fe Ave, Moore, OK
+  const HQ={lat:35.3264,lng:-97.4878};
+
+  // Live driver location Worker
   const WORKER_URL="https://update-location.bigredtransportation.workers.dev";
   const STALE_MINUTES=30;
+
   const ZONE1=["oklahoma city","moore","norman","midwest city","del city"];
   const ZONE2=["edmond","yukon","mustang","newcastle","tuttle","choctaw","harrah","jones","luther"];
   const ZONE3=["shawnee","tecumseh","guthrie","blanchard","wellston","seminole","chickasha","goldsby","lexington","noble","purcell"];
+
+  // =========================
+  // State
+  // =========================
+  let rideMode="now"; // "now" | "reserve"
 
   let map,geocoder,directionsService,directionsRenderer;
   let pickupLatLng=null,dropoffLatLng=null,pickupPlace=null,dropPlace=null;
@@ -91,6 +113,9 @@
   function isValidCoords(obj){return obj&&typeof obj.lat==="number"&&typeof obj.lng==="number"&&!isNaN(obj.lat)&&!isNaN(obj.lng);}
   function cap(s){return s?s.charAt(0).toUpperCase()+s.slice(1):s;}
 
+  // =========================
+  // Init Google
+  // =========================
   window.initGoogle=async function(){
     geocoder=new google.maps.Geocoder();
     directionsService=new google.maps.DirectionsService();
@@ -108,17 +133,20 @@
       pickupMarker=new google.maps.Marker({position:pickupLatLng,map,label:"P"});
       map.setCenter(pickupLatLng);map.setZoom(12);
       pickupCity=extractCity(p)||await reverseCity(pickupLatLng);
-      await computeFairnessNote();detectAirportAndSetType();
-    });
-    acDrop.addListener('place_changed',()=>{
-      const p=acDrop.getPlace();if(p.geometry){
-        dropPlace=p;dropoffLatLng=p.geometry.location;
-        if(dropoffMarker)dropoffMarker.setMap(null);
-        dropoffMarker=new google.maps.Marker({position:dropoffLatLng,map,label:"D"});
-        map.panTo(dropoffLatLng);detectAirportAndSetType();
-      }
+      await refreshNotes();
     });
 
+    acDrop.addListener('place_changed',async()=>{
+      const p=acDrop.getPlace();if(!p.geometry)return;
+      dropPlace=p;dropoffLatLng=p.geometry.location;
+      if(dropoffMarker)dropoffMarker.setMap(null);
+      dropoffMarker=new google.maps.Marker({position:dropoffLatLng,map,label:"D"});
+      map.panTo(dropoffLatLng);
+      detectAirportAndSetType();
+      await refreshNotes();
+    });
+
+    // carry over ?dropoff=
     const params=new URLSearchParams(window.location.search);
     const dest=params.get("dropoff");
     if(dest){
@@ -126,22 +154,56 @@
       document.getElementById("dropoff").value=decoded;
       dropPlace={formatted_address:decoded,name:decoded};
       detectAirportAndSetType();
-      setTimeout(()=>useMyLocation("pickup"),1000);
+      setTimeout(()=>useMyLocation("pickup"),750);
     }
 
-    smartRideTypeDefault();
-    await getDriverLocation();
-
+    // listeners
     document.getElementById("calcBtn").onclick=calculateFare;
     document.getElementById("addStopBtn").onclick=addStopField;
     document.getElementById("useLocPickup").onclick=()=>useMyLocation("pickup");
     document.getElementById("useLocDrop").onclick=()=>useMyLocation("dropoff");
+
+    // ride mode toggle
+    document.getElementById("rideNowBtn").onclick=()=>setRideMode("now");
+    document.getElementById("reserveBtn").onclick=()=>setRideMode("reserve");
+
+    smartRideTypeDefault();
+    await getDriverLocation();
   };
 
-  function extractCity(p){const c=p.address_components||[];const f=c.find(x=>x.types.includes("locality")||x.types.includes("postal_town"));return f?f.long_name:"";}
-  function reverseCity(latlng){return new Promise(r=>geocoder.geocode({location:latlng},(res,s)=>{if(s==="OK"&&res[0]){const c=res[0].address_components||[];const f=c.find(x=>x.types.includes("locality")||x.types.includes("postal_town"));r(f?f.long_name:"");}else r("");}));}
-  function distMi(a,b){return google.maps.geometry.spherical.computeDistanceBetween(new google.maps.LatLng(a.lat,a.lng),new google.maps.LatLng(b.lat,b.lng))/1609.34;}
-  function getZone(city){city=city.toLowerCase();if(ZONE1.includes(city))return 1;if(ZONE2.includes(city))return 2;if(ZONE3.includes(city))return 3;return 0;}
+  // =========================
+  // Helpers
+  // =========================
+  function extractCity(p){
+    const c=p.address_components||[];
+    const f=c.find(x=>x.types.includes("locality")||x.types.includes("postal_town"));
+    return f?f.long_name:"";
+  }
+
+  function reverseCity(latlng){
+    return new Promise(r=>{
+      geocoder.geocode({location:latlng},(res,s)=>{
+        if(s==="OK"&&res[0]){
+          const c=res[0].address_components||[];
+          const f=c.find(x=>x.types.includes("locality")||x.types.includes("postal_town"));
+          r(f?f.long_name:"");
+        } else r("");
+      });
+    });
+  }
+
+  function distMi(a,b){
+    return google.maps.geometry.spherical
+      .computeDistanceBetween(new google.maps.LatLng(a.lat,a.lng),new google.maps.LatLng(b.lat,b.lng))/1609.34;
+  }
+
+  function getZone(city){
+    city=(city||"").toLowerCase();
+    if(ZONE1.includes(city))return 1;
+    if(ZONE2.includes(city))return 2;
+    if(ZONE3.includes(city))return 3;
+    return 0;
+  }
 
   async function getDriverLocation(){
     try{
@@ -161,30 +223,6 @@
     }
   }
 
-  async function computeFairnessNote(totalTripMiles=0){
-    if(!pickupLatLng){document.getElementById('fairness-note').innerText="";return 0;}
-    const pCity=(pickupCity||"").toLowerCase().trim();
-    const ref=(isValidCoords(driverPos)?driverPos:HQ);
-    const src=(driverStatus==="online"?"Live Location":"HQ");
-    const driverCity=await reverseCity(ref);
-    const dropCity=dropPlace?(await reverseCity(dropoffLatLng)):"";
-    const pZone=getZone(pCity),dZone=getZone(driverCity||""),dropZone=getZone(dropCity||"");
-    const distFromDriver=distMi(ref,{lat:pickupLatLng.lat(),lng:pickupLatLng.lng()});
-    let fee=0,msg="";
-
-    if(pZone===dZone&&dropZone===dZone){
-      msg=`Pickup in ${cap(pCity)} — same zone as driver (${cap(driverCity)}).`;
-    }else if(totalTripMiles>=25){
-      msg=`Out-of-zone connection (${cap(pCity)} ↔ ${cap(dropCity)}), but distance fairly covered (${totalTripMiles.toFixed(1)} mi).`;
-    }else{
-      fee = distFromDriver > 50 ? 20 : 10;
-      msg=`Out-of-zone pickup (${cap(pCity)} vs driver in ${cap(driverCity)}), ${distFromDriver.toFixed(1)} mi away → $${fee} travel fairness fee.`;
-    }
-
-    document.getElementById('fairness-note').innerHTML=`${msg}<br><span style="color:#777;font-size:0.85em;">Source: ${src}</span>`;
-    return fee;
-  }
-
   function smartRideTypeDefault(){
     const d=new Date(),h=d.getHours(),day=d.getDay();
     if(day>=1&&day<=5&&((h>=5&&h<9)||(h>=15&&h<19))){
@@ -199,35 +237,17 @@
   function detectAirportAndSetType(){
     let combined="";
     const places=[pickupPlace,dropPlace].filter(Boolean);
-    for(const p of places){combined+=(p?.name||"")+p?.formatted_address||"";}
+    for(const p of places){combined+=(p?.name||"")+ (p?.formatted_address||"");}
     const c=combined.toLowerCase();
     if(c.includes("airport")&&!c.includes("tinker")){
       document.getElementById("tripType").value="15_airport";
       document.getElementById("airport-note").innerHTML="✈️ Airport ride detected — $15 base applied automatically.";
-    }else document.getElementById("airport-note").innerHTML="";
+    }else{
+      document.getElementById("airport-note").innerHTML="";
+    }
   }
 
-  async function useMyLocation(id){
-    if(!navigator.geolocation){alert("Location not supported.");return;}
-    navigator.geolocation.getCurrentPosition(async(p)=>{
-      const latlng={lat:p.coords.latitude,lng:p.coords.longitude};
-      const addr=await new Promise(r=>geocoder.geocode({location:latlng},(res,s)=>r((s==="OK"&&res[0])?res[0].formatted_address:`${latlng.lat},${latlng.lng}`)));
-      document.getElementById(id).value=addr;
-      if(id==="pickup"){
-        pickupLatLng=new google.maps.LatLng(latlng.lat,latlng.lng);
-        if(pickupMarker)pickupMarker.setMap(null);
-        pickupMarker=new google.maps.Marker({position:pickupLatLng,map,label:"P"});
-        pickupCity=await reverseCity(latlng);
-        await computeFairnessNote();
-      }else{
-        dropoffLatLng=new google.maps.LatLng(latlng.lat,latlng.lng);
-        if(dropoffMarker)dropoffMarker.setMap(null);
-        dropoffMarker=new google.maps.Marker({position:dropoffLatLng,map,label:"D"});
-      }
-    },()=>alert("Could not get your location permission."));
-  }
-
-  async function addStopField(){
+  function addStopField(){
     if(stopInputs.length>=3){alert("Limit 3 stops.");return;}
     const id=`stop_${Date.now()}`;stopInputs.push(id);
     const wrap=document.getElementById('stopsWrap');
@@ -248,32 +268,139 @@
     document.querySelectorAll("#stopsWrap label").forEach((l,i)=>l.textContent=`Stop ${i+1}`);
   }
 
+  async function useMyLocation(id){
+    if(!navigator.geolocation){alert("Location not supported.");return;}
+    navigator.geolocation.getCurrentPosition(async(p)=>{
+      const latlng={lat:p.coords.latitude,lng:p.coords.longitude};
+      const addr=await new Promise(r=>geocoder.geocode({location:latlng},(res,s)=>r((s==="OK"&&res[0])?res[0].formatted_address:`${latlng.lat},${latlng.lng}`)));
+      document.getElementById(id).value=addr;
+      if(id==="pickup"){
+        pickupLatLng=new google.maps.LatLng(latlng.lat,latlng.lng);
+        if(pickupMarker)pickupMarker.setMap(null);
+        pickupMarker=new google.maps.Marker({position:pickupLatLng,map,label:"P"});
+        pickupCity=await reverseCity(latlng);
+        await refreshNotes();
+      }else{
+        dropoffLatLng=new google.maps.LatLng(latlng.lat,latlng.lng);
+        if(dropoffMarker)dropoffMarker.setMap(null);
+        dropoffMarker=new google.maps.Marker({position:dropoffLatLng,map,label:"D"});
+        await refreshNotes();
+      }
+    },()=>alert("Could not get your location permission."));
+  }
+
+  // =========================
+  // Fairness Logic
+  // =========================
+  async function computeFairnessNote(totalTripMiles=0){
+    if(!pickupLatLng){document.getElementById('fairness-note').innerText="";return 0;}
+
+    // Choose origin reference based on rideMode
+    let ref, src;
+    if(rideMode==="reserve"){
+      ref=HQ; src="HQ (reserved)";
+    }else{
+      ref=(isValidCoords(driverPos)?driverPos:HQ);
+      src=(driverStatus==="online"?"Live Location":"HQ");
+    }
+
+    const pCity=(pickupCity||"").toLowerCase().trim();
+    const driverCity=await reverseCity(ref);
+    const dropCity=dropPlace?(await reverseCity(dropoffLatLng)):"";
+    const pZone=getZone(pCity), dZone=getZone(driverCity||""), dropZone=getZone(dropCity||"");
+    const distFromDriver=distMi(ref,{lat:pickupLatLng.lat(),lng:pickupLatLng.lng()});
+
+    // Simple rules:
+    // 1) Same-zone (pickup & drop both in driver's zone) => no fee
+    // 2) If total trip >= 25 mi => no fee (trip fairly covers travel)
+    // 3) Otherwise fee = $10 if <=50 mi from driver, else $20
+    let fee=0, msg="";
+    if(pZone===dZone && dropZone===dZone){
+      msg=`Pickup in ${cap(pCity)} — same zone as driver (${cap(driverCity)}).`;
+    }else if(totalTripMiles>=25){
+      msg=`Out-of-zone connection (${cap(pCity)} ↔ ${cap(dropCity)}), but distance fairly covered (${totalTripMiles.toFixed(1)} mi).`;
+    }else{
+      fee = distFromDriver > 50 ? 20 : 10;
+      msg=`Out-of-zone pickup (${cap(pCity)} vs driver in ${cap(driverCity)}), ${distFromDriver.toFixed(1)} mi away → $${fee} travel fairness fee.`;
+    }
+
+    const pill = document.getElementById('fairness-note');
+    if(rideMode==="reserve" && fee===0){
+      // stay silent for reserve if no fee
+      pill.innerHTML="";
+    }else{
+      pill.innerHTML = `${msg}<br><span style="color:#777;font-size:0.85em;">Source: ${src}</span>`;
+    }
+    return fee;
+  }
+
+  async function refreshNotes(){
+    // re-evaluate airport & rushhour notes; fairness uses zero miles until calc runs
+    detectAirportAndSetType();
+    smartRideTypeDefault();
+    await computeFairnessNote(0);
+  }
+
+  // =========================
+  // Ride Mode Toggle
+  // =========================
+  function setRideMode(mode){
+    if(mode===rideMode) return;
+    rideMode=mode;
+
+    // toggle button styles
+    document.getElementById("rideNowBtn").classList.toggle("active", rideMode==="now");
+    document.getElementById("reserveBtn").classList.toggle("active", rideMode==="reserve");
+
+    // refresh notes so fairness banner reflects mode
+    refreshNotes();
+  }
+
+  // =========================
+  // Fare Calculation
+  // =========================
   async function calculateFare(){
     const pickup=document.getElementById('pickup').value.trim();
     const dropoff=document.getElementById('dropoff').value.trim();
     if(!pickup||!dropoff){alert("Please enter both pickup and drop-off.");return;}
 
-    const stops=[];for(const id of stopInputs){const v=document.getElementById(id)?.value.trim();if(v)stops.push({location:v,stopover:true});}
+    const stops=[];
+    for(const id of stopInputs){
+      const v=document.getElementById(id)?.value.trim();
+      if(v)stops.push({location:v,stopover:true});
+    }
 
-    const route=await new Promise((res,rej)=>directionsService.route({origin:pickup,destination:dropoff,waypoints:stops,travelMode:"DRIVING"},(r,s)=>s==="OK"?res(r):rej(s)));
+    const route=await new Promise((res,rej)=>directionsService.route({
+      origin:pickup,destination:dropoff,waypoints:stops,travelMode:"DRIVING"
+    },(r,s)=>s==="OK"?res(r):rej(s)));
+
     directionsRenderer.setDirections(route);
 
     const miles=route.routes[0].legs.reduce((m,l)=>m+(l.distance?.value||0),0)/1609.34;
     const duration=route.routes[0].legs.reduce((t,l)=>t+(l.duration?.value||0),0)/60;
+
     const fairnessFee=await computeFairnessNote(miles);
-    const ref=(isValidCoords(driverPos)?driverPos:HQ);
+
+    // ETA uses live driver if available (reserve mode still shows pickup ETA from HQ ref)
+    const ref=(rideMode==="reserve") ? HQ : (isValidCoords(driverPos)?driverPos:HQ);
     const pickupETA=Math.max(2,Math.min(60,Math.ceil((distMi(ref,{lat:pickupLatLng?.lat(),lng:pickupLatLng?.lng()})/30)*60)))+" min";
 
-    smartRideTypeDefault();detectAirportAndSetType();
+    smartRideTypeDefault();
+    detectAirportAndSetType();
+
     const tripVal=document.getElementById('tripType').value;
     const base=(tripVal==="15_airport")?15:parseFloat(tripVal);
+
     const tier2=Math.max(0,Math.min(10,miles-10))*1.25;
     const tier3=Math.max(0,miles-20)*1.00;
     const mileageSubtotal=tier2+tier3;
+
     const stopsTotal=stops.length*5;
+
     let fare=base+mileageSubtotal+stopsTotal+fairnessFee;
     const pay=document.getElementById('payment').value;
-    if(pay==="card")fare+=fare*0.033+fare*0.024;
+    if(pay==="card"){ fare+=fare*0.033 + fare*0.024; }
+
     const total=fare.toFixed(2);
 
     const wayStr=stops.length?stops.map(s=>s.location).join("|"):"";
@@ -285,7 +412,7 @@
       <p><strong>Stops:</strong> ${stops.length} × $5 = $${stopsTotal.toFixed(2)}</p>
       <p><strong>Travel Fairness Fee:</strong> $${fairnessFee.toFixed(2)}</p>
       <p><strong>Payment:</strong> ${pay==="card"?"Card (incl. fees)":"Cash / Venmo / Cash App"}</p>
-      <p>📏 ${miles.toFixed(1)} mi  ⏱️ ${Math.round(duration)} min  🚗 ETA ${pickupETA}</p>
+      <p>📏 ${miles.toFixed(1)} mi  ⏱️ ${Math.round(duration)} min  🚗 ETA ${pickupETA} ${rideMode==="reserve" ? "(from HQ)" : ""}</p>
       <p style="text-align:center;margin-top:15px;">
         <button class="btn primary" id="textRedBtn">📲 Text RED with Trip Details</button>
       </p>
@@ -295,13 +422,16 @@
     resultDiv.innerHTML=html;
     resultDiv.style.display="block";
 
+    // hide any $0 lines (and keep fairness silent on Reserve if $0)
     resultDiv.querySelectorAll("p").forEach(p=>{
-      if(p.textContent.match(/\$0(\.00)?/))p.style.display="none";
+      if(p.textContent.match(/\$0(\.00)?/)) p.style.display="none";
     });
 
     document.getElementById("textRedBtn").onclick=()=>{
       const name=prompt("Hey there! Please enter your name for the message to Big Red:");
-      const smsBody=encodeURIComponent(`Hey Big Red — this is ${name||"a rider"} heading from ${pickup} to ${dropoff}. Estimated $${total} flat rate. View Route: ${routeLink}`);
+      const smsBody=encodeURIComponent(
+        `Hey Big Red — this is ${name||"a rider"} (${rideMode==="reserve"?"RESERVE":"NOW"}) from ${pickup} to ${dropoff}. Estimated $${total} flat rate. View Route: ${routeLink}`
+      );
       window.location.href=`sms:+14053784024?&body=${smsBody}`;
     };
   }
