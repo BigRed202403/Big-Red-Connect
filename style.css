@@ -328,7 +328,23 @@ footer a:hover {
   h1 { font-size: 1.6em; }
   footer { margin-top: 35px; font-size: 0.85em; }
 }
-
+/* Ride mode toggle */
+.ride-mode-toggle {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin: 10px 0 14px;
+}
+.btn-toggle {
+  border: 1px solid #c00;
+  background: transparent;
+  color: #c00;
+}
+.btn-toggle.active {
+  background: #c00;
+  color: #fff;
+  border-color: #c00;
+}
 /* ==========================================================
    END OF FILE
 ========================================================== */
