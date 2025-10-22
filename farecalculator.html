@@ -81,7 +81,7 @@
   <script>
   const HQ = { lat: 35.31953, lng: -97.51199 };
   const WORKER_URL = "https://update-location.bigredtransportation.workers.dev";
-  const STALE_MINUTES = 30; // auto-offline threshold
+  const STALE_MINUTES = 30;
   const ZONE1 = ["oklahoma city","moore","norman","midwest city","del city"];
   const ZONE2 = ["edmond","yukon","mustang","newcastle","tuttle","choctaw","harrah","jones","luther"];
   const ZONE3 = ["shawnee","tecumseh","guthrie","blanchard","wellston","seminole","chickasha","goldsby","lexington","noble","purcell"];
@@ -94,7 +94,7 @@
   function isValidCoords(obj){return obj&&typeof obj.lat==="number"&&typeof obj.lng==="number"&&!isNaN(obj.lat)&&!isNaN(obj.lng);}
   function cap(s){return s?s.charAt(0).toUpperCase()+s.slice(1):s;}
 
-  window.initGoogle=async function(){
+  window.initGoogle = async function() {
     geocoder=new google.maps.Geocoder();
     directionsService=new google.maps.DirectionsService();
     directionsRenderer=new google.maps.DirectionsRenderer({suppressMarkers:true});
@@ -113,6 +113,7 @@
       pickupCity=extractCity(p)||await reverseCity(pickupLatLng);
       await computeFairnessNote();detectAirportAndSetType();
     });
+
     acDrop.addListener('place_changed',()=>{
       const p=acDrop.getPlace();if(p.geometry){
         dropPlace=p;dropoffLatLng=p.geometry.location;
@@ -131,11 +132,6 @@
       detectAirportAndSetType();
       setTimeout(()=>useMyLocation("pickup"),1000);
     }
-
-    document.getElementById('useLocPickup').onclick=()=>useMyLocation('pickup');
-    document.getElementById('useLocDrop').onclick=()=>useMyLocation('dropoff');
-    document.getElementById('addStopBtn').onclick=addStopField;
-    document.getElementById('calcBtn').onclick=calculateFare;
 
     smartRideTypeDefault();
     await getDriverLocation();
@@ -233,6 +229,27 @@
     },()=>alert("Could not get your location permission."));
   }
 
+  async function addStopField(){
+    if(stopInputs.length>=3){alert("Limit 3 stops.");return;}
+    const id=`stop_${Date.now()}`;stopInputs.push(id);
+    const wrap=document.getElementById('stopsWrap');
+    const div=document.createElement('div');
+    div.className="stop-row";div.id=`row_${id}`;
+    div.innerHTML=`<label for="${id}">Stop ${stopInputs.length}</label>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <input id="${id}" type="text" placeholder="Enter stop address or place" style="flex:1;">
+        <button type="button" class="remove-stop" onclick="removeStop('${id}')">✖</button>
+      </div>`;
+    wrap.appendChild(div);
+    new google.maps.places.Autocomplete(document.getElementById(id));
+  }
+
+  function removeStop(id){
+    document.getElementById(`row_${id}`)?.remove();
+    stopInputs=stopInputs.filter(s=>s!==id);
+    document.querySelectorAll("#stopsWrap label").forEach((l,i)=>l.textContent=`Stop ${i+1}`);
+  }
+
   async function calculateFare(){
     const pickup=document.getElementById('pickup').value.trim();
     const dropoff=document.getElementById('dropoff').value.trim();
@@ -290,6 +307,15 @@
       window.location.href=`sms:+14053784024?&body=${smsBody}`;
     };
   }
+
+  // --- Ensure buttons always work, even if Google takes a second to load ---
+  document.addEventListener("DOMContentLoaded", () => {
+    const calc=document.getElementById("calcBtn");
+    const addStop=document.getElementById("addStopBtn");
+
+    if(calc) calc.addEventListener("click",()=>{ if(typeof calculateFare==="function") calculateFare(); else alert("Map still loading — please wait a few seconds."); });
+    if(addStop) addStop.addEventListener("click",()=>{ if(typeof addStopField==="function") addStopField(); else alert("Map still loading — please wait a few seconds."); });
+  });
   </script>
 
   <script src="status.js"></script>
