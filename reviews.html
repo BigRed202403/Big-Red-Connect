@@ -5,31 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Leave a Review • Big Red Connect</title>
 
-  <!-- 🚫 Force fresh reloads after publishing -->
+  <!-- 🚫 Force fresh reloads -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
 
   <link rel="stylesheet" href="style.css" />
 
-  <!-- ▸ Shimmer/Splash (once per session) -->
+  <!-- ▸ Shimmer/Splash -->
   <style>
     #shimmer {
       position: fixed; inset: 0; background:#000; z-index:10000;
       display:flex; flex-direction:column; align-items:center; justify-content:center;
     }
-    #shimmer .logo {
-      width: 160px; max-width: 50vw; height:auto;
-      animation:pulse 1.2s infinite ease-in-out;
-    }
-    #shimmer .msg {
-      color:#bbb; margin-top:14px; font-size:0.95em; letter-spacing:.3px;
-    }
-    @keyframes pulse {
-      0%{opacity:.5; transform:scale(.98)}
-      50%{opacity:1; transform:scale(1)}
-      100%{opacity:.5; transform:scale(.98)}
-    }
+    #shimmer .logo { width:160px; max-width:50vw; height:auto; animation:pulse 1.2s infinite ease-in-out; }
+    #shimmer .msg { color:#bbb; margin-top:14px; font-size:0.95em; letter-spacing:.3px; }
+    @keyframes pulse { 0%{opacity:.5;transform:scale(.98)} 50%{opacity:1;transform:scale(1)} 100%{opacity:.5;transform:scale(.98)} }
   </style>
 
   <script>
@@ -38,13 +29,13 @@
       if (sessionStorage.getItem("brc_splash_shown")) return;
       const w=document.createElement("div");
       w.id="shimmer";
-      w.innerHTML = '<img class="logo" src="official_logo.jpeg" alt="Big Red Connect Logo"><div class="msg">'+(window.SPLASH_MESSAGE||"Loading…")+'</div>';
-      document.addEventListener("DOMContentLoaded", ()=>document.body.appendChild(w));
-      window.addEventListener("load", ()=>{
+      w.innerHTML='<img class="logo" src="official_logo.jpeg" alt="Big Red Connect Logo"><div class="msg">'+(window.SPLASH_MESSAGE||"Loading…")+'</div>';
+      document.addEventListener("DOMContentLoaded",()=>document.body.appendChild(w));
+      window.addEventListener("load",()=>{
         setTimeout(()=>{
           w.style.transition="opacity .35s"; w.style.opacity="0";
-          setTimeout(()=>{ w.remove(); sessionStorage.setItem("brc_splash_shown","1"); }, 350);
-        }, 350);
+          setTimeout(()=>{ w.remove(); sessionStorage.setItem("brc_splash_shown","1"); },350);
+        },350);
       });
     })();
   </script>
@@ -52,20 +43,57 @@
 
 <body class="reviews-page">
 
-  <!-- 🚗 Logo Header (no hero banner) -->
+  <!-- 🚗 Logo Header -->
   <div class="logo-header">
     <img src="official_logo.jpeg" alt="Big Red Connect Logo" />
   </div>
 
-  <!-- 🏷️ Header -->
   <h1>Leave a Review</h1>
   <p class="tagline">We’d love to hear about your experience with Big Red Connect.</p>
 
-  <!-- 🟢 Status Pill -->
   <div id="status-pill" class="status status--loading">Checking status…</div>
 
+  <!-- ⭐ Rider Testimonials -->
+  <section class="info-section reviews">
+    <h2 style="text-align:center;">⭐ What Riders Are Saying</h2>
+
+    <div class="review-card">
+      <p>“Always on time and super friendly — way better than waiting on Uber!”</p>
+      <p><strong>– Ashley M. (Norman)</strong></p>
+    </div>
+
+    <div class="review-card">
+      <p>“Flat rates are clutch! No surprises, just local rides done right.”</p>
+      <p><strong>– Marcus T. (OKC)</strong></p>
+    </div>
+
+    <div class="review-card">
+      <p>“Used Big Red for the Bricktown concert — saved money and got home safe!”</p>
+      <p><strong>– Jen & Tyler (Yukon)</strong></p>
+    </div>
+
+    <div class="review-card">
+      <p>“Booked ahead for the airport — driver was early and super helpful with bags.”</p>
+      <p><strong>– Shannon P. (Moore)</strong></p>
+    </div>
+
+    <div class="review-card">
+      <p>“Super easy to plan ahead, and I love that it’s a local veteran-owned service.”</p>
+      <p><strong>– Chris L. (Mustang)</strong></p>
+    </div>
+
+    <div class="review-card">
+      <p>“Reliable, personable, and always safe — Big Red Connect is my go-to for nights out.”</p>
+      <p><strong>– Danielle R. (Shawnee)</strong></p>
+    </div>
+
+    <p style="text-align:center;margin-top:20px;">
+      <a href="#leave-review" class="btn primary">✍️ Leave Your Own Review</a>
+    </p>
+  </section>
+
   <!-- 📝 Google Form Embed -->
-  <section class="info-section" style="text-align:center;">
+  <section id="leave-review" class="info-section" style="text-align:center;">
     <iframe 
       src="https://docs.google.com/forms/d/e/1FAIpQLSeq6WCnkrG417rWCGwN56i7FplWpNTHlg1lpGuC-IETDEkEHw/viewform?embedded=true"
       width="100%" height="700" style="border:none; border-radius:10px;" allowfullscreen>
@@ -75,19 +103,15 @@
   <!-- 📱 QR Option -->
   <section class="info-section" style="text-align:center;">
     <p>Prefer to use your phone? Scan here:</p>
-
-    <!-- ✅ Clickable QR -->
     <a href="https://docs.google.com/forms/d/e/1FAIpQLSeq6WCnkrG417rWCGwN56i7FplWpNTHlg1lpGuC-IETDEkEHw/viewform?usp=sf_link" target="_blank">
       <img src="Review-qr.png" alt="Scan to leave a review" style="max-width:200px; border-radius:8px;" />
     </a>
-
     <p class="note" style="color:#aaa; margin-top:10px;">
       Your feedback goes directly to Big Red Connect.<br>
       Thank you for supporting local!
     </p>
   </section>
 
-  <!-- 🦶 Footer -->
   <footer>
     <p>Need a connection? Text <strong>“RED”</strong> to (405) 378-4024.</p>
     <a href="index.html" class="btn">🏠 Return to Home</a>
