@@ -5,16 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Fare Calculator – Big Red Connect</title>
 
+  <!-- Disable caching -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
 
   <link rel="stylesheet" href="style.css" />
 
+  <!-- Google Maps -->
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places,geometry&callback=initGoogle" async defer></script>
 </head>
 <body>
 
+  <!-- Header -->
   <div class="logo-header">
     <a href="index.html" title="Return to Home">
       <img src="official_logo.jpeg" alt="Big Red Connect Logo" style="cursor:pointer;" />
@@ -24,6 +27,7 @@
   <h1>Fare Calculator</h1>
   <p class="tagline">Plan your next ride connection — quick, simple, and local.</p>
 
+  <!-- Status Pill -->
   <div id="status-pill" class="status status--loading">Checking status…</div>
 
   <section class="info-section calculator">
@@ -75,18 +79,20 @@
   </footer>
 
   <script>
-  const HQ={lat:35.31953,lng:-97.51199};
-  const WORKER_URL="https://location-reader.bigredtransportation.workers.dev";
-  const ZONE1=["oklahoma city","moore","norman","midwest city","del city"];
-  const ZONE2=["edmond","yukon","mustang","newcastle","tuttle","choctaw","harrah","jones","luther"];
-  const ZONE3=["shawnee","tecumseh","guthrie","blanchard","wellston","seminole","chickasha","goldsby","lexington","noble","purcell"];
+  const HQ = { lat: 35.31953, lng: -97.51199 };
+  const WORKER_URL = "https://update-location.bigredtransportation.workers.dev";
+  const STALE_MINUTES = 30; // auto-offline threshold
+  const ZONE1 = ["oklahoma city","moore","norman","midwest city","del city"];
+  const ZONE2 = ["edmond","yukon","mustang","newcastle","tuttle","choctaw","harrah","jones","luther"];
+  const ZONE3 = ["shawnee","tecumseh","guthrie","blanchard","wellston","seminole","chickasha","goldsby","lexington","noble","purcell"];
 
-  let map,geocoder,directionsService,directionsRenderer;
-  let pickupLatLng=null,dropoffLatLng=null,pickupPlace=null,dropPlace=null;
-  let pickupCity="",driverPos=null;
-  let stopInputs=[],pickupMarker=null,dropoffMarker=null;
+  let map, geocoder, directionsService, directionsRenderer;
+  let pickupLatLng=null, dropoffLatLng=null, pickupPlace=null, dropPlace=null;
+  let pickupCity="", driverPos=null, driverStatus="unknown";
+  let stopInputs=[], pickupMarker=null, dropoffMarker=null;
 
   function isValidCoords(obj){return obj&&typeof obj.lat==="number"&&typeof obj.lng==="number"&&!isNaN(obj.lat)&&!isNaN(obj.lng);}
+  function cap(s){return s?s.charAt(0).toUpperCase()+s.slice(1):s;}
 
   window.initGoogle=async function(){
     geocoder=new google.maps.Geocoder();
@@ -135,30 +141,9 @@
     await getDriverLocation();
   };
 
-  function addStopField(){
-    if(stopInputs.length>=3){alert("Limit 3 stops.");return;}
-    const id=`stop_${Date.now()}`;stopInputs.push(id);
-    const wrap=document.getElementById('stopsWrap');
-    const div=document.createElement('div');
-    div.className="stop-row";div.id=`row_${id}`;
-    div.innerHTML=`<label for="${id}">Stop ${stopInputs.length}</label>
-      <div style="display:flex;gap:6px;align-items:center;">
-        <input id="${id}" type="text" placeholder="Enter stop address or place" style="flex:1;">
-        <button type="button" class="remove-stop" onclick="removeStop('${id}')">✖</button>
-      </div>`;
-    wrap.appendChild(div);
-    new google.maps.places.Autocomplete(document.getElementById(id));
-  }
-  function removeStop(id){
-    document.getElementById(`row_${id}`)?.remove();
-    stopInputs=stopInputs.filter(s=>s!==id);
-    document.querySelectorAll("#stopsWrap label").forEach((l,i)=>l.textContent=`Stop ${i+1}`);
-  }
-
   function extractCity(p){const c=p.address_components||[];const f=c.find(x=>x.types.includes("locality")||x.types.includes("postal_town"));return f?f.long_name:"";}
   function reverseCity(latlng){return new Promise(r=>geocoder.geocode({location:latlng},(res,s)=>{if(s==="OK"&&res[0]){const c=res[0].address_components||[];const f=c.find(x=>x.types.includes("locality")||x.types.includes("postal_town"));r(f?f.long_name:"");}else r("");}));}
   function distMi(a,b){return google.maps.geometry.spherical.computeDistanceBetween(new google.maps.LatLng(a.lat,a.lng),new google.maps.LatLng(b.lat,b.lng))/1609.34;}
-  function cap(s){return s?s.charAt(0).toUpperCase()+s.slice(1):s;}
   function getZone(city){city=city.toLowerCase();if(ZONE1.includes(city))return 1;if(ZONE2.includes(city))return 2;if(ZONE3.includes(city))return 3;return 0;}
 
   async function getDriverLocation(){
@@ -166,16 +151,27 @@
       const r=await fetch(WORKER_URL,{cache:"no-store"});
       const j=await r.json();
       const lat=parseFloat(j.latitude),lng=parseFloat(j.longitude);
+      const t=j.timestamp?new Date(j.timestamp):null;
+      const ageMinutes=t?(Date.now()-t.getTime())/60000:999;
       const valid=!isNaN(lat)&&!isNaN(lng)&&lat>34&&lat<37&&lng<-94&&lng>-99;
-      driverPos=valid?{lat,lng}:null;
-    }catch{driverPos=null;}
+      if(valid&&ageMinutes<=STALE_MINUTES){
+        driverPos={lat,lng};driverStatus="online";
+        document.getElementById("status-pill").textContent="🟢 On the road (live)";
+      }else{
+        driverPos=HQ;driverStatus="offline";
+        document.getElementById("status-pill").textContent="🔴 Offline — using HQ fallback";
+      }
+    }catch{
+      driverPos=HQ;driverStatus="offline";
+      document.getElementById("status-pill").textContent="🔴 Offline — fallback mode";
+    }
   }
 
   async function computeFairnessNote(totalTripMiles=0){
     if(!pickupLatLng){document.getElementById('fairness-note').innerText="";return 0;}
     const pCity=(pickupCity||"").toLowerCase().trim();
     const ref=(isValidCoords(driverPos)?driverPos:HQ);
-    const src=(isValidCoords(driverPos)?"Live Location":"HQ");
+    const src=(driverStatus==="online"?"Live Location":"HQ");
     const driverCity=await reverseCity(ref);
     const dropCity=dropPlace?(await reverseCity(dropoffLatLng)):"";
     const pZone=getZone(pCity),dZone=getZone(driverCity||""),dropZone=getZone(dropCity||"");
