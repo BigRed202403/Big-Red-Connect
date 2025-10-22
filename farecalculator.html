@@ -24,6 +24,9 @@
   <h1>Fare Calculator</h1>
   <p class="tagline">Plan your next ride connection — quick, simple, and local.</p>
 
+  <!-- ✅ Restored visible status pill (controlled only by status.js) -->
+  <div id="status-pill" class="status">Checking status…</div>
+
   <section class="info-section calculator">
     <label for="pickup">Pickup Location</label>
     <input id="pickup" type="text" placeholder="Enter pickup address or place" />
@@ -128,6 +131,11 @@
 
     smartRideTypeDefault();
     await getDriverLocation();
+
+    document.getElementById("calcBtn").onclick=calculateFare;
+    document.getElementById("addStopBtn").onclick=addStopField;
+    document.getElementById("useLocPickup").onclick=()=>useMyLocation("pickup");
+    document.getElementById("useLocDrop").onclick=()=>useMyLocation("dropoff");
   };
 
   function extractCity(p){const c=p.address_components||[];const f=c.find(x=>x.types.includes("locality")||x.types.includes("postal_town"));return f?f.long_name:"";}
@@ -297,13 +305,6 @@
       window.location.href=`sms:+14053784024?&body=${smsBody}`;
     };
   }
-
-  document.addEventListener("DOMContentLoaded", () => {
-    const calc=document.getElementById("calcBtn");
-    const addStop=document.getElementById("addStopBtn");
-    if(calc) calc.addEventListener("click",()=>{ if(typeof calculateFare==="function") calculateFare(); else alert("Map still loading — please wait a few seconds."); });
-    if(addStop) addStop.addEventListener("click",()=>{ if(typeof addStopField==="function") addStopField(); else alert("Map still loading — please wait a few seconds."); });
-  });
   </script>
 
   <script src="status.js"></script>
