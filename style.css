@@ -1,16 +1,16 @@
 /* ==========================================================
    BIG RED CONNECT – Global Stylesheet
-   Version: October 2025 (Unified + Shimmer Compatible)
+   Version: October 2025 (Unified + Fixed Calculator Layout)
 ========================================================== */
 
 /* ==============================
    GLOBAL LAYOUT
 ============================== */
-:root{
+:root {
   --red:#c40000;
   --red-dark:#9a0000;
 }
-*{box-sizing:border-box}
+* { box-sizing: border-box; }
 body {
   margin: 0;
   font-family: "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", sans-serif;
@@ -24,17 +24,17 @@ h1, h2, h3, p {
   max-width: 600px;
   line-height: 1.5;
 }
-.smallnote{font-size:.8em;color:#777;margin-top:10px;line-height:1.4}
+.smallnote { font-size:.8em;color:#777;margin-top:10px;line-height:1.4; }
 
 /* ==============================
    TOP BAR (secondary pages)
 ============================== */
-.topbar{
+.topbar {
   display:flex;justify-content:flex-start;align-items:center;
   gap:10px;padding:10px 14px;background:#0b0b0b;border-bottom:1px solid #111;
   position:sticky;top:0;z-index:1000;
 }
-.home-link{
+.home-link {
   display:inline-block;padding:8px 12px;border-radius:8px;text-decoration:none;
   background:linear-gradient(180deg, var(--red), var(--red-dark));
   border:1px solid var(--red); color:#fff; font-weight:700;
@@ -53,357 +53,215 @@ h1, h2, h3, p {
   border-radius: 0 0 15px 15px;
   box-shadow: 0 4px 20px rgba(255, 0, 0, 0.15);
 }
-.hero.small { display: none; }
+.hero.small { display:none; }
 
-/* Subpage logo header */
-.logo-header { text-align: center; margin: 18px 0 6px 0; }
-.logo-header img { width: 200px; max-width: 80%; height: auto; }
+.logo-header { text-align:center; margin:18px 0 6px 0; }
+.logo-header img { width:200px; max-width:80%; height:auto; }
 
-/* Main logo (used on homepage under hero) */
-.main-logo { width: 220px; margin-top: -40px; }
+.main-logo { width:220px; margin-top:-40px; }
 
 /* ==============================
    HEADINGS + TAGLINE
 ============================== */
-h1 { color: #ff1a1a; font-size: 2em; margin-top: 10px; letter-spacing: 0.5px; }
-h2 { color: #ff1a1a; font-size: 1.4em; margin-top: 30px; }
-.section-title{ margin-bottom:10px; }
-.tagline { color: #ccc; font-size: 1em; margin-bottom: 20px; }
+h1 { color:#ff1a1a; font-size:2em; margin-top:10px; letter-spacing:0.5px; }
+h2 { color:#ff1a1a; font-size:1.4em; margin-top:30px; }
+.section-title { margin-bottom:10px; }
+.tagline { color:#ccc; font-size:1em; margin-bottom:20px; }
 .hint { color:#888; font-size:.9em; margin-top:6px; }
 
 /* ==============================
    STATUS PILL
 ============================== */
 .status {
-  display: inline-block;
-  padding: 10px 16px;
-  border-radius: 25px;
-  font-size: 0.95em;
-  margin: 10px auto 20px;
-  text-align: center;
-  max-width: 90%;
+  display:inline-block;
+  padding:10px 16px;
+  border-radius:25px;
+  font-size:0.95em;
+  margin:15px auto 20px;
+  text-align:center;
+  max-width:90%;
 }
-.status.online { background-color: rgba(76, 175, 80, 0.15); color: #4CAF50; border: 1px solid #4CAF50; }
-.status.away   { background-color: rgba(255, 204, 0, 0.15); color: #ffcc00; border: 1px solid #ffcc00; }
-.status.offline{ background-color: rgba(255, 68, 68, 0.15); color: #ff4c4c; border: 1px solid #ff4c4c; }
+.status.online  { background:rgba(76,175,80,0.15); color:#4CAF50; border:1px solid #4CAF50; }
+.status.away    { background:rgba(255,204,0,0.15); color:#ffcc00; border:1px solid #ffcc00; }
+.status.offline { background:rgba(255,68,68,0.15); color:#ff4c4c; border:1px solid #ff4c4c; }
 
 /* ==============================
    BUTTONS
 ============================== */
 .cta-group {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(140px, 1fr));
-  gap: 12px;
-  max-width: 520px;
-  margin: 16px auto 6px;
-  padding: 0 16px;
+  display:grid;
+  grid-template-columns:repeat(2,minmax(140px,1fr));
+  gap:12px;
+  max-width:520px;
+  margin:16px auto 6px;
+  padding:0 16px;
 }
-.cta-group.cta-balanced .btn{ width:100%; }
-
 .btn {
-  display: inline-block;
-  padding: 12px 20px;
-  border-radius: 10px;
-  text-decoration: none;
-  font-weight: 700;
-  color: #fff;
-  transition: all 0.2s ease;
-  box-shadow: 0 3px 10px rgba(255, 0, 0, 0.2);
-  position: relative;
-  overflow: hidden;
-  white-space: nowrap;
-  border: 1px solid transparent;
+  display:inline-block;
+  padding:12px 20px;
+  border-radius:10px;
+  text-decoration:none;
+  font-weight:700;
+  color:#fff;
+  transition:all .2s ease;
+  box-shadow:0 3px 10px rgba(255,0,0,.2);
+  position:relative;
+  overflow:hidden;
+  border:1px solid transparent;
 }
-.btn.primary { background: linear-gradient(180deg, var(--red), var(--red-dark)); border-color: var(--red); }
-.btn.secondary { background: linear-gradient(180deg, #333, #111); border-color: #444; }
-.btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(255, 0, 0, 0.35); filter: brightness(1.08); }
-.btn:active { transform: scale(0.97); filter: brightness(0.92); box-shadow: 0 0 8px rgba(255, 0, 0, 0.5) inset; }
-
-/* Micro buttons (for per-field “Use My Location”) */
-.btn.micro{ padding:8px 12px; font-size:.9em; border-radius:8px; }
+.btn.primary   { background:linear-gradient(180deg,var(--red),var(--red-dark)); border-color:var(--red); }
+.btn.secondary { background:linear-gradient(180deg,#333,#111); border-color:#444; }
+.btn:hover     { transform:translateY(-2px); box-shadow:0 5px 15px rgba(255,0,0,0.35); }
+.btn:active    { transform:scale(0.97); box-shadow:0 0 8px rgba(255,0,0,0.5) inset; }
 
 /* ==============================
-   TILE GRID (home)
+   TILE GRID
 ============================== */
 .tile-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 14px;
-  max-width: 680px;
-  margin: 24px auto 10px;
-  padding: 0 18px;
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+  gap:14px;
+  max-width:680px;
+  margin:24px auto 10px;
+  padding:0 18px;
 }
 .tile {
-  background-color: #111;
-  border: 1px solid #222;
-  border-radius: 10px;
-  padding: 18px 12px;
-  color: #fff;
-  text-decoration: none;
-  font-size: 0.95em;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 6px rgba(255, 0, 0, 0.1);
-  min-height: 94px;
+  background:#111;
+  border:1px solid #222;
+  border-radius:10px;
+  padding:18px 12px;
+  color:#fff;
+  text-decoration:none;
+  font-size:0.95em;
+  transition:all .2s ease;
+  box-shadow:0 2px 6px rgba(255,0,0,0.1);
 }
-.tile:hover { transform: translateY(-2px); border-color: var(--red); box-shadow: 0 0 10px rgba(255, 0, 0, 0.28); }
-
-/* iPad-friendly alignment */
-.home-tiles { max-width: 720px; }
+.tile:hover { transform:translateY(-2px); border-color:var(--red); box-shadow:0 0 10px rgba(255,0,0,0.28); }
 
 /* ==============================
    INFO SECTIONS
 ============================== */
 .info-section {
-  background-color: #111;
-  border-radius: 10px;
-  padding: 20px;
-  margin: 25px auto;
-  max-width: 650px;
-  text-align: left;
-  box-shadow: 0 2px 10px rgba(255, 0, 0, 0.15);
+  background:#111;
+  border-radius:10px;
+  padding:20px;
+  margin:25px auto;
+  max-width:650px;
+  text-align:left;
+  box-shadow:0 2px 10px rgba(255,0,0,0.15);
 }
-.info-section.centered{ text-align:center; }
-.info-section h2 { text-align: center; }
-.info-section ul { text-align: left; padding-left: 20px; }
-.info-section li { margin-bottom: 8px; }
-
-/* “Where to?” inline form */
-.where-form{
-  display:flex;gap:10px;justify-content:center;flex-wrap:wrap;
-  max-width:640px;margin:0 auto;
-}
-.where-form input{
-  flex:1;min-width:220px;max-width:400px;padding:12px;border-radius:10px;
-  border:1px solid #333;background:#111;color:#fff;
-}
-
-/* ==============================
-   REVIEW CARDS
-============================== */
-.review-card {
-  background-color: #1a1a1a;
-  border-radius: 10px;
-  padding: 15px;
-  margin: 10px auto;
-  color: #fff;
-  max-width: 600px;
-  box-shadow: 0 0 6px rgba(255, 0, 0, 0.25);
-  border: 1px solid #333;
-}
+.info-section.centered { text-align:center; }
+.info-section h2 { text-align:center; }
+.info-section ul { text-align:left; padding-left:20px; }
+.info-section li { margin-bottom:8px; }
 
 /* ==============================
    CALCULATOR + MAP
 ============================== */
 .calculator label {
-  display: block;
-  text-align: left;
-  font-weight: 600;
-  margin: 10px auto 4px;
-  max-width: 600px;
+  display:block;
+  text-align:left;
+  font-weight:600;
+  margin:12px auto 6px;
+  max-width:600px;
 }
 .calculator input,
 .calculator select {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 12px;
-  margin-bottom: 8px;
-  border: 1px solid #333;
-  border-radius: 8px;
-  background: #111;
-  color: #fff;
-}
-.field-actions{
-  display:flex;justify-content:flex-end;gap:8px;max-width:600px;margin:4px auto 10px;
+  width:100%;
+  padding:12px;
+  border:1px solid #333;
+  border-radius:8px;
+  background:#111;
+  color:#fff;
+  margin-bottom:12px;
 }
 #map {
-  height: 260px;
-  border: 2px solid var(--red);
-  border-radius: 10px;
-  margin: 10px 0 18px;
+  height:260px;
+  border:2px solid var(--red);
+  border-radius:10px;
+  margin:20px 0 25px;
 }
-#airport-note,
-#event-note,
-#rushhour-note,
-#fairness-note{
-  text-align: left;
-  color: #ccc;
-  font-size: 0.95em;
-  margin: 6px auto;
+#airport-note,#event-note,#rushhour-note,#fairness-note {
+  text-align:left;
+  color:#ccc;
+  font-size:0.95em;
+  margin:6px auto;
   max-width:600px;
 }
-#airport-note { color: #ffcc00; font-weight: 600; }
-#event-note { color:#ffcc00; }
+#airport-note { color:#ffcc00; font-weight:600; }
+#event-note  { color:#ffcc00; }
 #result {
-  background: #111;
-  border: 1px solid var(--red);
-  border-radius: 12px;
-  padding: 18px;
-  margin-top: 22px;
-  text-align: left;
-  max-width: 600px;
-  margin-left: auto;
-  margin-right: auto;
+  background:#111;
+  border:1px solid var(--red);
+  border-radius:12px;
+  padding:18px;
+  margin-top:22px;
+  text-align:left;
+  max-width:600px;
+  margin-inline:auto;
 }
 #result .total {
-  font-size: 1.6em;
-  color: #ff4444;
-  font-weight: 800;
-  text-align: center;
-  margin: 0 0 8px;
+  font-size:1.6em;
+  color:#ff4444;
+  font-weight:800;
+  text-align:center;
+  margin:0 0 8px;
 }
 
 /* ==============================
    FOOTER
 ============================== */
-footer {
-  margin: 40px 0 30px;
-  font-size: 0.85em;
-  color: #aaa;
-}
-footer a { color: var(--red); text-decoration: none; }
-footer a:hover { text-decoration: underline; }
+footer { margin:40px 0 30px; font-size:0.85em; color:#aaa; }
+footer a { color:var(--red); text-decoration:none; }
+footer a:hover { text-decoration:underline; }
 
 /* ==============================
-   RESPONSIVE ADJUSTMENTS
+   RESPONSIVE
 ============================== */
-@media (max-width: 840px){
-  .cta-group{ max-width: 620px; grid-template-columns: 1fr 1fr; }
-  .home-tiles{ max-width: 680px; }
-}
-@media (max-width: 600px) {
-  h1 { font-size: 1.7em; }
-  .main-logo { width: 180px; margin-top: -20px; }
-  .tile-grid { gap: 12px; }
-  .info-section { padding: 15px; margin: 15px; }
-  #map { height: 220px; }
-  .btn { width: 100%; font-size: 1em; }
-}
-@media (max-width: 480px) {
-  .info-section { padding: 14px; margin: 10px; }
-  h1 { font-size: 1.6em; }
-  footer { margin-top: 35px; font-size: 0.85em; }
+@media (max-width:600px) {
+  h1{font-size:1.7em;}
+  .main-logo{width:180px;margin-top:-20px;}
+  .info-section{padding:15px;margin:15px;}
+  #map{height:220px;}
+  .btn{width:100%;font-size:1em;}
 }
 
-/* Ride mode toggle */
+/* ==============================
+   FARE CALCULATOR FIXES
+============================== */
 .ride-mode-toggle {
-  display: flex;
-  gap: 8px;
-  justify-content: center;
-  margin: 10px 0 14px;
+  display:flex;
+  gap:12px;
+  justify-content:center;
+  margin:15px 0 18px;
 }
 .btn-toggle {
-  border: 1px solid #c00;
-  background: transparent;
-  color: #c00;
+  flex:1;
+  min-width:130px;
+  padding:10px 16px;
+  border-radius:10px;
+  border:1px solid #c00;
+  color:#c00;
+  background:transparent;
 }
-.btn-toggle.active {
-  background: #c00;
-  color: #fff;
-  border-color: #c00;
-}
-/* ===== MOBILE FARE CALCULATOR LAYOUT TUNING ===== */
+.btn-toggle.active { background:#c00; color:#fff; border-color:#c00; }
 
-/* Add breathing room around status pill */
-.status {
-  margin-top: 15px;
-  margin-bottom: 20px;
-}
-
-/* Space between status and ride buttons */
-.ride-mode-toggle {
-  margin-top: 15px;
-  margin-bottom: 15px;
-  gap: 12px;
-}
-
-/* Make ride toggle buttons a touch smaller and more rounded */
-.btn-toggle {
-  flex: 1;
-  min-width: 130px;
-  padding: 10px 16px;
-  border-radius: 10px;
-  font-size: 1em;
-}
-
-/* Separate field groups visually */
-.calculator label {
-  margin-top: 14px;
-}
-.calculator input,
-.calculator select {
-  margin-bottom: 12px;
-}
-#map {
-  margin-top: 20px;
-  margin-bottom: 25px;
-}
-
-/* Distinct section padding for mobile view */
-@media (max-width: 600px) {
-  .info-section.calculator {
-    padding: 18px;
-    border: 1px solid #222;
-    box-shadow: 0 0 10px rgba(255, 0, 0, 0.25);
-    border-radius: 12px;
-  }
-
-  .btn.primary, .btn.secondary {
-    font-size: 1em;
-    padding: 10px 14px;
-  }
-
-  .status {
-    font-size: 0.95em;
-    margin-top: 10px;
-    margin-bottom: 25px;
-  }
-}
-/* ===== FINE-TUNE BUTTON STACK SPACING ===== */
-
-/* Separate "Use My Location" and "Add Stop" buttons clearly */
+/* Button stack separation */
 #useLocPickup,
-#useLocDrop {
-  display: block;
-  width: 100%;
-  margin-bottom: 10px !important;
-}
-
+#useLocDrop,
 #addStopBtn {
-  display: block;
-  width: 100%;
-  margin-top: 8px !important;
-  margin-bottom: 16px !important;
-  border: 1px solid #c00;
-  background: linear-gradient(180deg, #a30000, #7a0000);
-  color: #fff;
-  font-weight: 700;
+  display:block;
+  width:100%;
+  margin-top:14px;
+  margin-bottom:18px;
+}
+#addStopBtn {
+  background:linear-gradient(180deg,#a30000,#7a0000);
+  border:1px solid #ff1a1a;
+  color:#fff;
+  font-weight:700;
 }
 
-/* Adjust spacing consistency for field groups */
-.calculator label {
-  margin-top: 14px;
-  margin-bottom: 6px;
-}
-
-.calculator input {
-  margin-bottom: 10px;
-}
-
-/* Give a touch more separation above "Drop-off" section */
-#dropoff {
-  margin-top: 10px;
-}
-
-/* Slightly loosen vertical rhythm on mobile */
-@media (max-width: 600px) {
-  .info-section.calculator {
-    padding: 20px 18px;
-  }
-
-  #useLocPickup,
-  #useLocDrop,
-  #addStopBtn {
-    font-size: 1em;
-    padding: 10px 14px;
-  }
-}
+/* Additional spacing tweaks */
+#dropoff { margin-top:12px; }
+.info-section.calculator { padding-bottom:28px; }
