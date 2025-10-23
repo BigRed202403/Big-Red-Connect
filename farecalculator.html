@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Fare Calculator – Big Red Connect</title>
+
   <!-- 📱 Home Screen & PWA Support -->
   <link rel="apple-touch-icon" href="icon.PNG">
   <link rel="icon" type="image/png" sizes="192x192" href="icon.png">
@@ -13,6 +14,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="theme-color" content="#000000">
+
   <!-- No cache -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
@@ -25,10 +27,15 @@
 </head>
 <body>
 
+  <!-- Top bar with clear Home button -->
+  <div class="topbar">
+    <a href="index.html" class="home-link">🏠 Home</a>
+  </div>
+
   <!-- Header -->
   <div class="logo-header">
     <a href="index.html" title="Return to Home">
-      <img src="official_logo.jpeg" alt="Big Red Connect Logo" style="cursor:pointer;" />
+      <img src="official_logo.jpeg" alt="Big Red Connect Logo" />
     </a>
   </div>
 
@@ -60,26 +67,30 @@
         <option value="dropoff">Drop-Off Time</option>
       </select>
 
-      <div id="reserveHint" style="color:#ccc;font-size:0.9em;margin:6px 0 10px;">
+      <div id="reserveHint" class="hint">
         Choose a date/time. Rush hour auto-applies if the pickup is a weekday 5–9 AM or 3–7 PM.
       </div>
     </div>
 
+    <!-- Pickup -->
     <label for="pickup">Pickup Location</label>
     <input id="pickup" type="text" placeholder="Enter pickup address or place" />
+    <div class="field-actions">
+      <button id="useLocPickup" class="btn micro primary" type="button">📍 Use My Location</button>
+    </div>
 
+    <!-- Stops -->
     <div id="stopsWrap"></div>
     <button id="addStopBtn" class="btn primary" type="button">➕ Add Stop</button>
 
+    <!-- Dropoff -->
     <label for="dropoff">Drop-off Location</label>
     <input id="dropoff" type="text" placeholder="Enter drop-off address or place" />
-
-    <div class="location-buttons">
-      <button id="useLocPickup" class="btn primary" type="button">📍 Use My Location for Pickup</button>
-      <button id="useLocDrop" class="btn secondary" type="button">📍 Use My Location for Drop-off</button>
+    <div class="field-actions">
+      <button id="useLocDrop" class="btn micro secondary" type="button">📍 Use My Location</button>
     </div>
 
-    <div id="map" style="height:250px;margin-top:15px;border-radius:10px;"></div>
+    <div id="map" style="height:260px;margin-top:12px;border-radius:10px;"></div>
 
     <!-- Notes — shown only when relevant -->
     <div id="airport-note"></div>
@@ -129,7 +140,7 @@
   // Reserve / Mode
   let mode = "now"; // "now" | "reserve"
 
-  // Event data cache
+  // Event data cache (from event-venues.json)
   let EVENT_VENUES = null; // loaded on first use
 
   // ===== Helpers =====
@@ -144,7 +155,6 @@
     const rush = (h>=5 && h<9) || (h>=15 && h<19);
     return weekday && rush;
   }
-  function toRad(mi){return mi/3958.8;} // Earth radius miles → radians (for haversine fallback if needed)
 
   // ===== Google init =====
   window.initGoogle = async function(){
@@ -321,12 +331,11 @@
     let inside = null;
 
     function pointInRadius(pt, center, radiusMi){
-      // Using Google distance util
       const d = distMi(center, pt);
       return d <= radiusMi;
     }
 
-    // Geo check
+    // Geo check (pickup then dropoff)
     if(pickupLatLng){
       const p = {lat: pickupLatLng.lat(), lng: pickupLatLng.lng()};
       for(const v of EVENT_VENUES.venues){
@@ -357,7 +366,7 @@
     }
 
     if(inside){
-      // OU radius note stricter vs others
+      // OU radius note stricter vs others (matches your 4.0 event rule tweak)
       const isOU = /ou|memorial stadium|gaylord/i.test(inside.name||"");
       const radiusText = isOU ? "4.0" : (inside.radius_mi? inside.radius_mi.toString() : "2.0");
       document.getElementById("event-note").innerHTML = `🎟️ Special event area detected near ${inside.name || "venue"} — event base rate applies. (Within about ${radiusText} mi)`;
@@ -425,7 +434,6 @@
     if(!pickupLatLng) { document.getElementById('fairness-note').innerHTML=""; return; }
     await getDriverLocation();
     const ref=(isValidCoords(driverPos)?driverPos:HQ);
-    // We don't know total trip miles yet, so preview only on distance thresholds with conservative message
     const distFromDriver = distMi(ref,{lat:pickupLatLng.lat(),lng:pickupLatLng.lng()});
     let msg="";
     if(distFromDriver>35) msg="A travel fairness fee may apply based on driver distance to pickup.";
@@ -511,7 +519,7 @@
     // Fairness Fee 4.0 (silent unless >0)
     const fairnessFee = calcFairnessFee(miles, ref, pickupLatLng);
 
-    // Stops
+    // Stops ($5 ea, count only filled)
     const stopsTotal=(window.stopInputs||[]).filter(id => (document.getElementById(id)?.value||"").trim().length>0).length * 5;
 
     // Payment modifier
