@@ -114,6 +114,7 @@
     <p>&copy; 2025 Big Red Connect — <a href="index.html">Return to Home</a></p>
   </footer>
 
+  <!-- ===== ORIGINAL CALCULATOR SCRIPT (as you provided) ===== -->
   <script>
   // ===== CONFIG =====
   const HQ = { lat: 35.3207, lng: -97.4929 }; // Moore
@@ -251,9 +252,9 @@
     let inside=null;
     function inRad(pt,c,r){return distMi(c,pt)<=r;}
     if(pickupLatLng){const p={lat:pickupLatLng.lat(),lng:pickupLatLng.lng()};
-      for(const v of EVENT_VENUES.venues){if(inRad(p,{lat:v.lat,lng:v.lng},v.radius_mi)){inside=v;break;}}}
+      for(const v of (EVENT_VENUES.venues||[])){if(inRad(p,{lat:v.lat,lng:v.lng},v.radius_mi)){inside=v;break;}}}
     if(!inside&&dropoffLatLng){const d={lat:dropoffLatLng.lat(),lng:dropoffLatLng.lng()};
-      for(const v of EVENT_VENUES.venues){if(inRad(d,{lat:v.lat,lng:v.lng},v.radius_mi)){inside=v;break;}}}
+      for(const v of (EVENT_VENUES.venues||[])){if(inRad(d,{lat:v.lat,lng:v.lng},v.radius_mi)){inside=v;break;}}}
     if(!inside){let c=((pickupPlace?.name||"")+(pickupPlace?.formatted_address||"")+(dropPlace?.name||"")+(dropPlace?.formatted_address||"")).toLowerCase();
       const hit=(EVENT_VENUES.keywords||[]).some(k=>c.includes(k.toLowerCase()));if(hit)inside={name:"Special Event Area"};}
     if(inside){const isOU=/ou|memorial stadium|gaylord/i.test(inside.name||"");const rad=isOU?"4.0":inside.radius_mi||"2.0";
@@ -348,7 +349,7 @@
   function fmtDate(d){return `${d.getMonth()+1}/${d.getDate()}`;}
   </script>
 
-  <!-- status.js -->
+  <!-- Fixed Status Pill -->
   <script src="status.js"></script>
 </body>
 </html>
