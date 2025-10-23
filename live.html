@@ -5,14 +5,6 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>Live Map • Big Red Connect</title>
 
-  <!-- 📱 PWA -->
-  <link rel="apple-touch-icon" href="icon.PNG">
-  <link rel="icon" type="image/png" sizes="192x192" href="icon.png">
-  <link rel="shortcut icon" href="icon.PNG">
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#000000">
-
-  <!-- 🛑 No Cache -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
@@ -21,50 +13,35 @@
 </head>
 <body>
 
-  <!-- 🔝 Top Bar -->
   <div class="topbar">
     <a href="index.html" class="home-link">🏠 Home</a>
   </div>
 
-  <!-- 🚗 Header -->
   <div class="logo-header">
     <a href="index.html"><img src="official_logo.jpeg" alt="Big Red Connect Logo" /></a>
   </div>
 
   <h1>Live Map</h1>
-  <p class="tagline">See where Big Red Connect is rolling right now.</p>
+  <p class="tagline">See where Big Red Connect is rolling — updated in real time.</p>
 
   <div id="status-pill" class="status">Checking status…</div>
 
-  <iframe
-    src="https://glympse.com/!bigredconnect"
-    title="Big Red Connect Live Map"
-    loading="lazy"
-    allowfullscreen
-    style="width:100%;height:400px;max-width:650px;border:none;border-radius:10px;margin:15px auto;display:block;"
-  ></iframe>
-
-  <div class="cta-group" style="margin-top:20px;">
-    <a href="farecalculator.html" class="btn primary">💲 Fare Calculator</a>
-    <a href="sms:+14053784024" class="btn secondary">📲 Text “RED”</a>
-  </div>
+  <section class="info-section">
+    <iframe
+      id="glympse-frame"
+      src="https://glympse.com/!bigredconnect"
+      title="Big Red Connect Live Map"
+      loading="lazy"
+      allowfullscreen
+      style="width:100%;height:440px;max-width:650px;border:none;border-radius:10px;margin:15px auto;display:block;">
+    </iframe>
+    <div id="status-message" style="display:none;text-align:center;margin-top:15px;color:#ccc;"></div>
+  </section>
 
   <footer>
     <p>&copy; 2025 Big Red Connect — <a href="index.html">Return to Home</a></p>
   </footer>
 
   <script src="status.js"></script>
-  <script>
-    // Sync status across pages
-    const state = localStorage.getItem("bigred_status_v3") || "offline";
-    const pill = document.getElementById("status-pill");
-    pill.className = "status " + state;
-    pill.textContent =
-      state === "online"
-        ? "🟢 Online"
-        : state === "away"
-        ? "🟡 Limited Availability"
-        : "🔴 Offline";
-  </script>
 </body>
 </html>
