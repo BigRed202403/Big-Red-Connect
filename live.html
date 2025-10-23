@@ -5,59 +5,46 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>Live Map • Big Red Connect</title>
 
-  <!-- 📱 PWA / Meta -->
+  <!-- 📱 PWA -->
   <link rel="apple-touch-icon" href="icon.PNG">
   <link rel="icon" type="image/png" sizes="192x192" href="icon.png">
   <link rel="shortcut icon" href="icon.PNG">
   <link rel="manifest" href="manifest.json">
-  <meta name="apple-mobile-web-app-title" content="Big Red Connect">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="theme-color" content="#000000">
 
-  <!-- 🛑 Disable caching -->
+  <!-- 🛑 No Cache -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
 
   <link rel="stylesheet" href="style.css" />
-
-  <!-- 🗺️ Google Maps -->
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I"></script>
 </head>
 <body>
 
-  <!-- 🔝 Top Bar with Clear Home Button -->
+  <!-- 🔝 Top Bar -->
   <div class="topbar">
     <a href="index.html" class="home-link">🏠 Home</a>
   </div>
 
-  <!-- 🚗 Logo Header -->
+  <!-- 🚗 Header -->
   <div class="logo-header">
-    <a href="index.html" title="Return to Home">
-      <img src="official_logo.jpeg" alt="Big Red Connect Logo" />
-    </a>
+    <a href="index.html"><img src="official_logo.jpeg" alt="Big Red Connect Logo" /></a>
   </div>
 
   <h1>Live Map</h1>
-  <p class="tagline">See if Big Red Connect is currently active in your area.</p>
+  <p class="tagline">See where Big Red Connect is rolling right now.</p>
 
-  <!-- 🟢 Status Pill -->
-  <div id="status-pill" class="status status--loading">Checking status…</div>
+  <div id="status-pill" class="status">Checking status…</div>
 
-  <!-- 🗺️ Map Display -->
-  <div id="map" style="height: 400px; max-width: 650px; margin: 20px auto; border-radius: 10px; border: 2px solid #c40000;"></div>
+  <iframe
+    src="https://glympse.com/!bigredconnect"
+    title="Big Red Connect Live Map"
+    loading="lazy"
+    allowfullscreen
+    style="width:100%;height:400px;max-width:650px;border:none;border-radius:10px;margin:15px auto;display:block;"
+  ></iframe>
 
-  <section class="info-section">
-    <h2>How It Works</h2>
-    <ul>
-      <li>If the status shows <strong>Online</strong>, you may text “RED” to request a ride connection.</li>
-      <li>If it shows <strong>Away</strong>, Big Red may be completing a ride or on a short break.</li>
-      <li>If it shows <strong>Offline</strong>, you can still plan ahead using the Fare Calculator.</li>
-    </ul>
-  </section>
-
-  <div class="cta-group cta-balanced" style="margin-top:25px;">
+  <div class="cta-group" style="margin-top:20px;">
     <a href="farecalculator.html" class="btn primary">💲 Fare Calculator</a>
     <a href="sms:+14053784024" class="btn secondary">📲 Text “RED”</a>
   </div>
@@ -66,72 +53,18 @@
     <p>&copy; 2025 Big Red Connect — <a href="index.html">Return to Home</a></p>
   </footer>
 
-  <!-- ⚙️ Status + Live Location Script -->
   <script src="status.js"></script>
   <script>
-    const MAP_URL = "https://update-location.bigredtransportation.workers.dev";
-
-    async function initMap() {
-      const map = new google.maps.Map(document.getElementById("map"), {
-        center: { lat: 35.4676, lng: -97.5164 },
-        zoom: 10,
-        styles: [
-          { elementType: "geometry", stylers: [{ color: "#000000" }] },
-          { elementType: "labels.text.stroke", stylers: [{ color: "#000000" }] },
-          { elementType: "labels.text.fill", stylers: [{ color: "#ffffff" }] },
-          { featureType: "water", stylers: [{ color: "#0b0b0b" }] },
-        ]
-      });
-
-      try {
-        const res = await fetch(MAP_URL, { cache: "no-store" });
-        const j = await res.json();
-        const lat = parseFloat(j.latitude);
-        const lng = parseFloat(j.longitude);
-        const ts = j.timestamp ? new Date(j.timestamp) : null;
-        const ageMin = ts ? Math.round((Date.now() - ts.getTime()) / 60000) : 999;
-
-        if (!isNaN(lat) && !isNaN(lng)) {
-          const pos = { lat, lng };
-          new google.maps.Marker({
-            position: pos,
-            map,
-            title: "Big Red Connect",
-            icon: {
-              path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-              scale: 6,
-              strokeColor: "#ff1a1a",
-              fillColor: "#ff1a1a",
-              fillOpacity: 1,
-            },
-          });
-          map.setCenter(pos);
-          map.setZoom(12);
-
-          // Age indicator
-          const statusEl = document.getElementById("status-pill");
-          if (ageMin < 30) {
-            statusEl.className = "status online";
-            statusEl.textContent = "Online · Active within last " + ageMin + " min";
-          } else if (ageMin < 120) {
-            statusEl.className = "status away";
-            statusEl.textContent = "Away · Last update " + ageMin + " min ago";
-          } else {
-            statusEl.className = "status offline";
-            statusEl.textContent = "Offline · No recent update";
-          }
-        } else {
-          document.getElementById("status-pill").className = "status offline";
-          document.getElementById("status-pill").textContent = "Offline · No recent update";
-        }
-      } catch (e) {
-        console.warn("Map fetch failed:", e);
-        document.getElementById("status-pill").className = "status offline";
-        document.getElementById("status-pill").textContent = "Offline · Unable to load location";
-      }
-    }
-
-    window.onload = initMap;
+    // Sync status across pages
+    const state = localStorage.getItem("bigred_status_v3") || "offline";
+    const pill = document.getElementById("status-pill");
+    pill.className = "status " + state;
+    pill.textContent =
+      state === "online"
+        ? "🟢 Online"
+        : state === "away"
+        ? "🟡 Limited Availability"
+        : "🔴 Offline";
   </script>
 </body>
 </html>
