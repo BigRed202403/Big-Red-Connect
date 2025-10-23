@@ -358,3 +358,52 @@ footer a:hover { text-decoration: underline; }
     margin-bottom: 25px;
   }
 }
+/* ===== FINE-TUNE BUTTON STACK SPACING ===== */
+
+/* Separate "Use My Location" and "Add Stop" buttons clearly */
+#useLocPickup,
+#useLocDrop {
+  display: block;
+  width: 100%;
+  margin-bottom: 10px !important;
+}
+
+#addStopBtn {
+  display: block;
+  width: 100%;
+  margin-top: 8px !important;
+  margin-bottom: 16px !important;
+  border: 1px solid #c00;
+  background: linear-gradient(180deg, #a30000, #7a0000);
+  color: #fff;
+  font-weight: 700;
+}
+
+/* Adjust spacing consistency for field groups */
+.calculator label {
+  margin-top: 14px;
+  margin-bottom: 6px;
+}
+
+.calculator input {
+  margin-bottom: 10px;
+}
+
+/* Give a touch more separation above "Drop-off" section */
+#dropoff {
+  margin-top: 10px;
+}
+
+/* Slightly loosen vertical rhythm on mobile */
+@media (max-width: 600px) {
+  .info-section.calculator {
+    padding: 20px 18px;
+  }
+
+  #useLocPickup,
+  #useLocDrop,
+  #addStopBtn {
+    font-size: 1em;
+    padding: 10px 14px;
+  }
+}
