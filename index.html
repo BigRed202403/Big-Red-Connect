@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Big Red Connect</title>
 
-  <!-- 📱 Home Screen & PWA Support -->
+  <!-- 📱 PWA / Home Screen -->
   <link rel="apple-touch-icon" href="icon.PNG">
   <link rel="icon" type="image/png" sizes="192x192" href="icon.png">
   <link rel="shortcut icon" href="icon.PNG">
@@ -20,15 +20,9 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
 
-  <!-- 🎨 Styles -->
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="shimmer.css" />
-
-  <!-- ⚙️ Shimmer Loader -->
   <script src="shimmer.js" defer></script>
-
-  <!-- ✈️ Google Maps / Places (for “Where to?” autocomplete) -->
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places"></script>
 </head>
 <body>
 
@@ -44,24 +38,25 @@
   <!-- 🟢 Status Pill -->
   <div id="status-pill" class="status status--loading">Checking status…</div>
 
-  <!-- 📲 Quick Actions (even, aligned, responsive) -->
-  <div class="cta-group cta-balanced">
+  <!-- 📲 Quick Actions -->
+  <div class="cta-group">
     <a href="sms:14053784024" class="btn primary">📲 Text “RED”</a>
     <a href="tel:14053784024" class="btn secondary">📞 Call Big Red</a>
   </div>
 
-  <!-- 🧭 “Where To?” Smart Destination Box -->
-  <div class="info-section centered">
-    <h2 class="section-title">Plan Your Connection</h2>
-    <form id="quickDestination" onsubmit="goToFare(event)" class="where-form">
-      <input id="quickWhere" type="text" placeholder="Where to?" required>
+  <!-- 🧭 Where To -->
+  <div class="info-section" style="text-align:center;">
+    <h2>Plan Your Connection</h2>
+    <form id="quickDestination" onsubmit="goToFare(event)" style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+      <input id="quickWhere" type="text" placeholder="Where to?" required 
+        style="flex:1;min-width:220px;max-width:400px;padding:12px;border-radius:10px;border:1px solid #333;background:#111;color:#fff;">
       <button type="submit" class="btn primary">➡️ Next</button>
     </form>
-    <p class="hint">Tip: Start typing a place, business, or address — suggestions will appear.</p>
+    <p style="font-size:0.9em;color:#888;margin-top:6px;">Start typing a place, business, or address — suggestions appear automatically.</p>
   </div>
 
-  <!-- 🔗 Navigation Tiles (clean grid for mobile + iPad) -->
-  <div class="tile-grid home-tiles">
+  <!-- 🔗 Navigation Tiles -->
+  <div class="tile-grid">
     <a href="farecalculator.html" class="tile">💲<br>Fare Calculator</a>
     <a href="live.html" class="tile">🗺️<br>Live Map</a>
     <a href="reviews.html" class="tile">⭐<br>Rider Reviews</a>
@@ -72,10 +67,7 @@
   <!-- 💬 What I Do -->
   <section class="info-section">
     <h2>What I Do</h2>
-    <p>
-      I offer local ride connections and link-ups across the Oklahoma City metro — 
-      from workdays and class runs to weekend nights, OU games, and airport trips.
-    </p>
+    <p>I offer local ride connections across the Oklahoma City metro — from workdays and class runs to weekend nights, OU games, and airport trips.</p>
     <ul>
       <li>Daily work, school, and appointment connections</li>
       <li>Airport and Tinker AFB flat-rate rides</li>
@@ -97,56 +89,55 @@
   <!-- ⭐ Rider Feedback -->
   <section class="info-section">
     <h2>What Riders Say</h2>
-    <div class="review-card">
-      ⭐⭐⭐⭐⭐ “Always dependable and easy to reach. Flat rate, no surprises.”<br>
-      — <strong>Alex, Norman</strong>
-    </div>
-    <div class="review-card">
-      ⭐⭐⭐⭐⭐ “Feels like riding with a friend, not an app. My go-to for nights out.”<br>
-      — <strong>Taylor, OKC</strong>
-    </div>
-    <p style="text-align:center;margin-top:6px;"><a href="reviews.html">See more reviews →</a></p>
+    <div class="review-card">⭐⭐⭐⭐⭐ “Always dependable and easy to reach. Flat rate, no surprises.”<br>— <strong>Alex, Norman</strong></div>
+    <div class="review-card">⭐⭐⭐⭐⭐ “Feels like riding with a friend, not an app. My go-to for nights out.”<br>— <strong>Taylor, OKC</strong></div>
+    <p><a href="reviews.html">See more reviews →</a></p>
   </section>
 
   <!-- 🦶 Footer -->
   <footer>
-    <p>Questions or ride connection requests?<br>Text <strong>“RED”</strong> to (405) 378-4024.</p>
+    <p>Questions or ride requests?<br>Text <strong>“RED”</strong> to (405) 378-4024.</p>
     <p><a href="faq.html">FAQ & Policies</a> | <a href="reviews.html">Leave a Review</a></p>
     <p>&copy; 2025 Big Red Connect</p>
-    <p class="smallnote">
-      Vehicle imagery features actual Big Red Connect fleet vehicles.<br>
-      Some backgrounds created with AI-assisted design tools for illustrative purposes only.<br>
-      Brand names (Chevrolet® and GMC®) are property of their respective owners and used descriptively.
-    </p>
   </footer>
 
-  <!-- ⚙️ Simple Status Logic -->
+  <!-- ⚙️ STATUS CONTROL (manual) -->
   <script>
-    // Keep this in sync with your status.js broadcast logic if needed.
-    const CURRENT_STATUS = localStorage.getItem("bigred_status") || "offline"; // or "online"/"offline"
-    localStorage.setItem("bigred_status", CURRENT_STATUS);
-    localStorage.setItem("bigred_status_time", new Date().toISOString());
-  </script>
-  <script src="status.js"></script>
+    // ✅ Set this manually before commit:
+    const CURRENT_STATUS = "away"; // "online" | "away" | "offline"
 
-  <!-- ✈️ “Where To?” Autocomplete -->
+    // Bump version each time you change this so browsers re-read the new value
+    const STATUS_KEY = "bigred_status_v3";
+
+    localStorage.setItem(STATUS_KEY, CURRENT_STATUS);
+    localStorage.setItem("bigred_status_time", new Date().toISOString());
+
+    // Mirror into old key for backward compatibility
+    localStorage.setItem("bigred_status", CURRENT_STATUS);
+
+    // Update visible pill
+    const pill = document.getElementById("status-pill");
+    pill.className = "status " + CURRENT_STATUS;
+    pill.textContent = CURRENT_STATUS === "online"
+      ? "🟢 Online"
+      : CURRENT_STATUS === "away"
+      ? "🟡 Limited Availability"
+      : "🔴 Offline";
+  </script>
+
+  <!-- ✈️ Autocomplete + Redirect -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places"></script>
   <script>
     let whereAuto;
     function initQuickSearch() {
-      whereAuto = new google.maps.places.Autocomplete(
-        document.getElementById("quickWhere"),
-        { fields: ["formatted_address", "name"] }
-      );
+      whereAuto = new google.maps.places.Autocomplete(document.getElementById("quickWhere"), { fields: ["formatted_address","name"] });
     }
     function goToFare(e) {
       e.preventDefault();
       const dest = document.getElementById("quickWhere").value.trim();
-      if (dest) {
-        window.location.href = "farecalculator.html?dropoff=" + encodeURIComponent(dest);
-      }
+      if (dest) window.location.href = "farecalculator.html?dropoff=" + encodeURIComponent(dest);
     }
     window.onload = initQuickSearch;
   </script>
-
 </body>
 </html>
