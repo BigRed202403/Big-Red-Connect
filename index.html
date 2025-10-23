@@ -116,7 +116,7 @@
     </p>
   </footer>
 
-  <!-- Google Places -->
+  <!-- Google Places (for quick destination) -->
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places"></script>
   <script>
     let whereAuto;
@@ -129,12 +129,14 @@
     function goToFare(e) {
       e.preventDefault();
       const dest = document.getElementById("quickWhere").value.trim();
-      if (dest) window.location.href = "farecalculator.html?dropoff=" + encodeURIComponent(dest);
+      if (dest) {
+        window.location.href = "farecalculator.html?dropoff=" + encodeURIComponent(dest);
+      }
     }
     window.onload = initQuickSearch;
   </script>
 
-  <!-- ✅ Fixed Status Pill -->
+  <!-- Fixed Status Pill -->
   <script src="status.js"></script>
 </body>
 </html>
