@@ -1,14 +1,23 @@
-<script>
 // ===============================
-// Big Red Connect — status.js
+// Big Red Connect — status.js (fixed)
 // Renders a consistent status pill on every page
-// Shows local Central time with CST/CDT
+// Uses Central Time and defaults to "Offline" if unset
 // ===============================
-
 (function () {
   const TZ = "America/Chicago";
 
+  function ensureDefaultStatus() {
+    const s = localStorage.getItem("bigred_status");
+    const t = localStorage.getItem("bigred_status_time");
+    if (!s || !t) {
+      const iso = new Date().toISOString();
+      localStorage.setItem("bigred_status", "offline");
+      localStorage.setItem("bigred_status_time", iso);
+    }
+  }
+
   function readStatus() {
+    ensureDefaultStatus();
     const status = (localStorage.getItem("bigred_status") || "").toLowerCase();
     const iso = localStorage.getItem("bigred_status_time") || null;
     return { status, iso };
@@ -48,9 +57,8 @@
       case "away":
         return { text: `🟡 Limited Availability — as of ${dateStr} · ${timeStr} ${tzAbbrev}`, cls: "away" };
       case "offline":
-        return { text: `🔴 Offline — as of ${dateStr} · ${timeStr} ${tzAbbrev}`, cls: "offline" };
       default:
-        return { text: "Checking status…", cls: "" };
+        return { text: `🔴 Offline — as of ${dateStr} · ${timeStr} ${tzAbbrev}`, cls: "offline" };
     }
   }
 
@@ -59,34 +67,34 @@
     const pill = document.getElementById("status-pill");
     if (!pill) return;
 
-    // reset classes
     pill.classList.remove("online", "away", "offline", "status--loading");
-
     const { text, cls } = pillText(status, iso);
     pill.textContent = text;
     if (cls) pill.classList.add(cls);
 
-    // Let pages react if they need to (e.g., live map hide/show)
-    const evt = new CustomEvent("statusUpdated", { detail: status || "unknown" });
-    document.dispatchEvent(evt);
+    // Let pages react (e.g., live map toggle)
+    document.dispatchEvent(new CustomEvent("statusUpdated", { detail: status || "unknown" }));
   }
 
   // Initial render
-  document.addEventListener("DOMContentLoaded", renderPill);
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", renderPill);
+  } else {
+    renderPill();
+  }
 
-  // If another tab changes status, update here too
+  // React to tab sync (localStorage changes)
   window.addEventListener("storage", (e) => {
     if (e.key === "bigred_status" || e.key === "bigred_status_time") {
       renderPill();
     }
   });
 
-  // Optional: expose a tiny helper if an admin page wants to set it.
+  // Admin helper to manually update status
   window.__BRC_setStatus = function (status) {
     const iso = new Date().toISOString();
-    localStorage.setItem("bigred_status", status);
+    localStorage.setItem("bigred_status", (status || "offline").toLowerCase());
     localStorage.setItem("bigred_status_time", iso);
     renderPill();
   };
 })();
-</script>
