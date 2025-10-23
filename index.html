@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Big Red Connect</title>
-  
-  <!-- 📱 PWA + Icon Support -->
+
+  <!-- PWA / Icons -->
   <link rel="apple-touch-icon" href="icon.PNG">
   <link rel="icon" type="image/png" sizes="192x192" href="icon.png">
   <link rel="shortcut icon" href="icon.PNG">
@@ -15,40 +15,40 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="theme-color" content="#000000">
 
-  <!-- 🚫 No caching -->
+  <!-- No-cache -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
 
-  <!-- 🎨 Styles -->
+  <!-- Styles -->
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-  <!-- 🔻 Hero Banner -->
+  <!-- Hero -->
   <div class="hero"></div>
 
-  <!-- 🚗 Main Logo -->
+  <!-- Logo -->
   <img src="official_logo.jpeg" alt="Big Red Connect Logo" class="main-logo" />
 
-  <!-- 🏷️ Tagline -->
+  <!-- Tagline -->
   <p class="tagline">Veteran Owned · Affordable Flat Rates · Trusted Local Connections</p>
 
-  <!-- 🟢 Live Status Pill -->
+  <!-- Status pill (read-only; driven by status.js) -->
   <div id="status-pill" class="status status--loading">Checking status…</div>
 
-  <!-- 📲 Quick Actions -->
+  <!-- Quick Actions -->
   <div class="cta-group">
-    <a href="sms:+14053784024" class="btn primary">📲 Text “RED”</a>
-    <a href="tel:+14053784024" class="btn secondary">📞 Call Big Red</a>
+    <a href="sms:14053784024" class="btn primary">📲 Text “RED”</a>
+    <a href="tel:14053784024" class="btn secondary">📞 Call Big Red</a>
   </div>
 
-  <!-- 🧭 “Where To?” Smart Destination Box -->
+  <!-- “Where To?” -->
   <div class="info-section" style="text-align:center; margin-top:20px;">
     <h2 style="margin-bottom:10px;">Plan Your Connection</h2>
     <form id="quickDestination" onsubmit="goToFare(event)" style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
       <input id="quickWhere" type="text" placeholder="Where to?" required 
-             style="flex:1;min-width:220px;max-width:400px;padding:12px;border-radius:10px;border:1px solid #333;background:#111;color:#fff;">
+             style="flex:1;min-width:220px;max-width:420px;padding:12px;border-radius:10px;border:1px solid #333;background:#111;color:#fff;">
       <button type="submit" class="btn primary">➡️ Next</button>
     </form>
     <p style="font-size:0.9em;color:#888;margin-top:6px;">
@@ -56,7 +56,7 @@
     </p>
   </div>
 
-  <!-- 🔗 Navigation Tiles -->
+  <!-- Navigation Tiles -->
   <div class="tile-grid">
     <a href="farecalculator.html" class="tile">💲<br>Fare Calculator</a>
     <a href="live.html" class="tile">🗺️<br>Live Map</a>
@@ -65,12 +65,12 @@
     <a href="https://www.facebook.com/share/1BWCx63CUt/?mibextid=wwXIfr" target="_blank" class="tile">👍<br>Follow on Facebook</a>
   </div>
 
-  <!-- 💬 What I Do -->
+  <!-- What I Do -->
   <section class="info-section">
     <h2>What I Do</h2>
     <p>
-      I offer local ride connections and link-ups across the Oklahoma City metro — 
-      from workdays and class runs to weekend nights, OU games, and airport trips.
+      I offer local ride connections across the Oklahoma City metro — from workdays and class runs
+      to weekend nights, OU games, and airport trips.
     </p>
     <ul>
       <li>Daily work, school, and appointment connections</li>
@@ -80,7 +80,7 @@
     </ul>
   </section>
 
-  <!-- ❤️ Why Choose Red -->
+  <!-- Why Choose Red -->
   <section class="info-section">
     <h2>Why Choose Red</h2>
     <ul>
@@ -90,7 +90,7 @@
     </ul>
   </section>
 
-  <!-- ⭐ Rider Feedback -->
+  <!-- Reviews snippet -->
   <section class="info-section">
     <h2>What Riders Say</h2>
     <div class="review-card">
@@ -104,7 +104,7 @@
     <p><a href="reviews.html">See more reviews →</a></p>
   </section>
 
-  <!-- 🦶 Footer -->
+  <!-- Footer -->
   <footer>
     <p>Questions or ride connection requests?<br>Text <strong>“RED”</strong> to (405) 378-4024.</p>
     <p><a href="faq.html">FAQ & Policies</a> | <a href="reviews.html">Leave a Review</a></p>
@@ -116,34 +116,7 @@
     </p>
   </footer>
 
-  <!-- 🧠 Live Status Logic -->
-  <script>
-    function updateStatusPill(state, time){
-      const pill = document.getElementById("status-pill");
-      const now = (time && !isNaN(Date.parse(time))) ? new Date(time) : new Date();
-      const stamp = now.toLocaleString("en-US", {
-        month:"short", day:"numeric", hour:"numeric", minute:"2-digit"
-      });
-      pill.className = "status " + state;
-      if(state==="online") pill.textContent = `🟢 On the road — as of ${stamp}`;
-      else if(state==="away") pill.textContent = `🟡 Limited Availability — as of ${stamp}`;
-      else pill.textContent = `🔴 Offline — as of ${stamp}`;
-    }
-
-    // Read status on load
-    document.addEventListener("DOMContentLoaded", ()=>{
-      const s = localStorage.getItem("bigred_status") || "offline";
-      const t = localStorage.getItem("bigred_status_time") || null;
-      updateStatusPill(s,t);
-    });
-
-    // Listen for live updates (sync across tabs)
-    window.addEventListener("storage", e=>{
-      if(e.key==="bigred_status") updateStatusPill(e.newValue, localStorage.getItem("bigred_status_time"));
-    });
-  </script>
-
-  <!-- ✈️ Destination Search -->
+  <!-- Google Places (for “Where to?”) -->
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places"></script>
   <script>
     let whereAuto;
@@ -156,13 +129,21 @@
     function goToFare(e) {
       e.preventDefault();
       const dest = document.getElementById("quickWhere").value.trim();
-      if (dest) window.location.href = "farecalculator.html?dropoff=" + encodeURIComponent(dest);
+      if (dest) {
+        window.location.href = "farecalculator.html?dropoff=" + encodeURIComponent(dest);
+      }
     }
     window.onload = initQuickSearch;
   </script>
 
-  <!-- ✅ Shared Status Logic -->
-  <script src="status.js"></script>
+  <!-- Status pill renderer -->
+  <!-- (Paste the status.js file’s <script> block here OR include it as external script) -->
+  <!-- BEGIN status.js -->
+  <!-- (Inline inclusion for simplicity) -->
+  <?!-- paste status.js here if you prefer inline; otherwise keep as external file -->
+  <!-- END status.js -->
 
+  <!-- If using external file instead of inline: -->
+  <script src="status.js"></script>
 </body>
 </html>
