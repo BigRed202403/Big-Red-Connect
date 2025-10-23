@@ -301,3 +301,60 @@ footer a:hover { text-decoration: underline; }
   color: #fff;
   border-color: #c00;
 }
+/* ===== MOBILE FARE CALCULATOR LAYOUT TUNING ===== */
+
+/* Add breathing room around status pill */
+.status {
+  margin-top: 15px;
+  margin-bottom: 20px;
+}
+
+/* Space between status and ride buttons */
+.ride-mode-toggle {
+  margin-top: 15px;
+  margin-bottom: 15px;
+  gap: 12px;
+}
+
+/* Make ride toggle buttons a touch smaller and more rounded */
+.btn-toggle {
+  flex: 1;
+  min-width: 130px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 1em;
+}
+
+/* Separate field groups visually */
+.calculator label {
+  margin-top: 14px;
+}
+.calculator input,
+.calculator select {
+  margin-bottom: 12px;
+}
+#map {
+  margin-top: 20px;
+  margin-bottom: 25px;
+}
+
+/* Distinct section padding for mobile view */
+@media (max-width: 600px) {
+  .info-section.calculator {
+    padding: 18px;
+    border: 1px solid #222;
+    box-shadow: 0 0 10px rgba(255, 0, 0, 0.25);
+    border-radius: 12px;
+  }
+
+  .btn.primary, .btn.secondary {
+    font-size: 1em;
+    padding: 10px 14px;
+  }
+
+  .status {
+    font-size: 0.95em;
+    margin-top: 10px;
+    margin-bottom: 25px;
+  }
+}
