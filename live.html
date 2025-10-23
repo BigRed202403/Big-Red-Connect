@@ -2,46 +2,147 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-  <title>Live Map • Big Red Connect</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Live Map – Big Red Connect</title>
 
+  <!-- 🚫 No caching -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
 
+  <!-- 🎨 Styles -->
   <link rel="stylesheet" href="style.css" />
+
+  <style>
+    iframe {
+      width: 100%;
+      height: 480px;
+      border: none;
+      border-radius: 10px;
+      margin-top: 10px;
+    }
+    #status-message {
+      background: #111;
+      border-radius: 8px;
+      padding: 20px 16px;
+      text-align: center;
+      color: #ccc;
+      font-size: 1em;
+      margin-top: 20px;
+      line-height: 1.5;
+      border: 1px solid #333;
+    }
+    .home-btn {
+      display: inline-block;
+      margin-top: 25px;
+      padding: 10px 18px;
+      background: linear-gradient(180deg, #c40000, #9a0000);
+      border: 1px solid #c40000;
+      color: #fff;
+      border-radius: 8px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.25s ease;
+    }
+    .home-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(255,0,0,0.4);
+    }
+  </style>
 </head>
 <body>
 
-  <div class="topbar">
-    <a href="index.html" class="home-link">🏠 Home</a>
-  </div>
-
+  <!-- 🚗 Header -->
   <div class="logo-header">
-    <a href="index.html"><img src="official_logo.jpeg" alt="Big Red Connect Logo" /></a>
+    <a href="index.html" title="Return to Home">
+      <img src="official_logo.jpeg" alt="Big Red Connect Logo" />
+    </a>
   </div>
 
   <h1>Live Map</h1>
-  <p class="tagline">See where Big Red Connect is rolling — updated in real time.</p>
+  <p class="tagline">See where Big Red Connect is rolling — local and reliable.</p>
 
-  <div id="status-pill" class="status">Checking status…</div>
+  <!-- 🟢 Status Pill -->
+  <div id="status-pill" class="status status--loading">Checking status…</div>
 
-  <section class="info-section">
-    <iframe
+  <!-- 🗺️ Live Map / Message -->
+  <section class="info-section" style="text-align:center;">
+    <iframe 
       id="glympse-frame"
       src="https://glympse.com/!bigredconnect"
       title="Big Red Connect Live Map"
       loading="lazy"
-      allowfullscreen
-      style="width:100%;height:440px;max-width:650px;border:none;border-radius:10px;margin:15px auto;display:block;">
+      allowfullscreen>
     </iframe>
-    <div id="status-message" style="display:none;text-align:center;margin-top:15px;color:#ccc;"></div>
+
+    <div id="status-message" style="display:none;"></div>
+
+    <!-- Clear Home Button -->
+    <a href="index.html" class="home-btn">🏠 Return to Home</a>
   </section>
 
+  <!-- 🦶 Footer -->
   <footer>
-    <p>&copy; 2025 Big Red Connect — <a href="index.html">Return to Home</a></p>
+    <p>&copy; 2025 Big Red Connect</p>
+    <p style="font-size:0.8em;color:#777;margin-top:10px;line-height:1.4;">
+      Vehicle imagery features actual Big Red Connect fleet vehicles.<br>
+      Some backgrounds created with AI-assisted design tools for illustrative purposes only.<br>
+      Brand names (Chevrolet® and GMC®) are property of their respective owners and used descriptively.
+    </p>
   </footer>
 
+  <!-- 🔧 Status + Map Logic -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const frame = document.getElementById("glympse-frame");
+      const msgBox = document.getElementById("status-message");
+      const pill = document.getElementById("status-pill");
+
+      function updateUI(state, time=null) {
+        const now = time ? new Date(time) : new Date();
+        const stamp = now.toLocaleString("en-US", {
+          month:"short", day:"numeric", hour:"numeric", minute:"2-digit"
+        });
+
+        pill.className = "status " + state;
+        if(state==="online"){
+          pill.textContent = `🟢 On the road — as of ${stamp}`;
+          frame.style.display = "block";
+          msgBox.style.display = "none";
+        } else if(state==="away"){
+          pill.textContent = `🟡 Limited Availability — as of ${stamp}`;
+          frame.style.display = "none";
+          msgBox.style.display = "block";
+          msgBox.innerHTML = `
+            <strong>🟡 Limited Availability</strong><br>
+            I’m between runs or outside my usual area right now.<br>
+            You can still text <strong>“RED”</strong> to <strong>(405) 378-4024</strong> to plan ahead.`;
+        } else {
+          pill.textContent = `🔴 Offline — as of ${stamp}`;
+          frame.style.display = "none";
+          msgBox.style.display = "block";
+          msgBox.innerHTML = `
+            <strong>🔴 Currently Offline</strong><br>
+            I’m off the road for now, but I’ll be back soon.<br>
+            You can still line up your next connection anytime.`;
+        }
+      }
+
+      // Load from localStorage
+      const currentStatus = localStorage.getItem("bigred_status") || "offline";
+      const currentTime = localStorage.getItem("bigred_status_time") || null;
+      updateUI(currentStatus, currentTime);
+
+      // Listen for updates from index.html
+      document.addEventListener("statusUpdated", e => updateUI(e.detail, new Date()));
+      window.addEventListener("storage", e => {
+        if(e.key==="bigred_status") updateUI(e.newValue, localStorage.getItem("bigred_status_time"));
+      });
+    });
+  </script>
+
+  <!-- ✅ Status Sync -->
   <script src="status.js"></script>
+
 </body>
 </html>
