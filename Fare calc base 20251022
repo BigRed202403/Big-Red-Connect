@@ -53,7 +53,7 @@
       </select>
 
       <div id="reserveHint" style="color:#ccc;font-size:0.9em;margin:6px 0 10px;">
-        Choose a date/time. Rush hour will auto-apply if the pickup falls on a weekday 5–9 AM or 3–7 PM.
+        Choose a date/time. Rush hour auto-applies if the pickup is a weekday 5–9 AM or 3–7 PM.
       </div>
     </div>
 
@@ -72,12 +72,15 @@
     </div>
 
     <div id="map" style="height:250px;margin-top:15px;border-radius:10px;"></div>
-    <div id="fairness-note"></div>
-    <div id="airport-note"></div>
-    <div id="rushhour-note"></div>
 
-    <label for="tripType">Ride Type</label>
-    <select id="tripType">
+    <!-- Notes — shown only when relevant -->
+    <div id="airport-note"></div>
+    <div id="event-note"></div>
+    <div id="rushhour-note"></div>
+    <div id="fairness-note"></div>
+
+    <!-- Hidden ride-type (kept for internal logic; UI is automated) -->
+    <select id="tripType" style="display:none;">
       <option value="10">Standard ($10 base)</option>
       <option value="15">Rush Hour ($15 base)</option>
       <option value="15_airport">Airport ($15 base)</option>
@@ -109,18 +112,17 @@
   const HQ = { lat: 35.3207, lng: -97.4929 }; // 19th & S Santa Fe, Moore, OK (approx)
   const WORKER_URL = "https://update-location.bigredtransportation.workers.dev";
   const STALE_MINUTES = 30; // background "online" threshold for ETA/fee only
-  const ZONE1 = ["oklahoma city","moore","norman","midwest city","del city"];
-  const ZONE2 = ["edmond","yukon","mustang","newcastle","tuttle","choctaw","harrah","jones","luther"];
-  const ZONE3 = ["shawnee","tecumseh","guthrie","blanchard","wellston","seminole","chickasha","goldsby","lexington","noble","purcell"];
 
   // ===== Maps globals =====
   let map, geocoder, directionsService, directionsRenderer;
   let pickupLatLng=null, dropoffLatLng=null, pickupPlace=null, dropPlace=null;
   let pickupCity="", driverPos=null;
-  let stopInputs=[], pickupMarker=null, dropoffMarker=null;
 
-  // ===== Reserve / Mode =====
+  // Reserve / Mode
   let mode = "now"; // "now" | "reserve"
+
+  // Event data cache
+  let EVENT_VENUES = null; // loaded on first use
 
   // ===== Helpers =====
   function isValidCoords(obj){return obj && typeof obj.lat==="number" && typeof obj.lng==="number" && !isNaN(obj.lat) && !isNaN(obj.lng);}
@@ -134,6 +136,7 @@
     const rush = (h>=5 && h<9) || (h>=15 && h<19);
     return weekday && rush;
   }
+  function toRad(mi){return mi/3958.8;} // Earth radius miles → radians (for haversine fallback if needed)
 
   // ===== Google init =====
   window.initGoogle = async function(){
@@ -150,19 +153,20 @@
     acPickup.addListener('place_changed',async()=>{
       const p=acPickup.getPlace(); if(!p.geometry) return;
       pickupPlace=p; pickupLatLng=p.geometry.location;
-      if(pickupMarker) pickupMarker.setMap(null);
-      pickupMarker=new google.maps.Marker({position:pickupLatLng,map,label:"P"});
+      if(window.pickupMarker) window.pickupMarker.setMap(null);
+      window.pickupMarker=new google.maps.Marker({position:pickupLatLng,map,label:"P"});
       map.setCenter(pickupLatLng); map.setZoom(12);
       pickupCity=extractCity(p)||await reverseCity(pickupLatLng);
-      detectAirportAndSetType();
-      await maybeShowFairnessNotePreview(); // preview only if fee would apply
+      await applyRideTypePriority(); // airport/event/rush/standard
+      await maybeShowFairnessNotePreview(); // show only when fee might apply
     });
-    acDrop.addListener('place_changed',()=>{
+    acDrop.addListener('place_changed',async()=>{
       const p=acDrop.getPlace(); if(p.geometry){
         dropPlace=p; dropoffLatLng=p.geometry.location;
-        if(dropoffMarker) dropoffMarker.setMap(null);
-        dropoffMarker=new google.maps.Marker({position:dropoffLatLng,map,label:"D"});
-        map.panTo(dropoffLatLng); detectAirportAndSetType();
+        if(window.dropoffMarker) window.dropoffMarker.setMap(null);
+        window.dropoffMarker=new google.maps.Marker({position:dropoffLatLng,map,label:"D"});
+        map.panTo(dropoffLatLng);
+        await applyRideTypePriority();
       }
     });
 
@@ -173,7 +177,7 @@
       const decoded=decodeURIComponent(dest);
       document.getElementById("dropoff").value=decoded;
       dropPlace={formatted_address:decoded,name:decoded};
-      detectAirportAndSetType();
+      await applyRideTypePriority();
       setTimeout(()=>useMyLocation("pickup"),800);
     }
 
@@ -187,6 +191,7 @@
     document.getElementById("useLocPickup").onclick=()=>useMyLocation("pickup");
     document.getElementById("useLocDrop").onclick=()=>useMyLocation("dropoff");
 
+    // Default ride type (time-based)
     smartRideTypeDefault();
     await getDriverLocation();
   };
@@ -200,21 +205,23 @@
       nowBtn.classList.add("active"); resBtn.classList.remove("active");
       controls.style.display="none";
       smartRideTypeDefault(); // revert to live-time default
+      applyRideTypePriority();
     }else{
       resBtn.classList.add("active"); nowBtn.classList.remove("active");
       controls.style.display="block";
-      // If user picks a time later, we'll auto-set rush hour based on *effective pickup time*
+      applyRideTypePriority();
     }
   }
 
   // Add/remove stops
   function addStopField(){
-    if(stopInputs.length>=3){alert("Limit 3 stops.");return;}
-    const id=`stop_${Date.now()}`; stopInputs.push(id);
+    if(window.stopInputs?.length>=3){alert("Limit 3 stops.");return;}
+    if(!window.stopInputs) window.stopInputs=[];
+    const id=`stop_${Date.now()}`; window.stopInputs.push(id);
     const wrap=document.getElementById('stopsWrap');
     const div=document.createElement('div');
     div.className="stop-row"; div.id=`row_${id}`;
-    div.innerHTML=`<label for="${id}">Stop ${stopInputs.length}</label>
+    div.innerHTML=`<label for="${id}">Stop ${window.stopInputs.length}</label>
       <div style="display:flex;gap:6px;align-items:center;">
         <input id="${id}" type="text" placeholder="Enter stop address or place" style="flex:1;">
         <button type="button" class="remove-stop" onclick="removeStop('${id}')">✖</button>
@@ -224,22 +231,8 @@
   }
   function removeStop(id){
     document.getElementById(`row_${id}`)?.remove();
-    stopInputs=stopInputs.filter(s=>s!==id);
+    window.stopInputs = (window.stopInputs||[]).filter(s=>s!==id);
     document.querySelectorAll("#stopsWrap label").forEach((l,i)=>l.textContent=`Stop ${i+1}`);
-  }
-
-  // Airport detection
-  function detectAirportAndSetType(){
-    let combined="";
-    const places=[pickupPlace,dropPlace].filter(Boolean);
-    for(const p of places){ combined += (p?.name||"") + (p?.formatted_address||""); }
-    const c=combined.toLowerCase();
-    if(c.includes("airport") && !c.includes("tinker")){
-      document.getElementById("tripType").value="15_airport";
-      document.getElementById("airport-note").innerHTML="✈️ Airport ride detected — $15 base applied automatically.";
-    }else{
-      document.getElementById("airport-note").innerHTML="";
-    }
   }
 
   // Driver position (for ETA/fees only; status pill remains separate via status.js)
@@ -252,7 +245,7 @@
       const ageMinutes=t?(Date.now()-t.getTime())/60000:999;
 
       const valid=!isNaN(lat)&&!isNaN(lng);
-      const inRegion = lat>34 && lat<37 && lng>-99 && lng<-94; // keep obvious OKC-region sanity
+      const inRegion = lat>34 && lat<37 && lng>-99 && lng<-94; // sanity for OK region
       if(valid && ageMinutes<=STALE_MINUTES && inRegion){
         driverPos={lat,lng};
       }else{
@@ -267,10 +260,12 @@
   function smartRideTypeDefault(){
     const now=new Date();
     if(weekdayRushHour(now)){
-      document.getElementById("tripType").value="15";
+      setTripType("15");
       document.getElementById("rushhour-note").innerHTML="🚦 Weekday Rush Hour pricing (5–9 AM / 3–7 PM)";
     }else{
-      document.getElementById("tripType").value="10";
+      if(document.getElementById("tripType").value!=="15_airport" && document.getElementById("tripType").value!=="20"){
+        setTripType("10");
+      }
       document.getElementById("rushhour-note").innerHTML="";
     }
   }
@@ -278,14 +273,105 @@
   // Reserve rush-hour evaluator based on *effective pickup time*
   function applyRushHourForReserve(effectivePickupDate){
     if(weekdayRushHour(effectivePickupDate)){
-      document.getElementById("tripType").value="15";
+      setTripType("15");
       document.getElementById("rushhour-note").innerHTML="🚦 Reserve pickup lands in a weekday Rush Hour (5–9 AM / 3–7 PM)";
     }else{
-      // keep airport auto if detected, otherwise Standard
-      if(document.getElementById("tripType").value!=="15_airport"){
-        document.getElementById("tripType").value="10";
+      if(document.getElementById("tripType").value!=="15_airport" && document.getElementById("tripType").value!=="20"){
+        setTripType("10");
       }
       document.getElementById("rushhour-note").innerHTML="";
+    }
+  }
+
+  function setTripType(val){ document.getElementById("tripType").value = val; }
+
+  // Airport detection (simple text-based)
+  function detectAirportAndFlag(){
+    let combined="";
+    const places=[pickupPlace,dropPlace].filter(Boolean);
+    for(const p of places){ combined += (p?.name||"") + (p?.formatted_address||""); }
+    const c=combined.toLowerCase();
+    const isAirport = c.includes("airport") && !c.includes("tinker");
+    if(isAirport){
+      document.getElementById("airport-note").innerHTML="✈️ Airport ride detected — $15 base applied automatically.";
+    }else{
+      document.getElementById("airport-note").innerHTML="";
+    }
+    return isAirport;
+  }
+
+  // Event detection: (1) geofence via event-venues.json, (2) textual fallback
+  async function detectEventAndFlag(){
+    // Load venues on first call
+    if(!EVENT_VENUES){
+      try{
+        const r=await fetch("event-venues.json",{cache:"no-store"});
+        EVENT_VENUES = await r.json();
+      }catch{ EVENT_VENUES = { venues:[], keywords:[] }; }
+    }
+
+    let inside = null;
+
+    function pointInRadius(pt, center, radiusMi){
+      // Using Google distance util
+      const d = distMi(center, pt);
+      return d <= radiusMi;
+    }
+
+    // Geo check
+    if(pickupLatLng){
+      const p = {lat: pickupLatLng.lat(), lng: pickupLatLng.lng()};
+      for(const v of EVENT_VENUES.venues){
+        if(pointInRadius(p, {lat:v.lat, lng:v.lng}, v.radius_mi)){
+          inside = v; break;
+        }
+      }
+    }
+    if(!inside && dropoffLatLng){
+      const d = {lat: dropoffLatLng.lat(), lng: dropoffLatLng.lng()};
+      for(const v of EVENT_VENUES.venues){
+        if(pointInRadius(d, {lat:v.lat, lng:v.lng}, v.radius_mi)){
+          inside = v; break;
+        }
+      }
+    }
+
+    // Text fallback
+    if(!inside){
+      let combined="";
+      const places=[pickupPlace,dropPlace].filter(Boolean);
+      for(const p of places){ combined += " " + (p?.name||"") + " " + (p?.formatted_address||""); }
+      const c = combined.toLowerCase();
+      const hit = (EVENT_VENUES.keywords||[]).some(k => c.includes(k.toLowerCase()));
+      if(hit){
+        inside = { name: "Special Event Area" };
+      }
+    }
+
+    if(inside){
+      // OU radius note stricter vs others
+      const isOU = /ou|memorial stadium|gaylord/i.test(inside.name||"");
+      const radiusText = isOU ? "4.0" : (inside.radius_mi? inside.radius_mi.toString() : "2.0");
+      document.getElementById("event-note").innerHTML = `🎟️ Special event area detected near ${inside.name || "venue"} — event base rate applies. (Within about ${radiusText} mi)`;
+      return true;
+    }else{
+      document.getElementById("event-note").innerHTML = "";
+      return false;
+    }
+  }
+
+  // Priority selector: Airport > Event > Rush Hour > Standard
+  async function applyRideTypePriority(effectivePickupDT=null){
+    const isAirport = detectAirportAndFlag(); // updates airport-note
+    if(isAirport){ setTripType("15_airport"); document.getElementById("rushhour-note").innerHTML=""; return; }
+
+    const isEvent = await detectEventAndFlag(); // updates event-note
+    if(isEvent){ setTripType("20"); document.getElementById("rushhour-note").innerHTML=""; return; }
+
+    if(mode==="reserve" && effectivePickupDT){
+      applyRushHourForReserve(effectivePickupDT);
+    }else{
+      smartRideTypeDefault();
     }
   }
 
@@ -298,14 +384,16 @@
       document.getElementById(id).value=addr;
       if(id==="pickup"){
         pickupLatLng=new google.maps.LatLng(latlng.lat,latlng.lng);
-        if(pickupMarker) pickupMarker.setMap(null);
-        pickupMarker=new google.maps.Marker({position:pickupLatLng,map,label:"P"});
+        if(window.pickupMarker) window.pickupMarker.setMap(null);
+        window.pickupMarker=new google.maps.Marker({position:pickupLatLng,map,label:"P"});
         pickupCity=await reverseCity(latlng);
+        await applyRideTypePriority();
         await maybeShowFairnessNotePreview();
       }else{
         dropoffLatLng=new google.maps.LatLng(latlng.lat,latlng.lng);
-        if(dropoffMarker) dropoffMarker.setMap(null);
-        dropoffMarker=new google.maps.Marker({position:dropoffLatLng,map,label:"D"});
+        if(window.dropoffMarker) window.dropoffMarker.setMap(null);
+        window.dropoffMarker=new google.maps.Marker({position:dropoffLatLng,map,label:"D"});
+        await applyRideTypePriority();
       }
     },()=>alert("Could not get your location permission."));
   }
@@ -332,7 +420,7 @@
     // We don't know total trip miles yet, so preview only on distance thresholds with conservative message
     const distFromDriver = distMi(ref,{lat:pickupLatLng.lat(),lng:pickupLatLng.lng()});
     let msg="";
-    if(distFromDriver>35) msg="Potential travel fairness fee may apply based on driver distance to pickup.";
+    if(distFromDriver>35) msg="A travel fairness fee may apply based on driver distance to pickup.";
     else if(distFromDriver>15) msg="A small travel fairness fee may apply based on driver distance to pickup.";
     document.getElementById('fairness-note').innerHTML = msg ? msg : "";
   }
@@ -345,7 +433,7 @@
 
     // Build waypoints
     const stops=[];
-    for(const id of stopInputs){
+    for(const id of (window.stopInputs||[])){
       const v=document.getElementById(id)?.value.trim();
       if(v) stops.push({location:v, stopover:true});
     }
@@ -382,13 +470,15 @@
         effectivePickupDT = pickEstimate;
         reserveSummary = `Drop-off by ${fmtTime(chosen)} on ${fmtDate(chosen)} (Pickup ≈ ${fmtTime(pickEstimate)})`;
       }
-
       // Apply rush hour strictly Mon–Fri based on effective pickup time
       applyRushHourForReserve(effectivePickupDT);
     }else{
       // Live mode uses current time rule already via smartRideTypeDefault()
       smartRideTypeDefault();
     }
+
+    // Re-apply priority once we know reserve pickup time (so rush hour can be overridden by airport/event)
+    await applyRideTypePriority(mode==="reserve" ? effectivePickupDT : null);
 
     // Read driver position (for ETA/fee calc)
     await getDriverLocation();
@@ -401,8 +491,7 @@
       pickupETAText = `${mins} min`;
     }
 
-    // Trip base (airport rule still wins)
-    detectAirportAndSetType();
+    // Trip base from hidden selector (after priority logic)
     const tripVal=document.getElementById('tripType').value;
     const base=(tripVal==="15_airport")?15:parseFloat(tripVal);
 
@@ -415,7 +504,7 @@
     const fairnessFee = calcFairnessFee(miles, ref, pickupLatLng);
 
     // Stops
-    const stopsTotal=stops.length*5;
+    const stopsTotal=(window.stopInputs||[]).filter(id => (document.getElementById(id)?.value||"").trim().length>0).length * 5;
 
     // Payment modifier
     let fare=base+mileageSubtotal+stopsTotal+fairnessFee;
@@ -432,7 +521,7 @@
     let html=`<div class="total">$${total}</div>
       <p><strong>Base Rate:</strong> $${base.toFixed(2)}</p>
       <p><strong>Mileage:</strong> $${mileageSubtotal.toFixed(2)}</p>
-      <p><strong>Stops:</strong> ${stops.length} × $5 = $${stopsTotal.toFixed(2)}</p>
+      <p><strong>Stops:</strong> ${(stopsTotal/5)} × $5 = $${stopsTotal.toFixed(2)}</p>
       ${fairnessFee>0?`<p><strong>Travel Fairness Fee:</strong> $${fairnessFee.toFixed(2)}</p>`:""}
       <p><strong>Payment:</strong> ${pay==="card"?"Card (incl. fees)":"Cash / Venmo / Cash App"}</p>
       <p>📏 ${miles.toFixed(1)} mi  ⏱️ ${Math.round(durationMin)} min ${mode==="now"?` 🚗 ETA ${pickupETAText}`:""}</p>
@@ -473,6 +562,9 @@
       lines.push(`To: ${dropoff}`);
       lines.push(`Est. flat rate: $${total}`);
       if(fairnessFee>0) lines.push(`Includes travel fairness fee: $${fairnessFee.toFixed(2)}.`);
+      // If airport/event triggered, include a short tag
+      if(document.getElementById("tripType").value==="15_airport") lines.push(`(Airport base applied)`);
+      if(document.getElementById("tripType").value==="20") lines.push(`(Special event area base applied)`);
       lines.push(`Route: ${routeLink}`);
 
       const smsBody=encodeURIComponent(lines.join(" "));
