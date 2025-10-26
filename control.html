@@ -5,11 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Big Red Connect — Status Control</title>
 
-  <!-- PWA / App Icons -->
+  <!-- Icons -->
   <link rel="apple-touch-icon" href="icon.PNG">
   <link rel="icon" type="image/png" sizes="192x192" href="icon.png">
-  <link rel="shortcut icon" href="icon.PNG">
-  <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#000000">
 
   <!-- No Cache -->
@@ -17,23 +15,15 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
 
-  <!-- Styles -->
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- Hero -->
   <div class="hero"></div>
-
-  <!-- Logo -->
   <img src="official_logo.jpeg" alt="Big Red Connect Logo" class="main-logo" />
-
-  <!-- Tagline -->
   <p class="tagline">Veteran Owned • Affordable Flat Rates • Trusted Local Connections</p>
 
-  <!-- Status Pill -->
   <div id="status-pill" class="status status--loading">Checking status…</div>
 
-  <!-- Control Panel -->
   <section class="info-section" style="text-align:center;max-width:400px;margin:auto;">
     <h2>Update Driving Status</h2>
     <select id="statusSelect" class="btn secondary" style="width:100%;max-width:320px;padding:10px;">
@@ -41,27 +31,21 @@
       <option value="away">🟡 Limited Availability</option>
       <option value="offline">🔴 Offline</option>
     </select>
-
     <button id="updateStatusBtn" class="btn primary" style="margin-top:12px;">💾 Save Status</button>
     <p style="font-size:0.9em;color:#aaa;margin-top:8px;">
       Updates your live status instantly across all devices.
     </p>
   </section>
 
-  <!-- Quick Links -->
   <div class="cta-group">
     <a href="index.html" class="btn secondary">🏠 Return Home</a>
     <a href="sms:+14053784024" class="btn primary">📲 Text “RED”</a>
   </div>
 
-  <!-- Footer -->
   <footer>
     <p>&copy; 2025 Big Red Connect — Live Status Control</p>
   </footer>
 
-  <!-- ================================
-       Live Status Control Logic
-  ================================= -->
   <script>
     const WORKER_URL = "https://bigred-status-updater.bigredtransportation.workers.dev";
     const AUTH_SECRET = "BigRedPrivateKey2025";
@@ -70,16 +54,15 @@
     const saveBtn = document.getElementById("updateStatusBtn");
     const pill = document.getElementById("status-pill");
 
-    // ---- Fetch current status from Cloudflare ----
+    // ---- Fetch current status ----
     async function fetchStatus() {
       try {
         const res = await fetch(WORKER_URL + "/status?nocache=" + Date.now(), { cache: "no-store" });
-        if (!res.ok) throw new Error("Network response not ok");
         const j = await res.json();
-        updatePill(j.status, j.updated);
         select.value = j.status;
+        updatePill(j.status, j.updated);
       } catch (err) {
-        console.warn("⚠️ Could not load remote status:", err);
+        console.warn("⚠️ Could not load status:", err);
         updatePill("offline");
       }
     }
@@ -93,7 +76,7 @@
       };
 
       try {
-        const res = await fetch(WORKER_URL, {
+        const res = await fetch(WORKER_URL + "/", {        // ✅ Explicit trailing slash added
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
@@ -102,17 +85,17 @@
           body: JSON.stringify(payload)
         });
 
-        if (!res.ok) throw new Error("Worker update failed");
-
-        updatePill(newStatus, payload.updated);
+        if (!res.ok) throw new Error(await res.text());
+        const data = await res.json();
+        updatePill(data.newStatus?.status || newStatus, payload.updated);
         alert("✅ Status updated successfully!");
       } catch (err) {
-        console.error("❌ Error updating status:", err);
+        console.error("❌ Update failed:", err);
         alert("⚠️ Network error: unable to update status. Try again shortly.");
       }
     }
 
-    // ---- Update visible pill ----
+    // ---- Update pill display ----
     function updatePill(state, iso = null) {
       const now = iso ? new Date(iso) : new Date();
       const stamp = now.toLocaleString("en-US", {
@@ -124,7 +107,7 @@
         timeZoneName: "short"
       });
 
-      pill.classList.remove("online", "away", "offline", "status--loading");
+      pill.classList.remove("online","away","offline","status--loading");
       if (state === "online") {
         pill.classList.add("online");
         pill.textContent = `🟢 Online — as of ${stamp}`;
@@ -138,8 +121,6 @@
     }
 
     saveBtn.onclick = updateStatus;
-
-    // ---- Initialize ----
     fetchStatus();
   </script>
 </body>
