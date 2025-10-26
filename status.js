@@ -1,6 +1,6 @@
 // ===============================
-// Big Red Connect — status.js (cloud-synced)
-// Reads global status.json from GitHub and renders a live status pill
+// Big Red Connect — status.js (cloud-synced, always-current timestamp)
+// Reads global status.json from GitHub and always displays current Central time
 // ===============================
 (function () {
   const TZ = "America/Chicago";
@@ -38,6 +38,7 @@
     return { status, iso };
   }
 
+  // Format current Central Time
   function fmtCT(isoString) {
     const d = isoString ? new Date(isoString) : new Date();
     const dateStr = new Intl.DateTimeFormat("en-US", { timeZone: TZ, month: "short", day: "numeric", year: "numeric" }).format(d);
@@ -47,38 +48,44 @@
     return { dateStr, timeStr, tzAbbrev };
   }
 
-  function pillText(status, iso) {
-    const { dateStr, timeStr, tzAbbrev } = fmtCT(iso);
+  // 🟢 Modified to always show current time (not stored ISO)
+  function pillText(status) {
+    const { dateStr, timeStr, tzAbbrev } = fmtCT(new Date().toISOString());
     switch (status) {
-      case "online":  return { text: `🟢 Online — as of ${dateStr} · ${timeStr} ${tzAbbrev}`, cls: "online" };
-      case "away":    return { text: `🟡 Limited Availability — as of ${dateStr} · ${timeStr} ${tzAbbrev}`, cls: "away" };
-      default:        return { text: `🔴 Offline — as of ${dateStr} · ${timeStr} ${tzAbbrev}`, cls: "offline" };
+      case "online":
+        return { text: `🟢 Online — as of ${dateStr} · ${timeStr} ${tzAbbrev}`, cls: "online" };
+      case "away":
+        return { text: `🟡 Limited Availability — as of ${dateStr} · ${timeStr} ${tzAbbrev}`, cls: "away" };
+      case "offline":
+      default:
+        return { text: `🔴 Offline — as of ${dateStr} · ${timeStr} ${tzAbbrev}`, cls: "offline" };
     }
   }
 
   async function renderPill() {
-    const { status, iso } = await readStatus();
+    const { status } = await readStatus();
     const pill = document.getElementById("status-pill");
     if (!pill) return;
     pill.classList.remove("online", "away", "offline", "status--loading");
-    const { text, cls } = pillText(status, iso);
+    const { text, cls } = pillText(status);
     pill.textContent = text;
     pill.classList.add(cls);
     document.dispatchEvent(new CustomEvent("statusUpdated", { detail: status || "unknown" }));
   }
 
+  // Run when ready
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", renderPill);
   } else {
     renderPill();
   }
 
-  // Optional: respond to localStorage updates
+  // Listen for localStorage updates
   window.addEventListener("storage", e => {
     if (e.key === "bigred_status" || e.key === "bigred_status_time") renderPill();
   });
 
-  // Manual helper
+  // Manual admin helper
   window.__BRC_setStatus = function (status) {
     const iso = new Date().toISOString();
     localStorage.setItem("bigred_status", (status || "offline").toLowerCase());
