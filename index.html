@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Big Red Connect</title>
 
-  <!-- PWA / Icons -->
+  <!-- 📱 PWA / Icons -->
   <link rel="apple-touch-icon" href="icon.PNG">
   <link rel="icon" type="image/png" sizes="192x192" href="icon.png">
   <link rel="shortcut icon" href="icon.PNG">
@@ -15,35 +15,35 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="theme-color" content="#000000">
 
-  <!-- No-cache -->
+  <!-- 🚫 No cache -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
 
-  <!-- Styles -->
+  <!-- 🎨 Styles -->
   <link rel="stylesheet" href="style.css" />
 </head>
-<body>
 
-  <!-- Hero -->
+<body>
+  <!-- 🌆 Hero -->
   <div class="hero"></div>
 
-  <!-- Logo -->
+  <!-- 🚗 Logo -->
   <img src="official_logo.jpeg" alt="Big Red Connect Logo" class="main-logo" />
 
-  <!-- Tagline -->
+  <!-- 🏷️ Tagline -->
   <p class="tagline">Veteran Owned · Affordable Flat Rates · Trusted Local Connections</p>
 
-  <!-- Status pill -->
-  <div id="status-pill" class="status online">🟢 Online — as of Oct 26 · 9:15 PM CDT</div>
+  <!-- 🚦 Dynamic Status Pill -->
+  <div id="status-pill" class="status status--loading">Checking status…</div>
 
-  <!-- Quick Actions -->
+  <!-- 📲 Quick Actions -->
   <div class="cta-group">
     <a href="sms:14053784024" class="btn primary">📲 Text “RED”</a>
     <a href="tel:14053784024" class="btn secondary">📞 Call Big Red</a>
   </div>
 
-  <!-- “Where To?” -->
+  <!-- 🧭 “Where To?” -->
   <div class="info-section" style="text-align:center; margin-top:20px;">
     <h2 style="margin-bottom:10px;">Plan Your Connection</h2>
     <form id="quickDestination" onsubmit="goToFare(event)" style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
@@ -56,7 +56,7 @@
     </p>
   </div>
 
-  <!-- Navigation Tiles -->
+  <!-- 🧱 Navigation Tiles -->
   <div class="tile-grid">
     <a href="farecalculator.html" class="tile">💲<br>Fare Calculator</a>
     <a href="live.html" class="tile">🗺️<br>Live Map</a>
@@ -65,7 +65,7 @@
     <a href="https://www.facebook.com/share/1BWCx63CUt/?mibextid=wwXIfr" target="_blank" class="tile">👍<br>Follow on Facebook</a>
   </div>
 
-  <!-- What I Do -->
+  <!-- 🧾 What I Do -->
   <section class="info-section">
     <h2>What I Do</h2>
     <p>
@@ -80,7 +80,7 @@
     </ul>
   </section>
 
-  <!-- Why Choose Red -->
+  <!-- ❤️ Why Choose Red -->
   <section class="info-section">
     <h2>Why Choose Red</h2>
     <ul>
@@ -90,7 +90,7 @@
     </ul>
   </section>
 
-  <!-- Reviews snippet -->
+  <!-- 💬 Reviews -->
   <section class="info-section">
     <h2>What Riders Say</h2>
     <div class="review-card">
@@ -104,7 +104,7 @@
     <p><a href="reviews.html">See more reviews →</a></p>
   </section>
 
-  <!-- Footer -->
+  <!-- 🦶 Footer -->
   <footer>
     <p>Questions or ride connection requests?<br>Text <strong>“RED”</strong> to (405) 378-4024.</p>
     <p><a href="faq.html">FAQ & Policies</a> | <a href="reviews.html">Leave a Review</a></p>
@@ -116,7 +116,7 @@
     </p>
   </footer>
 
-  <!-- Google Places (for quick destination) -->
+  <!-- 🗺️ Google Places -->
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places"></script>
   <script>
     let whereAuto;
@@ -136,7 +136,7 @@
     window.onload = initQuickSearch;
   </script>
 
-  <!-- Fixed Status Pill -->
-  <script src="status.js"></script>
+  <!-- 🚦 Global Status Pill -->
+  <script src="status.js?v=20251026"></script>
 </body>
 </html>
