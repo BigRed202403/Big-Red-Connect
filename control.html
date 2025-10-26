@@ -76,9 +76,11 @@
       };
 
       try {
-        const res = await fetch(WORKER_URL + "/", {        // ✅ Explicit trailing slash added
+        const res = await fetch(WORKER_URL + "/", {
           method: "PUT",
+          mode: "cors", // ✅ Critical fix for Safari and mobile browsers
           headers: {
+            "Accept": "application/json",
             "Content-Type": "application/json",
             "X-Auth-Token": AUTH_SECRET
           },
