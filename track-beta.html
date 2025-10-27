@@ -5,38 +5,75 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Track My Ride (Beta) – Big Red Connect</title>
 
-  <!-- Icons -->
-  <link rel="apple-touch-icon" href="icon.PNG">
-  <link rel="icon" type="image/png" sizes="192x192" href="icon.png">
-  <meta name="theme-color" content="#000">
-
-  <!-- No Cache -->
+  <!-- No-cache -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
 
+  <!-- Styles -->
   <link rel="stylesheet" href="style.css" />
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=geometry"></script>
+
+  <style>
+    #map {
+      width: 100%;
+      height: 480px;
+      border-radius: 10px;
+      margin-top: 10px;
+    }
+    #banner {
+      background: #111;
+      border: 1px solid #ffcc00;
+      border-radius: 8px;
+      padding: 18px 16px;
+      text-align: center;
+      color: #ccc;
+      font-size: 1em;
+      margin-top: 15px;
+      line-height: 1.5;
+    }
+    .home-top {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 8px;
+    }
+  </style>
+
+  <!-- Google Maps -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I"></script>
 </head>
-
 <body>
-  <div class="hero"></div>
-  <img src="official_logo.jpeg" alt="Big Red Connect Logo" class="main-logo" />
-  <p class="tagline">Veteran Owned • Affordable Flat Rates • Trusted Local Connections</p>
-
-  <div id="status-pill" class="status status--loading">Checking status…</div>
-
-  <div class="info-section" style="text-align:center;max-width:500px;margin:auto;">
-    <h2>Track My Ride (Beta)</h2>
-    <p id="banner" style="margin:8px 0;color:#bbb;">Loading live location…</p>
+  <div class="logo-header">
+    <img src="official_logo.jpeg" alt="Big Red Connect Logo" />
+    <div class="home-top">
+      <a href="index.html" class="btn secondary">🏠 Home</a>
+    </div>
   </div>
 
-  <div id="map" style="height:450px;margin:15px auto;border-radius:10px;max-width:95%;"></div>
+  <h1>Track My Ride (Beta)</h1>
+  <p class="tagline">Follow Big Red’s live location — local, affordable, trusted.</p>
+
+  <!-- Unified status pill -->
+  <div id="status-pill" class="status status--loading">Checking status…</div>
+
+  <section class="info-section">
+    <div id="map"></div>
+    <div id="banner">Loading map…</div>
+  </section>
 
   <footer>
-    <p>&copy; 2025 Big Red Connect — Beta Ride Tracking</p>
+    <p>&copy; 2025 Big Red Connect — <a href="index.html">Return Home</a></p>
+    <p style="font-size:0.8em;color:#777;margin-top:10px;line-height:1.4;">
+      Vehicle imagery features actual Big Red Connect fleet vehicles.<br>
+      Some backgrounds created with AI-assisted design tools for illustrative purposes only.<br>
+      Brand names (Chevrolet® and GMC®) are property of their respective owners and used descriptively.
+    </p>
   </footer>
 
+  <!-- Pull the same live status system as production -->
+  <script src="status.js"></script>
+
+  <!-- Beta tracker logic -->
   <script src="track-beta.js"></script>
 </body>
 </html>
