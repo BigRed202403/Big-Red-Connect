@@ -1,13 +1,13 @@
 // ===============================
 // Big Red Connect – Track My Ride Beta (Phase 1)
+// Unified with status.js feed for real-time status + location
 // ===============================
 
-const MAP_KEY_URL = "https://bigred-status-updater.bigredtransportation.workers.dev/location";
-const STATUS_URL  = "https://raw.githubusercontent.com/bigred202403/Big-Red-Connect/main/status.json";
+const LOCATION_URL = "https://update-location.bigredtransportation.workers.dev"; // your live position feed
 const HQ = { lat: 35.3207, lng: -97.4929 };
 let map, marker;
 
-// Initialize map
+// ===== Initialize Map =====
 function initMap() {
   map = new google.maps.Map(document.getElementById("map"), {
     center: HQ,
@@ -16,75 +16,60 @@ function initMap() {
   });
   marker = new google.maps.Marker({
     map,
-    title: "Big Red Connect Driver",
-    icon: { path: google.maps.SymbolPath.CIRCLE, scale: 8, fillColor: "#ff0000", fillOpacity: 1, strokeColor: "#fff", strokeWeight: 2 }
+    title: "Big Red Connect",
+    icon: {
+      path: google.maps.SymbolPath.CIRCLE,
+      scale: 8,
+      fillColor: "#ff0000",
+      fillOpacity: 1,
+      strokeColor: "#fff",
+      strokeWeight: 2,
+    },
   });
-  refreshData();
-  setInterval(refreshData, 15000);
+  refreshLocation();
+  setInterval(refreshLocation, 15000); // update every 15s
 }
 
-async function refreshData() {
+// ===== Fetch Live Location =====
+async function refreshLocation() {
   try {
-    const [locRes, statusRes] = await Promise.all([
-      fetch(MAP_KEY_URL + "?t=" + Date.now(), { cache: "no-store" }),
-      fetch(STATUS_URL + "?t=" + Date.now(),  { cache: "no-store" })
-    ]);
-    const location = await locRes.json().catch(() => null);
-    const status   = await statusRes.json().catch(() => ({ status: "offline" }));
-    updateDisplay(location, status);
+    const res = await fetch(LOCATION_URL + "?t=" + Date.now(), { cache: "no-store" });
+    const loc = await res.json();
+    drawMarker(loc);
   } catch (e) {
-    console.error("Update error:", e);
-    showBanner("⚠️ Network error – retrying…", "offline");
+    console.error("Location fetch failed:", e);
   }
 }
 
-function updateDisplay(location, statusData) {
-  const state = (statusData.status || "offline").toLowerCase();
-  const pill  = document.getElementById("status-pill");
-  pill.classList.remove("online", "away", "offline", "status--loading");
-
-  const stamp = new Date(statusData.updated || Date.now()).toLocaleString("en-US", {
-    timeZone: "America/Chicago", hour: "numeric", minute: "2-digit", timeZoneName: "short"
-  });
-
-  if (state === "online") {
-    pill.classList.add("online");
-    pill.textContent = `🟢 Online — as of ${stamp}`;
-    showBanner("Big Red is on the move 🚗", "online");
-    drawMarker(location);
-  } else if (state === "away") {
-    pill.classList.add("away");
-    pill.textContent = `🟡 Limited Availability — as of ${stamp}`;
-    showBanner("Big Red is nearby but finishing another connection.", "away");
-    drawMarker(location);
-  } else {
-    pill.classList.add("offline");
-    pill.textContent = `🔴 Offline — as of ${stamp}`;
-    showBanner("Big Red is currently offline / unavailable.", "offline");
-    marker.setMap(null);
-    map.setCenter(HQ);
-  }
-}
-
-function drawMarker(location) {
-  if (!location || !location.latitude || !location.longitude) {
-    showBanner("Location data not available.", "offline");
-    marker.setMap(null);
-    return;
-  }
-  const pos = { lat: parseFloat(location.latitude), lng: parseFloat(location.longitude) };
+// ===== Draw Marker on Map =====
+function drawMarker(loc) {
+  if (!loc || !loc.latitude || !loc.longitude) return;
+  const pos = { lat: parseFloat(loc.latitude), lng: parseFloat(loc.longitude) };
   marker.setPosition(pos);
-  marker.setMap(map);
   map.setCenter(pos);
 }
 
-function showBanner(text, mode) {
+// ===== React to Live Status (from status.js) =====
+document.addEventListener("statusUpdated", (e) => {
+  const state = e.detail.toLowerCase();
   const banner = document.getElementById("banner");
-  banner.textContent = text;
-  banner.style.color = mode === "offline" ? "#999" : "#fff";
-}
 
-// Start
+  if (state === "online") {
+    banner.textContent = "🟢 Big Red is on the move — live tracking active.";
+    marker.setMap(map);
+  } else if (state === "away") {
+    banner.textContent = "🟡 Big Red is finishing another connection — location visible but limited availability.";
+    marker.setMap(map);
+  } else {
+    banner.textContent = "🔴 Big Red is currently offline — live tracking paused.";
+    marker.setMap(null);
+    map.setCenter(HQ);
+  }
+});
+
+// ===== Boot =====
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", initMap);
-} else initMap();
+} else {
+  initMap();
+}
