@@ -3,7 +3,7 @@
 // Unified with status.js feed for real-time status + location
 // ===============================
 
-const LOCATION_URL = "https://update-location.bigredtransportation.workers.dev"; // your live position feed
+const LOCATION_URL = "https://update-location.bigredtransportation.workers.dev/";
 const HQ = { lat: 35.3207, lng: -97.4929 };
 let map, marker;
 
