@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Track My Ride (Beta) – Big Red Connect</title>
+
+  <!-- Icons -->
+  <link rel="apple-touch-icon" href="icon.PNG">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon.png">
+  <meta name="theme-color" content="#000">
+
+  <!-- No Cache -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=geometry"></script>
+</head>
+
+<body>
+  <div class="hero"></div>
+  <img src="official_logo.jpeg" alt="Big Red Connect Logo" class="main-logo" />
+  <p class="tagline">Veteran Owned • Affordable Flat Rates • Trusted Local Connections</p>
+
+  <div id="status-pill" class="status status--loading">Checking status…</div>
+
+  <div class="info-section" style="text-align:center;max-width:500px;margin:auto;">
+    <h2>Track My Ride (Beta)</h2>
+    <p id="banner" style="margin:8px 0;color:#bbb;">Loading live location…</p>
+  </div>
+
+  <div id="map" style="height:450px;margin:15px auto;border-radius:10px;max-width:95%;"></div>
+
+  <footer>
+    <p>&copy; 2025 Big Red Connect — Beta Ride Tracking</p>
+  </footer>
+
+  <script src="track-beta.js"></script>
+</body>
+</html>
