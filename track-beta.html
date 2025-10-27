@@ -10,39 +10,37 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
 
-  <!-- Styles -->
   <link rel="stylesheet" href="style.css" />
 
   <style>
     #map {
-      width: 100%;
       height: 480px;
+      width: 100%;
+      border: 2px solid #b30000;
       border-radius: 10px;
       margin-top: 10px;
     }
-    #banner {
-      background: #111;
-      border: 1px solid #ffcc00;
+    #status-box {
+      margin-top: 20px;
+      padding: 10px;
       border-radius: 8px;
-      padding: 18px 16px;
-      text-align: center;
+      background: #111;
       color: #ccc;
+      text-align: center;
       font-size: 1em;
-      margin-top: 15px;
-      line-height: 1.5;
     }
     .home-top {
       display: flex;
       justify-content: center;
       gap: 10px;
-      margin-top: 8px;
+      margin-top: 10px;
     }
   </style>
 
-  <!-- Google Maps -->
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I"></script>
 </head>
 <body>
+
   <div class="logo-header">
     <img src="official_logo.jpeg" alt="Big Red Connect Logo" />
     <div class="home-top">
@@ -50,30 +48,68 @@
     </div>
   </div>
 
-  <h1>Track My Ride (Beta)</h1>
+  <h1 style="color:red;">Track My Ride (Beta)</h1>
   <p class="tagline">Follow Big Red’s live location — local, affordable, trusted.</p>
 
-  <!-- Unified status pill -->
+  <!-- Live status pill -->
   <div id="status-pill" class="status status--loading">Checking status…</div>
 
   <section class="info-section">
     <div id="map"></div>
-    <div id="banner">Loading map…</div>
+    <div id="status-box">Loading map…</div>
   </section>
 
   <footer>
     <p>&copy; 2025 Big Red Connect — <a href="index.html">Return Home</a></p>
-    <p style="font-size:0.8em;color:#777;margin-top:10px;line-height:1.4;">
-      Vehicle imagery features actual Big Red Connect fleet vehicles.<br>
-      Some backgrounds created with AI-assisted design tools for illustrative purposes only.<br>
-      Brand names (Chevrolet® and GMC®) are property of their respective owners and used descriptively.
-    </p>
   </footer>
 
-  <!-- Pull the same live status system as production -->
   <script src="status.js"></script>
 
-  <!-- Beta tracker logic -->
-  <script src="track-beta.js"></script>
+  <script>
+    const LOCATION_URL = "https://update-location.bigredtransportation.workers.dev/";
+    let map, marker;
+
+    async function initMap() {
+      const mapEl = document.getElementById("map");
+      const statusBox = document.getElementById("status-box");
+      map = new google.maps.Map(mapEl, {
+        center: { lat: 35.4676, lng: -97.5164 }, // OKC default
+        zoom: 11,
+        mapTypeControl: false,
+        streetViewControl: false
+      });
+
+      marker = new google.maps.Marker({
+        map,
+        title: "Big Red",
+        icon: {
+          url: "https://maps.google.com/mapfiles/ms/icons/red-dot.png",
+          scaledSize: new google.maps.Size(40, 40)
+        }
+      });
+
+      await updateLocation();
+      setInterval(updateLocation, 30000); // refresh every 30 seconds
+
+      statusBox.textContent = "Live tracking active — updating every 30 seconds.";
+    }
+
+    async function updateLocation() {
+      try {
+        const res = await fetch(LOCATION_URL + "?t=" + Date.now(), { cache: "no-store" });
+        const data = await res.json();
+        if (!data.latitude || !data.longitude) throw new Error("Invalid data");
+
+        const pos = { lat: data.latitude, lng: data.longitude };
+        marker.setPosition(pos);
+        map.setCenter(pos);
+      } catch (err) {
+        console.error("Location update failed:", err);
+        document.getElementById("status-box").textContent = "⚠️ Unable to load live location.";
+      }
+    }
+
+    window.onload = initMap;
+  </script>
 </body>
 </html>
