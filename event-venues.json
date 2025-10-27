@@ -1,5 +1,5 @@
 {
-  "venues": [
+  "venues": []
     {
       "name": "Paycom Center",
       "lat": 35.463990,
@@ -31,7 +31,7 @@
       "radius_mi": 1.5
     }
   ],
-  "keywords": [
+  "keywords": []
     "paycom center",
     "thunder",
     "ou game",
