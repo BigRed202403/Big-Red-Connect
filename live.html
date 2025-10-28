@@ -22,7 +22,7 @@
     }
     #status-message {
       background: #111;
-      border: 1px solid #ffcc00;
+      border: 1px solid #ff0000;
       border-radius: 8px;
       padding: 20px 16px;
       text-align: center;
@@ -77,40 +77,58 @@
   <!-- status.js -->
   <script src="status.js"></script>
 
-  <!-- Hide/show map based on status -->
   <script>
     function updateLiveView(state) {
       const frame = document.getElementById("glympse-frame");
       const msgBox = document.getElementById("status-message");
-      if (state === "online") {
+      const mode = state.toLowerCase();
+
+      if (mode === "online") {
         frame.style.display = "block";
         msgBox.style.display = "none";
+      } else if (mode === "away") {
+        frame.style.display = "none";
+        msgBox.style.display = "block";
+        msgBox.innerHTML = `
+          <strong>🟡 Limited Availability</strong><br>
+          I’m between runs or outside my usual area right now.<br>
+          You can still text <strong>“RED”</strong> to <strong>(405) 378-4024</strong> to plan ahead.
+        `;
       } else {
         frame.style.display = "none";
         msgBox.style.display = "block";
-        msgBox.innerHTML =
-          state === "away"
-            ? `<strong>🟡 Limited Availability</strong><br>
-               I’m between runs or outside my usual area right now.<br>
-               You can still text <strong>“RED”</strong> to <strong>(405) 378-4024</strong> to plan ahead.`
-            : `<strong>🔴 Currently Offline</strong><br>
-               I’m off the road for now, but I’ll be back soon.<br>
-               You can still line up your next connection anytime.`;
+        msgBox.innerHTML = `
+          <strong>🔴 Currently Offline</strong><br>
+          I’m off the road for now, but I’ll be back soon.<br>
+          You can still line up your next connection anytime.
+        `;
       }
     }
 
-    // Initial render (from localStorage)
-    (function(){
-      const state = (localStorage.getItem("bigred_status") || "offline").toLowerCase();
-      updateLiveView(state);
+    // Initial render
+    (function() {
+      const initial = (localStorage.getItem("bigred_status") || "offline").toLowerCase();
+      updateLiveView(initial);
     })();
 
     // React to pill updates
     document.addEventListener("statusUpdated", (e) => updateLiveView(e.detail));
-    // React to storage changes (if another tab changes status)
+
+    // React to storage changes (multi-tab sync)
     window.addEventListener("storage", (e) => {
-      if (e.key === "bigred_status") updateLiveView((e.newValue||"offline").toLowerCase());
+      if (e.key === "bigred_status") updateLiveView((e.newValue || "offline").toLowerCase());
     });
+
+    // Failsafe: poll status pill every 2s to ensure match
+    setInterval(() => {
+      const pill = document.getElementById("status-pill");
+      if (!pill) return;
+      const text = pill.textContent.toLowerCase();
+      if (text.includes("offline")) updateLiveView("offline");
+      else if (text.includes("away")) updateLiveView("away");
+      else if (text.includes("limited")) updateLiveView("away");
+      else updateLiveView("online");
+    }, 2000);
   </script>
 </body>
 </html>
