@@ -51,7 +51,6 @@
   <h1 style="color:red;">Track My Ride (Beta)</h1>
   <p class="tagline">Follow Big Red’s live location — local, affordable, trusted.</p>
 
-  <!-- Live status pill -->
   <div id="status-pill" class="status status--loading">Checking status…</div>
 
   <section class="info-section">
@@ -73,7 +72,7 @@
       const mapEl = document.getElementById("map");
       const statusBox = document.getElementById("status-box");
       map = new google.maps.Map(mapEl, {
-        center: { lat: 35.4676, lng: -97.5164 }, // OKC default
+        center: { lat: 35.4676, lng: -97.5164 },
         zoom: 11,
         mapTypeControl: false,
         streetViewControl: false
@@ -89,9 +88,9 @@
       });
 
       await updateLocation();
-      setInterval(updateLocation, 30000); // refresh every 30 seconds
+      setInterval(updateLocation, 30000);
 
-      statusBox.textContent = "Live tracking active — updating every 30 seconds.";
+      statusBox.textContent = "Live tracking active — updates every 30 seconds.";
     }
 
     async function updateLocation() {
