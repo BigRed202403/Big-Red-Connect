@@ -89,11 +89,17 @@
       });
 
       // Add Big Red marker
-      const icon = {
-        url: "https://raw.githubusercontent.com/BigRed202403/Big-Red-Connect/main/Official%20Logo.png",
-        scaledSize: new google.maps.Size(70, 70),
-        anchor: new google.maps.Point(35, 35)
-      };
+      const marker = new google.maps.Marker({
+        position: { lat: location.lat, lng: location.lng },
+        map: map,
+        title: "Big Red Connect",
+        icon: {
+          url: "https://raw.githubusercontent.com/BigRed202403/Big-Red-Connect/main/Official%20Logo.png",
+          scaledSize: new google.maps.Size(55, 55),
+          anchor: new google.maps.Point(27, 27),
+        },
+        zIndex: 9999
+      });
       marker = new google.maps.Marker({
         map,
         icon,
