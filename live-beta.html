@@ -44,56 +44,84 @@
     <p>&copy; 2025 Big Red Connect — <a href="index.html" style="color:#ff3333;">Return Home</a></p>
   </footer>
 
+  <!-- Debug-enabled script -->
   <script>
     const LOCATION_URL = "https://location-reader.bigredtransportation.workers.dev";
     const LOGO_URL = "https://raw.githubusercontent.com/BigRed202403/Big-Red-Connect/main/Official%20Logo.png";
 
+    // Create a debug panel for on-screen logs
+    const DEBUG = document.createElement("div");
+    DEBUG.style = "color:#0f0;text-align:center;font-size:0.9em;margin-top:10px;padding:10px;";
+    DEBUG.innerHTML = "<strong>Debug Log:</strong><br>";
+    document.body.insertBefore(DEBUG, document.querySelector("footer"));
+
+    function log(msg, isError = false) {
+      const color = isError ? "#ff4444" : "#00ff66";
+      DEBUG.innerHTML += `<span style='color:${color}'>${msg}</span><br>`;
+    }
+
     async function initMap() {
-      const res = await fetch(LOCATION_URL + "?nocache=" + Date.now());
-      const data = await res.json();
-
-      const coords = {
-        lat: parseFloat(data.latitude) || 35.3400,
-        lng: parseFloat(data.longitude) || -97.4900
-      };
-
-      const map = new google.maps.Map(document.getElementById("map"), {
-        center: coords,
-        zoom: 11,
-        mapTypeControl: true,
-        streetViewControl: true
-      });
-
-      // Marker icon
-      const icon = {
-        url: LOGO_URL,
-        scaledSize: new google.maps.Size(55, 55),
-        anchor: new google.maps.Point(27, 27)
-      };
+      log("🚀 initMap started…");
 
       try {
-        const marker = new google.maps.Marker({
-          position: coords,
-          map: map,
-          title: "Big Red Connect",
-          icon: icon
+        const res = await fetch(LOCATION_URL + "?nocache=" + Date.now());
+        if (!res.ok) throw new Error("Worker fetch failed: HTTP " + res.status);
+
+        const data = await res.json();
+        log("✅ Location data loaded: " + JSON.stringify(data));
+
+        const coords = {
+          lat: parseFloat(data.latitude) || 35.3400,
+          lng: parseFloat(data.longitude) || -97.4900
+        };
+
+        // Initialize map
+        const map = new google.maps.Map(document.getElementById("map"), {
+          center: coords,
+          zoom: 11,
+          mapTypeControl: true,
+          streetViewControl: true
         });
 
-        console.log("✅ Marker added at:", coords.lat, coords.lng);
-      } catch (err) {
-        console.error("⚠️ Error loading logo marker:", err);
-        new google.maps.Marker({ position: coords, map: map, title: "Big Red Connect" });
-      }
+        // Marker icon
+        const icon = {
+          url: LOGO_URL,
+          scaledSize: new google.maps.Size(55, 55),
+          anchor: new google.maps.Point(27, 27)
+        };
 
-      const ts = new Date(data.timestamp || Date.now()).toLocaleString("en-US", {
-        month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: "America/Chicago"
-      });
-      document.getElementById("timestamp").textContent = ts;
+        try {
+          const marker = new google.maps.Marker({
+            position: coords,
+            map: map,
+            title: "Big Red Connect",
+            icon: icon
+          });
+          log(`📍 Marker added at ${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}`);
+        } catch (iconErr) {
+          log("⚠️ Error using logo marker — fallback to red pin.", true);
+          new google.maps.Marker({ position: coords, map: map, title: "Big Red Connect" });
+        }
+
+        const ts = new Date(data.timestamp || Date.now()).toLocaleString("en-US", {
+          month: "short",
+          day: "numeric",
+          hour: "numeric",
+          minute: "2-digit",
+          timeZone: "America/Chicago"
+        });
+
+        document.getElementById("timestamp").textContent = ts;
+        log("🕒 Timestamp updated successfully.");
+      } catch (err) {
+        log("❌ ERROR: " + err.message, true);
+      }
     }
   </script>
 
+  <!-- Use temporary open test key -->
   <script async
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBXS1-a1cLLPT3JpUralOzUk6GRVmeqBwc&callback=initMap">
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA1b2-LOehKZQnfg9kxkyJtV5qSNCsZyGE&callback=initMap">
   </script>
 </body>
 </html>
