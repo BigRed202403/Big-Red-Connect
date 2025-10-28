@@ -44,82 +44,79 @@
     <p>&copy; 2025 Big Red Connect — <a href="index.html" style="color:#ff3333;">Return Home</a></p>
   </footer>
 
-  <!-- Debug-enabled script -->
   <script>
     const LOCATION_URL = "https://location-reader.bigredtransportation.workers.dev";
     const LOGO_URL = "https://raw.githubusercontent.com/BigRed202403/Big-Red-Connect/main/Official%20Logo.png";
 
-    // Create a debug panel for on-screen logs
-    const DEBUG = document.createElement("div");
-    DEBUG.style = "color:#0f0;text-align:center;font-size:0.9em;margin-top:10px;padding:10px;";
-    DEBUG.innerHTML = "<strong>Debug Log:</strong><br>";
-    document.body.insertBefore(DEBUG, document.querySelector("footer"));
-
-    function log(msg, isError = false) {
-      const color = isError ? "#ff4444" : "#00ff66";
-      DEBUG.innerHTML += `<span style='color:${color}'>${msg}</span><br>`;
+    async function fetchLocation() {
+      try {
+        const res = await fetch(LOCATION_URL + "?nocache=" + Date.now());
+        if (!res.ok) throw new Error("Unable to reach location reader.");
+        return await res.json();
+      } catch (err) {
+        console.error("⚠️ Location fetch failed:", err);
+        return null;
+      }
     }
 
     async function initMap() {
-      log("🚀 initMap started…");
+      const data = await fetchLocation();
+      const coords = data
+        ? { lat: parseFloat(data.latitude), lng: parseFloat(data.longitude) }
+        : { lat: 35.3400, lng: -97.4900 };
 
-      try {
-        const res = await fetch(LOCATION_URL + "?nocache=" + Date.now());
-        if (!res.ok) throw new Error("Worker fetch failed: HTTP " + res.status);
+      const map = new google.maps.Map(document.getElementById("map"), {
+        center: coords,
+        zoom: 11,
+        mapTypeControl: true,
+        streetViewControl: true
+      });
 
-        const data = await res.json();
-        log("✅ Location data loaded: " + JSON.stringify(data));
-
-        const coords = {
-          lat: parseFloat(data.latitude) || 35.3400,
-          lng: parseFloat(data.longitude) || -97.4900
-        };
-
-        // Initialize map
-        const map = new google.maps.Map(document.getElementById("map"), {
-          center: coords,
-          zoom: 11,
-          mapTypeControl: true,
-          streetViewControl: true
-        });
-
-        // Marker icon
-        const icon = {
+      const marker = new google.maps.Marker({
+        position: coords,
+        map: map,
+        title: "Big Red Connect",
+        icon: {
           url: LOGO_URL,
           scaledSize: new google.maps.Size(55, 55),
           anchor: new google.maps.Point(27, 27)
-        };
-
-        try {
-          const marker = new google.maps.Marker({
-            position: coords,
-            map: map,
-            title: "Big Red Connect",
-            icon: icon
-          });
-          log(`📍 Marker added at ${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}`);
-        } catch (iconErr) {
-          log("⚠️ Error using logo marker — fallback to red pin.", true);
-          new google.maps.Marker({ position: coords, map: map, title: "Big Red Connect" });
         }
+      });
 
-        const ts = new Date(data.timestamp || Date.now()).toLocaleString("en-US", {
+      if (data?.timestamp) {
+        const ts = new Date(data.timestamp).toLocaleString("en-US", {
           month: "short",
           day: "numeric",
           hour: "numeric",
           minute: "2-digit",
           timeZone: "America/Chicago"
         });
-
         document.getElementById("timestamp").textContent = ts;
-        log("🕒 Timestamp updated successfully.");
-      } catch (err) {
-        log("❌ ERROR: " + err.message, true);
       }
+
+      // Auto-refresh every 30 seconds
+      setInterval(async () => {
+        const newData = await fetchLocation();
+        if (newData) {
+          const newCoords = {
+            lat: parseFloat(newData.latitude),
+            lng: parseFloat(newData.longitude)
+          };
+          marker.setPosition(newCoords);
+          map.panTo(newCoords);
+          document.getElementById("timestamp").textContent =
+            new Date(newData.timestamp).toLocaleString("en-US", {
+              month: "short",
+              day: "numeric",
+              hour: "numeric",
+              minute: "2-digit",
+              timeZone: "America/Chicago"
+            });
+        }
+      }, 30000);
     }
   </script>
 
-  <!-- Use temporary open test key -->
   <script async
     src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBXS1-a1cLLPT3JpUralOzUk6GRVmeqBwc&callback=initMap">
   </script>
