@@ -3,197 +3,97 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Live Tracker (Beta) – Big Red Connect</title>
+  <title>Big Red Connect — Live Tracker (Beta)</title>
 
-  <!-- No Cache -->
+  <link rel="stylesheet" href="style.css" />
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
 
-  <link rel="stylesheet" href="style.css" />
-
-  <!-- Google Maps -->
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=geometry&callback=initMap" async defer></script>
-
   <style>
     #map {
+      height: 400px;
       width: 100%;
-      height: 420px;
       border: 2px solid #c40000;
-      border-radius: 12px;
-      margin-top: 15px;
-    }
-    .cta-bar {
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      margin-top: 14px;
-    }
-    .cta-bar .btn {
-      flex: 1;
-      max-width: 180px;
-      font-size: 0.95em;
-    }
-    #status-message {
-      text-align: center;
-      margin-top: 15px;
-      color: #ccc;
-      font-size: 0.95em;
-      line-height: 1.4;
+      border-radius: 10px;
+      margin: 15px auto;
+      max-width: 500px;
     }
   </style>
 </head>
 <body>
+  <header>
+    <a href="index.html" class="btn secondary">🏠 Home</a>
+    <h2 style="color:#ff3333;">Live Tracker (Beta)</h2>
+    <p>Follow Big Red Connect’s live position or preview your connection route.</p>
+  </header>
 
-  <div class="logo-header">
-    <a href="index.html"><img src="official_logo.jpeg" alt="Big Red Connect Logo" /></a>
-    <div class="home-top">
-      <a href="index.html" class="btn secondary">🏠 Home</a>
-    </div>
+  <div id="status-pill" class="status online">
+    🟢 Online — as of <span id="timestamp">Loading…</span>
   </div>
 
-  <h1>Live Tracker (Beta)</h1>
-  <p class="tagline">Follow Big Red Connect’s live position or preview your connection route.</p>
-
-  <div id="status-pill" class="status status--loading">Checking status…</div>
-
-  <!-- CTA Buttons -->
-  <div class="cta-bar">
+  <div style="display:flex;justify-content:center;gap:12px;margin-top:10px;">
     <a href="fare-calculator.html" class="btn secondary">💲 Estimate Fare</a>
-    <a href="sms:+14053784024?&body=Hey%20Big%20Red%20—%20I’d%20like%20to%20plan%20a%20ride%20connection." class="btn primary">📲 Text “RED”</a>
+    <a href="sms:+14053784024" class="btn primary">📲 Text “RED”</a>
   </div>
 
-  <section class="info-section">
-    <div id="map"></div>
-    <div id="status-message"></div>
-  </section>
+  <div id="map"></div>
+  <p style="text-align:center;">Big Red is live — track position or text for a pickup!</p>
 
   <footer>
-    <p>&copy; 2025 Big Red Connect — <a href="index.html">Return Home</a></p>
+    <p>&copy; 2025 Big Red Connect — <a href="index.html" style="color:#ff3333;">Return Home</a></p>
   </footer>
 
-  <script src="status.js"></script>
   <script>
     const LOCATION_URL = "https://location-reader.bigredtransportation.workers.dev";
-    const STATUS_URL = "https://bigred-status-updater.bigredtransportation.workers.dev/status";
+    const LOGO_URL = "https://raw.githubusercontent.com/BigRed202403/Big-Red-Connect/main/Official%20Logo.png";
 
-    let map, marker, routeLine;
-
-    // Initialize Map
     async function initMap() {
-      map = new google.maps.Map(document.getElementById("map"), {
-        center: { lat: 35.3207, lng: -97.4929 },
+      const res = await fetch(LOCATION_URL + "?nocache=" + Date.now());
+      const data = await res.json();
+
+      const coords = {
+        lat: parseFloat(data.latitude) || 35.3400,
+        lng: parseFloat(data.longitude) || -97.4900
+      };
+
+      const map = new google.maps.Map(document.getElementById("map"), {
+        center: coords,
         zoom: 11,
         mapTypeControl: true,
         streetViewControl: true
       });
 
-      // Add Big Red marker
-      const marker = new google.maps.Marker({
-        position: { lat: location.lat, lng: location.lng },
-        map: map,
-        title: "Big Red Connect",
-        icon: {
-          url: "https://raw.githubusercontent.com/BigRed202403/Big-Red-Connect/main/Official%20Logo.png",
-          scaledSize: new google.maps.Size(55, 55),
-          anchor: new google.maps.Point(27, 27),
-        },
-        zIndex: 9999
-      });
-      marker = new google.maps.Marker({
-        map,
-        icon,
-        title: "Big Red Connect"
-      });
+      // Marker icon
+      const icon = {
+        url: LOGO_URL,
+        scaledSize: new google.maps.Size(55, 55),
+        anchor: new google.maps.Point(27, 27)
+      };
 
-      // Fetch status first
-      await fetchStatus();
-      // Begin live updates
-      refreshLocation();
-      setInterval(refreshLocation, 30000);
-    }
-
-    // Get status + adjust UI messaging
-    async function fetchStatus() {
       try {
-        const res = await fetch(STATUS_URL + "?nocache=" + Date.now(), { cache: "no-store" });
-        const j = await res.json();
-        updatePill(j.status, j.updated);
-      } catch {
-        updatePill("offline");
-      }
-    }
+        const marker = new google.maps.Marker({
+          position: coords,
+          map: map,
+          title: "Big Red Connect",
+          icon: icon
+        });
 
-    function updatePill(state, iso = null) {
-      const pill = document.getElementById("status-pill");
-      const msg = document.getElementById("status-message");
-      const now = iso ? new Date(iso) : new Date();
-      const stamp = now.toLocaleString("en-US", {
-        month: "short", day: "numeric",
-        hour: "numeric", minute: "2-digit",
-        timeZone: "America/Chicago", timeZoneName: "short"
+        console.log("✅ Marker added at:", coords.lat, coords.lng);
+      } catch (err) {
+        console.error("⚠️ Error loading logo marker:", err);
+        new google.maps.Marker({ position: coords, map: map, title: "Big Red Connect" });
+      }
+
+      const ts = new Date(data.timestamp || Date.now()).toLocaleString("en-US", {
+        month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: "America/Chicago"
       });
-
-      pill.classList.remove("online","away","offline","status--loading");
-      if (state === "online") {
-        pill.classList.add("online");
-        pill.textContent = `🟢 Online — as of ${stamp}`;
-        msg.innerHTML = `Big Red is live — track position or text for a pickup!`;
-      } else if (state === "away") {
-        pill.classList.add("away");
-        pill.textContent = `🟡 Limited Availability — as of ${stamp}`;
-        msg.innerHTML = `Big Red’s between runs — text to line up your next connection.`;
-      } else {
-        pill.classList.add("offline");
-        pill.textContent = `🔴 Offline — as of ${stamp}`;
-        msg.innerHTML = `Big Red’s currently off the road — plan ahead for later or estimate your fare above.`;
-      }
+      document.getElementById("timestamp").textContent = ts;
     }
+  </script>
 
-    // Refresh live marker
-    async function refreshLocation() {
-      try {
-        const res = await fetch(LOCATION_URL + "?nocache=" + Date.now(), { cache: "no-store" });
-        const j = await res.json();
-        if (!j.latitude || !j.longitude) return;
-
-        const latLng = { lat: parseFloat(j.latitude), lng: parseFloat(j.longitude) };
-        marker.setPosition(latLng);
-        map.panTo(latLng);
-
-        // Optional route draw if pickup/dropoff exist
-        const params = new URLSearchParams(window.location.search);
-        const pickup = params.get("pickup");
-        const dropoff = params.get("dropoff");
-        if (pickup && dropoff && document.querySelector("#status-pill").classList.contains("online")) {
-          drawRoute(latLng, pickup, dropoff);
-        } else if (routeLine) {
-          routeLine.setMap(null);
-        }
-      } catch (e) {
-        console.warn("Location fetch failed:", e);
-      }
-    }
-
-    // Draw route only if params exist
-    async function drawRoute(currentLatLng, pickupAddr, dropoffAddr) {
-      const directionsService = new google.maps.DirectionsService();
-      const directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers: true, preserveViewport: true });
-      directionsRenderer.setMap(map);
-
-      directionsService.route({
-        origin: currentLatLng,
-        destination: dropoffAddr,
-        waypoints: [{ location: pickupAddr, stopover: true }],
-        travelMode: "DRIVING"
-      }, (result, status) => {
-        if (status === "OK") {
-          directionsRenderer.setDirections(result);
-        } else {
-          console.warn("Route error:", status);
-        }
-      });
-    }
+  <script async
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBXS1-a1cLLPT3JpUralOzUk6GRVmeqBwc&callback=initMap">
   </script>
 </body>
 </html>
