@@ -3,12 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Big Red Connect — Status Control</title>
-
-  <!-- Icons -->
-  <link rel="apple-touch-icon" href="icon.PNG">
-  <link rel="icon" type="image/png" sizes="192x192" href="icon.png">
-  <meta name="theme-color" content="#000000">
+  <title>Big Red Connect — Live Control (GPS Enabled)</title>
 
   <!-- No Cache -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
@@ -32,8 +27,8 @@
       <option value="offline">🔴 Offline</option>
     </select>
     <button id="updateStatusBtn" class="btn primary" style="margin-top:12px;">💾 Save Status</button>
-    <p style="font-size:0.9em;color:#aaa;margin-top:8px;">
-      Updates your live status and location instantly across all devices.
+    <p id="gps-status" style="font-size:0.9em;color:#aaa;margin-top:8px;">
+      GPS idle — waiting for status update…
     </p>
   </section>
 
@@ -43,17 +38,18 @@
   </div>
 
   <footer>
-    <p>&copy; 2025 Big Red Connect — Live Status Control</p>
+    <p>&copy; 2025 Big Red Connect — Live GPS Control</p>
   </footer>
 
   <script>
     const STATUS_WORKER = "https://bigred-status-updater.bigredtransportation.workers.dev";
-    const LOCATION_WORKER = "https://update-location.bigredtransportation.workers.dev/";
+    const LOCATION_WORKER = "https://update-location.bigredtransportation.workers.dev";
     const AUTH_SECRET = "BigRedPrivateKey2025";
 
     const select = document.getElementById("statusSelect");
     const saveBtn = document.getElementById("updateStatusBtn");
     const pill = document.getElementById("status-pill");
+    const gpsStatus = document.getElementById("gps-status");
 
     let gpsInterval = null;
 
@@ -93,66 +89,71 @@
         if (!res.ok) throw new Error(await res.text());
         const data = await res.json();
         updatePill(data.newStatus?.status || newStatus, payload.updated);
+
+        if (newStatus === "online") {
+          startLiveGPS();
+        } else {
+          stopLiveGPS();
+        }
+
         alert("✅ Status updated successfully!");
-
-        // Handle GPS start/stop
-        if (newStatus === "online") startGPSUpdates();
-        else stopGPSUpdates();
-
       } catch (err) {
         console.error("❌ Update failed:", err);
         alert("⚠️ Network error: unable to update status. Try again shortly.");
       }
     }
 
-    // ---- GPS Auto-Update ----
-    async function sendGPS(lat, lng) {
-      const coords = {
-        latitude: lat,
-        longitude: lng,
-        timestamp: new Date().toISOString()
-      };
-      try {
-        await fetch(LOCATION_WORKER, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(coords)
-        });
-        console.log("📡 GPS updated:", lat, lng);
-      } catch (err) {
-        console.warn("⚠️ GPS update failed:", err);
-      }
+    // ---- GPS Loop ----
+    function startLiveGPS() {
+      gpsStatus.textContent = "📡 GPS tracking active — updating every 30 seconds.";
+      gpsStatus.style.color = "#0f0";
+      if (gpsInterval) clearInterval(gpsInterval);
+
+      // Immediately send once
+      sendLocationToWorker();
+
+      // Repeat every 30 seconds
+      gpsInterval = setInterval(sendLocationToWorker, 30000);
     }
 
-    function startGPSUpdates() {
+    function stopLiveGPS() {
+      gpsStatus.textContent = "⛔ GPS tracking paused — driver is away/offline.";
+      gpsStatus.style.color = "#ffa500";
       if (gpsInterval) clearInterval(gpsInterval);
+    }
+
+    async function sendLocationToWorker() {
       if (!navigator.geolocation) {
-        alert("GPS not supported on this device.");
+        gpsStatus.textContent = "⚠️ GPS not supported on this device.";
+        gpsStatus.style.color = "#f00";
         return;
       }
 
-      const pushLocation = () => {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            const { latitude, longitude } = pos.coords;
-            sendGPS(latitude, longitude);
-          },
-          (err) => console.warn("GPS error:", err),
-          { enableHighAccuracy: true, maximumAge: 15000, timeout: 10000 }
-        );
-      };
+      navigator.geolocation.getCurrentPosition(async (pos) => {
+        const coords = {
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+          accuracy_m: pos.coords.accuracy,
+          timestamp: new Date().toISOString()
+        };
 
-      pushLocation(); // send immediately
-      gpsInterval = setInterval(pushLocation, 30000); // update every 30 s
-      console.log("✅ GPS tracking started");
-    }
-
-    function stopGPSUpdates() {
-      if (gpsInterval) {
-        clearInterval(gpsInterval);
-        gpsInterval = null;
-        console.log("🛑 GPS tracking stopped");
-      }
+        try {
+          await fetch(LOCATION_WORKER, {
+            method: "PUT",
+            mode: "cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(coords)
+          });
+          gpsStatus.textContent = `✅ Sent ${coords.latitude.toFixed(4)}, ${coords.longitude.toFixed(4)} @ ${new Date().toLocaleTimeString()}`;
+          gpsStatus.style.color = "#0f0";
+        } catch (err) {
+          gpsStatus.textContent = "⚠️ Failed to send location — retrying...";
+          gpsStatus.style.color = "#f00";
+        }
+      }, (err) => {
+        gpsStatus.textContent = "⚠️ GPS error: " + err.message;
+        gpsStatus.style.color = "#f00";
+      });
     }
 
     // ---- Update pill display ----
