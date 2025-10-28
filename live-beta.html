@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Live Tracker (Beta) — Big Red Connect</title>
+
+  <!-- No-cache -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+
+  <link rel="stylesheet" href="style.css" />
+
+  <style>
+    #map {
+      height: 450px;
+      width: 100%;
+      border-radius: 10px;
+      margin-top: 12px;
+    }
+    #status-message {
+      background: #111;
+      border: 1px solid #ffcc00;
+      border-radius: 8px;
+      padding: 18px;
+      text-align: center;
+      color: #ddd;
+      margin-top: 20px;
+      line-height: 1.5;
+    }
+    .home-top {
+      display:flex;justify-content:center;gap:10px;margin-top:8px;
+    }
+  </style>
+
+  <!-- Google Maps -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=geometry"></script>
+</head>
+
+<body>
+  <div class="logo-header">
+    <img src="official_logo.jpeg" alt="Big Red Connect Logo" />
+    <div class="home-top">
+      <a href="index.html" class="btn secondary">🏠 Home</a>
+    </div>
+  </div>
+
+  <h1>Live Tracker (Beta)</h1>
+  <p class="tagline">Follow Big Red Connect’s live position across the OKC metro.</p>
+
+  <!-- Status Pill -->
+  <div id="status-pill" class="status status--loading">Checking status…</div>
+
+  <section class="info-section">
+    <div id="map"></div>
+    <div id="status-message" style="display:none;"></div>
+  </section>
+
+  <footer>
+    <p>&copy; 2025 Big Red Connect — <a href="index.html">Return Home</a></p>
+  </footer>
+
+  <!-- Pulls live driver status -->
+  <script src="status.js"></script>
+
+  <script>
+    const STATUS_URL = "https://bigred-status-updater.bigredtransportation.workers.dev/status";
+    const LOCATION_URL = "https://location-reader.bigredtransportation.workers.dev/";
+    const HQ = { lat: 35.3207, lng: -97.4929 };
+    const LOGO_ICON = "https://raw.githubusercontent.com/BigRed202403/Big-Red-Connect/main/official_logo.jpeg";
+
+    let map, marker, routeLine;
+
+    async function getStatus() {
+      try {
+        const res = await fetch(STATUS_URL + "?t=" + Date.now(), { cache: "no-store" });
+        if (!res.ok) throw new Error("Status fetch failed");
+        return await res.json();
+      } catch {
+        return { status: "offline" };
+      }
+    }
+
+    async function getLocation() {
+      try {
+        const res = await fetch(LOCATION_URL + "?t=" + Date.now(), { cache: "no-store" });
+        if (!res.ok) throw new Error("Location fetch failed");
+        const j = await res.json();
+        return {
+          lat: parseFloat(j.latitude) || HQ.lat,
+          lng: parseFloat(j.longitude) || HQ.lng,
+          updated: j.updated || j.updated_at || new Date().toISOString()
+        };
+      } catch {
+        return { ...HQ, updated: new Date().toISOString() };
+      }
+    }
+
+    async function initMap() {
+      map = new google.maps.Map(document.getElementById("map"), {
+        center: HQ,
+        zoom: 11,
+        styles: [{ elementType: "geometry", stylers: [{ color: "#1a1a1a" }] }],
+      });
+
+      marker = new google.maps.Marker({
+        map,
+        icon: {
+          url: LOGO_ICON,
+          scaledSize: new google.maps.Size(60, 60),
+        },
+        title: "Big Red Connect",
+      });
+
+      routeLine = new google.maps.Polyline({
+        path: [],
+        geodesic: true,
+        strokeColor: "#ff0000",
+        strokeOpacity: 0.7,
+        strokeWeight: 4,
+        map,
+      });
+
+      await refreshLiveState();
+      setInterval(refreshLiveState, 30000);
+    }
+
+    async function refreshLiveState() {
+      const statusData = await getStatus();
+      const status = (statusData.status || "offline").toLowerCase();
+
+      const mapDiv = document.getElementById("map");
+      const msgDiv = document.getElementById("status-message");
+
+      if (status === "online") {
+        msgDiv.style.display = "none";
+        mapDiv.style.display = "block";
+        const loc = await getLocation();
+        updateMap(loc);
+      } else {
+        mapDiv.style.display = "none";
+        msgDiv.style.display = "block";
+        msgDiv.innerHTML = status === "away"
+          ? `<strong>🟡 Limited Availability</strong><br>I’m between runs or outside my usual area right now.<br>Text <strong>“RED”</strong> to (405) 378-4024 to plan ahead.`
+          : `<strong>🔴 Offline</strong><br>I’m off the road for now, but I’ll be back soon.<br>You can still plan your next connection anytime.`;
+      }
+    }
+
+    function updateMap(loc) {
+      const pos = { lat: loc.lat, lng: loc.lng };
+      marker.setPosition(pos);
+      map.setCenter(pos);
+    }
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", initMap);
+    } else initMap();
+  </script>
+</body>
+</html>
