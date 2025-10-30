@@ -103,12 +103,12 @@
 
   <script src="status.js"></script>
   <script>
-  const HQ = { lat: 35.3207, lng: -97.4929 };
-  const WORKER_URL = "https://update-location.bigredtransportation.workers.dev";
-  const STALE_MINUTES = 30;
-  let map, geocoder, directionsService, directionsRenderer;
-  let pickupLatLng=null, dropoffLatLng=null, pickupPlace=null, dropPlace=null;
-  let mode="now"; let driverPos=null; let EVENT_VENUES=null;
+  const HQ={lat:35.3207,lng:-97.4929};
+  const WORKER_URL="https://update-location.bigredtransportation.workers.dev";
+  const STALE_MINUTES=30;
+  let map,geocoder,directionsService,directionsRenderer;
+  let pickupLatLng=null,dropoffLatLng=null,pickupPlace=null,dropPlace=null;
+  let mode="now",driverPos=null,EVENT_VENUES=null;
 
   function isValidCoords(o){return o&&typeof o.lat==="number"&&typeof o.lng==="number"&&!isNaN(o.lat)&&!isNaN(o.lng);}
   function distMi(a,b){return google.maps.geometry.spherical.computeDistanceBetween(new google.maps.LatLng(a.lat,a.lng),new google.maps.LatLng(b.lat,b.lng))/1609.34;}
@@ -124,23 +124,16 @@
     const acPickup=new google.maps.places.Autocomplete(document.getElementById("pickup"));
     const acDrop=new google.maps.places.Autocomplete(document.getElementById("dropoff"));
 
-    acPickup.addListener("place_changed",async()=>{
-      const p=acPickup.getPlace(); if(!p.geometry)return;
-      pickupPlace=p; pickupLatLng=p.geometry.location;
-      if(window.pickupMarker)window.pickupMarker.setMap(null);
+    acPickup.addListener("place_changed",async()=>{const p=acPickup.getPlace();if(!p.geometry)return;
+      pickupPlace=p;pickupLatLng=p.geometry.location;if(window.pickupMarker)window.pickupMarker.setMap(null);
       window.pickupMarker=new google.maps.Marker({position:pickupLatLng,map,label:"P"});
-      map.setCenter(pickupLatLng); map.setZoom(12);
-      await applyRideTypePriority(); await maybeShowFairnessNotePreview();
-    });
-
-    acDrop.addListener("place_changed",async()=>{
-      const p=acDrop.getPlace(); if(!p.geometry)return;
-      dropPlace=p; dropoffLatLng=p.geometry.location;
-      if(window.dropoffMarker)window.dropoffMarker.setMap(null);
+      map.setCenter(pickupLatLng);map.setZoom(12);
+      await applyRideTypePriority();await maybeShowFairnessNotePreview();});
+    acDrop.addListener("place_changed",async()=>{const p=acDrop.getPlace();if(!p.geometry)return;
+      dropPlace=p;dropoffLatLng=p.geometry.location;if(window.dropoffMarker)window.dropoffMarker.setMap(null);
       window.dropoffMarker=new google.maps.Marker({position:dropoffLatLng,map,label:"D"});
       map.panTo(dropoffLatLng);
-      await applyRideTypePriority();
-    });
+      await applyRideTypePriority();});
 
     document.getElementById("modeNow").onclick=()=>setMode("now");
     document.getElementById("modeReserve").onclick=()=>setMode("reserve");
@@ -149,37 +142,37 @@
     document.getElementById("useLocPickup").onclick=()=>useMyLocation("pickup");
     document.getElementById("useLocDrop").onclick=()=>useMyLocation("dropoff");
 
-    smartRideTypeDefault(); await getDriverLocation(); setupDynamicRecheck();
+    smartRideTypeDefault();await getDriverLocation();setupDynamicRecheck();
   };
 
-  function setMode(m){mode=m;
-    const now=document.getElementById("modeNow"),res=document.getElementById("modeReserve"),ctr=document.getElementById("reserveControls");
+  function setMode(m){mode=m;const now=document.getElementById("modeNow"),res=document.getElementById("modeReserve"),ctr=document.getElementById("reserveControls");
     if(m==="now"){now.classList.add("active");res.classList.remove("active");ctr.style.display="none";smartRideTypeDefault();}
-    else{res.classList.add("active");now.classList.remove("active");ctr.style.display="block";}
-  }
+    else{res.classList.add("active");now.classList.remove("active");ctr.style.display="block";}}
 
-  async function getDriverLocation(){
-    try{
-      const r=await fetch(WORKER_URL,{cache:"no-store"});
-      const j=await r.json();const lat=parseFloat(j.latitude),lng=parseFloat(j.longitude);
-      if(!isNaN(lat)&&!isNaN(lng))driverPos={lat,lng};else driverPos=HQ;
-    }catch{driverPos=HQ;}
-  }
+  async function getDriverLocation(){try{const r=await fetch(WORKER_URL,{cache:"no-store"});const j=await r.json();const lat=parseFloat(j.latitude),lng=parseFloat(j.longitude);
+    if(!isNaN(lat)&&!isNaN(lng))driverPos={lat,lng};else driverPos=HQ;}catch{driverPos=HQ;}}
 
-  function smartRideTypeDefault(){
-    const now=new Date();
-    if(weekdayRushHour(now)){setTripType("15");document.getElementById("rushhour-note").innerHTML="🚦 Rush Hour pricing (5–9 AM / 3–7 PM)";}
-    else{setTripType("10");document.getElementById("rushhour-note").innerHTML="";}
-  }
+  function smartRideTypeDefault(){const now=new Date();if(weekdayRushHour(now)){setTripType("15");document.getElementById("rushhour-note").innerHTML="🚦 Rush Hour pricing (5–9 AM / 3–7 PM)";}
+    else{setTripType("10");document.getElementById("rushhour-note").innerHTML="";}}
   function applyRushHourForReserve(dt){if(weekdayRushHour(dt)){setTripType("15");document.getElementById("rushhour-note").innerHTML="🚦 Reserve pickup in Rush Hour";}
     else{setTripType("10");document.getElementById("rushhour-note").innerHTML="";}}
   function setTripType(v){document.getElementById("tripType").value=v;}
 
-  function detectAirportAndFlag(){
-    let combo="";[pickupPlace,dropPlace].filter(Boolean).forEach(p=>combo+=(p?.name||"")+(p?.formatted_address||""));
-    const c=combo.toLowerCase(),isAirport=c.includes("airport")&&!c.includes("tinker");
-    document.getElementById("airport-note").innerHTML=isAirport?"✈️ Airport ride detected — $15 base applied.":"";
-    return isAirport;
+  async function useMyLocation(id){
+    if(!navigator.geolocation){alert("Location not supported.");return;}
+    navigator.geolocation.getCurrentPosition(async(pos)=>{
+      const latlng={lat:pos.coords.latitude,lng:pos.coords.longitude};
+      const addr=await new Promise(r=>geocoder.geocode({location:latlng},(res,s)=>r((s==="OK"&&res[0])?res[0].formatted_address:`${latlng.lat},${latlng.lng}`)));
+      document.getElementById(id).value=addr;
+      if(id==="pickup"){pickupLatLng=new google.maps.LatLng(latlng.lat,latlng.lng);
+        if(window.pickupMarker)window.pickupMarker.setMap(null);
+        window.pickupMarker=new google.maps.Marker({position:pickupLatLng,map,label:"P"});
+        await maybeShowFairnessNotePreview();}
+      else{dropoffLatLng=new google.maps.LatLng(latlng.lat,latlng.lng);
+        if(window.dropoffMarker)window.dropoffMarker.setMap(null);
+        window.dropoffMarker=new google.maps.Marker({position:dropoffLatLng,map,label:"D"});}
+      await applyRideTypePriority();
+    },err=>alert("GPS error: "+err.message));
   }
 
   async function detectEventAndFlag(){
@@ -189,45 +182,46 @@
       for(const v of EVENT_VENUES.venues){if(v.active===false)continue;if(inRad(p,{lat:v.lat,lng:v.lng},v.radius_mi)){inside=v;break;}}}
     if(!inside&&dropoffLatLng){const d={lat:dropoffLatLng.lat(),lng:dropoffLatLng.lng()};
       for(const v of EVENT_VENUES.venues){if(v.active===false)continue;if(inRad(d,{lat:v.lat,lng:v.lng},v.radius_mi)){inside=v;break;}}}
-    if(!inside){
-      const combo=((pickupPlace?.name||"")+(pickupPlace?.formatted_address||"")+(dropPlace?.name||"")+(dropPlace?.formatted_address||"")).toLowerCase();
-      const hit=(EVENT_VENUES.keywords||[]).some(k=>k.active!==false && combo.includes(k.value?.toLowerCase?.()||k.toLowerCase()));
-      if(hit)inside={name:"Special Event Area"};
-    }
+    if(!inside){const combo=((pickupPlace?.name||"")+(pickupPlace?.formatted_address||"")+(dropPlace?.name||"")+(dropPlace?.formatted_address||"")).toLowerCase();
+      const hit=(EVENT_VENUES.keywords||[]).some(k=>k.active!==false && combo.includes(k.value?.toLowerCase?.()||k.toLowerCase()));if(hit)inside={name:"Special Event Area"};}
     if(inside){document.getElementById("event-note").innerHTML=`🎟️ Special event near ${inside.name}`;return true;}
     else{document.getElementById("event-note").innerHTML="";return false;}
   }
 
   async function applyRideTypePriority(dt=null){
-    const airport=detectAirportAndFlag();if(airport){setTripType("15_airport");document.getElementById("rushhour-note").innerHTML="";return;}
-    const event=await detectEventAndFlag();if(event){setTripType("20");document.getElementById("rushhour-note").innerHTML="";return;}
+    const airport=detectAirportAndFlag();if(airport){setTripType("15_airport");return;}
+    const event=await detectEventAndFlag();if(event){setTripType("20");return;}
     const currentType=document.getElementById("tripType").value;
     const pickup=document.getElementById("pickup").value.trim(),drop=document.getElementById("dropoff").value.trim();
-    if(!pickup && !drop){
-      setTripType("10");
-      document.getElementById("event-note").innerHTML="";document.getElementById("airport-note").innerHTML="";document.getElementById("rushhour-note").innerHTML="";
-      return;
-    }
+    if(!pickup&&!drop){setTripType("10");document.getElementById("event-note").innerHTML="";document.getElementById("airport-note").innerHTML="";return;}
     if(currentType==="20"||currentType==="15_airport"){if(mode==="reserve"&&dt)applyRushHourForReserve(dt);else smartRideTypeDefault();}
     else{if(mode==="reserve"&&dt)applyRushHourForReserve(dt);else smartRideTypeDefault();}
   }
 
-  function setupDynamicRecheck(){
-    const pickup=document.getElementById("pickup"),drop=document.getElementById("dropoff");
-    let timer;const delay=1200;
-    function check(){applyRideTypePriority();}
-    [pickup,drop].forEach(f=>{
-      f.addEventListener("input",()=>{clearTimeout(timer);timer=setTimeout(check,delay);});
-      f.addEventListener("change",check);
-      f.addEventListener("blur",check);
-    });
+  function detectAirportAndFlag(){
+    let combo="";[pickupPlace,dropPlace].filter(Boolean).forEach(p=>combo+=(p?.name||"")+(p?.formatted_address||""));
+    const c=combo.toLowerCase(),isAirport=c.includes("airport")&&!c.includes("tinker");
+    document.getElementById("airport-note").innerHTML=isAirport?"✈️ Airport ride detected — $15 base applied.":"";
+    return isAirport;
   }
+
+  async function maybeShowFairnessNotePreview(){
+    if(!pickupLatLng){document.getElementById("fairness-note").innerHTML="";return;}
+    await getDriverLocation();const ref=(isValidCoords(driverPos)?driverPos:HQ);
+    const d=distMi(ref,{lat:pickupLatLng.lat(),lng:pickupLatLng.lng()});let msg="";
+    if(d>35)msg="A travel fairness fee may apply based on driver distance to pickup.";
+    else if(d>15)msg="A small travel fairness fee may apply based on driver distance to pickup.";
+    document.getElementById("fairness-note").innerHTML=msg||"";
+  }
+
+  function setupDynamicRecheck(){const pickup=document.getElementById("pickup"),drop=document.getElementById("dropoff");let timer;const delay=1200;
+    function check(){applyRideTypePriority();}
+    [pickup,drop].forEach(f=>{f.addEventListener("input",()=>{clearTimeout(timer);timer=setTimeout(check,delay);});f.addEventListener("change",check);});}
 
   async function calculateFare(){
     const pickup=document.getElementById("pickup").value.trim(),dropoff=document.getElementById("dropoff").value.trim();
     if(!pickup||!dropoff){alert("Please enter both pickup and drop-off.");return;}
-    const stops=[];for(const id of(window.stopInputs||[])){const v=document.getElementById(id)?.value.trim();if(v)stops.push({location:v,stopover:true});}
-    const route=await new Promise((res,rej)=>directionsService.route({origin:pickup,destination:dropoff,waypoints:stops,travelMode:"DRIVING"},(r,s)=>s==="OK"?res(r):rej(s)));
+    const route=await new Promise((res,rej)=>directionsService.route({origin:pickup,destination:dropoff,travelMode:"DRIVING"},(r,s)=>s==="OK"?res(r):rej(s)));
     directionsRenderer.setDirections(route);
     const legs=route.routes[0].legs,miles=legs.reduce((m,l)=>m+(l.distance?.value||0),0)/1609.34,duration=legs.reduce((t,l)=>t+(l.duration?.value||0),0)/60;
     await applyRideTypePriority();await getDriverLocation();
@@ -235,19 +229,17 @@
     let eta="—";if(pickupLatLng){const mins=Math.max(2,Math.min(60,Math.ceil((distMi(ref,{lat:pickupLatLng.lat(),lng:pickupLatLng.lng()})/30)*60)));eta=`${mins} min`;}
     const tripVal=document.getElementById("tripType").value;const base=(tripVal==="15_airport")?15:parseFloat(tripVal);
     const tier2=Math.max(0,Math.min(10,miles-10))*1.25,tier3=Math.max(0,miles-20)*1.00,milesSub=tier2+tier3;
-    const total=base+milesSub;
+    const total=(base+milesSub).toFixed(2);
     const result=document.getElementById("result");
-    result.innerHTML=`<div class="total">$${total.toFixed(2)}</div>
+    result.innerHTML=`<div class="total">$${total}</div>
       <p><strong>Base:</strong> $${base.toFixed(2)}</p>
-      <p><strong>Mileage:</strong> $${milesSub.toFixed(2)}</p>
+      <p><strong> Mileage:</strong> $${milesSub.toFixed(2)}</p>
       <p>📏 ${miles.toFixed(1)} mi ⏱️ ${Math.round(duration)} min ${mode==="now"?`🚗 ETA ${eta}`:""}</p>
-      <p style="text-align:center;margin-top:15px;">
-        <button class="btn primary" id="textRedBtn">📲 Text RED with Trip Details</button>
-      </p>`;
+      <p style="text-align:center;margin-top:15px;"><button class="btn primary" id="textRedBtn">📲 Text RED with Trip Details</button></p>`;
     result.style.display="block";
     document.getElementById("textRedBtn").onclick=()=>{
       const name=prompt("Enter your name:");const sms=`Hey Big Red — this is ${name||"a rider"}.
-From: ${pickup} To: ${dropoff}. Est. flat rate: $${total.toFixed(2)}.`;
+From: ${pickup} To: ${dropoff}. Est. flat rate: $${total}.`;
       window.location.href=`sms:+14053784024?&body=${encodeURIComponent(sms)}`;
     };
   }
