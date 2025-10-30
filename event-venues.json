@@ -4,43 +4,40 @@
       "name": "Paycom Center",
       "lat": 35.463990,
       "lng": -97.515530,
-      "radius_mi": 1.5
+      "radius_mi": 1.5,
+      "active": true
     },
-    ]
     {
       "name": "OU Memorial Stadium (Gaylord Family)",
       "lat": 35.205910,
       "lng": -97.442520,
-      "radius_mi": 4.0
+      "radius_mi": 4.0,
+      "active": false
     },
     {
       "name": "Lloyd Noble Center",
       "lat": 35.195300,
       "lng": -97.447700,
-      "radius_mi": 2.0
+      "radius_mi": 2.0,
+      "active": false
     },
     {
       "name": "Riverwind Casino",
       "lat": 35.178370,
       "lng": -97.493150,
-      "radius_mi": 1.5
+      "radius_mi": 1.5,
+      "active": false
     },
     {
       "name": "Newcastle Casino",
       "lat": 35.255600,
       "lng": -97.600700,
-      "radius_mi": 1.5
+      "radius_mi": 1.5,
+      "active": false
     }
   ],
   "keywords": [
     "paycom center",
-    "thunder",]
-    "ou game",
-    "sooners",
-    "gaylord memorial",
-    "ou memorial stadium",
-    "lloyd noble",
-    "riverwind",
-    "newcastle casino"
+    "thunder"
   ]
 }
