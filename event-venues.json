@@ -5,8 +5,13 @@
       "lat": 35.463990,
       "lng": -97.515530,
       "radius_mi": 1.5,
-      "active": true
+      "active": true,
+      "activeDate": "2025-10-30",
+      "gameTime": "19:00",
+      "preMinutes": 60,
+      "postMinutes": 120
     },
+  ],
     {
       "name": "OU Memorial Stadium (Gaylord Family)",
       "lat": 35.205910,
@@ -37,14 +42,7 @@
     }
   ],
   "keywords": [
-    { "value": "paycom center", "active": true },
-    { "value": "thunder", "active": true },
-    { "value": "ou game", "active": false },
-    { "value": "sooners", "active": false },
-    { "value": "gaylord memorial", "active": false },
-    { "value": "ou memorial stadium", "active": false },
-    { "value": "lloyd noble", "active": false },
-    { "value": "riverwind", "active": false },
-    { "value": "newcastle casino", "active": false }
+    "paycom center",
+    "thunder"
   ]
 }
