@@ -1,11 +1,12 @@
 {
-  "venues": []
+  "venues": [
     {
       "name": "Paycom Center",
       "lat": 35.463990,
       "lng": -97.515530,
       "radius_mi": 1.5
     },
+    ]
     {
       "name": "OU Memorial Stadium (Gaylord Family)",
       "lat": 35.205910,
@@ -31,9 +32,9 @@
       "radius_mi": 1.5
     }
   ],
-  "keywords": []
+  "keywords": [
     "paycom center",
-    "thunder",
+    "thunder",]
     "ou game",
     "sooners",
     "gaylord memorial",
