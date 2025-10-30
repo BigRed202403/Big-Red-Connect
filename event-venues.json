@@ -37,7 +37,14 @@
     }
   ],
   "keywords": [
-    "paycom center",
-    "thunder"
+    { "value": "paycom center", "active": true },
+    { "value": "thunder", "active": true },
+    { "value": "ou game", "active": false },
+    { "value": "sooners", "active": false },
+    { "value": "gaylord memorial", "active": false },
+    { "value": "ou memorial stadium", "active": false },
+    { "value": "lloyd noble", "active": false },
+    { "value": "riverwind", "active": false },
+    { "value": "newcastle casino", "active": false }
   ]
 }
