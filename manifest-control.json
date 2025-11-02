@@ -1,6 +1,6 @@
 {
-  "name": "Big Red Connect Control",
-  "short_name": "BigRed Control",
+  "name": "Big Red Connect Status Control",
+  "short_name": "Big Red Status Control",
   "start_url": "control.html",
   "display": "standalone",
   "background_color": "#000000",
