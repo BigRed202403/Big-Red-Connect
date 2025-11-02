@@ -1,6 +1,7 @@
 // ===============================
-// Big Red Connect — status.js (Cloudflare Worker Live Version)
-// Fetches live status directly from Worker (no GitHub caching)
+// Big Red Connect — status.js (Synced Worker Version)
+// Fetches live status directly from Cloudflare Worker
+// and syncs across all open pages (Live, Fare Calculator, Control, etc.)
 // ===============================
 (function () {
   const TZ = "America/Chicago";
@@ -50,15 +51,24 @@
     const { status, iso } = await readStatus();
     const pill = document.getElementById("status-pill");
     if (!pill) return;
+
+    // update pill visuals
     pill.classList.remove("online", "away", "offline", "status--loading");
     const { text, cls } = renderPillContent(status, iso);
     pill.textContent = text;
     pill.classList.add(cls);
+
+    // store + broadcast so other pages react instantly
+    localStorage.setItem("bigred_status", status);
+    const event = new CustomEvent("statusUpdated", { detail: status });
+    document.dispatchEvent(event);
   }
 
-  // Run now + auto-refresh every 30 s
+  // Initial run + periodic refresh
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", renderPill);
-  } else renderPill();
+  } else {
+    renderPill();
+  }
   setInterval(renderPill, 30000);
 })();
