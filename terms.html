@@ -2,47 +2,117 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Big Red Connect – Terms of Service</title>
+  <meta name="theme-color" content="#000000" />
+  <link rel="apple-touch-icon" href="icon.PNG">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon.png">
+
   <style>
     body {
-      font-family: Arial, sans-serif;
-      margin: 20px auto;
+      margin: 0;
       padding: 20px;
-      max-width: 800px;
-      background-color: #fefefe;
-      color: #333;
+      background-color: #000;
+      color: #fff;
+      font-family: "Segoe UI", Arial, sans-serif;
+      line-height: 1.7;
+      max-width: 900px;
+      margin: 0 auto;
     }
+
+    header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    header img {
+      max-width: 260px;
+      height: auto;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
     h1 {
-      color: #b30000;
+      color: #ff3333;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
     }
+
     h2 {
-      color: #990000;
-      margin-top: 30px;
+      color: #ff3333;
+      border-bottom: 1px solid #222;
+      padding-bottom: 4px;
+      margin-top: 35px;
     }
+
+    p, li {
+      color: #ddd;
+    }
+
     ul {
-      line-height: 1.6;
+      margin-left: 25px;
     }
+
+    a {
+      color: #ff5555;
+    }
+
+    a:hover {
+      color: #ff7777;
+    }
+
     .highlight {
+      color: #ff3333;
       font-weight: bold;
-      color: #990000;
     }
-    .button {
+
+    .center {
+      text-align: center;
+      margin: 20px 0;
+    }
+
+    .button, .home-btn {
       display: inline-block;
-      padding: 10px 15px;
-      background-color: #b30000;
-      color: white;
+      background-color: #ff3333;
+      color: #fff;
       text-decoration: none;
-      border-radius: 5px;
-      margin-top: 15px;
+      padding: 10px 18px;
+      border-radius: 6px;
+      margin-top: 10px;
+      transition: all 0.2s ease-in-out;
+      font-weight: 600;
     }
-    .button:hover {
-      background-color: #800000;
+
+    .button:hover, .home-btn:hover {
+      background-color: #cc0000;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 50px;
+      font-size: 0.9em;
+      color: #999;
+    }
+
+    hr {
+      border: none;
+      border-top: 1px solid #222;
+      margin: 40px 0;
     }
   </style>
 </head>
+
 <body>
-  <h1>Big Red Connect – Terms of Service</h1>
+  <header>
+    <h1>Big Red Connect – Terms of Service</h1>
+    <a href="index.html" title="Return to Home">
+      <img src="official_logo_Nov.png" alt="Big Red Connect Logo" />
+    </a>
+    <div class="center">
+      <a href="index.html" class="home-btn">🏠 Home</a>
+    </div>
+  </header>
 
   <p><strong>By booking or accepting a connection with Big Red Connect, you acknowledge and agree to the following terms and conditions.</strong></p>
 
@@ -86,22 +156,22 @@
 
   <h2>📝 Group & Event Bookings</h2>
   <p>If you are booking for a group, event, or prefer to sign a written agreement, please complete the form below:</p>
-  <a class="button" href="https://docs.google.com/forms/d/e/1FAIpQLSe9qLWuv1fF8PLVs8QCVJUNr9o-YlytixhDi1Rcz5St5e6hlw/viewform?usp=dialog" target="_blank">
-    Complete Rider Agreement Form
-  </a>
+
+  <div class="center">
+    <a class="button" href="https://docs.google.com/forms/d/e/1FAIpQLSe9qLWuv1fF8PLVs8QCVJUNr9o-YlytixhDi1Rcz5St5e6hlw/viewform?usp=dialog" target="_blank">
+      Complete Rider Agreement Form
+    </a>
+  </div>
 
   <p class="highlight" style="margin-top: 30px;">
     By accepting a ride with Big Red Connect, you agree to these terms. If you do not agree, please refrain from using the service.
   </p>
 
-  <p style="margin-top: 40px; font-size: 0.9em; color: #555;">
-    This page is publicly available for your convenience. Please reach out via text at <strong>405-378-4024</strong> with any questions before your ride.
-  </p>
-
-  <div style="text-align: center; margin-top: 40px;">
-    <a href="index.html" style="padding: 10px 20px; background-color: #b30000; color: white; text-decoration: none; border-radius: 5px;">
-      ← Return to Main Page
-    </a>
-  </div>
+  <footer>
+    <p>This page is publicly available for your convenience.<br>
+      Text <strong>405-378-4024</strong> with any questions before your ride.
+    </p>
+    <a href="index.html" class="button">← Return to Main Page</a>
+  </footer>
 </body>
 </html>
