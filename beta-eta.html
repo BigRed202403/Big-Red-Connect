@@ -3,150 +3,213 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Big Red Connect — Live ETA</title>
+  <title>Big Red Connect — ETA to You</title>
 
-  <!-- No cache -->
+  <!-- ✅ PWA + Icon setup -->
+  <link rel="apple-touch-icon" href="icon.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#000000">
+  <meta name="apple-mobile-web-app-title" content="Big Red ETA">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+  <!-- Prevent caching -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
 
-  <!-- Icons & Theme -->
-  <link rel="apple-touch-icon" href="icon.PNG">
-  <link rel="icon" type="image/png" sizes="192x192" href="icon.png">
-  <meta name="theme-color" content="#000000">
   <link rel="stylesheet" href="style.css" />
 
-  <!-- Google Maps -->
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=geometry,places&callback=initMap" async defer></script>
-
   <style>
-    body { background:#000; color:#fff; font-family: 'Roboto', sans-serif; margin:0; padding:0; text-align:center; }
-    #map { height:300px; margin:15px auto; border-radius:10px; width:90%; }
-    #eta { font-size:1.4em; margin-top:10px; }
-    #last-updated { font-size:0.9em; color:#999; margin-top:6px; transition: color 0.4s ease; }
-    #status-indicator { margin-top:10px; }
-    .fresh { color:#00e676; }     /* green for <60 sec */
-    .delayed { color:#ffeb3b; }   /* yellow for 1–2 min */
-    .stale { color:#ff5252; }     /* red for >2 min */
-    .btn { display:inline-block; padding:10px 16px; margin-top:10px; border-radius:6px; background:#c62828; color:#fff; text-decoration:none; font-weight:bold; }
+    body { background:#000; color:#fff; font-family:'Roboto',sans-serif; margin:0; padding:0; text-align:center; }
+    .wrap { max-width:720px; margin:auto; padding:10px 14px; }
+    #map { height:320px; border-radius:10px; border:2px solid #c40000; margin:14px 0; }
+    .panel { background:#111; border:1px solid #333; border-radius:10px; padding:12px 14px; margin-top:10px; }
+    .cta-row { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin:8px 0 16px; }
+    .muted { color:#aaa; font-size:.9em; }
+    .hidden { display:none!important; }
+    .field-row { display:flex; gap:8px; align-items:center; }
+    .field-row input { flex:1; padding:8px; border-radius:6px; border:none; font-size:1em; }
+    .eta { font-weight:600; }
+    .helper { color:#bbb; font-size:.9em; margin-top:4px }
+
+    /* Live indicator */
+    #last-updated { font-size:.9em; margin-top:6px; transition:color .4s ease, opacity .6s ease; }
+    .fresh { color:#00e676; animation:pulse 2s infinite; }
+    .delayed { color:#ffeb3b; }
+    .stale { color:#ff5252; }
+    @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.4;} }
   </style>
 </head>
 
 <body>
-  <img src="official_logo_Nov.png" alt="Big Red Connect Logo" style="width:200px;margin-top:15px;">
-  <h1>Live ETA Tracker</h1>
-  <p>See how far Big Red is from your location.</p>
+  <div class="logo-header">
+    <img src="official_logo.jpeg" alt="Big Red Connect Logo" />
+  </div>
 
-  <div id="map"></div>
-  <div id="eta">Calculating ETA...</div>
-  <p id="last-updated">Last updated: —</p>
-  <div id="status-indicator"></div>
+  <div class="wrap">
+    <h1>How far is Big Red from you?</h1>
+    <p class="tagline">Quickly check ETA from my live position to yours.</p>
 
-  <a href="fare-calculator.html" class="btn">💲 Open Fare Calculator</a>
+    <div id="status-pill" class="status status--loading">Checking status…</div>
 
+    <div class="panel">
+      <div id="gps-hint" class="helper">Allow GPS for faster results, or enter your location manually.</div>
+      <div class="cta-row">
+        <button id="btnUseMyLoc" class="btn primary" type="button">📍 Check ETA to Me</button>
+        <button id="btnEnterAddress" class="btn secondary" type="button">⌨️ Enter Address</button>
+      </div>
+      <div id="manualRow" class="field-row hidden">
+        <input id="manualAddr" type="text" placeholder="Enter your current location/address" />
+        <button id="btnUseManual" class="btn primary" type="button">✅ Use This</button>
+      </div>
+    </div>
+
+    <div id="map"></div>
+
+    <div id="resultPanel" class="panel hidden">
+      <div id="etaLine" class="eta"></div>
+      <div id="distLine"></div>
+      <div id="whenLine" class="muted"></div>
+      <div id="last-updated" class="muted">Last updated: —</div>
+
+      <div class="cta-row" style="margin-top:12px;">
+        <a id="gmLink" class="btn secondary" href="#" target="_blank">🗺️ Open in Google Maps</a>
+        <a href="fare-calculator.html" class="btn primary">💲 Fare Calculator</a>
+        <a id="textRed" class="btn secondary" href="sms:+14053784024">📲 Text RED</a>
+      </div>
+      <div class="muted">No surprises. Just solid local moves.</div>
+    </div>
+
+    <p class="muted">
+      • Shows ETA only when Big Red is <strong>🟢 Online</strong>.<br>
+      • Refreshes automatically every 30 seconds.
+    </p>
+
+    <footer style="margin-top:20px;">
+      <p>&copy; 2025 Big Red Connect — <a href="index.html">Return Home</a></p>
+    </footer>
+  </div>
+
+  <script src="status.js"></script>
   <script>
-    const WORKER_URL = "https://update-location.bigredtransportation.workers.dev";
-    let map, directionsService, directionsRenderer;
-    let driverMarker, userMarker;
-    let driverPos = null;
+    const LOCATION_READER = "https://update-location.bigredtransportation.workers.dev";
+    const STALE_MIN = 30;
+    const HQ = { lat: 35.3207, lng: -97.4929 };
+    let map, geocoder, directionsService, directionsRenderer;
+    let driverPos = null, riderPos = null;
+    let currentStatus = (localStorage.getItem("bigred_status") || "offline").toLowerCase();
 
-    async function initMap() {
-      map = new google.maps.Map(document.getElementById("map"), {
-        center: { lat: 35.4676, lng: -97.5164 },
-        zoom: 11,
-        styles: [{ elementType: "geometry", stylers: [{ color: "#1d2c4d" }] }]
-      });
+    const el = id => document.getElementById(id);
 
+    window.initEtaBeta = async function(){
+      geocoder = new google.maps.Geocoder();
       directionsService = new google.maps.DirectionsService();
-      directionsRenderer = new google.maps.DirectionsRenderer({ map, suppressMarkers: true });
+      directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers:true });
+      map = new google.maps.Map(el("map"), { center:{lat:35.4676,lng:-97.5164}, zoom:11 });
+      directionsRenderer.setMap(map);
+
+      el("btnUseMyLoc").onclick = handleUseMyLocation;
+      el("btnEnterAddress").onclick = ()=>el("manualRow").classList.remove("hidden");
+      el("btnUseManual").onclick = handleManualUse;
 
       await getDriverLocation();
-      getUserLocation();
-    }
+    };
 
-    async function getDriverLocation() {
+    async function getDriverLocation(){
       try {
-        const res = await fetch(WORKER_URL + "?nocache=" + Date.now());
-        const data = await res.json();
-        if (data.latitude && data.longitude) {
-          driverPos = { lat: data.latitude, lng: data.longitude };
-          updateLastUpdated(data.timestamp);
-        }
-      } catch (err) {
-        console.warn("⚠️ Could not fetch driver location:", err);
-      }
+        const res = await fetch(LOCATION_READER + "?nocache=" + Date.now());
+        const j = await res.json();
+        const lat = parseFloat(j.latitude), lng = parseFloat(j.longitude);
+        const ts = j.timestamp ? new Date(j.timestamp) : null;
+        const ageMin = ts ? (Date.now()-ts.getTime())/60000 : 999;
+        driverPos = (!isNaN(lat)&&!isNaN(lng)&&ageMin<=STALE_MIN)?{lat,lng}:HQ;
+        if(j.timestamp) updateLastUpdated(j.timestamp);
+      } catch { driverPos = HQ; }
     }
 
-    function getUserLocation() {
-      if (!navigator.geolocation) {
-        alert("Location not supported on this device.");
-        return;
-      }
-
-      navigator.geolocation.getCurrentPosition(async (pos) => {
-        const userPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-        showMarkersAndRoute(userPos);
-      }, (err) => {
-        alert("Could not get your location. Please allow access or enter manually.");
-      });
-    }
-
-    async function showMarkersAndRoute(userPos) {
-      if (!driverPos) return;
-
-      if (driverMarker) driverMarker.setMap(null);
-      if (userMarker) userMarker.setMap(null);
-
-      driverMarker = new google.maps.Marker({
-        position: driverPos,
-        map,
-        label: "🚗",
-        title: "Big Red"
-      });
-
-      userMarker = new google.maps.Marker({
-        position: userPos,
-        map,
-        label: "📍",
-        title: "You"
-      });
-
-      const route = await directionsService.route({
-        origin: driverPos,
-        destination: userPos,
-        travelMode: "DRIVING"
-      });
-
-      directionsRenderer.setDirections(route);
-      const leg = route.routes[0].legs[0];
-      const etaText = leg.duration.text;
-
-      document.getElementById("eta").innerHTML = `🚘 ETA: <strong>${etaText}</strong>`;
-    }
-
-    // 🕒 Update "Last Updated" text
-    function updateLastUpdated(timestamp) {
-      const elem = document.getElementById("last-updated");
-      if (!elem) return;
-      const now = new Date();
-      const ts = new Date(timestamp);
-      const diff = Math.round((now - ts) / 1000);
-
-      let msg = "";
-      let className = "";
-      if (diff < 60) { msg = `${diff} sec ago`; className = "fresh"; }
-      else if (diff < 120) { msg = `${Math.floor(diff/60)} min ago`; className = "delayed"; }
-      else { msg = `${Math.floor(diff/60)} min ago`; className = "stale"; }
-
-      elem.textContent = `Last updated: ${msg}`;
-      elem.className = className;
-    }
-
-    // Refresh ETA & timestamp every 30 s
-    setInterval(async () => {
+    async function handleUseMyLocation(){
       await getDriverLocation();
-      if (driverPos) getUserLocation();
-    }, 30000);
+      if(currentStatus!=="online") return showOfflinePanel();
+      if(!navigator.geolocation) return alert("Location not supported.");
+      navigator.geolocation.getCurrentPosition(async(pos)=>{
+        riderPos=new google.maps.LatLng(pos.coords.latitude,pos.coords.longitude);
+        await drawRoute();
+      },()=>el("manualRow").classList.remove("hidden"));
+    }
+
+    async function handleManualUse(){
+      await getDriverLocation();
+      if(currentStatus!=="online") return showOfflinePanel();
+      const addr=el("manualAddr").value.trim(); if(!addr) return alert("Enter your address.");
+      geocoder.geocode({address:addr},async(res,status)=>{
+        if(status==="OK"&&res[0]?.geometry?.location){riderPos=res[0].geometry.location;await drawRoute(addr);}
+        else alert("Could not find that address.");
+      });
+    }
+
+    async function drawRoute(addrStr=""){
+      if(!driverPos||!riderPos)return;
+      directionsRenderer.set("directions",null);
+      if(window.driverMarker)window.driverMarker.setMap(null);
+      if(window.riderMarker)window.riderMarker.setMap(null);
+      window.driverMarker=new google.maps.Marker({position:driverPos,map,label:"🚗"});
+      window.riderMarker=new google.maps.Marker({position:riderPos,map,label:"📍"});
+
+      const route=await new Promise((res,rej)=>directionsService.route({
+        origin:driverPos,destination:riderPos,travelMode:"DRIVING"
+      },(r,s)=>s==="OK"?res(r):rej(s)));
+      directionsRenderer.setDirections(route);
+      const leg=route.routes[0].legs[0];
+      const miles=(leg.distance.value/1609.34).toFixed(1);
+      const mins=Math.round(leg.duration.value/60);
+      el("etaLine").textContent=`ETA ≈ ${mins} min`;
+      el("distLine").textContent=`Distance ≈ ${miles} mi`;
+      el("whenLine").textContent=`Calculated at ${new Date().toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})} CT`;
+      el("gmLink").href=`https://www.google.com/maps/dir/?api=1&origin=${driverPos.lat},${driverPos.lng}&destination=${encodeURIComponent(addrStr||leg.end_address)}`;
+      el("textRed").href=`sms:+14053784024?&body=${encodeURIComponent("Hey Big Red — quick ETA check: ETA ~ "+mins+" min ("+miles+" mi). My spot: "+(addrStr||leg.end_address||"Pinned on map")+"." )}`;
+      el("resultPanel").classList.remove("hidden");
+      const b=new google.maps.LatLngBounds();b.extend(driverPos);b.extend(riderPos);map.fitBounds(b);
+    }
+
+    function showOfflinePanel(){
+      directionsRenderer.set("directions",null);
+      if(window.driverMarker)window.driverMarker.setMap(null);
+      if(window.riderMarker)window.riderMarker.setMap(null);
+      el("resultPanel").classList.remove("hidden");
+      el("etaLine").textContent="I’m not currently online.";
+      el("distLine").textContent="Tap “Text RED” to plan your connection.";
+      el("whenLine").textContent="";
+      el("gmLink").href="#";
+    }
+
+    function updateLastUpdated(ts){
+      const e=el("last-updated"); if(!e)return;
+      const now=new Date(); const diff=Math.round((now-new Date(ts))/1000);
+      let msg,cls;
+      if(diff<60){msg=`${diff}s ago`;cls="fresh";}
+      else if(diff<120){msg=`${Math.floor(diff/60)} min ago`;cls="delayed";}
+      else{msg=`${Math.floor(diff/60)} min ago`;cls="stale";}
+      e.textContent=`Last updated: ${msg}`; e.className=cls;
+    }
+
+    // 🔁 Auto-refresh
+    setInterval(async()=>{
+      await getDriverLocation();
+      if(driverPos&&riderPos)drawRoute();
+    },30000);
+
+    // ✅ Register Service Worker
+    if('serviceWorker' in navigator){
+      navigator.serviceWorker.register('service-worker.js')
+        .then(()=>console.log("✅ Service worker registered"))
+        .catch(err=>console.warn("SW fail:",err));
+    }
+  </script>
+
+  <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places,geometry&callback=initEtaBeta">
   </script>
 </body>
 </html>
