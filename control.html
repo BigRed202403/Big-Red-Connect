@@ -5,19 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Big Red Connect — Status Control</title>
 
-    <!-- 📱 PWA / Icons -->
+  <!-- 📱 Shared PWA Setup -->
   <link rel="apple-touch-icon" href="icon.PNG">
   <link rel="icon" type="image/png" sizes="192x192" href="icon.png">
   <link rel="shortcut icon" href="icon.PNG">
   <link rel="manifest" href="manifest.json">
-  <meta name="apple-mobile-web-app-title" content="Big Red Connect Control">
+  <meta name="apple-mobile-web-app-title" content="Big Red Connect">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="theme-color" content="#000000">
-  
-  <!-- Icons -->
-  <link rel="apple-touch-icon" href="icon.PNG">
-  <link rel="icon" type="image/png" sizes="192x192" href="icon.png">
   <meta name="theme-color" content="#000000">
 
   <!-- No Cache -->
@@ -27,6 +22,7 @@
 
   <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
   <div class="hero"></div>
   <img src="official_logo_Nov.png" alt="Big Red Connect Logo" class="main-logo" />
@@ -66,6 +62,7 @@
     const pill = document.getElementById("status-pill");
 
     let gpsInterval = null;
+    let wakeLock = null; // prevent iPad sleep
 
     // ---- Fetch current status ----
     async function fetchStatus() {
@@ -83,10 +80,7 @@
     // ---- Save new status ----
     async function updateStatus() {
       const newStatus = select.value;
-      const payload = {
-        status: newStatus,
-        updated: new Date().toISOString()
-      };
+      const payload = { status: newStatus, updated: new Date().toISOString() };
 
       try {
         const res = await fetch(STATUS_WORKER + "/", {
@@ -105,9 +99,13 @@
         updatePill(data.newStatus?.status || newStatus, payload.updated);
         alert("✅ Status updated successfully!");
 
-        // Handle GPS start/stop
-        if (newStatus === "online") startGPSUpdates();
-        else stopGPSUpdates();
+        if (newStatus === "online") {
+          startGPSUpdates();
+          requestWakeLock();
+        } else {
+          stopGPSUpdates();
+          releaseWakeLock();
+        }
 
       } catch (err) {
         console.error("❌ Update failed:", err);
@@ -117,11 +115,7 @@
 
     // ---- GPS Auto-Update ----
     async function sendGPS(lat, lng) {
-      const coords = {
-        latitude: lat,
-        longitude: lng,
-        timestamp: new Date().toISOString()
-      };
+      const coords = { latitude: lat, longitude: lng, timestamp: new Date().toISOString() };
       try {
         await fetch(LOCATION_WORKER, {
           method: "PUT",
@@ -129,6 +123,7 @@
           body: JSON.stringify(coords)
         });
         console.log("📡 GPS updated:", lat, lng);
+        document.title = "📡 Live • " + new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
       } catch (err) {
         console.warn("⚠️ GPS update failed:", err);
       }
@@ -140,7 +135,6 @@
         alert("GPS not supported on this device.");
         return;
       }
-
       const pushLocation = () => {
         navigator.geolocation.getCurrentPosition(
           (pos) => {
@@ -151,9 +145,8 @@
           { enableHighAccuracy: true, maximumAge: 15000, timeout: 10000 }
         );
       };
-
-      pushLocation(); // send immediately
-      gpsInterval = setInterval(pushLocation, 30000); // update every 30 s
+      pushLocation();
+      gpsInterval = setInterval(pushLocation, 30000);
       console.log("✅ GPS tracking started");
     }
 
@@ -165,16 +158,28 @@
       }
     }
 
-    // ---- Update pill display ----
+    // ---- Prevent sleep (wake lock API) ----
+    async function requestWakeLock() {
+      try {
+        if ('wakeLock' in navigator) {
+          wakeLock = await navigator.wakeLock.request('screen');
+          wakeLock.addEventListener('release', () => console.log('🔓 Screen WakeLock released'));
+          console.log('🔒 Screen WakeLock active');
+        }
+      } catch (err) {
+        console.warn('WakeLock failed:', err);
+      }
+    }
+    async function releaseWakeLock() {
+      if (wakeLock) { await wakeLock.release(); wakeLock = null; }
+    }
+
+    // ---- Update pill ----
     function updatePill(state, iso = null) {
       const now = iso ? new Date(iso) : new Date();
       const stamp = now.toLocaleString("en-US", {
-        month: "short",
-        day: "numeric",
-        hour: "numeric",
-        minute: "2-digit",
-        timeZone: "America/Chicago",
-        timeZoneName: "short"
+        month: "short", day: "numeric", hour: "numeric", minute: "2-digit",
+        timeZone: "America/Chicago", timeZoneName: "short"
       });
 
       pill.classList.remove("online","away","offline","status--loading");
@@ -190,8 +195,18 @@
       }
     }
 
+    // Register events
     saveBtn.onclick = updateStatus;
     fetchStatus();
+
+    // 🧱 Register service worker (shared across pages)
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("sw.js")
+          .then(() => console.log("✅ Service worker registered"))
+          .catch(err => console.warn("⚠️ Service worker failed:", err));
+      });
+    }
   </script>
 </body>
 </html>
