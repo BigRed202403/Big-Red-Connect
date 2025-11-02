@@ -3,7 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Big Red Connect — Live Control</title>
+  <title>Big Red Connect — Status Control</title>
+
+  <!-- 📱 Shared PWA Setup -->
+  <link rel="apple-touch-icon" href="icon.PNG">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon.png">
+  <link rel="shortcut icon" href="icon.PNG">
+  <link rel="manifest" href="manifest.json">
+  <meta name="apple-mobile-web-app-title" content="Big Red Connect">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="theme-color" content="#000000">
 
   <!-- No Cache -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
@@ -12,9 +22,10 @@
 
   <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
   <div class="hero"></div>
-  <img src="official_logo.jpeg" alt="Big Red Connect Logo" class="main-logo" />
+  <img src="official_logo_Nov.png" alt="Big Red Connect Logo" class="main-logo" />
   <p class="tagline">Veteran Owned • Affordable Flat Rates • Trusted Local Connections</p>
 
   <div id="status-pill" class="status status--loading">Checking status…</div>
@@ -28,7 +39,7 @@
     </select>
     <button id="updateStatusBtn" class="btn primary" style="margin-top:12px;">💾 Save Status</button>
     <p style="font-size:0.9em;color:#aaa;margin-top:8px;">
-      Updates your live visibility across all Big Red Connect pages.
+      Updates your live status and location instantly across all devices.
     </p>
   </section>
 
@@ -42,17 +53,21 @@
   </footer>
 
   <script>
-    const WORKER_URL = "https://bigred-status-updater.bigredtransportation.workers.dev";
+    const STATUS_WORKER = "https://bigred-status-updater.bigredtransportation.workers.dev";
+    const LOCATION_WORKER = "https://update-location.bigredtransportation.workers.dev/";
     const AUTH_SECRET = "BigRedPrivateKey2025";
 
     const select = document.getElementById("statusSelect");
     const saveBtn = document.getElementById("updateStatusBtn");
     const pill = document.getElementById("status-pill");
 
+    let gpsInterval = null;
+    let wakeLock = null; // prevent iPad sleep
+
     // ---- Fetch current status ----
     async function fetchStatus() {
       try {
-        const res = await fetch(WORKER_URL + "/status?nocache=" + Date.now(), { cache: "no-store" });
+        const res = await fetch(STATUS_WORKER + "/status?nocache=" + Date.now(), { cache: "no-store" });
         const j = await res.json();
         select.value = j.status;
         updatePill(j.status, j.updated);
@@ -65,13 +80,10 @@
     // ---- Save new status ----
     async function updateStatus() {
       const newStatus = select.value;
-      const payload = {
-        status: newStatus,
-        updated: new Date().toISOString()
-      };
+      const payload = { status: newStatus, updated: new Date().toISOString() };
 
       try {
-        const res = await fetch(WORKER_URL + "/", {
+        const res = await fetch(STATUS_WORKER + "/", {
           method: "PUT",
           mode: "cors",
           headers: {
@@ -86,22 +98,88 @@
         const data = await res.json();
         updatePill(data.newStatus?.status || newStatus, payload.updated);
         alert("✅ Status updated successfully!");
+
+        if (newStatus === "online") {
+          startGPSUpdates();
+          requestWakeLock();
+        } else {
+          stopGPSUpdates();
+          releaseWakeLock();
+        }
+
       } catch (err) {
         console.error("❌ Update failed:", err);
         alert("⚠️ Network error: unable to update status. Try again shortly.");
       }
     }
 
-    // ---- Update pill display ----
+    // ---- GPS Auto-Update ----
+    async function sendGPS(lat, lng) {
+      const coords = { latitude: lat, longitude: lng, timestamp: new Date().toISOString() };
+      try {
+        await fetch(LOCATION_WORKER, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(coords)
+        });
+        console.log("📡 GPS updated:", lat, lng);
+        document.title = "📡 Live • " + new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+      } catch (err) {
+        console.warn("⚠️ GPS update failed:", err);
+      }
+    }
+
+    function startGPSUpdates() {
+      if (gpsInterval) clearInterval(gpsInterval);
+      if (!navigator.geolocation) {
+        alert("GPS not supported on this device.");
+        return;
+      }
+      const pushLocation = () => {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const { latitude, longitude } = pos.coords;
+            sendGPS(latitude, longitude);
+          },
+          (err) => console.warn("GPS error:", err),
+          { enableHighAccuracy: true, maximumAge: 15000, timeout: 10000 }
+        );
+      };
+      pushLocation();
+      gpsInterval = setInterval(pushLocation, 30000);
+      console.log("✅ GPS tracking started");
+    }
+
+    function stopGPSUpdates() {
+      if (gpsInterval) {
+        clearInterval(gpsInterval);
+        gpsInterval = null;
+        console.log("🛑 GPS tracking stopped");
+      }
+    }
+
+    // ---- Prevent sleep (wake lock API) ----
+    async function requestWakeLock() {
+      try {
+        if ('wakeLock' in navigator) {
+          wakeLock = await navigator.wakeLock.request('screen');
+          wakeLock.addEventListener('release', () => console.log('🔓 Screen WakeLock released'));
+          console.log('🔒 Screen WakeLock active');
+        }
+      } catch (err) {
+        console.warn('WakeLock failed:', err);
+      }
+    }
+    async function releaseWakeLock() {
+      if (wakeLock) { await wakeLock.release(); wakeLock = null; }
+    }
+
+    // ---- Update pill ----
     function updatePill(state, iso = null) {
       const now = iso ? new Date(iso) : new Date();
       const stamp = now.toLocaleString("en-US", {
-        month: "short",
-        day: "numeric",
-        hour: "numeric",
-        minute: "2-digit",
-        timeZone: "America/Chicago",
-        timeZoneName: "short"
+        month: "short", day: "numeric", hour: "numeric", minute: "2-digit",
+        timeZone: "America/Chicago", timeZoneName: "short"
       });
 
       pill.classList.remove("online","away","offline","status--loading");
@@ -117,8 +195,18 @@
       }
     }
 
+    // Register events
     saveBtn.onclick = updateStatus;
     fetchStatus();
+
+    // 🧱 Register service worker (shared across pages)
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("sw.js")
+          .then(() => console.log("✅ Service worker registered"))
+          .catch(err => console.warn("⚠️ Service worker failed:", err));
+      });
+    }
   </script>
 </body>
 </html>
