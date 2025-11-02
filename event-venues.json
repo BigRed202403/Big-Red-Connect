@@ -5,7 +5,7 @@
       "lat": 35.463990,
       "lng": -97.515530,
       "radius_mi": 1.5,
-      "active": true,
+      "active": false,
       "activeDate": "2025-10-30",
       "gameTime": "19:00",
       "preMinutes": 60,
@@ -41,8 +41,9 @@
       "active": false
     }
   ],
-  "keywords": [
+  "keywords": []
     "paycom center",
     "thunder"
-  ]
+
+
 }
