@@ -73,6 +73,7 @@
   <section class="info-section">
     <!-- Map (visible when online only) -->
     <div id="map" class="hidden"></div>
+    <p id="lastUpdate" class="muted hidden">🕓 Last updated: —</p>
 
     <!-- ETA Panel -->
     <div id="etaPanel" class="panel hidden">
@@ -116,11 +117,18 @@
     let map, geocoder, directionsService, directionsRenderer;
     let driverPos = null;
     let riderPos = null;
-    let currentStatus = "offline";
+    let currentStatus = localStorage.getItem("bigred_status") || "offline";
 
     document.addEventListener("statusUpdated", (e) => {
       currentStatus = (e.detail || "offline").toLowerCase();
       updateVisibility();
+    });
+
+    window.addEventListener("storage", (e) => {
+      if (e.key === "bigred_status") {
+        currentStatus = (e.newValue || "offline").toLowerCase();
+        updateVisibility();
+      }
     });
 
     // --- Initialize Google Map ---
@@ -148,8 +156,12 @@
         const lat = parseFloat(j.latitude), lng = parseFloat(j.longitude);
         const ts = j.timestamp ? new Date(j.timestamp) : null;
         const ageMin = ts ? (Date.now()-ts.getTime())/60000 : 999;
-        if (!isNaN(lat) && !isNaN(lng) && ageMin <= STALE_MIN) driverPos = {lat,lng};
-        else driverPos = HQ;
+        if (!isNaN(lat) && !isNaN(lng) && ageMin <= STALE_MIN) {
+          driverPos = {lat,lng};
+          document.getElementById("lastUpdate").textContent =
+            `🕓 Last updated: ${ts.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})} CT`;
+          document.getElementById("lastUpdate").classList.remove("hidden");
+        } else driverPos = HQ;
       } catch { driverPos = HQ; }
     }
 
@@ -176,12 +188,9 @@
     // --- Draw Driver Marker with Pulse ---
     function drawDriverMarker(){
       if (!map || !driverPos) return;
-
-      // Clear existing
       if (window.driverMarker) window.driverMarker.setMap(null);
       if (window.pulseOverlay) window.pulseOverlay.setMap(null);
 
-      // Main 🚗 marker
       window.driverMarker = new google.maps.Marker({
         position: driverPos,
         map,
@@ -189,15 +198,12 @@
         title: "Big Red (Live)"
       });
 
-      // Pulse effect (only when online)
       if (currentStatus === "online") {
         const pulseDiv = document.createElement("div");
         pulseDiv.className = "pulse-marker";
-
         window.pulseOverlay = new google.maps.OverlayView();
         window.pulseOverlay.onAdd = function() {
-          const layer = this.getPanes().overlayLayer;
-          layer.appendChild(pulseDiv);
+          this.getPanes().overlayLayer.appendChild(pulseDiv);
         };
         window.pulseOverlay.draw = function() {
           const projection = this.getProjection();
@@ -256,6 +262,16 @@
       const leg=route.routes[0].legs[0];
       const miles=leg.distance.value/1609.34;
       const mins=Math.round(leg.duration.value/60);
+
+      // --- Save to localStorage for fare calculator ---
+      const riderData = {
+        lat: riderPos.lat ? riderPos.lat() : riderPos.lat,
+        lng: riderPos.lng ? riderPos.lng() : riderPos.lng(),
+        address: optionalAddr || leg.end_address || null,
+        timestamp: Date.now()
+      };
+      localStorage.setItem("bigred_last_rider", JSON.stringify(riderData));
+
       document.getElementById("etaLine").textContent=`ETA ≈ ${mins} min`;
       document.getElementById("distLine").textContent=`Distance ≈ ${miles.toFixed(1)} mi`;
       document.getElementById("whenLine").textContent=`Calculated at ${new Date().toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})} CT`;
@@ -279,7 +295,6 @@
     }
   </script>
 
-  <script src="status.js"></script>
   <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places,geometry&callback=initLiveMap"></script>
 </body>
 </html>
