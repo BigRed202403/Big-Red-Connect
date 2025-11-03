@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Fare Calculator (Beta) – Big Red Connect</title>
+  <title>Fare Calculator – Big Red Connect</title>
 
   <!-- 📱 PWA / Icons -->
   <link rel="apple-touch-icon" href="icon.PNG">
@@ -239,7 +239,8 @@
     await getDriverLocation();const ref=(isValidCoords(driverPos)?driverPos:HQ);
     const d=distMi(ref,{lat:pickupLatLng.lat(),lng:pickupLatLng.lng()});let msg="";if(d>35)msg="A travel fairness fee may apply.";else if(d>15)msg="A small fairness fee may apply.";document.getElementById('fairness-note').innerHTML=msg||"";}
 
-  async function calculateFare(){const pickup=document.getElementById('pickup').value.trim(),dropoff=document.getElementById('dropoff').value.trim();
+  async function calculateFare(){
+    const pickup=document.getElementById('pickup').value.trim(),dropoff=document.getElementById('dropoff').value.trim();
     if(!pickup||!dropoff){alert("Please enter both pickup and drop-off.");return;}
     const stops=[];for(const id of(window.stopInputs||[])){const v=document.getElementById(id)?.value.trim();if(v)stops.push({location:v,stopover:true});}
     const route=await new Promise((res,rej)=>directionsService.route({origin:pickup,destination:dropoff,waypoints:stops,travelMode:"DRIVING"},(r,s)=>s==="OK"?res(r):rej(s)));
@@ -262,28 +263,29 @@
       <p style="text-align:center;margin-top:15px;"><button class="btn primary" id="textRedBtn">📲 Text RED with Trip Details</button></p>
       <p style="text-align:center;color:#888;margin-top:10px;">No surprises. Just solid local moves.</p>`;
     resDiv.style.display="block";
-document.getElementById("textRedBtn").onclick = () => {
-  const name = prompt("Enter your name for Big Red:");
-  const lines = [];
-  lines.push(`Hey Big Red — this is ${name || "a rider"}.`);
-  lines.push(`Ride estimate: $${total}`);
-  lines.push(`From: ${pickup}`);
-  if (stops.length) lines.push(`Stops: ${stops.map(s => s.location).join(" → ")}`);
-  lines.push(`To: ${dropoff}`);
-  lines.push(`Distance: ${miles.toFixed(1)} mi`);
-  lines.push(`Time: ${Math.round(duration)} min`);
-  if (fair > 0) lines.push(`Includes travel fairness fee: $${fair.toFixed(2)}.`);
-  if (document.getElementById("tripType").value === "15_airport") lines.push("(Airport base applied)");
-  if (document.getElementById("tripType").value === "20") lines.push("(Special event area base applied)");
-  lines.push(`Payment: ${pay === "card" ? "Card (incl. fees)" : "Cash / Venmo / Cash App"}`);
-  
-  const routeLink = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(pickup)}&destination=${encodeURIComponent(dropoff)}`;
-  lines.push(`Route: ${routeLink}`);
-  lines.push("No surprises. Just solid local moves.");
 
-  const smsBody = encodeURIComponent(lines.join(" "));
-  window.location.href = `sms:+14053784024?&body=${smsBody}`;
-};
+    document.getElementById("textRedBtn").onclick = () => {
+      const name = prompt("Enter your name for Big Red:");
+      const lines = [];
+      lines.push(`Hey Big Red — this is ${name || "a rider"}.`);
+      lines.push(`Ride estimate: $${total}`);
+      lines.push(`From: ${pickup}`);
+      if (stops.length) lines.push(`Stops: ${stops.map(s => s.location).join(" → ")}`);
+      lines.push(`To: ${dropoff}`);
+      lines.push(`Distance: ${miles.toFixed(1)} mi`);
+      lines.push(`Time: ${Math.round(duration)} min`);
+      if (fair > 0) lines.push(`Includes travel fairness fee: $${fair.toFixed(2)}.`);
+      if (document.getElementById("tripType").value === "15_airport") lines.push("(Airport base applied)");
+      if (document.getElementById("tripType").value === "20") lines.push("(Special event area base applied)");
+      lines.push(`Payment: ${pay === "card" ? "Card (incl. fees)" : "Cash / Venmo / Cash App"}`);
+
+      const routeLink = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(pickup)}&destination=${encodeURIComponent(dropoff)}`;
+      lines.push(`Route: ${routeLink}`);
+      lines.push("No surprises. Just solid local moves.");
+
+      const smsBody = encodeURIComponent(lines.join(" "));
+      window.location.href = `sms:+14053784024?&body=${smsBody}`;
+    };
   }
   </script>
 </body>
