@@ -262,7 +262,28 @@
       <p style="text-align:center;margin-top:15px;"><button class="btn primary" id="textRedBtn">📲 Text RED with Trip Details</button></p>
       <p style="text-align:center;color:#888;margin-top:10px;">No surprises. Just solid local moves.</p>`;
     resDiv.style.display="block";
-    document.getElementById("textRedBtn").onclick=()=>{const smsBody=encodeURIComponent(`Hey Big Red — ride estimate $${total}. From ${pickup} to ${dropoff}. ${miles.toFixed(1)} mi, ${Math.round(duration)} min.`);window.location.href=`sms:+14053784024?&body=${smsBody}`;};
+document.getElementById("textRedBtn").onclick = () => {
+  const name = prompt("Enter your name for Big Red:");
+  const lines = [];
+  lines.push(`Hey Big Red — this is ${name || "a rider"}.`);
+  lines.push(`Ride estimate: $${total}`);
+  lines.push(`From: ${pickup}`);
+  if (stops.length) lines.push(`Stops: ${stops.map(s => s.location).join(" → ")}`);
+  lines.push(`To: ${dropoff}`);
+  lines.push(`Distance: ${miles.toFixed(1)} mi`);
+  lines.push(`Time: ${Math.round(duration)} min`);
+  if (fair > 0) lines.push(`Includes travel fairness fee: $${fair.toFixed(2)}.`);
+  if (document.getElementById("tripType").value === "15_airport") lines.push("(Airport base applied)");
+  if (document.getElementById("tripType").value === "20") lines.push("(Special event area base applied)");
+  lines.push(`Payment: ${pay === "card" ? "Card (incl. fees)" : "Cash / Venmo / Cash App"}`);
+  
+  const routeLink = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(pickup)}&destination=${encodeURIComponent(dropoff)}`;
+  lines.push(`Route: ${routeLink}`);
+  lines.push("No surprises. Just solid local moves.");
+
+  const smsBody = encodeURIComponent(lines.join(" "));
+  window.location.href = `sms:+14053784024?&body=${smsBody}`;
+};
   }
   </script>
 </body>
