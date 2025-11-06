@@ -212,9 +212,7 @@
     const event = new CustomEvent("statusUpdated", { detail: status });
     document.dispatchEvent(event);
 
-    if (status !== lastKnownStatus && status === "online") {
-      sendZapierWebhook(status);
-    }
+    sendZapierWebhook(status);
     lastKnownStatus = status;
   }
 
