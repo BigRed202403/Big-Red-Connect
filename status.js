@@ -65,7 +65,7 @@
 
     // 🦃 October — use Thanksgiving look all month
     if (month === 9) {
-      return base + "Big%20Red%20Live%20Thanksgiving.png";
+      return base + "Big%20Red%20Live%20Holiday%201.png";
     }
 
     // 🦃 November — default holiday, Thanksgiving week override
