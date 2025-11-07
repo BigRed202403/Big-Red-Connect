@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Big Red Connect – Quick Share</title>
+  <style>
+    body {
+      background-color: #000;
+      color: #fff;
+      font-family: "Segoe UI", Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+    header {
+      background-color: #b30000;
+      padding: 15px 10px;
+      font-size: 1.4em;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .container {
+      padding: 20px;
+    }
+    img {
+      max-width: 95%;
+      border: 3px solid #b30000;
+      border-radius: 8px;
+      margin-top: 15px;
+    }
+    textarea {
+      width: 90%;
+      height: 140px;
+      margin-top: 15px;
+      padding: 10px;
+      font-size: 1em;
+      border: 2px solid #b30000;
+      border-radius: 6px;
+      background-color: #111;
+      color: #fff;
+      resize: none;
+    }
+    .buttons {
+      margin-top: 20px;
+    }
+    button {
+      background-color: #b30000;
+      border: none;
+      color: white;
+      padding: 12px 18px;
+      margin: 8px;
+      font-size: 1em;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    button:hover {
+      background-color: #e60000;
+    }
+    footer {
+      margin-top: 40px;
+      font-size: 0.85em;
+      color: #888;
+    }
+  </style>
+</head>
+<body>
+  <header>Big Red Connect Quick Share</header>
+  <div class="container">
+    <h2 id="statusText">Loading current status...</h2>
+    <img id="statusImage" src="" alt="Big Red Connect image" />
+    <textarea id="captionBox" readonly>Loading caption...</textarea>
+    <div class="buttons">
+      <button id="shareBtn">Share on Facebook</button>
+      <button id="copyBtn">Copy Caption</button>
+    </div>
+  </div>
+  <footer>Veteran Owned • Affordable • Local • Trusted</footer>
+
+  <script>
+    const WORKER_URL = "https://bigredtransportation.workers.dev/status";
+
+    async function loadStatus() {
+      try {
+        const res = await fetch(WORKER_URL + "?t=" + Date.now(), { cache: "no-store" });
+        const data = await res.json();
+
+        const image = data.image || data.imageURL || "";
+        const message = data.message || data.caption || "Big Red Connect is LIVE — plan ahead this holiday season!";
+        const status = data.status ? data.status.toUpperCase() : "UNKNOWN";
+
+        document.getElementById("statusText").innerText = `Current Status: ${status}`;
+        document.getElementById("statusImage").src = image;
+        document.getElementById("captionBox").value = message;
+
+        document.getElementById("shareBtn").onclick = () => {
+          const fbURL = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(image)}&quote=${encodeURIComponent(message)}`;
+          window.open(fbURL, "_blank");
+        };
+
+        document.getElementById("copyBtn").onclick = () => {
+          navigator.clipboard.writeText(message);
+          alert("✅ Caption copied to clipboard!");
+        };
+      } catch (err) {
+        console.error(err);
+        document.getElementById("statusText").innerText = "Error loading status.";
+      }
+    }
+
+    loadStatus();
+  </script>
+</body>
+</html>
