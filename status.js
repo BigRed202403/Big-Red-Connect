@@ -4,7 +4,7 @@
 (function () {
   const TZ = "America/Chicago";
   const CLOUD_URL = "https://bigred-status-updater.bigredtransportation.workers.dev/status";
-  const WEBHOOK_URL = "https://hooks.zapier.com/hooks/catch/25268921/usciyze//";
+  const WEBHOOK_URL = "https://hook.us2.make.com/2nnff4bvea1pid0h4k35k4ww1xajguin";
 
   let lastKnownStatus = localStorage.getItem("bigred_status") || "offline";
   let lastWebhookTime = parseInt(localStorage.getItem("last_webhook_time") || "0", 10);
