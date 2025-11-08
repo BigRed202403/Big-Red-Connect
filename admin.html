@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Big Red Connect — Admin Console</title>
+<style>
+  body {
+    background:#000;
+    color:#fff;
+    font-family:Arial, sans-serif;
+    margin:0; padding:0;
+    text-align:center;
+  }
+  header {
+    background:#111;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:10px 20px;
+    border-bottom:2px solid #b30000;
+  }
+  .internal-tag {color:#aaa; font-size:0.9em;}
+  .refresh-btn {
+    background:#b30000; color:#fff; border:none;
+    padding:8px 14px; border-radius:6px; cursor:pointer; font-weight:bold;
+  }
+  .refresh-btn:hover { background:#cc0000; }
+  h1 {margin:20px 0 10px; color:#b30000;}
+  .status {margin:10px auto; padding:10px; border-radius:6px; display:inline-block;}
+  .online {background:#064; color:#fff;}
+  .away {background:#665500; color:#fff;}
+  .offline {background:#400; color:#fff;}
+  select, button {
+    padding:10px; border-radius:6px; border:none; margin:5px;
+    font-weight:bold;
+  }
+  .btn-primary {background:#b30000; color:#fff;}
+  .btn-secondary {background:#000; color:#fff; border:1px solid #b30000;}
+  .img-box {max-width:90%; margin:auto; border:3px solid #b30000; border-radius:6px; padding:8px;}
+  textarea {width:90%; height:120px; background:#111; color:#fff; border:2px solid #b30000; border-radius:6px; padding:8px;}
+  footer {margin-top:25px; font-size:0.9em; color:#777;}
+  #toast {
+    position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+    background:#b30000; color:#fff; padding:8px 16px; border-radius:6px;
+    opacity:0; transition:opacity .4s;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="internal-tag">🔒 Internal Use Only</div>
+  <button class="refresh-btn" id="refreshPage">🔄 Refresh Page</button>
+</header>
+
+<h1>Big Red Connect Admin Console</h1>
+<p class="tagline">Veteran Owned • Affordable • Local • Trusted</p>
+
+<div id="status-pill" class="status status--loading">Checking status…</div>
+
+<section id="control">
+  <h2>Update Driving Status</h2>
+  <select id="statusSelect">
+    <option value="online">🟢 On the Road</option>
+    <option value="away">🟡 Limited Availability</option>
+    <option value="offline">🔴 Offline</option>
+  </select>
+  <button class="btn-primary" id="updateStatusBtn">💾 Save Status</button>
+  <p id="timestamp" style="color:#aaa;font-size:0.85em;"></p>
+</section>
+
+<hr style="margin:20px 0;border:1px solid #333;">
+
+<section id="share">
+  <h2>Quick Share Builder</h2>
+  <div class="img-box"><img id="statusImage" src="" alt="Preview" style="width:100%;border-radius:6px;"></div>
+  <textarea id="captionBox" readonly>Loading caption...</textarea><br>
+  <button class="btn-secondary" id="copyBtn">📋 Copy Caption</button>
+  <button class="btn-primary" id="shareBtn">📤 Share on Facebook</button>
+</section>
+
+<footer>© 2025 Big Red Connect — Admin Panel</footer>
+<div id="toast"></div>
+
+<script>
+const WORKER = "https://bigred-status-updater.bigredtransportation.workers.dev";
+const AUTH = "BigRedPrivateKey2025";
+const pill = document.getElementById("status-pill");
+const select = document.getElementById("statusSelect");
+const toast = document.getElementById("toast");
+
+function showToast(msg){
+  toast.textContent = msg;
+  toast.style.opacity = 1;
+  setTimeout(()=> toast.style.opacity = 0, 2000);
+}
+
+// 🔄 Refresh Page
+document.getElementById("refreshPage").onclick = () => {
+  showToast("Refreshing...");
+  setTimeout(()=> location.reload(true), 400);
+};
+
+// Fetch current status
+async function fetchStatus(){
+  try {
+    const res = await fetch(WORKER+"/status?nocache="+Date.now(), {cache:"no-store"});
+    const j = await res.json();
+    updatePill(j.status, j.updated);
+    select.value = j.status;
+    buildPreview(j.status);
+  } catch(e){
+    updatePill("offline");
+  }
+}
+
+// Update pill visuals
+function updatePill(state, iso=null){
+  pill.classList.remove("online","away","offline");
+  let stamp = "";
+  if(iso){
+    stamp = new Date(iso).toLocaleString("en-US",{timeZone:"America/Chicago"});
+  }
+  if(state==="online"){ pill.classList.add("online"); pill.textContent=`🟢 Online — as of ${stamp}`;}
+  else if(state==="away"){ pill.classList.add("away"); pill.textContent=`🟡 Limited — as of ${stamp}`;}
+  else { pill.classList.add("offline"); pill.textContent=`🔴 Offline — as of ${stamp}`;}
+  document.getElementById("timestamp").textContent = stamp;
+}
+
+// Save new status
+document.getElementById("updateStatusBtn").onclick = async ()=>{
+  const newStatus = select.value;
+  const payload = {status:newStatus, updated:new Date().toISOString()};
+  try{
+    await fetch(WORKER+"/",{
+      method:"PUT",
+      headers:{"Content-Type":"application/json","X-Auth-Token":AUTH},
+      body:JSON.stringify(payload)
+    });
+    updatePill(newStatus);
+    showToast("✅ Status updated");
+    buildPreview(newStatus);
+  }catch(e){ showToast("⚠️ Update failed"); }
+};
+
+// Build smart preview (holiday/day/night)
+function buildPreview(status){
+  const img = document.getElementById("statusImage");
+  const caption = document.getElementById("captionBox");
+  const hour = new Date().getHours();
+  const m = new Date().getMonth();
+  const isHoliday = (m===10||m===11);
+  const isDay = hour>=7 && hour<18;
+  let imgName = "Big Red Live 2.png";
+  if(isHoliday) imgName = "Big Red Live Holiday 1.png";
+  else if(!isDay) imgName = "Big Red Live Christmas.png";
+  img.src = `https://raw.githubusercontent.com/bigred202403/Big-Red-Connect/main/${encodeURIComponent(imgName)}`;
+  let base="";
+  if(status==="online"){
+    base = isHoliday? "Big Red Connect is LIVE — plan ahead this holiday season!"
+      : isDay? "Big Red Connect is LIVE — your affordable flat-rate ride connection."
+      : "Big Red Connect is LIVE — from last call to your front door, ride local and ride safe.";
+  } else if(status==="away") base="Temporarily away — back soon!";
+  else base="Currently offline. Service resumes soon.";
+  const CTA="\n\nNo surprises. Just solid local moves.\nText ‘RED’ to 405-378-4024 — your affordable flat-rate ride connection.\nVeteran Owned • Affordable • Local • Trusted.";
+  caption.value = base+CTA;
+}
+
+document.getElementById("copyBtn").onclick=()=>{
+  navigator.clipboard.writeText(document.getElementById("captionBox").value);
+  showToast("Copied!");
+};
+document.getElementById("shareBtn").onclick=()=>{
+  const c = encodeURIComponent(document.getElementById("captionBox").value);
+  window.open(`https://www.facebook.com/sharer/sharer.php?u=https://bigred202403.github.io/Big-Red-Connect/&quote=${c}`,"_blank");
+};
+
+fetchStatus();
+</script>
+</body>
+</html>
