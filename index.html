@@ -37,6 +37,11 @@
   <!-- 🚦 Dynamic Status Pill -->
   <div id="status-pill" class="status status--loading">Checking status…</div>
 
+  <!-- ✅ Refresh Button (auto-fades after 5 seconds) -->
+  <div id="refreshNotice" class="refresh-banner hidden">
+    🔄 Tap to refresh your connection status
+  </div>
+  
   <!-- 📲 Quick Actions -->
   <div class="cta-group">
     <a href="sms:14053784024" class="btn primary">📲 Text “RED”</a>
@@ -138,5 +143,48 @@
 
   <!-- 🚦 Global Status Pill -->
   <script src="status.js?v=20251026"></script>
+  <script>
+    // Fade-out refresh logic
+    const refreshNotice = document.getElementById("refreshNotice");
+  
+    function showRefreshNotice() {
+      refreshNotice.classList.remove("hidden");
+      refreshNotice.classList.add("visible");
+      setTimeout(() => {
+        refreshNotice.classList.remove("visible");
+        refreshNotice.classList.add("fade");
+        setTimeout(() => refreshNotice.classList.add("hidden"), 1000);
+      }, 5000);
+    }
+  
+    refreshNotice.addEventListener("click", () => {
+      location.reload();
+    });
+  
+    // Show after status loads (listen for event from status.js)
+    document.addEventListener("statusUpdated", () => {
+      showRefreshNotice();
+    });
+  </script>
+  
+  <style>
+    /* Refresh banner styling */
+    .refresh-banner {
+      text-align: center;
+      background-color: #111;
+      color: #fff;
+      font-size: 0.9em;
+      padding: 8px 12px;
+      margin: 10px auto;
+      border-radius: 6px;
+      border: 1px solid #b30000;
+      width: fit-content;
+      transition: opacity 1s ease-in-out;
+      cursor: pointer;
+    }
+    .refresh-banner.hidden { display: none; }
+    .refresh-banner.visible { display: block; opacity: 1; }
+    .refresh-banner.fade { opacity: 0; }
+  </style>
 </body>
 </html>
