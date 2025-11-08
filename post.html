@@ -6,31 +6,34 @@
   <title>Big Red Connect Quick Share</title>
   <style>
     body {
-      background-color: #000;
+      background: #000;
       color: #fff;
       font-family: Arial, sans-serif;
       text-align: center;
       padding: 30px;
     }
     h1 {
-      background-color: #b30000;
+      background: #b30000;
+      color: #fff;
       padding: 15px;
-      border-radius: 5px;
+      border-radius: 6px;
       margin-bottom: 20px;
+      font-weight: bold;
     }
-    #image {
+    #status-text { font-size: 18px; margin-bottom: 12px; }
+    img {
       max-width: 90%;
       border: 3px solid #b30000;
       border-radius: 8px;
-      margin-bottom: 15px;
+      margin: 10px 0 15px;
     }
     textarea {
       width: 90%;
       height: 140px;
-      border: 2px solid #b30000;
-      border-radius: 8px;
       background: #111;
       color: #fff;
+      border: 2px solid #b30000;
+      border-radius: 8px;
       padding: 10px;
       resize: none;
     }
@@ -39,68 +42,73 @@
       padding: 10px 20px;
       border: none;
       border-radius: 6px;
-      background-color: #b30000;
+      background: #b30000;
       color: white;
       font-size: 16px;
       cursor: pointer;
     }
-    button:hover { background-color: #ff0000; }
-    footer { margin-top: 20px; font-size: 14px; color: #ccc; }
+    button:hover { background: #ff0000; }
+    footer { margin-top: 20px; color: #ccc; font-size: 14px; }
   </style>
 </head>
 <body>
   <h1>BIG RED CONNECT QUICK SHARE</h1>
-  <div id="status-box">
-    <p id="status-text">Loading current status...</p>
-    <img id="image" src="" alt="Big Red Connect image" style="display:none;" />
-    <textarea id="caption" readonly>Loading caption...</textarea><br />
-    <button id="shareBtn">Share on Facebook</button>
-    <button id="copyBtn">Copy Caption</button>
-  </div>
+  <div id="status-text">Loading status…</div>
+  <img id="status-image" style="display:none;" />
+  <textarea id="caption" readonly>Loading caption…</textarea><br />
+  <button id="shareBtn">Share on Facebook</button>
+  <button id="copyBtn">Copy Caption</button>
   <footer>Veteran Owned · Affordable · Local · Trusted</footer>
 
   <script>
     const WORKER_URL = "https://bigred-status-updater.bigredtransportation.workers.dev/status";
-    const statusText = document.getElementById("status-text");
-    const image = document.getElementById("image");
-    const captionBox = document.getElementById("caption");
+    const imgEl = document.getElementById("status-image");
+    const statusEl = document.getElementById("status-text");
+    const captionEl = document.getElementById("caption");
+
+    const CTA = "\n\nNo surprises. Just solid local moves.\nText ‘RED’ to 405-378-4024 — your affordable flat-rate link-up.\nVeteran Owned · Affordable · Local · Trusted.";
 
     async function loadStatus() {
       try {
-        const res = await fetch(WORKER_URL, { cache: "no-store" });
-        const data = await res.json();
+        const r = await fetch(WORKER_URL, { cache: "no-store" });
+        const data = await r.json();
 
-        // Determine display text and fallback if missing
         const status = data.status || "offline";
-        const message = data.message || "Big Red Connect is currently unavailable.";
-        const img = data.image || "https://raw.githubusercontent.com/bigred202403/Big-Red-Connect/main/BigRedDefault.png";
+        const msg = data.message || "";
+        const img = data.image || "";
 
-        captionBox.value = message;
+        let displayMsg = "";
+        let displayImg = "";
 
-        // Smart logic — visual cue per status
         if (status === "online") {
-          statusText.innerHTML = "🟢 Big Red Connect is ONLINE";
+          statusEl.innerHTML = "🟢 Big Red Connect is ONLINE";
+          displayMsg = msg || "Big Red Connect is LIVE — plan ahead this holiday season!";
+          displayImg = img || "https://raw.githubusercontent.com/bigred202403/Big-Red-Connect/main/Big%20Red%20Live%20Holiday%201.png";
         } else if (status === "away") {
-          statusText.innerHTML = "🟡 Big Red Connect is temporarily AWAY";
+          statusEl.innerHTML = "🟡 Big Red Connect is temporarily AWAY";
+          displayMsg = msg || "Currently stepping away — check back soon for rides and updates.";
+          displayImg = img || "https://raw.githubusercontent.com/bigred202403/Big-Red-Connect/main/Rogue%20One%20Night%20Holiday%201.png";
         } else {
-          statusText.innerHTML = "🔴 Big Red Connect is OFFLINE";
+          statusEl.innerHTML = "🔴 Big Red Connect is OFFLINE";
+          displayMsg = msg || "Big Red Connect is currently unavailable — please check back later.";
+          displayImg = img || "https://raw.githubusercontent.com/bigred202403/Big-Red-Connect/main/Big%20Red%20Offline.png";
         }
 
-        image.src = img;
-        image.style.display = "block";
-      } catch (err) {
-        statusText.innerHTML = "⚠️ Error loading status.";
-        captionBox.value = "Could not load current message.";
+        captionEl.value = displayMsg + CTA;
+        imgEl.src = displayImg;
+        imgEl.style.display = "block";
+      } catch (e) {
+        statusEl.innerHTML = "⚠️ Error loading status.";
+        captionEl.value = "Could not load the latest update.";
       }
     }
 
-    // Buttons
     document.getElementById("shareBtn").onclick = () => {
-      const text = encodeURIComponent(captionBox.value);
+      const text = encodeURIComponent(captionEl.value);
       window.open(`https://www.facebook.com/sharer/sharer.php?quote=${text}`, "_blank");
     };
     document.getElementById("copyBtn").onclick = () => {
-      navigator.clipboard.writeText(captionBox.value);
+      navigator.clipboard.writeText(captionEl.value);
       alert("Caption copied!");
     };
 
