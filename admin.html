@@ -2,15 +2,15 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Big Red Connect — Admin Control</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Big Red Connect — Status Control</title>
 
-  <!-- 📱 PWA / Icons -->
+  <!-- 📱 Shared PWA Setup -->
   <link rel="apple-touch-icon" href="icon.PNG">
   <link rel="icon" type="image/png" sizes="192x192" href="icon.png">
   <link rel="shortcut icon" href="icon.PNG">
-  <link rel="manifest" href="manifest.json">
-  <meta name="apple-mobile-web-app-title" content="Admin Big Red">
+  <link rel="manifest" href="manifest-control.json">
+  <meta name="apple-mobile-web-app-title" content="Big Red Connect Status Control">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="theme-color" content="#000000">
@@ -22,6 +22,7 @@
 
   <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
   <div class="hero"></div>
   <img src="official_logo_Nov.png" alt="Big Red Connect Logo" class="main-logo" />
@@ -48,7 +49,7 @@
   </div>
 
   <footer>
-    <p>&copy; 2025 Big Red Connect — Admin Control Panel</p>
+    <p>&copy; 2025 Big Red Connect — Live Status Control</p>
   </footer>
 
   <script>
@@ -61,19 +62,16 @@
     const pill = document.getElementById("status-pill");
 
     let gpsInterval = null;
-    let wakeLock = null;
+    let wakeLock = null; // prevent iPad sleep
 
-    // --- 🧭 Force GPS permission if missing ---
+    // 🧭 Add permission check before anything else
     async function ensureLocationPermission() {
       try {
-        if (!("permissions" in navigator)) {
-          console.warn("Permission API not supported in this browser.");
-          return;
-        }
-
+        if (!("permissions" in navigator)) return;
         const status = await navigator.permissions.query({ name: "geolocation" });
+
         if (status.state === "denied") {
-          alert("Location access is currently denied. Go to Settings → Safari → Location → Allow.");
+          alert("Location access is denied. Go to Settings → Safari → Location → Allow.");
         } else if (status.state === "prompt") {
           navigator.geolocation.getCurrentPosition(
             () => console.log("✅ GPS permission granted."),
@@ -88,7 +86,7 @@
       }
     }
 
-    // --- Load current status ---
+    // ---- Fetch current status ----
     async function fetchStatus() {
       try {
         const res = await fetch(STATUS_WORKER + "/status?nocache=" + Date.now(), { cache: "no-store" });
@@ -101,7 +99,7 @@
       }
     }
 
-    // --- Update status and GPS loop ---
+    // ---- Save new status ----
     async function updateStatus() {
       const newStatus = select.value;
       const payload = { status: newStatus, updated: new Date().toISOString() };
@@ -124,20 +122,21 @@
         alert("✅ Status updated successfully!");
 
         if (newStatus === "online") {
-          ensureLocationPermission(); // force prompt when going online
+          ensureLocationPermission(); // ✅ triggers prompt when going online
           startGPSUpdates();
           requestWakeLock();
         } else {
           stopGPSUpdates();
           releaseWakeLock();
         }
+
       } catch (err) {
         console.error("❌ Update failed:", err);
         alert("⚠️ Network error: unable to update status. Try again shortly.");
       }
     }
 
-    // --- GPS send logic ---
+    // ---- GPS Auto-Update ----
     async function sendGPS(lat, lng) {
       const coords = { latitude: lat, longitude: lng, timestamp: new Date().toISOString() };
       try {
@@ -159,7 +158,6 @@
         alert("GPS not supported on this device.");
         return;
       }
-
       const pushLocation = () => {
         navigator.geolocation.getCurrentPosition(
           (pos) => {
@@ -170,7 +168,6 @@
           { enableHighAccuracy: true, maximumAge: 15000, timeout: 10000 }
         );
       };
-
       pushLocation();
       gpsInterval = setInterval(pushLocation, 30000);
       console.log("✅ GPS tracking started");
@@ -184,7 +181,7 @@
       }
     }
 
-    // --- Prevent screen sleep ---
+    // ---- Prevent sleep (wake lock API) ----
     async function requestWakeLock() {
       try {
         if ('wakeLock' in navigator) {
@@ -196,12 +193,11 @@
         console.warn('WakeLock failed:', err);
       }
     }
-
     async function releaseWakeLock() {
       if (wakeLock) { await wakeLock.release(); wakeLock = null; }
     }
 
-    // --- Update status pill ---
+    // ---- Update pill ----
     function updatePill(state, iso = null) {
       const now = iso ? new Date(iso) : new Date();
       const stamp = now.toLocaleString("en-US", {
@@ -209,7 +205,7 @@
         timeZone: "America/Chicago", timeZoneName: "short"
       });
 
-      pill.classList.remove("online", "away", "offline", "status--loading");
+      pill.classList.remove("online","away","offline","status--loading");
       if (state === "online") {
         pill.classList.add("online");
         pill.textContent = `🟢 Online — as of ${stamp}`;
@@ -222,12 +218,12 @@
       }
     }
 
-    // --- Init ---
+    // Register events
     saveBtn.onclick = updateStatus;
     document.addEventListener("DOMContentLoaded", ensureLocationPermission);
     fetchStatus();
 
-    // --- Shared PWA SW ---
+    // 🧱 Register service worker (shared across pages)
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
         navigator.serviceWorker.register("sw.js")
