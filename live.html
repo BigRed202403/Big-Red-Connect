@@ -3,44 +3,23 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Big Red Connect — Live Map & ETA (Beta)</title>
+  <title>Big Red Connect — Live Map & ETA</title>
 
-  <!-- 📱 PWA / Icons -->
   <link rel="apple-touch-icon" href="icon.PNG">
   <link rel="icon" type="image/png" sizes="192x192" href="icon.png">
   <link rel="shortcut icon" href="icon.PNG">
   <link rel="manifest" href="manifest.json">
-  <meta name="apple-mobile-web-app-title" content="Big Red Connect">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="theme-color" content="#000000">
-
-  <!-- No-cache -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-
   <link rel="stylesheet" href="style.css" />
 
   <style>
-    body { text-align:center; color:#fff; background:#000; font-family:'Roboto',sans-serif; }
-    #map { height: 340px; width: 100%; border-radius: 10px; margin-top: 10px; }
-    .info-section { max-width: 720px; margin: auto; padding: 0 12px; }
-    .panel { background:#111; border:1px solid #333; border-radius:10px; padding:14px; margin-top:14px; text-align:left; }
-    .cta-row { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin:12px 0; }
-    .muted { color:#aaa; font-size:0.9em; }
+    body { text-align:center; color:#fff; background:#000; font-family:Arial, sans-serif; }
+    #map { height:340px; width:100%; border-radius:10px; margin-top:10px; }
     .hidden { display:none !important; }
-    .field-row { display:flex; gap:8px; align-items:center; }
-    .field-row input {
-      flex:1; height:48px; padding:8px 10px; font-size:1em;
-      border-radius:8px; border:1px solid #555;
-      background-color:#000; color:#fff;
-    }
-    #status-message {
-      background:#111; border:1px solid #ff0000;
-      border-radius:8px; padding:18px; margin-top:20px;
-      color:#ccc; font-size:1em;
-    }
+    #status-message { background:#111; border:1px solid #f00; padding:14px; border-radius:8px; margin-top:12px; }
     .pulse-marker {
       position:absolute; width:20px; height:20px;
       background:rgba(255,0,0,0.5); border-radius:50%;
@@ -53,267 +32,103 @@
     }
   </style>
 </head>
-
 <body>
-  <div class="logo-header">
-    <a href="index.html"><img src="official_logo_Nov.png" alt="Big Red Connect Logo" /></a>
-    <div style="text-align:center; margin:10px 0;">
-      <a href="index.html" class="btn secondary">🏠 Home</a>
-    </div>
-  </div>
-
   <h1>Big Red Live Map & ETA</h1>
   <p class="tagline">See where Big Red is — and how long until arrival.</p>
 
   <div id="status-pill" class="status status--loading">Checking status…</div>
-
-  <section class="info-section">
-    <div id="map" class="hidden"></div>
-
-    <div id="etaPanel" class="panel hidden">
-      <p style="margin-top:0;">Check your ETA from my live position to yours:</p>
-      <div class="cta-row">
-        <button id="btnUseMyLoc" class="btn primary">📍 Use My Location</button>
-        <button id="btnEnterAddress" class="btn secondary">⌨️ Enter Address</button>
-      </div>
-
-      <div id="manualRow" class="field-row hidden">
-        <input id="manualAddr" type="text" placeholder="Enter address or place (e.g., Omni Hotel, Henry Hudson’s)" />
-        <button id="btnUseManual" class="btn primary" type="button">✅ Use</button>
-      </div>
-
-      <div id="resultPanel" class="hidden" style="margin-top:10px;">
-        <p id="etaLine" style="font-weight:600;"></p>
-        <p id="distLine"></p>
-        <p id="whenLine" class="muted"></p>
-        <div class="cta-row">
-          <a id="gmLink" class="btn secondary" href="#" target="_blank">🗺️ Open in Maps</a>
-          <a href="farecalculator.html" class="btn primary">💲 Fare Calculator</a>
-          <a id="textRed" class="btn secondary" href="sms:+14053784024">📲 Text RED</a>
-        </div>
-      </div>
-    </div>
-
-    <div id="status-message" style="display:none;"></div>
-  </section>
-
-  <footer style="margin-top:20px;">
-    <p>&copy; 2025 Big Red Connect — <a href="index.html">Return Home</a></p>
-  </footer>
+  <div id="map" class="hidden"></div>
+  <div id="status-message"></div>
 
   <script src="status.js"></script>
 
-  <!-- 🚗 Live-tracking logic -->
   <script>
-    const LOCATION_READER = "https://location-reader.bigredtransportation.workers.dev/?nocache=";
+    const LOCATION_READER = "https://location-reader.bigredtransportation.workers.dev";
     const HQ = { lat: 35.3207, lng: -97.4929 };
-    const STALE_MS = 60_000;      // stale threshold (1 min)
-    const POLL_MS  = 5_000;       // fetch every 5 s
-    const TRAIL_KEEP_MS = 5 * 60_000; // keep 5 min of points
+    const REFRESH_MS = 5000;
 
-    let map, geocoder, directionsService, directionsRenderer;
-    let driverPos = null, riderPos = null;
+    let map, driverMarker, pulseOverlay;
     let currentStatus = "offline";
-    let autocompleteManual;
-    let trail = [];
-    let trailLine, driverMarker, pulseOverlay;
 
     document.addEventListener("statusUpdated", (e) => {
       currentStatus = (e.detail || "offline").toLowerCase();
-      updateVisibility();
+      toggleMap();
     });
 
-    window.initLiveMap = async function() {
-      geocoder = new google.maps.Geocoder();
-      directionsService = new google.maps.DirectionsService();
-      directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers:true });
+    // Load cached status immediately
+    const cachedStatus = localStorage.getItem("bigred_status");
+    if (cachedStatus) {
+      currentStatus = cachedStatus;
+      toggleMap();
+    }
 
+    window.initMap = async function() {
       map = new google.maps.Map(document.getElementById("map"), {
-        center:{lat:35.4676,lng:-97.5164}, zoom:11,
-        mapTypeControl:false, streetViewControl:false, fullscreenControl:true,
+        center: HQ, zoom: 11, disableDefaultUI: false
       });
-      directionsRenderer.setMap(map);
-
-      trailLine = new google.maps.Polyline({
-        path: [], geodesic:true,
-        strokeColor:"#b30000", strokeOpacity:0.9, strokeWeight:3, map,
-      });
-
-      document.getElementById("btnUseMyLoc").onclick = handleUseMyLocation;
-      document.getElementById("btnEnterAddress").onclick = () =>
-        document.getElementById("manualRow").classList.remove("hidden");
-      document.getElementById("btnUseManual").onclick = handleManualUse;
-
-      autocompleteManual = new google.maps.places.Autocomplete(
-        document.getElementById("manualAddr"),
-        { fields:["geometry","formatted_address","name"], types:["geocode","establishment"] }
-      );
-      autocompleteManual.addListener("place_changed", async () => {
-        const place = autocompleteManual.getPlace();
-        if (place.geometry && place.geometry.location) {
-          riderPos = place.geometry.location;
-          await drawRoute(place.formatted_address || place.name);
-        }
-      });
-
-      await getDriverLocation();
-      updateVisibility();
-      startAutoRefresh();
+      startTracking();
     };
 
-    // ---------- GPS Fetch + Render ----------
-    async function getDriverLocation(){
-      try {
-        const res = await fetch(LOCATION_READER + Date.now(), { cache:"no-store" });
-        const j = await res.json();
-        const lat = parseFloat(j.latitude), lng = parseFloat(j.longitude);
-        const ts  = j.timestamp ? new Date(j.timestamp) : null;
-        const age = ts ? (Date.now() - ts.getTime()) : 999999;
-        if (!isNaN(lat) && !isNaN(lng)) {
-          driverPos = { lat, lng, time: Date.now() };
-          renderDriverMarker(age);
-        } else driverPos = HQ;
-      } catch { driverPos = HQ; }
-    }
-
-    function renderDriverMarker(ageMs=0){
-      if (!map || !driverPos) return;
-      if (driverMarker) driverMarker.setMap(null);
-      if (pulseOverlay) pulseOverlay.setMap(null);
-
-      const stale = ageMs > STALE_MS;
-      trail.push(driverPos);
-      const cutoff = Date.now() - TRAIL_KEEP_MS;
-      trail = trail.filter(p => p.time >= cutoff); // prune >5 min old points
-      trailLine.setPath(trail);
-      trailLine.setOptions({ strokeOpacity: stale ? 0.3 : 0.9 });
-
-      driverMarker = new google.maps.Marker({
-        position: driverPos, map, label:"🚗", title:"Big Red (Live)",
-      });
-
-      const pulseDiv = document.createElement("div");
-      pulseDiv.className = "pulse-marker";
-      pulseOverlay = new google.maps.OverlayView();
-      pulseOverlay.onAdd = function(){ this.getPanes().overlayLayer.appendChild(pulseDiv); };
-      pulseOverlay.draw = function(){
-        const proj = this.getProjection();
-        const pos = proj.fromLatLngToDivPixel(new google.maps.LatLng(driverPos.lat, driverPos.lng));
-        if (pos){ pulseDiv.style.left = pos.x + "px"; pulseDiv.style.top = pos.y + "px"; }
-      };
-      pulseOverlay.onRemove = function(){ if (pulseDiv.parentNode) pulseDiv.parentNode.removeChild(pulseDiv); };
-      pulseOverlay.setMap(map);
-      map.panTo(driverPos);
-    }
-
-    function startAutoRefresh(){
-      setInterval(async ()=>{
-        if (currentStatus!=="online") return;
-        await getDriverLocation();
-      }, POLL_MS);
-    }
-
-    // ---------- Visibility ----------
-    function updateVisibility(){
+    function toggleMap() {
       const mapDiv = document.getElementById("map");
-      const etaDiv = document.getElementById("etaPanel");
       const msg = document.getElementById("status-message");
 
-      if (currentStatus==="online"){
+      if (currentStatus === "online") {
         mapDiv.classList.remove("hidden");
-        etaDiv.classList.remove("hidden");
-        msg.style.display="none";
+        msg.innerHTML = "";
+        startTracking();
       } else {
         mapDiv.classList.add("hidden");
-        etaDiv.classList.add("hidden");
-        msg.style.display="block";
-        msg.innerHTML = currentStatus==="away"
-          ? `<strong>🟡 Limited Availability</strong><br>I’m between runs or outside my usual area.<br>Text <strong>“RED”</strong> to <strong>(405) 378-4024</strong> to plan ahead.`
-          : `<strong>🔴 Offline</strong><br>I’m off the road for now.<br>You can still line up your next connection anytime.`;
+        msg.innerHTML =
+          currentStatus === "away"
+            ? "🟡 Limited Availability — between runs or outside usual area."
+            : "🔴 Offline — off the road for now. You can still plan ahead anytime.";
       }
     }
 
-    // ---------- Rider Interaction ----------
-    async function handleUseMyLocation(){
-      if (currentStatus!=="online") return;
-      await getDriverLocation();
-      navigator.geolocation.getCurrentPosition(async pos=>{
-        riderPos=new google.maps.LatLng(pos.coords.latitude,pos.coords.longitude);
-        await drawRoute();
-      },()=>document.getElementById("manualRow").classList.remove("hidden"),
-      {enableHighAccuracy:true,timeout:10000});
+    async function fetchLocation() {
+      try {
+        const res = await fetch(LOCATION_READER + "?nocache=" + Date.now(), { cache: "no-store" });
+        const j = await res.json();
+        if (j.latitude && j.longitude) return { lat: parseFloat(j.latitude), lng: parseFloat(j.longitude) };
+      } catch (e) {
+        console.warn("Location fetch failed:", e);
+      }
+      return HQ;
     }
 
-    async function handleManualUse(){
-      if (currentStatus!=="online") return;
-      await getDriverLocation();
-      const addr=document.getElementById("manualAddr").value.trim();
-      if(!addr)return alert("Enter your location/address.");
-      geocoder.geocode({address:addr},async(res,status)=>{
-        if(status==="OK"&&res[0]?.geometry?.location){
-          riderPos=res[0].geometry.location;
-          await drawRoute(addr);
-        }else alert("Could not find that address.");
-      });
+    async function startTracking() {
+      if (currentStatus !== "online") return;
+      const pos = await fetchLocation();
+      renderMarker(pos);
+      setTimeout(startTracking, REFRESH_MS);
     }
 
-    async function drawRoute(optionalAddr=""){
-      if(!driverPos||!riderPos)return;
-      directionsRenderer.set("directions",null);
-      if(window.riderMarker)window.riderMarker.setMap(null);
+    function renderMarker(pos) {
+      if (!map) return;
+      if (driverMarker) driverMarker.setMap(null);
+      if (pulseOverlay) pulseOverlay.setMap(null);
 
-      window.riderMarker=new google.maps.Marker({position:riderPos,map,label:"📍"});
-      const route=await new Promise((resolve,reject)=>{
-        directionsService.route({origin:driverPos,destination:riderPos,travelMode:"DRIVING"},
-          (r,s)=>s==="OK"?resolve(r):reject(s));
-      });
-      directionsRenderer.setDirections(route);
-      const leg=route.routes[0].legs[0];
-      const miles=Math.round(leg.distance.value/1609.34);
-      const mins=Math.round(leg.duration.value/60);
-      document.getElementById("etaLine").textContent=`ETA ≈ ${mins} min`;
-      document.getElementById("distLine").textContent=`Distance ≈ ${miles} mi`;
-      document.getElementById("whenLine").textContent=`Calculated at ${new Date().toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})} CT`;
-
-      const address=optionalAddr||leg.end_address||"Pinned on map";
-      localStorage.setItem("bigred_last_rider",JSON.stringify({address,lat:riderPos.lat(),lng:riderPos.lng(),timestamp:Date.now()}));
-
-      const gm=`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(driverPos.lat+","+driverPos.lng)}&destination=${encodeURIComponent(address)}`;
-      document.getElementById("gmLink").href=gm;
-      document.getElementById("resultPanel").classList.remove("hidden");
-
-      const bounds=new google.maps.LatLngBounds();
-      bounds.extend(driverPos); bounds.extend(riderPos); map.fitBounds(bounds);
+      driverMarker = new google.maps.Marker({ position: pos, map, label: "🚗" });
+      const pulseDiv = document.createElement("div");
+      pulseDiv.className = "pulse-marker";
+      pulseOverlay = new google.maps.OverlayView();
+      pulseOverlay.onAdd = function() {
+        this.getPanes().overlayLayer.appendChild(pulseDiv);
+      };
+      pulseOverlay.draw = function() {
+        const proj = this.getProjection();
+        const pt = proj.fromLatLngToDivPixel(new google.maps.LatLng(pos.lat, pos.lng));
+        if (pt) { pulseDiv.style.left = pt.x + "px"; pulseDiv.style.top = pt.y + "px"; }
+      };
+      pulseOverlay.onRemove = function() { if (pulseDiv.parentNode) pulseDiv.parentNode.remove(); };
+      pulseOverlay.setMap(map);
+      map.panTo(pos);
     }
-
-    // ---------- “Text RED” ----------
-    document.addEventListener("DOMContentLoaded",()=>{
-      const textBtn=document.getElementById("textRed");
-      if(!textBtn)return;
-      textBtn.addEventListener("click",(e)=>{
-        e.preventDefault();
-        const name=prompt("Enter your name so Big Red knows who’s texting:");
-        if(!name)return;
-        const eta=document.getElementById("etaLine")?.textContent||"";
-        const dist=document.getElementById("distLine")?.textContent||"";
-        const manualAddr=document.getElementById("manualAddr")?.value?.trim()||"";
-        const riderInfo=manualAddr||"My location (used GPS)";
-        const lines=[
-          `Hey Big Red — this is ${name}.`,
-          eta?`${eta} (${dist}).`:"",
-          `Pickup spot: ${riderInfo}.`,"",
-          "Live Map: https://bigred202403.github.io/Big-Red-Connect/live.html",
-          "Fare Calculator: https://bigred202403.github.io/Big-Red-Connect/farecalculator.html"
-        ].filter(Boolean);
-        const smsBody=encodeURIComponent(lines.join(" "));
-        window.location.href=`sms:+14053784024?&body=${smsBody}`;
-      });
-    });
   </script>
 
-  <!-- Google Maps -->
   <script async defer
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places,geometry&callback=initLiveMap">
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&callback=initMap">
   </script>
 </body>
 </html>
