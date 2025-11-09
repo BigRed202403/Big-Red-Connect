@@ -72,6 +72,13 @@ background:var(--red);color:#fff;padding:8px 16px;border-radius:6px;opacity:0;tr
       </select>
       <button class="btn-primary" id="updateStatusBtn">💾 Save Status</button>
     </div>
+
+    <!-- 🧭 GPS Permission Button -->
+    <div id="gpsPermission" style="display:none; margin-top:10px;">
+      <button class="btn-secondary" id="requestGPSBtn">📍 Grant Location Permission</button>
+      <p class="meta">Tap this once to allow live GPS tracking on this device.</p>
+    </div>
+
     <div class="meta">
       <div>Last status update: <span id="statusStamp">—</span></div>
       <div>Last GPS ping: <span id="gpsStamp">—</span> • Interval: <span id="gpsRate">—</span></div>
@@ -107,6 +114,8 @@ const gpsRate=document.getElementById("gpsRate");
 const select=document.getElementById("statusSelect");
 const livePill=document.getElementById("livePill");
 const toast=document.getElementById("toast");
+const gpsPermission=document.getElementById("gpsPermission");
+const requestGPSBtn=document.getElementById("requestGPSBtn");
 
 function showToast(msg,ms=2000){toast.textContent=msg;toast.style.opacity=1;setTimeout(()=>toast.style.opacity=0,ms);}
 
@@ -136,6 +145,28 @@ function renderStatusPill(state,iso){
  statusStamp.textContent=stamp;
 }
 
+// === MANUAL GPS PERMISSION PROMPT ===
+requestGPSBtn.addEventListener("click",()=>{
+ if(!navigator.geolocation){alert("GPS not supported on this device.");return;}
+ navigator.geolocation.getCurrentPosition(
+  pos=>{
+    showToast("✅ Location permission granted!");
+    gpsPermission.style.display="none";
+    const{latitude,longitude}=pos.coords;
+    sendGPS(latitude,longitude);
+  },
+  err=>{
+    console.warn("❌ Permission denied:",err);
+    alert("Location permission was denied. Enable it in Settings → Privacy → Location Services.");
+  },
+  {enableHighAccuracy:true,timeout:10000}
+ );
+});
+function maybeShowGPSPrompt(status){
+ if(status==="online"){gpsPermission.style.display="block";}
+ else{gpsPermission.style.display="none";}
+}
+
 document.getElementById("updateStatusBtn").onclick=async()=>{
  const newStatus=select.value;
  const payload={status:newStatus,updated:new Date().toISOString()};
@@ -145,6 +176,7 @@ document.getElementById("updateStatusBtn").onclick=async()=>{
   renderStatusPill(newStatus,payload.updated);
   showToast("✅ Status updated");
   buildPreview(newStatus);
+  maybeShowGPSPrompt(newStatus);
   if(newStatus==="online")startGPSLoop(5000);
   else if(newStatus==="away")startGPSLoop(30000);
   else stopGPSLoop();
@@ -204,24 +236,6 @@ function stopGPSLoop(){if(gpsTimer){clearInterval(gpsTimer);gpsTimer=null;}curre
 async function requestWakeLock(){try{if('wakeLock'in navigator){wakeLock=await navigator.wakeLock.request('screen');}}catch(e){}}
 async function releaseWakeLock(){if(wakeLock){try{await wakeLock.release();}catch{}wakeLock=null;}}
 
-/* === GPS DIAGNOSTIC PATCH === */
-async function verifyGPS(){
- if(!navigator.geolocation){showToast("⚠️ GPS not supported");return;}
- navigator.geolocation.getCurrentPosition(async(pos)=>{
-   const{latitude,longitude}=pos.coords;
-   showToast("📡 GPS captured, pushing…");
-   const payload={latitude,longitude,timestamp:new Date().toISOString()};
-   try{
-     const res=await fetch(LOCATION_WORKER,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
-     if(res.ok){const data=await res.json();console.log("✅ GPS update confirmed:",data);showToast("✅ GPS updated!");}
-     else{console.warn("⚠️ GPS push failed:",res.status);showToast("⚠️ GPS push failed");}
-   }catch(err){console.error("❌ GPS push error:",err);showToast("❌ GPS error");}
- },(err)=>{console.warn("❌ Location error:",err);showToast("❌ Location access error");},
- {enableHighAccuracy:true,maximumAge:0,timeout:10000});
-}
-window.addEventListener("load",()=>{if(select?.value==="online"){setTimeout(verifyGPS,3000);}});
-
-/* === CLEANUP + INIT === */
 window.addEventListener("pagehide",()=>{stopGPSLoop();});
 fetchStatus();
 
