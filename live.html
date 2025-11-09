@@ -3,128 +3,131 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Big Red Connect — Live Map & ETA</title>
+  <title>Big Red Connect — Live Map</title>
 
+  <!-- 📱 PWA / Icons -->
   <link rel="apple-touch-icon" href="icon.PNG">
   <link rel="icon" type="image/png" sizes="192x192" href="icon.png">
   <link rel="shortcut icon" href="icon.PNG">
   <link rel="manifest" href="manifest.json">
+  <meta name="apple-mobile-web-app-title" content="Big Red Connect">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="theme-color" content="#000000">
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <meta http-equiv="Pragma" content="no-cache" />
-  <meta http-equiv="Expires" content="0" />
-  <link rel="stylesheet" href="style.css" />
 
   <style>
-    body { text-align:center; color:#fff; background:#000; font-family:Arial, sans-serif; }
-    #map { height:340px; width:100%; border-radius:10px; margin-top:10px; }
-    .hidden { display:none !important; }
-    #status-message { background:#111; border:1px solid #f00; padding:14px; border-radius:8px; margin-top:12px; }
-    .pulse-marker {
-      position:absolute; width:20px; height:20px;
-      background:rgba(255,0,0,0.5); border-radius:50%;
-      animation:pulse 2s infinite; transform:translate(-10px,-10px);
+    body {
+      background: #000;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 0;
     }
-    @keyframes pulse {
-      0% { transform:scale(0.8); opacity:0.6; }
-      50% { transform:scale(1.5); opacity:0.3; }
-      100% { transform:scale(0.8); opacity:0.6; }
+    h1 {
+      color: #b30000;
+      margin-top: 20px;
+    }
+    p.tagline {
+      color: #ccc;
+      margin-bottom: 10px;
+    }
+    #map {
+      height: 340px;
+      width: 95%;
+      max-width: 700px;
+      margin: 10px auto;
+      border: 2px solid #b30000;
+      border-radius: 8px;
+    }
+    .status {
+      display: inline-block;
+      padding: 10px 16px;
+      border-radius: 20px;
+      margin: 10px 0;
+      font-weight: bold;
+      font-size: 1em;
+    }
+    .status.online { background: #064; }
+    .status.away { background: #665500; }
+    .status.offline { background: #400; }
+    footer {
+      margin: 20px 0;
+      font-size: 0.9em;
+      color: #aaa;
+    }
+    a {
+      color: #b30000;
+      text-decoration: none;
     }
   </style>
 </head>
-<body>
-  <h1>Big Red Live Map & ETA</h1>
-  <p class="tagline">See where Big Red is — and how long until arrival.</p>
 
-  <div id="status-pill" class="status status--loading">Checking status…</div>
-  <div id="map" class="hidden"></div>
-  <div id="status-message"></div>
+<body>
+  <h1>Big Red Live Map</h1>
+  <p class="tagline">See where Big Red is right now.</p>
+
+  <div id="status-pill" class="status">Checking status…</div>
+  <div id="map"></div>
+
+  <footer>
+    <p>&copy; 2025 Big Red Connect — <a href="index.html">Return Home</a></p>
+  </footer>
 
   <script src="status.js"></script>
-
   <script>
     const LOCATION_READER = "https://location-reader.bigredtransportation.workers.dev";
-    const HQ = { lat: 35.3207, lng: -97.4929 };
-    const REFRESH_MS = 5000;
+    const HQ = { lat: 35.3400, lng: -97.4900 }; // fallback HQ coordinates
+    const STALE_MIN = 30;
 
-    let map, driverMarker, pulseOverlay;
-    let currentStatus = "offline";
+    let map, driverMarker;
 
-    document.addEventListener("statusUpdated", (e) => {
-      currentStatus = (e.detail || "offline").toLowerCase();
-      toggleMap();
-    });
-
-    // Load cached status immediately
-    const cachedStatus = localStorage.getItem("bigred_status");
-    if (cachedStatus) {
-      currentStatus = cachedStatus;
-      toggleMap();
-    }
-
-    window.initMap = async function() {
+    async function initMap() {
       map = new google.maps.Map(document.getElementById("map"), {
-        center: HQ, zoom: 11, disableDefaultUI: false
+        center: HQ,
+        zoom: 11,
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: false,
       });
-      startTracking();
-    };
-
-    function toggleMap() {
-      const mapDiv = document.getElementById("map");
-      const msg = document.getElementById("status-message");
-
-      if (currentStatus === "online") {
-        mapDiv.classList.remove("hidden");
-        msg.innerHTML = "";
-        startTracking();
-      } else {
-        mapDiv.classList.add("hidden");
-        msg.innerHTML =
-          currentStatus === "away"
-            ? "🟡 Limited Availability — between runs or outside usual area."
-            : "🔴 Offline — off the road for now. You can still plan ahead anytime.";
-      }
+      await loadDriverLocation();
     }
 
-    async function fetchLocation() {
+    async function loadDriverLocation() {
       try {
         const res = await fetch(LOCATION_READER + "?nocache=" + Date.now(), { cache: "no-store" });
         const j = await res.json();
-        if (j.latitude && j.longitude) return { lat: parseFloat(j.latitude), lng: parseFloat(j.longitude) };
-      } catch (e) {
-        console.warn("Location fetch failed:", e);
+        const lat = parseFloat(j.latitude);
+        const lng = parseFloat(j.longitude);
+        const ts = j.timestamp ? new Date(j.timestamp) : null;
+        const ageMin = ts ? (Date.now() - ts.getTime()) / 60000 : 999;
+
+        let pos = HQ;
+        if (!isNaN(lat) && !isNaN(lng) && ageMin <= STALE_MIN) {
+          pos = { lat, lng };
+        }
+
+        if (driverMarker) driverMarker.setMap(null);
+        driverMarker = new google.maps.Marker({
+          position: pos,
+          map,
+          label: "🚗",
+          title: "Big Red (Live Position)"
+        });
+
+        map.setCenter(pos);
+      } catch (err) {
+        console.warn("⚠️ Failed to load driver position:", err);
       }
-      return HQ;
     }
 
-    async function startTracking() {
-      if (currentStatus !== "online") return;
-      const pos = await fetchLocation();
-      renderMarker(pos);
-      setTimeout(startTracking, REFRESH_MS);
-    }
-
-    function renderMarker(pos) {
-      if (!map) return;
-      if (driverMarker) driverMarker.setMap(null);
-      if (pulseOverlay) pulseOverlay.setMap(null);
-
-      driverMarker = new google.maps.Marker({ position: pos, map, label: "🚗" });
-      const pulseDiv = document.createElement("div");
-      pulseDiv.className = "pulse-marker";
-      pulseOverlay = new google.maps.OverlayView();
-      pulseOverlay.onAdd = function() {
-        this.getPanes().overlayLayer.appendChild(pulseDiv);
-      };
-      pulseOverlay.draw = function() {
-        const proj = this.getProjection();
-        const pt = proj.fromLatLngToDivPixel(new google.maps.LatLng(pos.lat, pos.lng));
-        if (pt) { pulseDiv.style.left = pt.x + "px"; pulseDiv.style.top = pt.y + "px"; }
-      };
-      pulseOverlay.onRemove = function() { if (pulseDiv.parentNode) pulseDiv.parentNode.remove(); };
-      pulseOverlay.setMap(map);
-      map.panTo(pos);
-    }
+    document.addEventListener("statusUpdated", async (e) => {
+      const state = e.detail;
+      if (state === "online") {
+        await loadDriverLocation();
+        setInterval(loadDriverLocation, 30000);
+      }
+    });
   </script>
 
   <script async defer
