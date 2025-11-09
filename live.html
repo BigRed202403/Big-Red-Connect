@@ -32,14 +32,9 @@
     .hidden { display:none !important; }
     .field-row { display:flex; gap:8px; align-items:center; }
     .field-row input {
-      flex:1;
-      height: 48px;
-      padding: 8px 10px;
-      font-size: 1em;
-      border-radius: 8px;
-      border: 1px solid #555;
-      background-color: #000;
-      color: #fff;
+      flex:1; height:48px; padding:8px 10px; font-size:1em;
+      border-radius:8px; border:1px solid #555;
+      background-color:#000; color:#fff;
     }
     #status-message {
       background:#111; border:1px solid #ff0000;
@@ -47,27 +42,21 @@
       color:#ccc; font-size:1em;
     }
     .pulse-marker {
-      position: absolute;
-      width: 20px;
-      height: 20px;
-      background: rgba(255,0,0,0.5);
-      border-radius: 50%;
-      animation: pulse 2s infinite;
-      transform: translate(-10px, -10px);
+      position:absolute; width:20px; height:20px;
+      background:rgba(255,0,0,0.5); border-radius:50%;
+      animation:pulse 2s infinite; transform:translate(-10px,-10px);
     }
     @keyframes pulse {
-      0% { transform: scale(0.8); opacity: 0.6; }
-      50% { transform: scale(1.5); opacity: 0.3; }
-      100% { transform: scale(0.8); opacity: 0.6; }
+      0% { transform:scale(0.8); opacity:0.6; }
+      50% { transform:scale(1.5); opacity:0.3; }
+      100% { transform:scale(0.8); opacity:0.6; }
     }
   </style>
 </head>
 
 <body>
   <div class="logo-header">
-    <a href="index.html">
-      <img src="official_logo_Nov.png" alt="Big Red Connect Logo" />
-    </a>
+    <a href="index.html"><img src="official_logo_Nov.png" alt="Big Red Connect Logo" /></a>
     <div style="text-align:center; margin:10px 0;">
       <a href="index.html" class="btn secondary">🏠 Home</a>
     </div>
@@ -114,16 +103,20 @@
 
   <script src="status.js"></script>
 
+  <!-- 🚗 Live-tracking logic -->
   <script>
-    const LOCATION_READER = "https://update-location.bigredtransportation.workers.dev";
+    const LOCATION_READER = "https://location-reader.bigredtransportation.workers.dev/?nocache=";
     const HQ = { lat: 35.3207, lng: -97.4929 };
-    const STALE_MIN = 30;
+    const STALE_MS = 60_000;      // stale threshold (1 min)
+    const POLL_MS  = 5_000;       // fetch every 5 s
+    const TRAIL_KEEP_MS = 5 * 60_000; // keep 5 min of points
 
     let map, geocoder, directionsService, directionsRenderer;
-    let driverPos = null;
-    let riderPos = null;
+    let driverPos = null, riderPos = null;
     let currentStatus = "offline";
     let autocompleteManual;
+    let trail = [];
+    let trailLine, driverMarker, pulseOverlay;
 
     document.addEventListener("statusUpdated", (e) => {
       currentStatus = (e.detail || "offline").toLowerCase();
@@ -134,19 +127,26 @@
       geocoder = new google.maps.Geocoder();
       directionsService = new google.maps.DirectionsService();
       directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers:true });
+
       map = new google.maps.Map(document.getElementById("map"), {
-        center: { lat:35.4676, lng:-97.5164 }, zoom: 11
+        center:{lat:35.4676,lng:-97.5164}, zoom:11,
+        mapTypeControl:false, streetViewControl:false, fullscreenControl:true,
       });
       directionsRenderer.setMap(map);
 
+      trailLine = new google.maps.Polyline({
+        path: [], geodesic:true,
+        strokeColor:"#b30000", strokeOpacity:0.9, strokeWeight:3, map,
+      });
+
       document.getElementById("btnUseMyLoc").onclick = handleUseMyLocation;
-      document.getElementById("btnEnterAddress").onclick = () => document.getElementById("manualRow").classList.remove("hidden");
+      document.getElementById("btnEnterAddress").onclick = () =>
+        document.getElementById("manualRow").classList.remove("hidden");
       document.getElementById("btnUseManual").onclick = handleManualUse;
 
-      // Attach predictive autocomplete for manual address
       autocompleteManual = new google.maps.places.Autocomplete(
         document.getElementById("manualAddr"),
-        { fields: ["geometry", "formatted_address", "name"], types: ["geocode", "establishment"] }
+        { fields:["geometry","formatted_address","name"], types:["geocode","establishment"] }
       );
       autocompleteManual.addListener("place_changed", async () => {
         const place = autocompleteManual.getPlace();
@@ -158,83 +158,94 @@
 
       await getDriverLocation();
       updateVisibility();
+      startAutoRefresh();
     };
 
+    // ---------- GPS Fetch + Render ----------
     async function getDriverLocation(){
       try {
-        const res = await fetch(LOCATION_READER + "?nocache=" + Date.now(), { cache:"no-store" });
+        const res = await fetch(LOCATION_READER + Date.now(), { cache:"no-store" });
         const j = await res.json();
         const lat = parseFloat(j.latitude), lng = parseFloat(j.longitude);
-        const ts = j.timestamp ? new Date(j.timestamp) : null;
-        const ageMin = ts ? (Date.now()-ts.getTime())/60000 : 999;
-        if (!isNaN(lat) && !isNaN(lng) && ageMin <= STALE_MIN) driverPos = {lat,lng};
-        else driverPos = HQ;
+        const ts  = j.timestamp ? new Date(j.timestamp) : null;
+        const age = ts ? (Date.now() - ts.getTime()) : 999999;
+        if (!isNaN(lat) && !isNaN(lng)) {
+          driverPos = { lat, lng, time: Date.now() };
+          renderDriverMarker(age);
+        } else driverPos = HQ;
       } catch { driverPos = HQ; }
     }
 
+    function renderDriverMarker(ageMs=0){
+      if (!map || !driverPos) return;
+      if (driverMarker) driverMarker.setMap(null);
+      if (pulseOverlay) pulseOverlay.setMap(null);
+
+      const stale = ageMs > STALE_MS;
+      trail.push(driverPos);
+      const cutoff = Date.now() - TRAIL_KEEP_MS;
+      trail = trail.filter(p => p.time >= cutoff); // prune >5 min old points
+      trailLine.setPath(trail);
+      trailLine.setOptions({ strokeOpacity: stale ? 0.3 : 0.9 });
+
+      driverMarker = new google.maps.Marker({
+        position: driverPos, map, label:"🚗", title:"Big Red (Live)",
+      });
+
+      const pulseDiv = document.createElement("div");
+      pulseDiv.className = "pulse-marker";
+      pulseOverlay = new google.maps.OverlayView();
+      pulseOverlay.onAdd = function(){ this.getPanes().overlayLayer.appendChild(pulseDiv); };
+      pulseOverlay.draw = function(){
+        const proj = this.getProjection();
+        const pos = proj.fromLatLngToDivPixel(new google.maps.LatLng(driverPos.lat, driverPos.lng));
+        if (pos){ pulseDiv.style.left = pos.x + "px"; pulseDiv.style.top = pos.y + "px"; }
+      };
+      pulseOverlay.onRemove = function(){ if (pulseDiv.parentNode) pulseDiv.parentNode.removeChild(pulseDiv); };
+      pulseOverlay.setMap(map);
+      map.panTo(driverPos);
+    }
+
+    function startAutoRefresh(){
+      setInterval(async ()=>{
+        if (currentStatus!=="online") return;
+        await getDriverLocation();
+      }, POLL_MS);
+    }
+
+    // ---------- Visibility ----------
     function updateVisibility(){
       const mapDiv = document.getElementById("map");
       const etaDiv = document.getElementById("etaPanel");
       const msg = document.getElementById("status-message");
 
-      if (currentStatus === "online") {
+      if (currentStatus==="online"){
         mapDiv.classList.remove("hidden");
         etaDiv.classList.remove("hidden");
-        msg.style.display = "none";
-        getDriverLocation().then(drawDriverMarker);
+        msg.style.display="none";
       } else {
         mapDiv.classList.add("hidden");
         etaDiv.classList.add("hidden");
-        msg.style.display = "block";
-        msg.innerHTML = currentStatus === "away"
+        msg.style.display="block";
+        msg.innerHTML = currentStatus==="away"
           ? `<strong>🟡 Limited Availability</strong><br>I’m between runs or outside my usual area.<br>Text <strong>“RED”</strong> to <strong>(405) 378-4024</strong> to plan ahead.`
           : `<strong>🔴 Offline</strong><br>I’m off the road for now.<br>You can still line up your next connection anytime.`;
       }
     }
 
-    function drawDriverMarker(){
-      if (!map || !driverPos) return;
-      if (window.driverMarker) window.driverMarker.setMap(null);
-      if (window.pulseOverlay) window.pulseOverlay.setMap(null);
-
-      window.driverMarker = new google.maps.Marker({
-        position: driverPos,
-        map,
-        label: "🚗",
-        title: "Big Red (Live)"
-      });
-
-      const pulseDiv = document.createElement("div");
-      pulseDiv.className = "pulse-marker";
-      window.pulseOverlay = new google.maps.OverlayView();
-      window.pulseOverlay.onAdd = function() {
-        const layer = this.getPanes().overlayLayer;
-        layer.appendChild(pulseDiv);
-      };
-      window.pulseOverlay.draw = function() {
-        const projection = this.getProjection();
-        const pos = projection.fromLatLngToDivPixel(new google.maps.LatLng(driverPos.lat, driverPos.lng));
-        if (pos) { pulseDiv.style.left = pos.x + "px"; pulseDiv.style.top = pos.y + "px"; }
-      };
-      window.pulseOverlay.onRemove = function() {
-        if (pulseDiv.parentNode) pulseDiv.parentNode.removeChild(pulseDiv);
-      };
-      window.pulseOverlay.setMap(map);
-      map.setCenter(driverPos);
-    }
-
+    // ---------- Rider Interaction ----------
     async function handleUseMyLocation(){
-      if (currentStatus !== "online") return;
+      if (currentStatus!=="online") return;
       await getDriverLocation();
       navigator.geolocation.getCurrentPosition(async pos=>{
-        riderPos = new google.maps.LatLng(pos.coords.latitude,pos.coords.longitude);
+        riderPos=new google.maps.LatLng(pos.coords.latitude,pos.coords.longitude);
         await drawRoute();
       },()=>document.getElementById("manualRow").classList.remove("hidden"),
       {enableHighAccuracy:true,timeout:10000});
     }
 
     async function handleManualUse(){
-      if (currentStatus !== "online") return;
+      if (currentStatus!=="online") return;
       await getDriverLocation();
       const addr=document.getElementById("manualAddr").value.trim();
       if(!addr)return alert("Enter your location/address.");
@@ -249,69 +260,60 @@
     async function drawRoute(optionalAddr=""){
       if(!driverPos||!riderPos)return;
       directionsRenderer.set("directions",null);
-      if(window.driverMarker)window.driverMarker.setMap(null);
       if(window.riderMarker)window.riderMarker.setMap(null);
 
-      window.driverMarker=new google.maps.Marker({position:driverPos,map,label:"🚗"});
       window.riderMarker=new google.maps.Marker({position:riderPos,map,label:"📍"});
-
       const route=await new Promise((resolve,reject)=>{
         directionsService.route({origin:driverPos,destination:riderPos,travelMode:"DRIVING"},
           (r,s)=>s==="OK"?resolve(r):reject(s));
       });
       directionsRenderer.setDirections(route);
       const leg=route.routes[0].legs[0];
-      const milesRaw=leg.distance.value/1609.34;
-      const miles=Math.round(milesRaw);
+      const miles=Math.round(leg.distance.value/1609.34);
       const mins=Math.round(leg.duration.value/60);
-
       document.getElementById("etaLine").textContent=`ETA ≈ ${mins} min`;
       document.getElementById("distLine").textContent=`Distance ≈ ${miles} mi`;
       document.getElementById("whenLine").textContent=`Calculated at ${new Date().toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})} CT`;
 
-      const address = optionalAddr || leg.end_address || "Pinned on map";
-      localStorage.setItem("bigred_last_rider", JSON.stringify({
-        address,
-        lat: riderPos.lat(),
-        lng: riderPos.lng(),
-        timestamp: Date.now()
-      }));
+      const address=optionalAddr||leg.end_address||"Pinned on map";
+      localStorage.setItem("bigred_last_rider",JSON.stringify({address,lat:riderPos.lat(),lng:riderPos.lng(),timestamp:Date.now()}));
 
       const gm=`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(driverPos.lat+","+driverPos.lng)}&destination=${encodeURIComponent(address)}`;
       document.getElementById("gmLink").href=gm;
       document.getElementById("resultPanel").classList.remove("hidden");
 
       const bounds=new google.maps.LatLngBounds();
-      bounds.extend(driverPos);
-      bounds.extend(riderPos);
-      map.fitBounds(bounds);
+      bounds.extend(driverPos); bounds.extend(riderPos); map.fitBounds(bounds);
     }
 
-    document.addEventListener("DOMContentLoaded", () => {
-      const textBtn = document.getElementById("textRed");
-      if (!textBtn) return;
-      textBtn.addEventListener("click", (e) => {
+    // ---------- “Text RED” ----------
+    document.addEventListener("DOMContentLoaded",()=>{
+      const textBtn=document.getElementById("textRed");
+      if(!textBtn)return;
+      textBtn.addEventListener("click",(e)=>{
         e.preventDefault();
-        const name = prompt("Enter your name so Big Red knows who’s texting:");
-        if (!name) return;
-        const etaLine = document.getElementById("etaLine")?.textContent || "";
-        const distLine = document.getElementById("distLine")?.textContent || "";
-        const manualAddr = document.getElementById("manualAddr")?.value?.trim() || "";
-        const riderInfo = manualAddr || "My location (used GPS)";
-        const bodyLines = [
+        const name=prompt("Enter your name so Big Red knows who’s texting:");
+        if(!name)return;
+        const eta=document.getElementById("etaLine")?.textContent||"";
+        const dist=document.getElementById("distLine")?.textContent||"";
+        const manualAddr=document.getElementById("manualAddr")?.value?.trim()||"";
+        const riderInfo=manualAddr||"My location (used GPS)";
+        const lines=[
           `Hey Big Red — this is ${name}.`,
-          etaLine ? `${etaLine} (${distLine}).` : "",
-          `Pickup spot: ${riderInfo}.`,
-          "",
+          eta?`${eta} (${dist}).`:"",
+          `Pickup spot: ${riderInfo}.`,"",
           "Live Map: https://bigred202403.github.io/Big-Red-Connect/live.html",
           "Fare Calculator: https://bigred202403.github.io/Big-Red-Connect/farecalculator.html"
         ].filter(Boolean);
-        const smsBody = encodeURIComponent(bodyLines.join(" "));
-        window.location.href = `sms:+14053784024?&body=${smsBody}`;
+        const smsBody=encodeURIComponent(lines.join(" "));
+        window.location.href=`sms:+14053784024?&body=${smsBody}`;
       });
     });
   </script>
 
-  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places,geometry&callback=initLiveMap"></script>
+  <!-- Google Maps -->
+  <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places,geometry&callback=initLiveMap">
+  </script>
 </body>
 </html>
