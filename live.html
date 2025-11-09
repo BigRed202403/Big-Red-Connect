@@ -15,72 +15,113 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="theme-color" content="#000000">
 
+  <!-- No-cache -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+
+  <link rel="stylesheet" href="style.css" />
+
   <style>
-    body { text-align:center; color:#fff; background:#000; font-family:Arial,sans-serif; margin:0; }
-    h1 { color:#b30000; margin-top:20px; }
-    p.tagline { color:#ccc; margin-bottom:10px; }
-    #map { height:340px; width:95%; max-width:700px; margin:10px auto; border-radius:10px; border:2px solid #b30000; }
-    .status { display:inline-block; padding:10px 16px; border-radius:20px; margin:10px 0; font-weight:700; }
-    .status.online { background:#064; } .status.away { background:#665500; } .status.offline { background:#400; }
-    .panel { background:#111; border:1px solid #333; border-radius:10px; padding:14px; max-width:700px; margin:20px auto; text-align:left; }
+    body { text-align:center; color:#fff; background:#000; font-family:'Roboto',sans-serif; }
+    #map { height: 340px; width: 100%; border-radius: 10px; margin-top: 10px; }
+    .info-section { max-width: 720px; margin: auto; padding: 0 12px; }
+    .panel { background:#111; border:1px solid #333; border-radius:10px; padding:14px; margin-top:14px; text-align:left; }
     .cta-row { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin:12px 0; }
-    .btn { border:none; border-radius:6px; padding:10px 14px; font-weight:700; cursor:pointer; }
-    .btn.primary { background:#b30000; color:#fff; }
-    .btn.secondary { background:#000; color:#fff; border:1px solid #b30000; }
-    .field-row { display:flex; gap:8px; align-items:center; margin:8px 0; }
-    .field-row input { flex:1; height:48px; padding:8px 10px; border-radius:8px; border:1px solid #555; background:#000; color:#fff; }
-    #status-message { background:#111; border:1px solid #b30000; border-radius:8px; padding:18px; margin-top:20px; color:#ccc; font-size:1em; }
-    footer { margin:20px 0; font-size:.9em; color:#777; }
-    a { color:#b30000; text-decoration:none; }
+    .muted { color:#aaa; font-size:0.9em; }
+    .hidden { display:none !important; }
+    .field-row { display:flex; gap:8px; align-items:center; }
+    .field-row input {
+      flex:1;
+      height: 48px; /* Taller input field */
+      padding: 8px 10px;
+      font-size: 1em;
+      border-radius: 8px;
+      border: 1px solid #555;
+      background-color: #000;
+      color: #fff;
+    }
+    #status-message {
+      background:#111; border:1px solid #ff0000;
+      border-radius:8px; padding:18px; margin-top:20px;
+      color:#ccc; font-size:1em;
+    }
+
+    /* --- Live Pulse Effect --- */
+    .pulse-marker {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background: rgba(255,0,0,0.5);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+      transform: translate(-10px, -10px);
+    }
+    @keyframes pulse {
+      0% { transform: scale(0.8); opacity: 0.6; }
+      50% { transform: scale(1.5); opacity: 0.3; }
+      100% { transform: scale(0.8); opacity: 0.6; }
+    }
   </style>
 </head>
 
 <body>
+  <div class="logo-header">
+    <a href="index.html">
+      <img src="official_logo_Nov.png" alt="Big Red Connect Logo" />
+    </a>
+    <div style="text-align:center; margin:10px 0;">
+      <a href="index.html" class="btn secondary">🏠 Home</a>
+    </div>
+  </div>
+
   <h1>Big Red Live Map & ETA</h1>
   <p class="tagline">See where Big Red is — and how long until arrival.</p>
 
   <div id="status-pill" class="status status--loading">Checking status…</div>
 
-  <div id="map" style="display:none;"></div>
+  <section class="info-section">
+    <div id="map" class="hidden"></div>
 
-  <div id="etaPanel" class="panel" style="display:none;">
-    <p>Check your ETA from my live position to yours:</p>
-    <div class="cta-row">
-      <button id="btnUseMyLoc" class="btn primary">📍 Use My Location</button>
-      <button id="btnEnterAddress" class="btn secondary">⌨️ Enter Address</button>
-    </div>
-
-    <div id="manualRow" class="field-row" style="display:none;">
-      <input id="manualAddr" type="text" placeholder="Enter address or place (e.g., Omni Hotel, Henry Hudson’s)" />
-      <button id="btnUseManual" class="btn primary" type="button">✅ Use</button>
-    </div>
-
-    <div id="resultPanel" style="display:none;">
-      <p id="etaLine" style="font-weight:600;"></p>
-      <p id="distLine"></p>
-      <p id="whenLine" style="color:#aaa;font-size:.9em;"></p>
+    <div id="etaPanel" class="panel hidden">
+      <p style="margin-top:0;">Check your ETA from my live position to yours:</p>
       <div class="cta-row">
-        <a id="gmLink" class="btn secondary" href="#" target="_blank">🗺️ Open in Maps</a>
-        <a href="farecalculator.html" class="btn primary">💲 Fare Calculator</a>
-        <a id="textRed" class="btn secondary" href="sms:+14053784024">📲 Text RED</a>
+        <button id="btnUseMyLoc" class="btn primary">📍 Use My Location</button>
+        <button id="btnEnterAddress" class="btn secondary">⌨️ Enter Address</button>
+      </div>
+
+      <div id="manualRow" class="field-row hidden">
+        <input id="manualAddr" type="text" placeholder="Enter your current location/address" />
+        <button id="btnUseManual" class="btn primary" type="button">✅ Use</button>
+      </div>
+
+      <div id="resultPanel" class="hidden" style="margin-top:10px;">
+        <p id="etaLine" style="font-weight:600;"></p>
+        <p id="distLine"></p>
+        <p id="whenLine" class="muted"></p>
+        <div class="cta-row">
+          <a id="gmLink" class="btn secondary" href="#" target="_blank">🗺️ Open in Maps</a>
+          <a href="farecalcbeta.html" class="btn primary">💲 Fare Calculator</a>
+          <a id="textRed" class="btn secondary" href="sms:+14053784024">📲 Text RED</a>
+        </div>
       </div>
     </div>
-  </div>
 
-  <div id="status-message" style="display:none;"></div>
+    <div id="status-message" style="display:none;"></div>
+  </section>
 
-  <footer>
-    <p>© 2025 Big Red Connect — <a href="index.html">Return Home</a></p>
+  <footer style="margin-top:20px;">
+    <p>&copy; 2025 Big Red Connect — <a href="index.html">Return Home</a></p>
   </footer>
 
   <script src="status.js"></script>
 
   <script>
-    const LOCATION_READER = "https://location-reader.bigredtransportation.workers.dev";
-    const HQ = { lat: 35.3400, lng: -97.4900 };
+    const LOCATION_READER = "https://update-location.bigredtransportation.workers.dev";
+    const HQ = { lat: 35.3207, lng: -97.4929 };
     const STALE_MIN = 30;
 
-    let map, directionsService, directionsRenderer, geocoder;
+    let map, geocoder, directionsService, directionsRenderer;
     let driverPos = null;
     let riderPos = null;
     let currentStatus = "offline";
@@ -90,21 +131,22 @@
       updateVisibility();
     });
 
-    async function initLiveMap() {
+    window.initLiveMap = async function() {
+      geocoder = new google.maps.Geocoder();
       directionsService = new google.maps.DirectionsService();
       directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers:true });
-      geocoder = new google.maps.Geocoder();
       map = new google.maps.Map(document.getElementById("map"), {
-        center: HQ, zoom: 11, mapTypeControl: false
+        center: { lat:35.4676, lng:-97.5164 }, zoom: 11
       });
       directionsRenderer.setMap(map);
+
       document.getElementById("btnUseMyLoc").onclick = handleUseMyLocation;
-      document.getElementById("btnEnterAddress").onclick = () => document.getElementById("manualRow").style.display="flex";
+      document.getElementById("btnEnterAddress").onclick = () => document.getElementById("manualRow").classList.remove("hidden");
       document.getElementById("btnUseManual").onclick = handleManualUse;
 
       await getDriverLocation();
       updateVisibility();
-    }
+    };
 
     async function getDriverLocation(){
       try {
@@ -119,45 +161,68 @@
     }
 
     function updateVisibility(){
-      const mapDiv=document.getElementById("map");
-      const etaDiv=document.getElementById("etaPanel");
-      const msg=document.getElementById("status-message");
+      const mapDiv = document.getElementById("map");
+      const etaDiv = document.getElementById("etaPanel");
+      const msg = document.getElementById("status-message");
 
-      if(currentStatus==="online"){
-        mapDiv.style.display="block";
-        etaDiv.style.display="block";
-        msg.style.display="none";
+      if (currentStatus === "online") {
+        mapDiv.classList.remove("hidden");
+        etaDiv.classList.remove("hidden");
+        msg.style.display = "none";
         getDriverLocation().then(drawDriverMarker);
-      }else{
-        mapDiv.style.display="none";
-        etaDiv.style.display="none";
-        msg.style.display="block";
-        msg.innerHTML=currentStatus==="away"
-          ? `<strong>🟡 Limited Availability</strong><br>I’m between runs or outside my usual area.<br>Text “RED” to (405) 378-4024 to plan ahead.`
+      } else {
+        mapDiv.classList.add("hidden");
+        etaDiv.classList.add("hidden");
+        msg.style.display = "block";
+        msg.innerHTML = currentStatus === "away"
+          ? `<strong>🟡 Limited Availability</strong><br>I’m between runs or outside my usual area.<br>Text <strong>“RED”</strong> to <strong>(405) 378-4024</strong> to plan ahead.`
           : `<strong>🔴 Offline</strong><br>I’m off the road for now.<br>You can still line up your next connection anytime.`;
       }
     }
 
     function drawDriverMarker(){
-      if(!map||!driverPos)return;
-      if(window.driverMarker)window.driverMarker.setMap(null);
-      window.driverMarker=new google.maps.Marker({
-        position:driverPos,map,label:"🚗",title:"Big Red (Live)"
+      if (!map || !driverPos) return;
+      if (window.driverMarker) window.driverMarker.setMap(null);
+      if (window.pulseOverlay) window.pulseOverlay.setMap(null);
+
+      window.driverMarker = new google.maps.Marker({
+        position: driverPos,
+        map,
+        label: "🚗",
+        title: "Big Red (Live)"
       });
+
+      const pulseDiv = document.createElement("div");
+      pulseDiv.className = "pulse-marker";
+      window.pulseOverlay = new google.maps.OverlayView();
+      window.pulseOverlay.onAdd = function() {
+        const layer = this.getPanes().overlayLayer;
+        layer.appendChild(pulseDiv);
+      };
+      window.pulseOverlay.draw = function() {
+        const projection = this.getProjection();
+        const pos = projection.fromLatLngToDivPixel(new google.maps.LatLng(driverPos.lat, driverPos.lng));
+        if (pos) { pulseDiv.style.left = pos.x + "px"; pulseDiv.style.top = pos.y + "px"; }
+      };
+      window.pulseOverlay.onRemove = function() {
+        if (pulseDiv.parentNode) pulseDiv.parentNode.removeChild(pulseDiv);
+      };
+      window.pulseOverlay.setMap(map);
       map.setCenter(driverPos);
     }
 
     async function handleUseMyLocation(){
-      if(currentStatus!=="online")return;
+      if (currentStatus !== "online") return;
       await getDriverLocation();
       navigator.geolocation.getCurrentPosition(async pos=>{
-        riderPos=new google.maps.LatLng(pos.coords.latitude,pos.coords.longitude);
+        riderPos = new google.maps.LatLng(pos.coords.latitude,pos.coords.longitude);
         await drawRoute();
-      },()=>document.getElementById("manualRow").style.display="flex",{enableHighAccuracy:true,timeout:10000});
+      },()=>document.getElementById("manualRow").classList.remove("hidden"),
+      {enableHighAccuracy:true,timeout:10000});
     }
 
     async function handleManualUse(){
-      if(currentStatus!=="online")return;
+      if (currentStatus !== "online") return;
       await getDriverLocation();
       const addr=document.getElementById("manualAddr").value.trim();
       if(!addr)return alert("Enter your location/address.");
@@ -184,17 +249,24 @@
       });
       directionsRenderer.setDirections(route);
       const leg=route.routes[0].legs[0];
-      const miles=Math.round(leg.distance.value/1609.34);
+      const miles=leg.distance.value/1609.34;
       const mins=Math.round(leg.duration.value/60);
-
       document.getElementById("etaLine").textContent=`ETA ≈ ${mins} min`;
-      document.getElementById("distLine").textContent=`Distance ≈ ${miles} mi`;
+      document.getElementById("distLine").textContent=`Distance ≈ ${miles.toFixed(1)} mi`;
       document.getElementById("whenLine").textContent=`Calculated at ${new Date().toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})} CT`;
 
-      const address=optionalAddr||leg.end_address||"Pinned on map";
+      // Save pickup data for fare calculator
+      const address = optionalAddr || leg.end_address || "Pinned on map";
+      localStorage.setItem("bigred_last_rider", JSON.stringify({
+        address,
+        lat: riderPos.lat(),
+        lng: riderPos.lng(),
+        timestamp: Date.now()
+      }));
+
       const gm=`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(driverPos.lat+","+driverPos.lng)}&destination=${encodeURIComponent(address)}`;
       document.getElementById("gmLink").href=gm;
-      document.getElementById("resultPanel").style.display="block";
+      document.getElementById("resultPanel").classList.remove("hidden");
 
       const bounds=new google.maps.LatLngBounds();
       bounds.extend(driverPos);
@@ -202,20 +274,52 @@
       map.fitBounds(bounds);
     }
 
+    // === Text RED personal message ===
     document.addEventListener("DOMContentLoaded", () => {
-      document.getElementById("textRed").addEventListener("click", (e) => {
+      const textBtn = document.getElementById("textRed");
+      if (!textBtn) return;
+
+      textBtn.addEventListener("click", (e) => {
         e.preventDefault();
         const name = prompt("Enter your name so Big Red knows who’s texting:");
         if (!name) return;
-        const etaLine=document.getElementById("etaLine")?.textContent||"";
-        const distLine=document.getElementById("distLine")?.textContent||"";
-        const addr=document.getElementById("manualAddr")?.value?.trim()||"My location (used GPS)";
-        const body=`Hey Big Red — this is ${name}. ${etaLine} ${distLine} Pickup: ${addr}. Live Map: https://bigred202403.github.io/Big-Red-Connect/live.html`;
-        window.location.href=`sms:+14053784024?&body=${encodeURIComponent(body)}`;
+
+        const etaLine = document.getElementById("etaLine")?.textContent || "";
+        const distLine = document.getElementById("distLine")?.textContent || "";
+        const manualAddr = document.getElementById("manualAddr")?.value?.trim() || "";
+        const riderInfo = manualAddr || "My location (used GPS)";
+
+        const bodyLines = [
+          `Hey Big Red — this is ${name}.`,
+          etaLine ? `${etaLine} (${distLine}).` : "",
+          `Pickup spot: ${riderInfo}.`,
+          "",
+          "Live Map: https://bigred202403.github.io/Big-Red-Connect/live.html",
+          "Fare Calculator: https://bigred202403.github.io/Big-Red-Connect/farecalculator.html"
+        ].filter(Boolean);
+
+        const smsBody = encodeURIComponent(bodyLines.join(" "));
+        window.location.href = `sms:+14053784024?&body=${smsBody}`;
       });
     });
   </script>
 
-  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places&callback=initLiveMap"></script>
+  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places,geometry&callback=initLiveMap"></script>
+  
+  <script>
+    // Attach predictive search to manual address field
+    document.addEventListener("DOMContentLoaded", () => {
+      const interval = setInterval(() => {
+        const manualInput = document.getElementById("manualAddr");
+        if (manualInput && window.google?.maps?.places) {
+          clearInterval(interval);
+          new google.maps.places.Autocomplete(manualInput, {
+            fields: ["geometry", "formatted_address", "name"],
+            types: ["geocode"],
+          });
+        }
+      }, 500);
+    });
+  </script>
 </body>
 </html>
