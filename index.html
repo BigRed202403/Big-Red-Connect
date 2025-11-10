@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Big Red Connect</title>
+  <title>Big Red Connect — Veteran Owned • Affordable • Local • Trusted</title>
 
   <!-- 📱 PWA / Icons -->
   <link rel="apple-touch-icon" href="icon.png">
@@ -15,130 +15,166 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="theme-color" content="#000000">
 
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+
+  <link rel="stylesheet" href="style.css" />
+
   <style>
     body {
-      margin: 0;
-      font-family: "Roboto", sans-serif;
-      background-color: #000;
-      color: #fff;
-      text-align: center;
+      background:#000;
+      color:#fff;
+      font-family:'Roboto',sans-serif;
+      text-align:center;
+      margin:0;
     }
 
-    .logo {
-      margin-top: 20px;
-      max-width: 240px;
-    }
+    .hero { margin-top:25px; }
+    .main-logo { width:260px; margin-top:20px; }
+    .tagline { color:#bbb; margin:8px 0 20px; font-size:.95em; }
 
-    .tagline {
-      color: #bbb;
-      margin-top: 8px;
-      font-size: 0.95em;
+    .cta-group {
+      display:flex; flex-direction:column; align-items:center;
+      gap:10px; margin-top:10px;
     }
-
     .btn {
-      display: inline-block;
-      margin: 10px 8px;
-      padding: 12px 18px;
-      border-radius: 6px;
-      text-decoration: none;
-      font-weight: 700;
-      transition: background 0.3s;
+      display:inline-block;
+      text-decoration:none;
+      padding:12px 20px;
+      border-radius:6px;
+      font-weight:700;
+      width:85%; max-width:320px;
+      text-align:center;
     }
+    .btn.primary { background:#b30000; color:#fff; }
+    .btn.primary:hover { background:#cc0000; }
+    .btn.secondary { border:1px solid #b30000; background:transparent; color:#fff; }
 
-    .primary {
-      background: #b30000;
-      color: #fff;
+    /* --- Why Choose Section --- */
+    .why-section {
+      background:#111;
+      border-top:1px solid #222;
+      border-bottom:1px solid #222;
+      margin:30px 0 0;
+      padding:25px 12px;
     }
+    .why-section h2 { color:#fff; margin-bottom:16px; }
+    .why-grid {
+      display:flex; flex-wrap:wrap; justify-content:center;
+      gap:18px; max-width:900px; margin:0 auto;
+    }
+    .why-item {
+      background:#000; border:1px solid #b30000;
+      border-radius:8px; padding:15px; width:250px;
+    }
+    .why-item h3 { color:#b30000; margin:8px 0 6px; }
+    .why-item p { color:#ccc; font-size:.9em; }
 
-    .primary:hover {
-      background: #cc0000;
+    /* --- Reviews Section --- */
+    .reviews-section {
+      padding:25px 12px;
     }
-
-    .secondary {
-      border: 1px solid #b30000;
-      color: #fff;
-    }
+    .reviews-section h2 { color:#fff; margin-bottom:10px; }
+    .reviews-section a.btn { margin-top:8px; }
 
     footer {
-      margin-top: 30px;
-      color: #666;
-      font-size: 0.9em;
+      color:#666;
+      margin:25px 0;
+      font-size:.9em;
     }
 
     /* --- Floating Refresh Bar --- */
     #refreshButton {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background: #b30000;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      padding: 10px 16px;
-      font-size: 0.95em;
-      font-weight: 700;
-      cursor: pointer;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.4);
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.5s ease;
-      z-index: 10;
+      position:fixed;
+      bottom:20px;
+      right:20px;
+      background:#b30000;
+      color:#fff;
+      border:none;
+      border-radius:6px;
+      padding:10px 16px;
+      font-size:.95em;
+      font-weight:700;
+      cursor:pointer;
+      box-shadow:0 2px 6px rgba(0,0,0,.4);
+      opacity:0;
+      pointer-events:none;
+      transition:opacity .5s ease;
+      z-index:10;
     }
-
-    #refreshButton.visible {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    #refreshButton:hover {
-      background: #cc0000;
-    }
+    #refreshButton.visible { opacity:1; pointer-events:auto; }
+    #refreshButton:hover { background:#cc0000; }
   </style>
 </head>
 
 <body>
-  <img src="official_logo_Nov.png" alt="Big Red Connect Logo" class="logo" />
-  <p class="tagline">Veteran Owned • Affordable Flat Rates • Trusted Local Connections</p>
+  <div class="hero">
+    <img src="official_logo_Nov.png" alt="Big Red Connect Logo" class="main-logo" />
+    <p class="tagline">Veteran Owned • Affordable Flat Rates • Trusted Local Connections</p>
+  </div>
 
-  <div>
-    <a href="live.html" class="btn primary">📍 Live Map</a>
+  <div class="cta-group">
+    <a href="live.html" class="btn primary">📍 View Live Map</a>
     <a href="farecalculator.html" class="btn secondary">💲 Fare Calculator</a>
+    <a href="reviews.html" class="btn primary">⭐ Leave a Review</a>
+    <a href="faq.html" class="btn secondary">❓ FAQs & Info</a>
     <a href="sms:+14053784024" class="btn primary">📲 Text “RED”</a>
     <a href="tel:+14053784024" class="btn secondary">📞 Call RED</a>
   </div>
 
+  <!-- Why Choose Big Red -->
+  <section class="why-section">
+    <h2>Why Choose Big Red Connect?</h2>
+    <div class="why-grid">
+      <div class="why-item">
+        <h3>🚗 Flat-Rate Local Rides</h3>
+        <p>Know your fare before you ride — no surge pricing or hidden fees.</p>
+      </div>
+      <div class="why-item">
+        <h3>🎯 No Surprises</h3>
+        <p>Affordable, predictable pricing for your daily rides and night outs.</p>
+      </div>
+      <div class="why-item">
+        <h3>💬 Plan Ahead by Text</h3>
+        <p>Text ‘RED’ to 405-378-4024 to plan your connection in seconds.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Reviews -->
+  <section class="reviews-section">
+    <h2>⭐ Customer Reviews</h2>
+    <p>We love hearing from our riders! Share your experience below:</p>
+    <a href="https://docs.google.com/forms/d/e/1FAIpQLSeq6WCnkrG417rWCGwN56i7FplWpNTHlg1lpGuC-IETDEkEHw/viewform?usp=dialog"
+       class="btn primary" target="_blank">📝 Leave a Review</a>
+  </section>
+
   <footer>
-    &copy; 2025 Big Red Connect — Local. Affordable. Trusted.
+    <p>© 2025 Big Red Connect — Veteran Owned • Affordable • Local • Trusted</p>
   </footer>
 
   <!-- Floating Refresh Bar -->
   <button id="refreshButton" title="Refresh Page">🔄 Refresh</button>
 
   <script>
-    const refreshBtn = document.getElementById("refreshButton");
+    const refreshBtn=document.getElementById("refreshButton");
     let refreshTimeout;
 
-    // Show button after delay
-    function showRefreshButton() {
+    function showRefreshButton(){
       refreshBtn.classList.add("visible");
     }
-
-    // Hide button and restart timer
-    function hideRefreshButton() {
+    function hideRefreshButton(){
       refreshBtn.classList.remove("visible");
       clearTimeout(refreshTimeout);
-      refreshTimeout = setTimeout(showRefreshButton, 30000);
+      refreshTimeout=setTimeout(showRefreshButton,30000);
     }
-
-    // Refresh when tapped
-    refreshBtn.addEventListener("click", () => {
+    refreshBtn.addEventListener("click",()=>{
       hideRefreshButton();
       location.reload(true);
     });
-
-    // Initial appearance delay (30s after load)
-    window.addEventListener("load", () => {
-      refreshTimeout = setTimeout(showRefreshButton, 30000);
+    window.addEventListener("load",()=>{
+      refreshTimeout=setTimeout(showRefreshButton,30000);
     });
   </script>
 </body>
