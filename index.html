@@ -2,180 +2,196 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Big Red Connect — Veteran Owned • Affordable • Local • Trusted</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Big Red Connect</title>
 
   <!-- 📱 PWA / Icons -->
-  <link rel="apple-touch-icon" href="icon.png">
+  <link rel="apple-touch-icon" href="icon.PNG">
   <link rel="icon" type="image/png" sizes="192x192" href="icon.png">
-  <link rel="shortcut icon" href="icon.png">
+  <link rel="shortcut icon" href="icon.PNG">
   <link rel="manifest" href="manifest.json">
   <meta name="apple-mobile-web-app-title" content="Big Red Connect">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="theme-color" content="#000000">
 
+  <!-- 🚫 No cache -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
 
+  <!-- 🎨 Styles -->
   <link rel="stylesheet" href="style.css" />
-
-  <style>
-    body {
-      background:#000;
-      color:#fff;
-      font-family:'Roboto',sans-serif;
-      text-align:center;
-      margin:0;
-    }
-
-    .hero { margin-top:25px; }
-    .main-logo { width:260px; margin-top:20px; }
-    .tagline { color:#bbb; margin:8px 0 20px; font-size:.95em; }
-
-    .cta-group {
-      display:flex; flex-direction:column; align-items:center;
-      gap:10px; margin-top:10px;
-    }
-    .btn {
-      display:inline-block;
-      text-decoration:none;
-      padding:12px 20px;
-      border-radius:6px;
-      font-weight:700;
-      width:85%; max-width:320px;
-      text-align:center;
-    }
-    .btn.primary { background:#b30000; color:#fff; }
-    .btn.primary:hover { background:#cc0000; }
-    .btn.secondary { border:1px solid #b30000; background:transparent; color:#fff; }
-
-    /* --- Why Choose Section --- */
-    .why-section {
-      background:#111;
-      border-top:1px solid #222;
-      border-bottom:1px solid #222;
-      margin:30px 0 0;
-      padding:25px 12px;
-    }
-    .why-section h2 { color:#fff; margin-bottom:16px; }
-    .why-grid {
-      display:flex; flex-wrap:wrap; justify-content:center;
-      gap:18px; max-width:900px; margin:0 auto;
-    }
-    .why-item {
-      background:#000; border:1px solid #b30000;
-      border-radius:8px; padding:15px; width:250px;
-    }
-    .why-item h3 { color:#b30000; margin:8px 0 6px; }
-    .why-item p { color:#ccc; font-size:.9em; }
-
-    /* --- Reviews Section --- */
-    .reviews-section {
-      padding:25px 12px;
-    }
-    .reviews-section h2 { color:#fff; margin-bottom:10px; }
-    .reviews-section a.btn { margin-top:8px; }
-
-    footer {
-      color:#666;
-      margin:25px 0;
-      font-size:.9em;
-    }
-
-    /* --- Floating Refresh Bar --- */
-    #refreshButton {
-      position:fixed;
-      bottom:20px;
-      right:20px;
-      background:#b30000;
-      color:#fff;
-      border:none;
-      border-radius:6px;
-      padding:10px 16px;
-      font-size:.95em;
-      font-weight:700;
-      cursor:pointer;
-      box-shadow:0 2px 6px rgba(0,0,0,.4);
-      opacity:0;
-      pointer-events:none;
-      transition:opacity .5s ease;
-      z-index:10;
-    }
-    #refreshButton.visible { opacity:1; pointer-events:auto; }
-    #refreshButton:hover { background:#cc0000; }
-  </style>
 </head>
 
 <body>
-  <div class="hero">
-    <img src="official_logo_Nov.png" alt="Big Red Connect Logo" class="main-logo" />
-    <p class="tagline">Veteran Owned • Affordable Flat Rates • Trusted Local Connections</p>
-  </div>
+  <!-- 🌆 Hero -->
+  <div class="hero"></div>
 
-  <div class="cta-group">
-    <a href="live.html" class="btn primary">📍 View Live Map</a>
-    <a href="farecalculator.html" class="btn secondary">💲 Fare Calculator</a>
-    <a href="reviews.html" class="btn primary">⭐ Leave a Review</a>
-    <a href="faq.html" class="btn secondary">❓ FAQs & Info</a>
-    <a href="sms:+14053784024" class="btn primary">📲 Text “RED”</a>
-    <a href="tel:+14053784024" class="btn secondary">📞 Call RED</a>
-  </div>
+  <!-- 🚗 Logo -->
+  <img src="official_logo_Nov.png" alt="Big Red Connect Logo" class="main-logo" />
 
-  <!-- Why Choose Big Red -->
-  <section class="why-section">
-    <h2>Why Choose Big Red Connect?</h2>
-    <div class="why-grid">
-      <div class="why-item">
-        <h3>🚗 Flat-Rate Local Rides</h3>
-        <p>Know your fare before you ride — no surge pricing or hidden fees.</p>
-      </div>
-      <div class="why-item">
-        <h3>🎯 No Surprises</h3>
-        <p>Affordable, predictable pricing for your daily rides and night outs.</p>
-      </div>
-      <div class="why-item">
-        <h3>💬 Plan Ahead by Text</h3>
-        <p>Text ‘RED’ to 405-378-4024 to plan your connection in seconds.</p>
-      </div>
-    </div>
-  </section>
+  <!-- 🏷️ Tagline -->
+  <p class="tagline">Veteran Owned · Affordable Flat Rates · Trusted Local Connections</p>
 
-  <!-- Reviews -->
-  <section class="reviews-section">
-    <h2>⭐ Customer Reviews</h2>
-    <p>We love hearing from our riders! Share your experience below:</p>
-    <a href="https://docs.google.com/forms/d/e/1FAIpQLSeq6WCnkrG417rWCGwN56i7FplWpNTHlg1lpGuC-IETDEkEHw/viewform?usp=dialog"
-       class="btn primary" target="_blank">📝 Leave a Review</a>
-  </section>
+  <!-- 🚦 Dynamic Status Pill -->
+  <div id="status-pill" class="status status--loading">Checking status…</div>
 
-  <footer>
-    <p>© 2025 Big Red Connect — Veteran Owned • Affordable • Local • Trusted</p>
-  </footer>
-
-  <!-- Floating Refresh Bar -->
+  <!-- 🔄 Floating Refresh Button -->
   <button id="refreshButton" title="Refresh Page">🔄 Refresh</button>
 
+  <!-- 📲 Quick Actions -->
+  <div class="cta-group">
+    <a href="sms:14053784024" class="btn primary">📲 Text “RED”</a>
+    <a href="tel:14053784024" class="btn secondary">📞 Call Big Red</a>
+  </div>
+
+  <!-- 🧭 “Where To?” -->
+  <div class="info-section" style="text-align:center; margin-top:20px;">
+    <h2 style="margin-bottom:10px;">Plan Your Connection</h2>
+    <form id="quickDestination" onsubmit="goToFare(event)" style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+      <input id="quickWhere" type="text" placeholder="Where to?" required 
+             style="flex:1;min-width:220px;max-width:420px;padding:12px;border-radius:10px;border:1px solid #333;background:#111;color:#fff;">
+      <button type="submit" class="btn primary">➡️ Next</button>
+    </form>
+    <p style="font-size:0.9em;color:#888;margin-top:6px;">
+      Tip: Start typing a place, business, or address — suggestions will appear.
+    </p>
+  </div>
+
+  <!-- 🧱 Navigation Tiles -->
+  <div class="tile-grid">
+    <a href="farecalculator.html" class="tile">💲<br>Fare Calculator</a>
+    <a href="live.html" class="tile">🗺️<br>Live Map</a>
+    <a href="reviews.html" class="tile">⭐<br>Rider Reviews</a>
+    <a href="faq.html" class="tile">ℹ️<br>FAQ & Info</a>
+    <a href="https://www.facebook.com/share/1BWCx63CUt/?mibextid=wwXIfr" target="_blank" class="tile">👍<br>Follow on Facebook</a>
+  </div>
+
+  <!-- 🧾 What I Do -->
+  <section class="info-section">
+    <h2>What I Do</h2>
+    <p>
+      I offer local ride connections across the Oklahoma City metro — from workdays and class runs
+      to weekend nights, OU games, and airport trips.
+    </p>
+    <ul>
+      <li>Daily work, school, and appointment connections</li>
+      <li>Airport and Tinker AFB flat-rate rides</li>
+      <li>Evening and nightlife link-ups</li>
+      <li>Event, casino, and concert trips — plan ahead and ride local</li>
+    </ul>
+  </section>
+
+  <!-- ❤️ Why Choose Red -->
+  <section class="info-section">
+    <h2>Why Choose Red</h2>
+    <ul>
+      <li>Veteran-owned and operated — every connection is personal.</li>
+      <li>Flat-rate, fair pricing with zero surprises.</li>
+      <li>One trusted driver — no random apps or surge pricing.</li>
+    </ul>
+  </section>
+
+  <!-- 💬 Reviews -->
+  <section class="info-section">
+    <h2>What Riders Say</h2>
+    <div class="review-card">
+      ⭐⭐⭐⭐⭐ “Always dependable and easy to reach. Flat rate, no surprises.”<br>
+      — <strong>Alex, Norman</strong>
+    </div>
+    <div class="review-card">
+      ⭐⭐⭐⭐⭐ “Feels like riding with a friend, not an app. My go-to for nights out.”<br>
+      — <strong>Taylor, OKC</strong>
+    </div>
+    <p><a href="reviews.html">See more reviews →</a></p>
+  </section>
+
+  <!-- 🦶 Footer -->
+  <footer>
+    <p>Questions or ride connection requests?<br>Text <strong>“RED”</strong> to (405) 378-4024.</p>
+    <p><a href="faq.html">FAQ & Policies</a> | <a href="reviews.html">Leave a Review</a></p>
+    <p>&copy; 2025 Big Red Connect</p>
+    <p style="font-size:0.8em;color:#777;margin-top:10px;line-height:1.4;">
+      Vehicle imagery features actual Big Red Connect fleet vehicles.<br>
+      Some backgrounds created with AI-assisted design tools for illustrative purposes only.<br>
+      Brand names (Chevrolet® and GMC®) are property of their respective owners and used descriptively.
+    </p>
+  </footer>
+
+  <!-- 🗺️ Google Places -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places"></script>
   <script>
-    const refreshBtn=document.getElementById("refreshButton");
+    let whereAuto;
+    function initQuickSearch() {
+      whereAuto = new google.maps.places.Autocomplete(
+        document.getElementById("quickWhere"),
+        { fields: ["formatted_address", "name"] }
+      );
+    }
+    function goToFare(e) {
+      e.preventDefault();
+      const dest = document.getElementById("quickWhere").value.trim();
+      if (dest) {
+        window.location.href = "farecalculator.html?dropoff=" + encodeURIComponent(dest);
+      }
+    }
+    window.onload = initQuickSearch;
+  </script>
+
+  <!-- 🚦 Global Status Pill -->
+  <script src="status.js?v=20251026"></script>
+
+  <!-- 🔄 Smart Refresh Button Logic -->
+  <script>
+    const refreshBtn = document.getElementById("refreshButton");
     let refreshTimeout;
 
-    function showRefreshButton(){
+    function showRefreshButton() {
       refreshBtn.classList.add("visible");
     }
-    function hideRefreshButton(){
+
+    function hideRefreshButton() {
       refreshBtn.classList.remove("visible");
       clearTimeout(refreshTimeout);
-      refreshTimeout=setTimeout(showRefreshButton,30000);
+      refreshTimeout = setTimeout(showRefreshButton, 30000);
     }
-    refreshBtn.addEventListener("click",()=>{
+
+    refreshBtn.addEventListener("click", () => {
       hideRefreshButton();
       location.reload(true);
     });
-    window.addEventListener("load",()=>{
-      refreshTimeout=setTimeout(showRefreshButton,30000);
+
+    window.addEventListener("load", () => {
+      refreshTimeout = setTimeout(showRefreshButton, 30000);
     });
   </script>
+
+  <style>
+    /* Floating refresh styling */
+    #refreshButton {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #b30000;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 10px 16px;
+      font-size: 0.95em;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s ease;
+      z-index: 10;
+    }
+    #refreshButton.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    #refreshButton:hover { background: #cc0000; }
+  </style>
 </body>
 </html>
