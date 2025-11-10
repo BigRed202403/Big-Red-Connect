@@ -3,14 +3,13 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Admin Big Red</title>
+<title>Admin Big Red (Beta)</title>
 
 <!-- 📱 Big Red Connect Admin PWA Setup -->
 <link rel="apple-touch-icon" href="icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon.png">
 <link rel="shortcut icon" href="icon.png">
-<link rel="manifest" href="manifest-admin.json">
-<meta name="apple-mobile-web-app-title" content="Admin Big Red">
+<meta name="apple-mobile-web-app-title" content="Admin Big Red Beta">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#000000">
@@ -43,6 +42,8 @@ border-radius:6px;padding:8px;}
 footer{margin:18px 0 24px;font-size:.9em;color:#777;}
 #toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
 background:var(--red);color:#fff;padding:8px 16px;border-radius:6px;opacity:0;transition:opacity .35s;z-index:5;}
+#debugLog{font-family:monospace;font-size:0.75rem;color:#0f0;background:#000;
+padding:6px;max-height:200px;overflow:auto;text-align:left;border-top:1px solid #222;}
 </style>
 </head>
 <body>
@@ -55,7 +56,7 @@ background:var(--red);color:#fff;padding:8px 16px;border-radius:6px;opacity:0;tr
   <button class="refresh-btn" id="refreshPage">🔄 Refresh Page</button>
 </header>
 
-<h1>Big Red Connect — Admin Console</h1>
+<h1>Big Red Connect — Admin Console (Beta)</h1>
 <p class="tagline">Veteran Owned • Affordable • Local • Trusted</p>
 
 <div id="status-pill" class="status">Checking status…</div>
@@ -73,7 +74,6 @@ background:var(--red);color:#fff;padding:8px 16px;border-radius:6px;opacity:0;tr
       <button class="btn-primary" id="updateStatusBtn">💾 Save Status</button>
     </div>
 
-    <!-- 🧭 GPS Permission Button -->
     <div id="gpsPermission" style="display:none; margin-top:10px;">
       <button class="btn-secondary" id="requestGPSBtn">📍 Grant Location Permission</button>
       <p class="meta">Tap this once to allow live GPS tracking on this device.</p>
@@ -98,8 +98,9 @@ background:var(--red);color:#fff;padding:8px 16px;border-radius:6px;opacity:0;tr
   </section>
 </div>
 
-<footer>© 2025 Big Red Connect — Admin Panel</footer>
+<footer>© 2025 Big Red Connect — Admin Panel Beta</footer>
 <div id="toast"></div>
+<div id="debugLog">[Debug log started]</div>
 
 <script>
 const STATUS_WORKER="https://bigred-status-updater.bigredtransportation.workers.dev";
@@ -118,6 +119,11 @@ const gpsPermission=document.getElementById("gpsPermission");
 const requestGPSBtn=document.getElementById("requestGPSBtn");
 
 function showToast(msg,ms=2000){toast.textContent=msg;toast.style.opacity=1;setTimeout(()=>toast.style.opacity=0,ms);}
+function logDebug(msg){
+ const el=document.getElementById("debugLog");
+ const now=new Date().toLocaleTimeString("en-US",{hour12:false});
+ el.innerHTML=`[${now}] ${msg}<br>`+el.innerHTML;
+}
 
 document.getElementById("refreshPage").onclick=()=>{showToast("Refreshing…");setTimeout(()=>location.reload(true),350);};
 
@@ -135,7 +141,6 @@ async function fetchStatus(){
 }
 
 function fmtLocal(iso){if(!iso)return"—";return new Date(iso).toLocaleString("en-US",{timeZone:TZ});}
-
 function renderStatusPill(state,iso){
  pill.classList.remove("online","away","offline");
  let stamp=fmtLocal(iso);
@@ -145,7 +150,6 @@ function renderStatusPill(state,iso){
  statusStamp.textContent=stamp;
 }
 
-// === MANUAL GPS PERMISSION PROMPT ===
 requestGPSBtn.addEventListener("click",()=>{
  if(!navigator.geolocation){alert("GPS not supported on this device.");return;}
  navigator.geolocation.getCurrentPosition(
@@ -206,35 +210,62 @@ document.getElementById("copyBtn").onclick=()=>{navigator.clipboard.writeText(do
 document.getElementById("shareBtn").onclick=()=>{const c=encodeURIComponent(document.getElementById("captionBox").value);
 window.open(`https://www.facebook.com/sharer/sharer.php?u=https://bigred202403.github.io/Big-Red-Connect/&quote=${c}`,"_blank");};
 
-/* === GPS LOOP + WAKE LOCK === */
-let gpsTimer=null;let wakeLock=null;let currentIntervalMs=0;
+/* === GPS LOOP (recursive) + WAKE LOCK === */
+let gpsTimerActive=false;let wakeLock=null;let currentIntervalMs=0;
 function setLivePill(active,rateMs){
  livePill.classList.remove("online","away","offline");
  if(active){livePill.classList.add("online");livePill.textContent="📡 Tracking: ON";}
  else{livePill.classList.add("offline");livePill.textContent="📡 Tracking: OFF";}
  gpsRate.textContent=active?`${Math.round(rateMs/1000)}s`:"—";
 }
+
 async function sendGPS(lat,lng){
  const payload={latitude:lat,longitude:lng,timestamp:new Date().toISOString()};
  try{
-  await fetch(LOCATION_WORKER,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
-  gpsStamp.textContent=fmtLocal(payload.timestamp);
- }catch(e){console.warn("GPS send error",e);}
+  logDebug(`Sending GPS → ${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+  const res=await fetch(LOCATION_WORKER,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+  if(res.ok){
+    gpsStamp.textContent=fmtLocal(payload.timestamp);
+    logDebug("✅ GPS sent OK");
+  }else{
+    logDebug("⚠️ GPS push failed "+res.status);
+  }
+ }catch(e){
+  logDebug("❌ GPS send error: "+e.message);
+ }
 }
+
 function startGPSLoop(intervalMs){
- stopGPSLoop();currentIntervalMs=intervalMs;setLivePill(true,currentIntervalMs);requestWakeLock();
- const push=()=>{
-  if(!navigator.geolocation){showToast("⚠️ Enable Location Services");return;}
-  navigator.geolocation.getCurrentPosition(
-    (pos)=>{const{latitude,longitude}=pos.coords;sendGPS(latitude,longitude);},
-    ()=>{}, {enableHighAccuracy:true,maximumAge:8000,timeout:8000}
-  );
+ stopGPSLoop();
+ currentIntervalMs=intervalMs;
+ gpsTimerActive=true;
+ setLivePill(true,currentIntervalMs);
+ requestWakeLock();
+ logDebug("GPS loop started ("+intervalMs+"ms)");
+ const loop=()=>{
+   if(!gpsTimerActive)return;
+   if(!navigator.geolocation){showToast("⚠️ Enable Location Services");return;}
+   logDebug("⏰ GPS tick");
+   navigator.geolocation.getCurrentPosition(
+     (pos)=>{const{latitude,longitude}=pos.coords;sendGPS(latitude,longitude);},
+     (err)=>logDebug("GPS error "+err.message),
+     {enableHighAccuracy:true,maximumAge:8000,timeout:8000}
+   );
+   setTimeout(loop,currentIntervalMs);
  };
- push();gpsTimer=setInterval(push,currentIntervalMs);
+ loop();
 }
-function stopGPSLoop(){if(gpsTimer){clearInterval(gpsTimer);gpsTimer=null;}currentIntervalMs=0;setLivePill(false,0);releaseWakeLock();}
-async function requestWakeLock(){try{if('wakeLock'in navigator){wakeLock=await navigator.wakeLock.request('screen');}}catch(e){}}
-async function releaseWakeLock(){if(wakeLock){try{await wakeLock.release();}catch{}wakeLock=null;}}
+
+function stopGPSLoop(){
+ gpsTimerActive=false;
+ currentIntervalMs=0;
+ setLivePill(false,0);
+ releaseWakeLock();
+ logDebug("GPS loop stopped");
+}
+
+async function requestWakeLock(){try{if('wakeLock'in navigator){wakeLock=await navigator.wakeLock.request('screen');logDebug("Wake lock granted");}}catch(e){logDebug("Wake lock denied "+e.message);}}
+async function releaseWakeLock(){if(wakeLock){try{await wakeLock.release();logDebug("Wake lock released");}catch{}wakeLock=null;}}
 
 window.addEventListener("pagehide",()=>{stopGPSLoop();});
 fetchStatus();
