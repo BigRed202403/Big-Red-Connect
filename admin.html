@@ -134,8 +134,8 @@ async function fetchStatus(){
   renderStatusPill(j.status,j.updated);
   select.value=j.status;
   buildPreview(j.status);
-  if(j.status==="online")startGPSLoop(5000);
-  else if(j.status==="away")startGPSLoop(30000);
+  if(j.status==="online")startGPSLoop(30000);
+  else if(j.status==="away")startGPSLoop(60000);
   else stopGPSLoop();
  }catch(e){renderStatusPill("offline");}
 }
@@ -150,57 +150,69 @@ function renderStatusPill(state,iso){
  statusStamp.textContent=stamp;
 }
 
-requestGPSBtn.addEventListener("click",()=>{
- if(!navigator.geolocation){alert("GPS not supported on this device.");return;}
- navigator.geolocation.getCurrentPosition(
-  pos=>{
-    showToast("✅ Location permission granted!");
-    gpsPermission.style.display="none";
-    const{latitude,longitude}=pos.coords;
-    sendGPS(latitude,longitude);
-  },
-  err=>{
-    console.warn("❌ Permission denied:",err);
-    alert("Location permission was denied. Enable it in Settings → Privacy → Location Services.");
-  },
-  {enableHighAccuracy:true,timeout:10000}
- );
-});
-function maybeShowGPSPrompt(status){
- if(status==="online"){gpsPermission.style.display="block";}
- else{gpsPermission.style.display="none";}
-}
-
-document.getElementById("updateStatusBtn").onclick=async()=>{
- const newStatus=select.value;
- const payload={status:newStatus,updated:new Date().toISOString()};
- try{
-  const res=await fetch(STATUS_WORKER+"/",{method:"PUT",headers:{"Content-Type":"application/json","X-Auth-Token":AUTH_SECRET},body:JSON.stringify(payload)});
-  if(!res.ok)throw new Error(await res.text());
-  renderStatusPill(newStatus,payload.updated);
-  showToast("✅ Status updated");
-  buildPreview(newStatus);
-  maybeShowGPSPrompt(newStatus);
-  if(newStatus==="online")startGPSLoop(30000);
-  else stopGPSLoop();
- }catch(e){showToast("⚠️ Update failed");}
-};
-
+/* === SMART PREVIEW BUILDER with Actual Filenames === */
 function buildPreview(status){
  const img=document.getElementById("statusImage");
  const caption=document.getElementById("captionBox");
- const now=new Date();const hour=now.getHours();const m=now.getMonth();
- const isHoliday=(m===10||m===11);const isDay=hour>=7&&hour<18;
- let imgName="Big Red Live 2.png";
- if(isHoliday)imgName="Big Red Live Holiday 1.png";else if(!isDay)imgName="Big Red Live Christmas.png";
- img.src=`https://raw.githubusercontent.com/bigred202403/Big-Red-Connect/main/${encodeURIComponent(imgName)}`;
+ const now=new Date();
+ const hour=now.getHours();
+ const month=now.getMonth();
+
+ const isHoliday=(month===10||month===11);
+ const isDay=hour>=7&&hour<18;
+
+ const dayImages=[
+   "3F34BE7E-5953-433C-B8D0-17AC9108107F.png",
+   "B02AB3EA-1AF5-4BE4-8CBB-E5A1AA40711F.png",
+   "Big Red Live 2.png",
+   "Big Red Live Text Only.png"
+ ];
+
+ const nightImages=[
+   "3673A967-4A2D-4F9C-8602-0C820D31D168.png",
+   "982ABF7A-D9F5-403D-BAE8-13777EC286FB.png",
+   "BA7E86CF-5782-4323-B0B2-19918EF67887.png",
+   "0081086F-89FA-41B2-85EB-E4EE97E9E8EF.png",
+   "Big Red Live 2.png"
+ ];
+
+ const holidayImages=[
+   "3673A967-4A2D-4F9C-8602-0C820D31D168.png",
+   "982ABF7A-D9F5-403D-BAE8-13777EC286FB.png",
+   "B02AB3EA-1AF5-4BE4-8CBB-E5A1AA40711F.png",
+   "Big Red Live Holiday 1.png",
+   "Big Red Live Christmas.png",
+   "Big Red Live Thanksgiving.png"
+ ];
+
+ let chosen;
+ if(isHoliday){
+   chosen=holidayImages[Math.floor(Math.random()*holidayImages.length)];
+ }else if(isDay){
+   chosen=dayImages[Math.floor(Math.random()*dayImages.length)];
+ }else{
+   chosen=nightImages[Math.floor(Math.random()*nightImages.length)];
+ }
+
+ img.src=`https://raw.githubusercontent.com/bigred202403/Big-Red-Connect/main/${encodeURIComponent(chosen)}`;
+
+ const dayNames=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+ const weekday=dayNames[now.getDay()];
  let base="";
  if(status==="online"){
-  base=isHoliday?"🎄 Big Red Connect is LIVE — plan ahead this holiday season!"
-  :(isDay?"🚗 Big Red Connect is LIVE — your affordable flat-rate ride connection."
-  :"🌙 Big Red Connect is LIVE — from last call to your front door, ride local and ride safe.");
- }else if(status==="away"){base="🕑 Big Red Connect is temporarily away — back soon!";}
- else{base="🔴 Big Red Connect is currently offline. Thanks for riding local!";}
+   if(isHoliday){
+     base=`🎄 ${weekday} Moves – Big Red Connect is LIVE this holiday season! From last call to your front door, ride local and ride safe.`;
+   }else if(isDay){
+     base=`🚗 ${weekday} Moves – Big Red Connect is LIVE! Affordable, local, and ready for your next daytime ride.`;
+   }else{
+     base=`🌙 ${weekday} Nights – Big Red Connect is LIVE! From last call to your front door, ride local and ride safe.`;
+   }
+ }else if(status==="away"){
+   base=`🕑 ${weekday} Update – Big Red Connect is temporarily away but back soon!`;
+ }else{
+   base=`🔴 ${weekday} Update – Big Red Connect is currently offline. Thanks for riding local!`;
+ }
+
  const CTA="\n\nNo surprises. Just solid local moves.\nText ‘RED’ to 405-378-4024 — your affordable flat-rate ride connection.\nVeteran Owned • Affordable • Local • Trusted.";
  caption.value=base+CTA;
 }
@@ -209,7 +221,7 @@ document.getElementById("copyBtn").onclick=()=>{navigator.clipboard.writeText(do
 document.getElementById("shareBtn").onclick=()=>{const c=encodeURIComponent(document.getElementById("captionBox").value);
 window.open(`https://www.facebook.com/sharer/sharer.php?u=https://bigred202403.github.io/Big-Red-Connect/&quote=${c}`,"_blank");};
 
-/* === GPS LOOP (recursive) + WAKE LOCK === */
+/* === GPS LOOP + WAKE LOCK === */
 let gpsTimerActive=false;let wakeLock=null;let currentIntervalMs=0;
 function setLivePill(active,rateMs){
  livePill.classList.remove("online","away","offline");
