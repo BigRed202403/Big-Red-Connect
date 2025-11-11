@@ -1,3 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Admin Big Red (Beta)</title>
+
+<!-- 📱 Big Red Connect Admin PWA Setup -->
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon.png">
+<link rel="shortcut icon" href="icon.png">
+<meta name="apple-mobile-web-app-title" content="Admin Big Red Beta">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#000000">
+
+<style>
+:root { --red:#b30000; --bg:#000; --panel:#111; --muted:#aaa; }
+body{background:var(--bg);color:#fff;font-family:Arial,Helvetica,sans-serif;margin:0;text-align:center;}
+header{background:var(--panel);display:flex;justify-content:space-between;align-items:center;
+padding:10px 16px;border-bottom:2px solid var(--red);}
+.bar-left{color:#bbb;font-size:.92em;display:flex;gap:10px;align-items:center;}
+.pill{padding:4px 10px;border-radius:999px;font-weight:700;font-size:.85em;}
+.pill.online{background:#064;} .pill.away{background:#665500;} .pill.offline{background:#400;}
+.refresh-btn{background:var(--red);color:#fff;border:none;padding:8px 14px;border-radius:6px;cursor:pointer;font-weight:700;}
+.refresh-btn:hover{background:#cc0000;}
+h1{margin:18px 0 6px;color:var(--red);font-size:1.6rem;}
+.tagline{color:#ddd;margin:0 0 8px;font-size:.95rem;}
+.status{margin:10px auto;padding:10px;border-radius:6px;display:inline-block;min-width:280px;}
+.status.online{background:#064;} .status.away{background:#665500;} .status.offline{background:#400;}
+.grid{display:grid;grid-template-columns:1fr;gap:18px;max-width:880px;margin:0 auto;padding:10px 16px 24px;}
+section{background:var(--panel);border:1px solid #222;border-radius:8px;padding:14px;}
+section h2{margin:6px 0 8px;font-size:1.1rem;}
+select,button{padding:10px;border-radius:6px;border:none;margin:6px;font-weight:700;}
+.btn-primary{background:var(--red);color:#fff;} .btn-secondary{background:#000;color:#fff;border:1px solid var(--red);}
+.row{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:6px;}
+.meta{color:var(--muted);font-size:.85em;margin-top:6px;}
+.img-box{max-width:95%;margin:10px auto;border:3px solid var(--red);border-radius:6px;padding:8px;}
+.img-box img{width:100%;border-radius:6px;}
+textarea{width:95%;max-width:780px;height:120px;background:#111;color:#fff;border:2px solid var(--red);
+border-radius:6px;padding:8px;}
+footer{margin:18px 0 24px;font-size:.9em;color:#777;}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+background:var(--red);color:#fff;padding:8px 16px;border-radius:6px;opacity:0;transition:opacity .35s;z-index:5;}
+#debugLog{font-family:monospace;font-size:0.75rem;color:#0f0;background:#000;
+padding:6px;max-height:200px;overflow:auto;text-align:left;border-top:1px solid #222;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="bar-left">
+    <span>🔒 Internal Use Only</span>
+    <span id="livePill" class="pill offline">📡 Tracking: OFF</span>
+  </div>
+  <button class="refresh-btn" id="refreshPage">🔄 Refresh Page</button>
+</header>
+
+<h1>Big Red Connect — Admin Console (Beta)</h1>
+<p class="tagline">Veteran Owned • Affordable • Local • Trusted</p>
+
+<div id="status-pill" class="status">Checking status…</div>
+
+<div class="grid">
+  <!-- ===== CONTROL ===== -->
+  <section id="control">
+    <h2>Update Driving Status</h2>
+    <div class="row">
+      <select id="statusSelect">
+        <option value="online">🟢 On the Road</option>
+        <option value="away">🟡 Limited Availability</option>
+        <option value="offline">🔴 Offline</option>
+      </select>
+      <button class="btn-primary" id="updateStatusBtn">💾 Save Status</button>
+    </div>
+
+    <div id="gpsPermission" style="display:none; margin-top:10px;">
+      <button class="btn-secondary" id="requestGPSBtn">📍 Grant Location Permission</button>
+      <p class="meta">Tap this once to allow live GPS tracking on this device.</p>
+    </div>
+
+    <div class="meta">
+      <div>Last status update: <span id="statusStamp">—</span></div>
+      <div>Last GPS ping: <span id="gpsStamp">—</span> • Interval: <span id="gpsRate">—</span></div>
+    </div>
+  </section>
+
+  <!-- ===== QUICK SHARE ===== -->
+  <section id="share">
+    <h2>Quick Share Builder</h2>
+    <div class="img-box"><img id="statusImage" src="" alt="Preview"></div>
+    <textarea id="captionBox" readonly>Loading caption...</textarea>
+    <div class="row">
+      <button class="btn-secondary" id="copyBtn">📋 Copy Caption</button>
+      <button class="btn-primary" id="shareBtn">📤 Share on Facebook</button>
+    </div>
+    <div class="meta">Preview uses holiday/day/night logic automatically.</div>
+  </section>
+</div>
+
+<footer>© 2025 Big Red Connect — Admin Panel Beta</footer>
+<div id="toast"></div>
+<div id="debugLog">[Debug log started]</div>
+
 <script>
 const STATUS_WORKER="https://bigred-status-updater.bigredtransportation.workers.dev";
 const LOCATION_WORKER="https://update-location.bigredtransportation.workers.dev";
@@ -46,43 +150,7 @@ function renderStatusPill(state,iso){
  statusStamp.textContent=stamp;
 }
 
-requestGPSBtn.addEventListener("click",()=>{
- if(!navigator.geolocation){alert("GPS not supported on this device.");return;}
- navigator.geolocation.getCurrentPosition(
-  pos=>{
-    showToast("✅ Location permission granted!");
-    gpsPermission.style.display="none";
-    const{latitude,longitude}=pos.coords;
-    sendGPS(latitude,longitude);
-  },
-  err=>{
-    console.warn("❌ Permission denied:",err);
-    alert("Location permission was denied. Enable it in Settings → Privacy → Location Services.");
-  },
-  {enableHighAccuracy:true,timeout:10000}
- );
-});
-function maybeShowGPSPrompt(status){
- if(status==="online"){gpsPermission.style.display="block";}
- else{gpsPermission.style.display="none";}
-}
-
-document.getElementById("updateStatusBtn").onclick=async()=>{
- const newStatus=select.value;
- const payload={status:newStatus,updated:new Date().toISOString()};
- try{
-  const res=await fetch(STATUS_WORKER+"/",{method:"PUT",headers:{"Content-Type":"application/json","X-Auth-Token":AUTH_SECRET},body:JSON.stringify(payload)});
-  if(!res.ok)throw new Error(await res.text());
-  renderStatusPill(newStatus,payload.updated);
-  showToast("✅ Status updated");
-  buildPreview(newStatus);
-  maybeShowGPSPrompt(newStatus);
-  if(newStatus==="online")startGPSLoop(30000);
-  else stopGPSLoop();
- }catch(e){showToast("⚠️ Update failed");}
-};
-
-/* === SMART PREVIEW BUILDER (Merged) === */
+/* === SMART PREVIEW BUILDER with Actual Filenames === */
 function buildPreview(status){
  const img=document.getElementById("statusImage");
  const caption=document.getElementById("captionBox");
@@ -149,12 +217,11 @@ function buildPreview(status){
  caption.value=base+CTA;
 }
 
-/* === Share / Copy Buttons === */
 document.getElementById("copyBtn").onclick=()=>{navigator.clipboard.writeText(document.getElementById("captionBox").value);showToast("📋 Caption copied");};
 document.getElementById("shareBtn").onclick=()=>{const c=encodeURIComponent(document.getElementById("captionBox").value);
 window.open(`https://www.facebook.com/sharer/sharer.php?u=https://bigred202403.github.io/Big-Red-Connect/&quote=${c}`,"_blank");};
 
-/* === GPS LOOP (recursive) + WAKE LOCK === */
+/* === GPS LOOP + WAKE LOCK === */
 let gpsTimerActive=false;let wakeLock=null;let currentIntervalMs=0;
 function setLivePill(active,rateMs){
  livePill.classList.remove("online","away","offline");
@@ -223,3 +290,5 @@ if("serviceWorker"in navigator){
  });
 }
 </script>
+</body>
+</html>
