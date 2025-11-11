@@ -181,8 +181,7 @@ document.getElementById("updateStatusBtn").onclick=async()=>{
   showToast("✅ Status updated");
   buildPreview(newStatus);
   maybeShowGPSPrompt(newStatus);
-  if(newStatus==="online")startGPSLoop(5000);
-  else if(newStatus==="away")startGPSLoop(30000);
+  if(newStatus==="online")startGPSLoop(30000);
   else stopGPSLoop();
  }catch(e){showToast("⚠️ Update failed");}
 };
