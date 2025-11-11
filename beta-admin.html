@@ -1,107 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Admin Big Red (Beta)</title>
-
-<!-- 📱 Big Red Connect Admin PWA Setup -->
-<link rel="apple-touch-icon" href="icon.png">
-<link rel="icon" type="image/png" sizes="192x192" href="icon.png">
-<link rel="shortcut icon" href="icon.png">
-<meta name="apple-mobile-web-app-title" content="Admin Big Red Beta">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#000000">
-
-<style>
-:root { --red:#b30000; --bg:#000; --panel:#111; --muted:#aaa; }
-body{background:var(--bg);color:#fff;font-family:Arial,Helvetica,sans-serif;margin:0;text-align:center;}
-header{background:var(--panel);display:flex;justify-content:space-between;align-items:center;
-padding:10px 16px;border-bottom:2px solid var(--red);}
-.bar-left{color:#bbb;font-size:.92em;display:flex;gap:10px;align-items:center;}
-.pill{padding:4px 10px;border-radius:999px;font-weight:700;font-size:.85em;}
-.pill.online{background:#064;} .pill.away{background:#665500;} .pill.offline{background:#400;}
-.refresh-btn{background:var(--red);color:#fff;border:none;padding:8px 14px;border-radius:6px;cursor:pointer;font-weight:700;}
-.refresh-btn:hover{background:#cc0000;}
-h1{margin:18px 0 6px;color:var(--red);font-size:1.6rem;}
-.tagline{color:#ddd;margin:0 0 8px;font-size:.95rem;}
-.status{margin:10px auto;padding:10px;border-radius:6px;display:inline-block;min-width:280px;}
-.status.online{background:#064;} .status.away{background:#665500;} .status.offline{background:#400;}
-.grid{display:grid;grid-template-columns:1fr;gap:18px;max-width:880px;margin:0 auto;padding:10px 16px 24px;}
-section{background:var(--panel);border:1px solid #222;border-radius:8px;padding:14px;}
-section h2{margin:6px 0 8px;font-size:1.1rem;}
-select,button{padding:10px;border-radius:6px;border:none;margin:6px;font-weight:700;}
-.btn-primary{background:var(--red);color:#fff;} .btn-secondary{background:#000;color:#fff;border:1px solid var(--red);}
-.row{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:6px;}
-.meta{color:var(--muted);font-size:.85em;margin-top:6px;}
-.img-box{max-width:95%;margin:10px auto;border:3px solid var(--red);border-radius:6px;padding:8px;}
-.img-box img{width:100%;border-radius:6px;}
-textarea{width:95%;max-width:780px;height:120px;background:#111;color:#fff;border:2px solid var(--red);
-border-radius:6px;padding:8px;}
-footer{margin:18px 0 24px;font-size:.9em;color:#777;}
-#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
-background:var(--red);color:#fff;padding:8px 16px;border-radius:6px;opacity:0;transition:opacity .35s;z-index:5;}
-#debugLog{font-family:monospace;font-size:0.75rem;color:#0f0;background:#000;
-padding:6px;max-height:200px;overflow:auto;text-align:left;border-top:1px solid #222;}
-</style>
-</head>
-<body>
-
-<header>
-  <div class="bar-left">
-    <span>🔒 Internal Use Only</span>
-    <span id="livePill" class="pill offline">📡 Tracking: OFF</span>
-  </div>
-  <button class="refresh-btn" id="refreshPage">🔄 Refresh Page</button>
-</header>
-
-<h1>Big Red Connect — Admin Console (Beta)</h1>
-<p class="tagline">Veteran Owned • Affordable • Local • Trusted</p>
-
-<div id="status-pill" class="status">Checking status…</div>
-
-<div class="grid">
-  <!-- ===== CONTROL ===== -->
-  <section id="control">
-    <h2>Update Driving Status</h2>
-    <div class="row">
-      <select id="statusSelect">
-        <option value="online">🟢 On the Road</option>
-        <option value="away">🟡 Limited Availability</option>
-        <option value="offline">🔴 Offline</option>
-      </select>
-      <button class="btn-primary" id="updateStatusBtn">💾 Save Status</button>
-    </div>
-
-    <div id="gpsPermission" style="display:none; margin-top:10px;">
-      <button class="btn-secondary" id="requestGPSBtn">📍 Grant Location Permission</button>
-      <p class="meta">Tap this once to allow live GPS tracking on this device.</p>
-    </div>
-
-    <div class="meta">
-      <div>Last status update: <span id="statusStamp">—</span></div>
-      <div>Last GPS ping: <span id="gpsStamp">—</span> • Interval: <span id="gpsRate">—</span></div>
-    </div>
-  </section>
-
-  <!-- ===== QUICK SHARE ===== -->
-  <section id="share">
-    <h2>Quick Share Builder</h2>
-    <div class="img-box"><img id="statusImage" src="" alt="Preview"></div>
-    <textarea id="captionBox" readonly>Loading caption...</textarea>
-    <div class="row">
-      <button class="btn-secondary" id="copyBtn">📋 Copy Caption</button>
-      <button class="btn-primary" id="shareBtn">📤 Share on Facebook</button>
-    </div>
-    <div class="meta">Preview auto-updates hourly with day/night & holiday logic.</div>
-  </section>
-</div>
-
-<footer>© 2025 Big Red Connect — Admin Panel Beta</footer>
-<div id="toast"></div>
-<div id="debugLog">[Debug log started]</div>
-
 <script>
 const STATUS_WORKER="https://bigred-status-updater.bigredtransportation.workers.dev";
 const LOCATION_WORKER="https://update-location.bigredtransportation.workers.dev";
@@ -178,62 +74,82 @@ document.getElementById("updateStatusBtn").onclick=async()=>{
   const res=await fetch(STATUS_WORKER+"/",{method:"PUT",headers:{"Content-Type":"application/json","X-Auth-Token":AUTH_SECRET},body:JSON.stringify(payload)});
   if(!res.ok)throw new Error(await res.text());
   renderStatusPill(newStatus,payload.updated);
+  showToast("✅ Status updated");
   buildPreview(newStatus);
   maybeShowGPSPrompt(newStatus);
-  showToast("✅ Status updated");
   if(newStatus==="online")startGPSLoop(30000);
   else stopGPSLoop();
  }catch(e){showToast("⚠️ Update failed");}
 };
 
-/* === ENHANCED PREVIEW BUILDER === */
+/* === SMART PREVIEW BUILDER (Merged) === */
 function buildPreview(status){
  const img=document.getElementById("statusImage");
  const caption=document.getElementById("captionBox");
- const now=new Date();const hour=now.getHours();const day=now.getDay();const month=now.getMonth();
- const isHoliday=(month===10||month===11);const isDay=hour>=7&&hour<18;
+ const now=new Date();
+ const hour=now.getHours();
+ const month=now.getMonth();
 
- const dayImages=["Big Red Day 1.png","Big Red Day 2.png","Big Red Day 3.png"];
- const nightImages=["Big Red Night 1.png","Big Red Night 2.png","Big Red Night 3.png"];
- const holidayImages=["Big Red Holiday 1.png","Big Red Holiday 2.png","Big Red Holiday 3.png"];
+ const isHoliday=(month===10||month===11);
+ const isDay=hour>=7&&hour<18;
 
- let selectedImg;
- if(isHoliday)selectedImg=holidayImages[Math.floor(Math.random()*holidayImages.length)];
- else if(isDay)selectedImg=dayImages[Math.floor(Math.random()*dayImages.length)];
- else selectedImg=nightImages[Math.floor(Math.random()*nightImages.length)];
+ const dayImages=[
+   "3F34BE7E-5953-433C-B8D0-17AC9108107F.png",
+   "B02AB3EA-1AF5-4BE4-8CBB-E5A1AA40711F.png",
+   "Big Red Live 2.png",
+   "Big Red Live Text Only.png"
+ ];
 
- img.src=`https://raw.githubusercontent.com/bigred202403/Big-Red-Connect/main/${encodeURIComponent(selectedImg)}`;
+ const nightImages=[
+   "3673A967-4A2D-4F9C-8602-0C820D31D168.png",
+   "982ABF7A-D9F5-403D-BAE8-13777EC286FB.png",
+   "BA7E86CF-5782-4323-B0B2-19918EF67887.png",
+   "0081086F-89FA-41B2-85EB-E4EE97E9E8EF.png",
+   "Big Red Live 2.png"
+ ];
 
- const dailyTags=["Sunday Slowdown","Monday Moves","Tap-In Tuesday","Midweek Vibe Check","Weekend Preview","Friday Push","Saturday Night"];
- const dayLabel=dailyTags[day]||"Big Red Connect";
+ const holidayImages=[
+   "3673A967-4A2D-4F9C-8602-0C820D31D168.png",
+   "982ABF7A-D9F5-403D-BAE8-13777EC286FB.png",
+   "B02AB3EA-1AF5-4BE4-8CBB-E5A1AA40711F.png",
+   "Big Red Live Holiday 1.png",
+   "Big Red Live Christmas.png",
+   "Big Red Live Thanksgiving.png"
+ ];
 
+ let chosen;
+ if(isHoliday){
+   chosen=holidayImages[Math.floor(Math.random()*holidayImages.length)];
+ }else if(isDay){
+   chosen=dayImages[Math.floor(Math.random()*dayImages.length)];
+ }else{
+   chosen=nightImages[Math.floor(Math.random()*nightImages.length)];
+ }
+
+ img.src=`https://raw.githubusercontent.com/bigred202403/Big-Red-Connect/main/${encodeURIComponent(chosen)}`;
+
+ const dayNames=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+ const weekday=dayNames[now.getDay()];
  let base="";
  if(status==="online"){
    if(isHoliday){
-     base=`🎄 ${dayLabel} – Big Red Connect is LIVE this holiday season!`;
-     if(!isDay)base+=` From last call to your front door, ride local and ride safe.`;
-     else base+=` Plan ahead and make your connection early.`;
+     base=`🎄 ${weekday} Moves – Big Red Connect is LIVE this holiday season! From last call to your front door, ride local and ride safe.`;
    }else if(isDay){
-     base=`🚗 ${dayLabel} – Big Red Connect is LIVE — your affordable flat-rate ride connection.`;
+     base=`🚗 ${weekday} Moves – Big Red Connect is LIVE! Affordable, local, and ready for your next daytime ride.`;
    }else{
-     base=`🌙 ${dayLabel} – Big Red Connect is LIVE — from last call to your front door, ride local and ride safe.`;
+     base=`🌙 ${weekday} Nights – Big Red Connect is LIVE! From last call to your front door, ride local and ride safe.`;
    }
  }else if(status==="away"){
-   base=`🕑 ${dayLabel} – Big Red Connect is temporarily away — back soon!`;
- }else if(status==="offline"){
-   if(isDay){
-     base=`✅ Wrapped up another round of solid local moves.\nThanks to everyone who planned ahead and rode local today.\n\nI’ll be back online tonight — until then, keep it local and stay safe.`;
-   }else{
-     base=`🌙 That’s a wrap for tonight’s connections.\nBig Red is signing off — appreciate everyone who rode local and kept it safe out there.\n\nPlan ahead for tomorrow and keep your connections local.`;
-   }
-   showToast("📣 Wrap-Up caption ready to post",3500);
+   base=`🕑 ${weekday} Update – Big Red Connect is temporarily away but back soon!`;
+ }else{
+   base=`🔴 ${weekday} Update – Big Red Connect is currently offline. Thanks for riding local!`;
  }
 
  const CTA="\n\nNo surprises. Just solid local moves.\nText ‘RED’ to 405-378-4024 — your affordable flat-rate ride connection.\nVeteran Owned • Affordable • Local • Trusted.";
  caption.value=base+CTA;
 }
 
-/* === COPY & SHARE === */
+/* === Share / Copy Buttons === */
 document.getElementById("copyBtn").onclick=()=>{navigator.clipboard.writeText(document.getElementById("captionBox").value);showToast("📋 Caption copied");};
 document.getElementById("shareBtn").onclick=()=>{const c=encodeURIComponent(document.getElementById("captionBox").value);
 window.open(`https://www.facebook.com/sharer/sharer.php?u=https://bigred202403.github.io/Big-Red-Connect/&quote=${c}`,"_blank");};
@@ -246,35 +162,56 @@ function setLivePill(active,rateMs){
  else{livePill.classList.add("offline");livePill.textContent="📡 Tracking: OFF";}
  gpsRate.textContent=active?`${Math.round(rateMs/1000)}s`:"—";
 }
+
 async function sendGPS(lat,lng){
  const payload={latitude:lat,longitude:lng,timestamp:new Date().toISOString()};
  try{
   logDebug(`Sending GPS → ${lat.toFixed(5)}, ${lng.toFixed(5)}`);
   const res=await fetch(LOCATION_WORKER,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
-  if(res.ok){gpsStamp.textContent=fmtLocal(payload.timestamp);logDebug("✅ GPS sent OK");}
-  else{logDebug("⚠️ GPS push failed "+res.status);}
- }catch(e){logDebug("❌ GPS send error: "+e.message);}
+  if(res.ok){
+    gpsStamp.textContent=fmtLocal(payload.timestamp);
+    logDebug("✅ GPS sent OK");
+  }else{
+    logDebug("⚠️ GPS push failed "+res.status);
+  }
+ }catch(e){
+  logDebug("❌ GPS send error: "+e.message);
+ }
 }
+
 function startGPSLoop(intervalMs){
- stopGPSLoop();currentIntervalMs=intervalMs;gpsTimerActive=true;setLivePill(true,currentIntervalMs);
- requestWakeLock();logDebug("GPS loop started ("+intervalMs+"ms)");
- const loop=()=>{if(!gpsTimerActive)return;
- if(!navigator.geolocation){showToast("⚠️ Enable Location Services");return;}
- navigator.geolocation.getCurrentPosition(
-  (pos)=>{const{latitude,longitude}=pos.coords;sendGPS(latitude,longitude);},
-  (err)=>logDebug("GPS error "+err.message),
-  {enableHighAccuracy:true,maximumAge:8000,timeout:8000}
- );setTimeout(loop,currentIntervalMs);};
+ stopGPSLoop();
+ currentIntervalMs=intervalMs;
+ gpsTimerActive=true;
+ setLivePill(true,currentIntervalMs);
+ requestWakeLock();
+ logDebug("GPS loop started ("+intervalMs+"ms)");
+ const loop=()=>{
+   if(!gpsTimerActive)return;
+   if(!navigator.geolocation){showToast("⚠️ Enable Location Services");return;}
+   logDebug("⏰ GPS tick");
+   navigator.geolocation.getCurrentPosition(
+     (pos)=>{const{latitude,longitude}=pos.coords;sendGPS(latitude,longitude);},
+     (err)=>logDebug("GPS error "+err.message),
+     {enableHighAccuracy:true,maximumAge:8000,timeout:8000}
+   );
+   setTimeout(loop,currentIntervalMs);
+ };
  loop();
 }
-function stopGPSLoop(){gpsTimerActive=false;currentIntervalMs=0;setLivePill(false,0);releaseWakeLock();logDebug("GPS loop stopped");}
+
+function stopGPSLoop(){
+ gpsTimerActive=false;
+ currentIntervalMs=0;
+ setLivePill(false,0);
+ releaseWakeLock();
+ logDebug("GPS loop stopped");
+}
+
 async function requestWakeLock(){try{if('wakeLock'in navigator){wakeLock=await navigator.wakeLock.request('screen');logDebug("Wake lock granted");}}catch(e){logDebug("Wake lock denied "+e.message);}}
 async function releaseWakeLock(){if(wakeLock){try{await wakeLock.release();logDebug("Wake lock released");}catch{}wakeLock=null;}}
+
 window.addEventListener("pagehide",()=>{stopGPSLoop();});
-
-/* === AUTO PREVIEW REFRESH === */
-setInterval(()=>{buildPreview(select.value);logDebug("Auto-refreshed social preview");},60*60*1000);
-
 fetchStatus();
 
 /* === PWA Service Worker === */
@@ -286,5 +223,3 @@ if("serviceWorker"in navigator){
  });
 }
 </script>
-</body>
-</html>
