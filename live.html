@@ -111,6 +111,7 @@
     let riderPos = null;
     let currentStatus = "offline";
     let autocompleteManual;
+    let liveRefreshTimer = null;
 
     document.addEventListener("statusUpdated", (e) => {
       currentStatus = (e.detail || "offline").toLowerCase();
@@ -147,6 +148,7 @@
 
       await getDriverLocation();
       updateVisibility();
+      startLiveRefresh(); // ✅ quiet 31-second background refresh
     };
 
     async function getDriverLocation(){
@@ -207,6 +209,28 @@
       };
       window.pulseOverlay.setMap(map);
       map.setCenter(driverPos);
+    }
+
+    /* === Quiet Background Auto-Refresh === */
+    function startLiveRefresh() {
+      if (liveRefreshTimer) clearInterval(liveRefreshTimer);
+      liveRefreshTimer = setInterval(async () => {
+        try {
+          const res = await fetch(LOCATION_READER + "?nocache=" + Date.now(), { cache:"no-store" });
+          const j = await res.json();
+          const lat = parseFloat(j.latitude), lng = parseFloat(j.longitude);
+          if (!isNaN(lat) && !isNaN(lng)) {
+            const newPos = { lat, lng };
+            if (!driverPos || Math.abs(lat - driverPos.lat) > 0.0001 || Math.abs(lng - driverPos.lng) > 0.0001) {
+              driverPos = newPos;
+              if (window.driverMarker) driverMarker.setPosition(driverPos);
+              map.panTo(driverPos);
+            }
+          }
+        } catch (e) {
+          console.warn("Live refresh failed:", e);
+        }
+      }, 31000); // every 31 seconds
     }
 
     async function handleUseMyLocation(){
