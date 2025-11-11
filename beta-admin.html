@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Admin Big Red (Beta)</title>
 
+<!-- Icons / PWA basics -->
 <link rel="apple-touch-icon" href="icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon.png">
 <link rel="shortcut icon" href="icon.png">
@@ -58,6 +59,7 @@ padding:6px;max-height:200px;overflow:auto;text-align:left;border-top:1px solid 
 <div id="status-pill" class="status">Checking status…</div>
 
 <div class="grid">
+  <!-- CONTROL -->
   <section id="control">
     <h2>Update Driving Status</h2>
     <div class="row">
@@ -74,6 +76,7 @@ padding:6px;max-height:200px;overflow:auto;text-align:left;border-top:1px solid 
     </div>
   </section>
 
+  <!-- QUICK SHARE -->
   <section id="share">
     <h2>Quick Share Builder</h2>
     <div class="img-box"><img id="statusImage" src="" alt="Preview"></div>
@@ -91,11 +94,13 @@ padding:6px;max-height:200px;overflow:auto;text-align:left;border-top:1px solid 
 <div id="debugLog">[Debug log started]</div>
 
 <script>
+/* === CONFIG === */
 const STATUS_WORKER="https://bigred-status-updater.bigredtransportation.workers.dev";
 const LOCATION_WORKER="https://update-location.bigredtransportation.workers.dev";
 const AUTH_SECRET="BigRedPrivateKey2025";
 const TZ="America/Chicago";
 
+/* === ELEMENTS === */
 const pill=document.getElementById("status-pill");
 const statusStamp=document.getElementById("statusStamp");
 const gpsStamp=document.getElementById("gpsStamp");
@@ -104,14 +109,16 @@ const select=document.getElementById("statusSelect");
 const livePill=document.getElementById("livePill");
 const toast=document.getElementById("toast");
 
+/* === UTILS === */
 function showToast(msg,ms=2500){toast.textContent=msg;toast.style.opacity=1;setTimeout(()=>toast.style.opacity=0,ms);}
 function logDebug(msg){
  const el=document.getElementById("debugLog");
  const now=new Date().toLocaleTimeString("en-US",{hour12:false});
  el.innerHTML=`[${now}] ${msg}<br>`+el.innerHTML;
 }
+function fmtLocal(iso){if(!iso)return"—";return new Date(iso).toLocaleString("en-US",{timeZone:TZ});}
 
-/* === Refresh Page Button === */
+/* === Refresh Page === */
 document.getElementById("refreshPage").onclick=()=>{showToast("Refreshing…");setTimeout(()=>location.reload(true),350);};
 
 /* === Status Fetch + Render === */
@@ -122,13 +129,10 @@ async function fetchStatus(){
   renderStatusPill(j.status,j.updated);
   select.value=j.status;
   buildPreview(j.status);
-  if(j.status==="online")startGPSLoop(30000);
-  else if(j.status==="away")startGPSLoop(60000);
-  else stopGPSLoop();
+  if(j.status==="online") startGPSLoop(30000);  // ✅ Online only: 30s
+  else stopGPSLoop();                           // ❌ No loop for Away/Offline
  }catch(e){renderStatusPill("offline");}
 }
-
-function fmtLocal(iso){if(!iso)return"—";return new Date(iso).toLocaleString("en-US",{timeZone:TZ});}
 function renderStatusPill(state,iso){
  pill.classList.remove("online","away","offline");
  const stamp=fmtLocal(iso);
@@ -138,7 +142,7 @@ function renderStatusPill(state,iso){
  statusStamp.textContent=stamp;
 }
 
-/* === Status Update Button === */
+/* === Status Update Button (kept as-fixed) === */
 document.getElementById("updateStatusBtn").onclick=async()=>{
  const newStatus=select.value;
  const payload={status:newStatus,updated:new Date().toISOString()};
@@ -157,30 +161,31 @@ document.getElementById("updateStatusBtn").onclick=async()=>{
   renderStatusPill(newStatus,payload.updated);
   showToast("✅ Status saved successfully!");
   buildPreview(newStatus);
+  if(newStatus==="online") startGPSLoop(30000); else stopGPSLoop();
  }catch(e){
   logDebug("❌ Status update error: "+e.message);
   showToast("⚠️ Failed to save status");
  }
 };
 
-/* === Smart Preview Builder === */
+/* === Smart Preview Builder (Holiday + Day/Night + Offline wrap) === */
 function buildPreview(status){
  const img=document.getElementById("statusImage");
  const caption=document.getElementById("captionBox");
  const now=new Date();
  const hour=now.getHours();
  const month=now.getMonth();
- const isHoliday=(month===10||month===11);
+ const isHoliday=(month===10||month===11); // Nov/Dec
  const isDay=hour>=7&&hour<18;
  const weekday=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][now.getDay()];
 
- // Clean image sets (holiday/day/night)
+ // Clean image sets (no overlaid text graphics in offline)
  const dayImgs=["3F34BE7E-5953-433C-B8D0-17AC9108107F.png","B02AB3EA-1AF5-4BE4-8CBB-E5A1AA40711F.png","Big Red Live 2.png"];
  const nightImgs=["3673A967-4A2D-4F9C-8602-0C820D31D168.png","982ABF7A-D9F5-403D-BAE8-13777EC286FB.png","0081086F-89FA-41B2-85EB-E4EE97E9E8EF.png"];
  const holidayImgs=["B02AB3EA-1AF5-4BE4-8CBB-E5A1AA40711F.png","3673A967-4A2D-4F9C-8602-0C820D31D168.png","982ABF7A-D9F5-403D-BAE8-13777EC286FB.png","Big Red Live Holiday 1.png","Big Red Live Christmas.png","Big Red Live Thanksgiving.png"];
 
  let chosen="";
- if(status==="offline"){ // ✅ Restricted to clean Rogue One visuals
+ if(status==="offline"){
    const offlineImgs=["3673A967-4A2D-4F9C-8602-0C820D31D168.png","982ABF7A-D9F5-403D-BAE8-13777EC286FB.png","0081086F-89FA-41B2-85EB-E4EE97E9E8EF.png"];
    chosen=offlineImgs[Math.floor(Math.random()*offlineImgs.length)];
  } else if(isHoliday){
@@ -194,16 +199,43 @@ function buildPreview(status){
 
  let base="";
  if(status==="online"){
-   base=isHoliday?`🎄 ${weekday} Moves – Big Red Connect is LIVE this holiday season! From last call to your front door, ride local and ride safe.`
-   :(isDay?`🚗 ${weekday} Moves – Big Red Connect is LIVE! Affordable, local, and ready for your next daytime ride.`
-   :`🌙 ${weekday} Nights – Big Red Connect is LIVE! From last call to your front door, ride local and ride safe.`);
- } else if(status==="away"){
+   base=isHoliday
+     ? `🎄 ${weekday} Moves – Big Red Connect is LIVE this holiday season! From last call to your front door, ride local and ride safe.`
+     : (isDay
+        ? `🚗 ${weekday} Moves – Big Red Connect is LIVE! Affordable, local, and ready for your next daytime ride.`
+        : `🌙 ${weekday} Nights – Big Red Connect is LIVE! From last call to your front door, ride local and ride safe.`);
+ }
+ else if(status==="away"){
    base=`🕑 ${weekday} Update – Big Red Connect is temporarily away but back soon!`;
- } else if(status==="offline"){
-   if(isDay){
-     base=`✅ Wrapped up another round of solid local moves.\nThanks to everyone who planned ahead and rode local today.\n\nI’ll be back online tonight — until then, keep it local and stay safe.`;
+ }
+ else if(status==="offline"){
+   // 👋 “See you …” line with day/night + holiday awareness
+   const dayNames=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+   const day=now.getDay();
+   const nextDay=(day+1)%7;
+   let seeYouMsg="";
+   if(day===0){ // Sunday
+     seeYouMsg=isHoliday
+       ? "🎄 Back on the road Monday night — plan ahead with Big Red this holiday season!"
+       : "👋 Back on the road Monday night — plan ahead with Big Red!";
+   } else if(isDay){
+     seeYouMsg=isHoliday
+       ? "🎁 See you tonight — plan ahead and ride local this holiday season!"
+       : "👋 See you tonight — plan ahead with Big Red!";
    } else {
-     base=`🌙 That’s a wrap for tonight’s connections.\nBig Red is signing off — appreciate everyone who rode local and kept it safe out there.\n\nPlan ahead for tomorrow and keep your connections local.`;
+     seeYouMsg=isHoliday
+       ? `🎄 See you ${dayNames[nextDay]} night — plan ahead and ride local this holiday season!`
+       : `👋 See you ${dayNames[nextDay]} night — plan ahead with Big Red!`;
+   }
+
+   if(isHoliday){
+     base = isDay
+       ? `🎄 Wrapped up another round of solid local moves.\nThanks to everyone who planned ahead and rode local today!\n\n${seeYouMsg}`
+       : `🎁 That’s a wrap for tonight’s holiday connections.\nAppreciate everyone who rode local and kept it festive and safe!\n\n${seeYouMsg}`;
+   } else {
+     base = isDay
+       ? `✅ Wrapped up another round of solid local moves.\nThanks to everyone who planned ahead and rode local today.\n\n${seeYouMsg}`
+       : `🌙 That’s a wrap for tonight’s connections.\nBig Red is signing off — appreciate everyone who rode local and kept it safe out there.\n\n${seeYouMsg}`;
    }
    showToast("📣 Wrap-Up caption ready to post!");
  }
@@ -212,13 +244,13 @@ function buildPreview(status){
  caption.value=base+CTA;
 }
 
-/* === Copy / Share Buttons === */
+/* === Copy / Share === */
 document.getElementById("copyBtn").onclick=()=>{navigator.clipboard.writeText(document.getElementById("captionBox").value);showToast("📋 Caption copied");};
 document.getElementById("shareBtn").onclick=()=>{const c=encodeURIComponent(document.getElementById("captionBox").value);
 window.open(`https://www.facebook.com/sharer/sharer.php?u=https://bigred202403.github.io/Big-Red-Connect/&quote=${c}`,"_blank");};
 
-/* === GPS & Wake Lock === */
-let gpsTimerActive=false;let wakeLock=null;
+/* === GPS loop (Online only) + Wake Lock === */
+let gpsTimerActive=false, wakeLock=null;
 function setLivePill(active,rateMs){
  livePill.classList.remove("online","away","offline");
  livePill.classList.add(active?"online":"offline");
@@ -236,27 +268,30 @@ async function sendGPS(lat,lng){
 }
 function startGPSLoop(intervalMs){
  stopGPSLoop();
- gpsTimerActive=true;setLivePill(true,intervalMs);requestWakeLock();
+ gpsTimerActive=true; setLivePill(true,intervalMs); requestWakeLock();
  const loop=()=>{if(!gpsTimerActive)return;
-  navigator.geolocation.getCurrentPosition(
-    pos=>sendGPS(pos.coords.latitude,pos.coords.longitude),
-    err=>logDebug("GPS error "+err.message),
-    {enableHighAccuracy:true,maximumAge:8000,timeout:8000});
+  if(navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(
+      pos=>sendGPS(pos.coords.latitude,pos.coords.longitude),
+      err=>logDebug("GPS error "+err.message),
+      {enableHighAccuracy:true,maximumAge:8000,timeout:8000}
+    );
+  }
   setTimeout(loop,intervalMs);
- };loop();
+ }; loop();
 }
-function stopGPSLoop(){gpsTimerActive=false;setLivePill(false,0);releaseWakeLock();}
+function stopGPSLoop(){gpsTimerActive=false; setLivePill(false,0); releaseWakeLock();}
 async function requestWakeLock(){try{if('wakeLock'in navigator){wakeLock=await navigator.wakeLock.request('screen');}}catch{}}
 async function releaseWakeLock(){if(wakeLock){try{await wakeLock.release();}catch{}wakeLock=null;}}
 window.addEventListener("pagehide",()=>{stopGPSLoop();});
+
+/* Init */
 fetchStatus();
 
-/* === PWA Service Worker === */
+/* PWA SW (optional) */
 if("serviceWorker"in navigator){
  window.addEventListener("load",()=>{
-  navigator.serviceWorker.register("sw.js")
-  .then(()=>console.log("✅ Service Worker registered for Admin PWA"))
-  .catch(err=>console.warn("⚠️ SW registration failed:",err));
+  navigator.serviceWorker.register("sw.js").catch(()=>{});
  });
 }
 </script>
