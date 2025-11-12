@@ -146,12 +146,17 @@
         }
       }
 
-      // ✅ New: ensure pickup coords even if auto-filled
+      // ✅ Force pickup geocode even if auto-filled (guaranteed fairness check)
       const val = document.getElementById("pickup").value;
-      if (val && !pickupLatLng) {
+      if (val) {
         geocoder = new google.maps.Geocoder();
         geocoder.geocode({ address: val }, (res, s) => {
-          if (s === "OK" && res[0]) pickupLatLng = res[0].geometry.location;
+          if (s === "OK" && res[0]) {
+            pickupLatLng = res[0].geometry.location;
+            console.log("✅ Pickup geocoded from autofill:", pickupLatLng.lat(), pickupLatLng.lng());
+          } else {
+            console.warn("⚠️ Pickup geocode failed for autofill:", val);
+          }
         });
       }
     } catch (e) {}
