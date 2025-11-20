@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Admin Big Red (Beta)</title>
+<title>Admin Big Red (BETA)</title>
 
 <!-- Icons / PWA basics -->
 <link rel="apple-touch-icon" href="icon.png">
@@ -29,12 +29,14 @@ h1{margin:18px 0 6px;color:var(--red);font-size:1.6rem;}
 section{background:var(--panel);border:1px solid #222;border-radius:8px;padding:14px;}
 section h2{margin:6px 0 8px;font-size:1.1rem;}
 select,button{padding:10px;border-radius:6px;border:none;margin:6px;font-weight:700;}
-.btn-primary{background:var(--red);color:#fff;} .btn-secondary{background:#000;color:#fff;border:1px solid var(--red);}
+.btn-primary{background:var(--red);color:#fff;} 
+.btn-secondary{background:#000;color:#fff;border:1px solid var(--red);}
+.btn-tertiary{background:#222;color:#fff;border:1px solid #555;}
 .row{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:6px;}
 .meta{color:var(--muted);font-size:.85em;margin-top:6px;}
 .img-box{max-width:95%;margin:10px auto;border:3px solid var(--red);border-radius:6px;padding:8px;}
 .img-box img{width:100%;border-radius:6px;}
-textarea{width:95%;max-width:780px;height:120px;background:#111;color:#fff;border:2px solid var(--red);
+textarea{width:95%;max-width:780px;height:140px;background:#111;color:#fff;border:2px solid var(--red);
 border-radius:6px;padding:8px;}
 footer{margin:18px 0 24px;font-size:.9em;color:#777;}
 #toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
@@ -53,12 +55,13 @@ padding:6px;max-height:200px;overflow:auto;text-align:left;border-top:1px solid 
   <button class="refresh-btn" id="refreshPage">🔄 Refresh Page</button>
 </header>
 
-<h1>Big Red Connect — Admin Console (Beta)</h1>
+<h1>Big Red Connect — Admin Console (BETA)</h1>
 <p class="tagline">Veteran Owned • Affordable • Local • Trusted</p>
 
 <div id="status-pill" class="status">Checking status…</div>
 
 <div class="grid">
+
   <!-- CONTROL -->
   <section id="control">
     <h2>Update Driving Status</h2>
@@ -76,20 +79,30 @@ padding:6px;max-height:200px;overflow:auto;text-align:left;border-top:1px solid 
     </div>
   </section>
 
-  <!-- QUICK SHARE -->
+  <!-- QUICK SHARE BUILDER -->
   <section id="share">
     <h2>Quick Share Builder</h2>
     <div class="img-box"><img id="statusImage" src="" alt="Preview"></div>
+
+    <!-- Caption Variants -->
+    <div class="row">
+      <button id="prevCaption" class="btn-tertiary">⬅ Prev</button>
+      <button id="nextCaption" class="btn-tertiary">Next ➡</button>
+    </div>
+
     <textarea id="captionBox" readonly>Loading caption...</textarea>
+
     <div class="row">
       <button class="btn-secondary" id="copyBtn">📋 Copy Caption</button>
       <button class="btn-primary" id="shareBtn">📤 Share on Facebook</button>
+      <button class="btn-primary" id="postToLive">📢 Post to Live Page</button>
     </div>
-    <div class="meta">Preview updates automatically by status, time & holiday logic.</div>
+
+    <div class="meta">This preview + caption will appear on <strong>live-beta.html</strong></div>
   </section>
 </div>
 
-<footer>© 2025 Big Red Connect — Admin Panel Beta</footer>
+<footer>© 2025 Big Red Connect — Admin Panel (BETA)</footer>
 <div id="toast"></div>
 <div id="debugLog">[Debug log started]</div>
 
@@ -97,19 +110,20 @@ padding:6px;max-height:200px;overflow:auto;text-align:left;border-top:1px solid 
 /* === CONFIG === */
 const STATUS_WORKER="https://bigred-status-updater.bigredtransportation.workers.dev";
 const LOCATION_WORKER="https://update-location.bigredtransportation.workers.dev";
+const POST_WORKER="https://post-to-live-beta.bigredtransportation.workers.dev";
 const AUTH_SECRET="BigRedPrivateKey2025";
 const TZ="America/Chicago";
 
-/* === ELEMENTS === */
+/* === ELEMENT REFERENCES === */
 const pill=document.getElementById("status-pill");
 const statusStamp=document.getElementById("statusStamp");
 const gpsStamp=document.getElementById("gpsStamp");
 const gpsRate=document.getElementById("gpsRate");
 const select=document.getElementById("statusSelect");
 const livePill=document.getElementById("livePill");
+const captionBox=document.getElementById("captionBox");
 const toast=document.getElementById("toast");
 
-/* === UTILS === */
 function showToast(msg,ms=2500){toast.textContent=msg;toast.style.opacity=1;setTimeout(()=>toast.style.opacity=0,ms);}
 function logDebug(msg){
  const el=document.getElementById("debugLog");
@@ -118,21 +132,22 @@ function logDebug(msg){
 }
 function fmtLocal(iso){if(!iso)return"—";return new Date(iso).toLocaleString("en-US",{timeZone:TZ});}
 
-/* === Refresh Page === */
+/* === REFRESH BUTTON === */
 document.getElementById("refreshPage").onclick=()=>{showToast("Refreshing…");setTimeout(()=>location.reload(true),350);};
 
-/* === Status Fetch + Render === */
+/* === FETCH STATUS === */
 async function fetchStatus(){
  try{
   const res=await fetch(`${STATUS_WORKER}/status?nocache=${Date.now()}`,{cache:"no-store"});
   const j=await res.json();
   renderStatusPill(j.status,j.updated);
   select.value=j.status;
-  buildPreview(j.status);
-  if(j.status==="online") startGPSLoop(30000);  // ✅ Online only: 30s
-  else stopGPSLoop();                           // ❌ No loop for Away/Offline
- }catch(e){renderStatusPill("offline");}
+  updatePreview(j.status);
+  if(j.status==="online") startGPSLoop(30000);
+  else stopGPSLoop();
+ }catch{renderStatusPill("offline");}
 }
+
 function renderStatusPill(state,iso){
  pill.classList.remove("online","away","offline");
  const stamp=fmtLocal(iso);
@@ -142,7 +157,7 @@ function renderStatusPill(state,iso){
  statusStamp.textContent=stamp;
 }
 
-/* === Status Update Button (kept as-fixed) === */
+/* === SAVE STATUS === */
 document.getElementById("updateStatusBtn").onclick=async()=>{
  const newStatus=select.value;
  const payload={status:newStatus,updated:new Date().toISOString()};
@@ -155,102 +170,122 @@ document.getElementById("updateStatusBtn").onclick=async()=>{
     },
     body:JSON.stringify(payload)
   });
-  const resultText=await res.text();
-  if(!res.ok) throw new Error(resultText);
-  logDebug("✅ Worker response: "+resultText);
+
+  if(!res.ok) throw new Error(await res.text());
+
   renderStatusPill(newStatus,payload.updated);
-  showToast("✅ Status saved successfully!");
-  buildPreview(newStatus);
-  if(newStatus==="online") startGPSLoop(30000); else stopGPSLoop();
- }catch(e){
-  logDebug("❌ Status update error: "+e.message);
-  showToast("⚠️ Failed to save status");
+  updatePreview(newStatus);
+  showToast("Status updated!");
+
+  if(newStatus==="online") startGPSLoop(30000);
+  else stopGPSLoop();
+
+ }catch(err){
+  showToast("⚠️ Update failed");
+  logDebug("Error: "+err.message);
  }
 };
 
-/* === Smart Preview Builder (Holiday + Day/Night + Offline wrap) === */
-function buildPreview(status){
- const img=document.getElementById("statusImage");
- const caption=document.getElementById("captionBox");
- const now=new Date();
- const hour=now.getHours();
- const month=now.getMonth();
- const isHoliday=(month===10||month===11); // Nov/Dec
- const isDay=hour>=7&&hour<18;
- const weekday=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][now.getDay()];
+/* === CAPTION VARIANTS === */
+let variants=[];
+let currentIndex=0;
 
- // Clean image sets (no overlaid text graphics in offline)
- const dayImgs=["3F34BE7E-5953-433C-B8D0-17AC9108107F.png","B02AB3EA-1AF5-4BE4-8CBB-E5A1AA40711F.png","Big Red Live 2.png"];
- const nightImgs=["3673A967-4A2D-4F9C-8602-0C820D31D168.png","982ABF7A-D9F5-403D-BAE8-13777EC286FB.png","0081086F-89FA-41B2-85EB-E4EE97E9E8EF.png"];
- const holidayImgs=["B02AB3EA-1AF5-4BE4-8CBB-E5A1AA40711F.png","3673A967-4A2D-4F9C-8602-0C820D31D168.png","982ABF7A-D9F5-403D-BAE8-13777EC286FB.png","Big Red Live Holiday 1.png","Big Red Live Christmas.png","Big Red Live Thanksgiving.png"];
+function generateVariants(status){
+ const weekday=new Date().toLocaleString("en-US",{weekday:"long"});
+ const CTA="\n\nNo surprises. Just solid local moves.\nText ‘RED’ to 405-378-4024 — your affordable flat-rate ride connection.\nVeteran Owned • Affordable • Local • Trusted.\nhttps://bigred202403.github.io/Big-Red-Connect/";
 
- let chosen="";
- if(status==="offline"){
-   const offlineImgs=["3673A967-4A2D-4F9C-8602-0C820D31D168.png","982ABF7A-D9F5-403D-BAE8-13777EC286FB.png","0081086F-89FA-41B2-85EB-E4EE97E9E8EF.png"];
-   chosen=offlineImgs[Math.floor(Math.random()*offlineImgs.length)];
- } else if(isHoliday){
-   chosen=holidayImgs[Math.floor(Math.random()*holidayImgs.length)];
- } else if(isDay){
-   chosen=dayImgs[Math.floor(Math.random()*dayImgs.length)];
- } else {
-   chosen=nightImgs[Math.floor(Math.random()*nightImgs.length)];
- }
- img.src=`https://raw.githubusercontent.com/bigred202403/Big-Red-Connect/main/${encodeURIComponent(chosen)}`;
-
- let base="";
  if(status==="online"){
-   base=isHoliday
-     ? `🎄 ${weekday} Moves – Big Red Connect is LIVE this holiday season! From last call to your front door, ride local and ride safe.`
-     : (isDay
-        ? `🚗 ${weekday} Moves – Big Red Connect is LIVE! Affordable, local, and ready for your next daytime ride.`
-        : `🌙 ${weekday} Nights – Big Red Connect is LIVE! From last call to your front door, ride local and ride safe.`);
+   variants=[
+     `🚗 ${weekday} Moves — Big Red Connect is LIVE! Let’s roll.\n${CTA}`,
+     `🌙 ${weekday} Nights — Out and about? Big Red’s on the move.\n${CTA}`,
+     `🎄 Holiday Run — Big Red is LIVE and rolling local tonight!\n${CTA}`,
+     `🚦 Rolling steady — your trusted flat-rate connection is LIVE.\n${CTA}`,
+     `📍 In the metro now — message me to plan your pickup.\n${CTA}`
+   ];
  }
  else if(status==="away"){
-   base=`🕑 ${weekday} Update – Big Red Connect is temporarily away but back soon!`;
+   variants=[
+     `🕑 ${weekday} Update — I’m stepping away but still nearby. Text me if you need a connection.\n${CTA}`,
+     `🟡 Limited Availability — I can take select rides, just message me first.\n${CTA}`,
+     `📩 Need a ride? I’m close — text RED and I’ll confirm ASAP.\n${CTA}`
+   ];
  }
- else if(status==="offline"){
-   // 👋 “See you …” line with day/night + holiday awareness
-   const dayNames=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
-   const day=now.getDay();
-   const nextDay=(day+1)%7;
-   let seeYouMsg="";
-   if(day===0){ // Sunday
-     seeYouMsg=isHoliday
-       ? "🎄 Back on the road Monday night — plan ahead with Big Red this holiday season!"
-       : "👋 Back on the road Monday night — plan ahead with Big Red!";
-   } else if(isDay){
-     seeYouMsg=isHoliday
-       ? "🎁 See you tonight — plan ahead and ride local this holiday season!"
-       : "👋 See you tonight — plan ahead with Big Red!";
-   } else {
-     seeYouMsg=isHoliday
-       ? `🎄 See you ${dayNames[nextDay]} night — plan ahead and ride local this holiday season!`
-       : `👋 See you ${dayNames[nextDay]} night — plan ahead with Big Red!`;
-   }
-
-   if(isHoliday){
-     base = isDay
-       ? `🎄 Wrapped up another round of solid local moves.\nThanks to everyone who planned ahead and rode local today!\n\n${seeYouMsg}`
-       : `🎁 That’s a wrap for tonight’s holiday connections.\nAppreciate everyone who rode local and kept it festive and safe!\n\n${seeYouMsg}`;
-   } else {
-     base = isDay
-       ? `✅ Wrapped up another round of solid local moves.\nThanks to everyone who planned ahead and rode local today.\n\n${seeYouMsg}`
-       : `🌙 That’s a wrap for tonight’s connections.\nBig Red is signing off — appreciate everyone who rode local and kept it safe out there.\n\n${seeYouMsg}`;
-   }
-   showToast("📣 Wrap-Up caption ready to post!");
+ else{
+   variants=[
+     `🔴 Offline — Thank you for riding local! Back soon.\n${CTA}`,
+     `😴 Signing off for now — see you later tonight or tomorrow.\n${CTA}`
+   ];
  }
 
- const CTA="\n\nNo surprises. Just solid local moves.\nText ‘RED’ to 405-378-4024 — your affordable flat-rate ride connection.\nVeteran Owned • Affordable • Local • Trusted.";
- caption.value=base+CTA;
+ currentIndex=0;
+ captionBox.value=variants[0];
 }
 
-/* === Copy / Share === */
-document.getElementById("copyBtn").onclick=()=>{navigator.clipboard.writeText(document.getElementById("captionBox").value);showToast("📋 Caption copied");};
-document.getElementById("shareBtn").onclick=()=>{const c=encodeURIComponent(document.getElementById("captionBox").value);
+document.getElementById("prevCaption").onclick=()=>{
+ if(variants.length===0)return;
+ currentIndex=(currentIndex-1+variants.length)%variants.length;
+ captionBox.value=variants[currentIndex];
+};
+document.getElementById("nextCaption").onclick=()=>{
+ if(variants.length===0)return;
+ currentIndex=(currentIndex+1)%variants.length;
+ captionBox.value=variants[currentIndex];
+};
+
+/* === PREVIEW (IMAGE + VARIANTS) === */
+function updatePreview(status){
+ generateVariants(status);
+
+ const now=new Date();
+ const hour=now.getHours();
+ const isDay=hour>=7&&hour<18;
+
+ const img=document.getElementById("statusImage");
+ const dayImgs=[
+   "3F34BE7E-5953-433C-B8D0-17AC9108107F.png",
+   "B02AB3EA-1AF5-4BE4-8CBB-E5A1AA40711F.png"
+ ];
+ const nightImgs=[
+   "3673A967-4A2D-4F9C-8602-0C820D31D168.png",
+   "982ABF7A-D9F5-403D-BAE8-13777EC286FB.png"
+ ];
+ const chosen=(isDay?dayImgs:nightImgs)[Math.floor(Math.random()*2)];
+ img.src=`https://raw.githubusercontent.com/bigred202403/Big-Red-Connect/main/${chosen}`;
+}
+
+/* === COPY / SHARE === */
+document.getElementById("copyBtn").onclick=()=>{navigator.clipboard.writeText(captionBox.value);showToast("Copied!");};
+document.getElementById("shareBtn").onclick=()=>{const c=encodeURIComponent(captionBox.value);
 window.open(`https://www.facebook.com/sharer/sharer.php?u=https://bigred202403.github.io/Big-Red-Connect/&quote=${c}`,"_blank");};
 
-/* === GPS loop (Online only) + Wake Lock === */
-let gpsTimerActive=false, wakeLock=null;
+/* === POST TO LIVE (BETA) === */
+document.getElementById("postToLive").onclick=async()=>{
+ const status=select.value;
+ const caption=captionBox.value;
+ const image=document.getElementById("statusImage").src;
+
+ try{
+   const res=await fetch(POST_WORKER,{
+     method:"PUT",
+     headers:{
+       "Content-Type":"application/json",
+       "X-Admin-Secret":AUTH_SECRET
+     },
+     body:JSON.stringify({status,caption,image})
+   });
+
+   if(!res.ok) throw new Error(await res.text());
+
+   showToast("📢 Posted to live-beta!");
+   logDebug("Posted to live-beta successfully.");
+ }catch(err){
+   showToast("⚠ Error posting to live-beta");
+   logDebug("Error posting: "+err.message);
+ }
+};
+
+/* === GPS LOOP (unchanged from stable version) === */
+let gpsTimerActive=false,wakeLock=null;
 function setLivePill(active,rateMs){
  livePill.classList.remove("online","away","offline");
  livePill.classList.add(active?"online":"offline");
@@ -260,40 +295,39 @@ function setLivePill(active,rateMs){
 async function sendGPS(lat,lng){
  const payload={latitude:lat,longitude:lng,timestamp:new Date().toISOString()};
  try{
-  logDebug(`Sending GPS → ${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+  logDebug(`GPS → ${lat.toFixed(5)}, ${lng.toFixed(5)}`);
   const res=await fetch(LOCATION_WORKER,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
-  if(res.ok){gpsStamp.textContent=fmtLocal(payload.timestamp);logDebug("✅ GPS sent OK");}
-  else{logDebug("⚠️ GPS push failed "+res.status);}
- }catch(e){logDebug("❌ GPS send error: "+e.message);}
+  if(res.ok){gpsStamp.textContent=fmtLocal(payload.timestamp);logDebug("GPS OK");}
+  else logDebug("GPS FAIL "+res.status);
+ }catch(err){logDebug("GPS ERR "+err.message);}
 }
 function startGPSLoop(intervalMs){
  stopGPSLoop();
- gpsTimerActive=true; setLivePill(true,intervalMs); requestWakeLock();
- const loop=()=>{if(!gpsTimerActive)return;
-  if(navigator.geolocation){
-    navigator.geolocation.getCurrentPosition(
-      pos=>sendGPS(pos.coords.latitude,pos.coords.longitude),
-      err=>logDebug("GPS error "+err.message),
-      {enableHighAccuracy:true,maximumAge:8000,timeout:8000}
-    );
-  }
-  setTimeout(loop,intervalMs);
- }; loop();
+ gpsTimerActive=true;setLivePill(true,intervalMs);requestWakeLock();
+
+ const loop=()=>{
+   if(!gpsTimerActive)return;
+   if(navigator.geolocation){
+     navigator.geolocation.getCurrentPosition(
+       pos=>sendGPS(pos.coords.latitude,pos.coords.longitude),
+       err=>logDebug("GPS ERROR "+err.message),
+       {enableHighAccuracy:true,maximumAge:8000,timeout:8000}
+     );
+   }
+   setTimeout(loop,intervalMs);
+ };
+ loop();
 }
-function stopGPSLoop(){gpsTimerActive=false; setLivePill(false,0); releaseWakeLock();}
+function stopGPSLoop(){
+ gpsTimerActive=false;setLivePill(false,0);releaseWakeLock();
+}
 async function requestWakeLock(){try{if('wakeLock'in navigator){wakeLock=await navigator.wakeLock.request('screen');}}catch{}}
 async function releaseWakeLock(){if(wakeLock){try{await wakeLock.release();}catch{}wakeLock=null;}}
-window.addEventListener("pagehide",()=>{stopGPSLoop();});
 
-/* Init */
+window.addEventListener("pagehide",()=>stopGPSLoop());
+
 fetchStatus();
-
-/* PWA SW (optional) */
-if("serviceWorker"in navigator){
- window.addEventListener("load",()=>{
-  navigator.serviceWorker.register("sw.js").catch(()=>{});
- });
-}
 </script>
+
 </body>
 </html>
