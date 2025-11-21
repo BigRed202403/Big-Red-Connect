@@ -192,6 +192,30 @@ footer{
 
 <div class="grid">
 
+  <!-- PUSH NOTIFICATION SECTION -->
+  <section id="push">
+    <h2>Send Push Notification</h2>
+
+    <div class="row">
+      <select id="pushTemplate">
+        <option value="LIVE">🚗 LIVE — Ready to Roll</option>
+        <option value="AIRPORT">✈️ Airport Runs</option>
+        <option value="WEEKEND">🍻 Weekend Night Run</option>
+        <option value="HOLIDAY">🎄 Holiday Specials</option>
+        <option value="CAMPUS">🅿️ Campus Corner Late Night</option>
+        <option value="OFFLINE">🔴 Going Offline</option>
+      </select>
+    </div>
+
+    <div class="row">
+      <button class="btn-primary" id="sendPush">📣 Send Push Now</button>
+    </div>
+
+    <div class="meta">
+      Sends instantly to every subscriber.
+    </div>
+  </section>
+
   <!-- CONTROL -->
   <section id="control">
     <h2>Update Driving Status</h2>
@@ -209,7 +233,7 @@ footer{
     </div>
   </section>
 
-  <!-- QUICK SHARE BUILDER -->
+  <!-- QUICK SHARE BUILDER (unchanged except FB removed) -->
   <section id="share">
     <h2>Quick Share Builder</h2>
 
@@ -217,13 +241,11 @@ footer{
       <img id="statusImage" src="" alt="Preview">
     </div>
 
-    <!-- Image Variants -->
     <div class="row">
       <button id="prevImage" class="btn-tertiary">⬅ Image</button>
       <button id="nextImage" class="btn-tertiary">Image ➡</button>
     </div>
 
-    <!-- Caption Variants -->
     <div class="row">
       <button id="prevCaption" class="btn-tertiary">⬅ Caption</button>
       <button id="nextCaption" class="btn-tertiary">Caption ➡</button>
@@ -233,7 +255,6 @@ footer{
 
     <div class="row">
       <button class="btn-secondary" id="copyBtn">📋 Copy Caption</button>
-      <button class="btn-primary" id="shareBtn">📤 Share on Facebook</button>
       <button class="btn-primary" id="postToLive">📢 Post to Live Page</button>
     </div>
 
@@ -248,10 +269,11 @@ footer{
 <div id="debugLog">[Debug log started]</div>
 
 <script>
-/* === CONFIG (original worker URLs) === */
+/* === CONFIG === */
 const STATUS_WORKER = "https://bigred-status-updater.bigredtransportation.workers.dev";
 const LOCATION_WORKER = "https://update-location.bigredtransportation.workers.dev";
 const POST_WORKER    = "https://post-to-live-beta.bigredtransportation.workers.dev";
+const PUSH_WORKER    = "https://bigred-send-push.bigredtransportation.workers.dev/";
 const AUTH_SECRET    = "BigRedPrivateKey2025";
 const TZ             = "America/Chicago";
 
@@ -265,6 +287,59 @@ const livePill    = document.getElementById("livePill");
 const captionBox  = document.getElementById("captionBox");
 const toast       = document.getElementById("toast");
 const imageEl     = document.getElementById("statusImage");
+
+/* === TEMPLATES === */
+const PUSH_TEMPLATES = {
+  LIVE: {
+    title: "Big Red is LIVE",
+    message: "I’m on the road now — message me if you need a connection."
+  },
+  AIRPORT: {
+    title: "Airport Runs Open",
+    message: "Headed toward Will Rogers — text RED if you need a flat-rate airport ride."
+  },
+  WEEKEND: {
+    title: "Weekend Night Run",
+    message: "Rolling through the metro — rides open tonight."
+  },
+  HOLIDAY: {
+    title: "Holiday Lights & Rides",
+    message: "Holiday specials + lights tours — message RED to plan ahead!"
+  },
+  CAMPUS: {
+    title: "Campus Corner Late Night",
+    message: "OU late night runs open — message RED if you need a ride back."
+  },
+  OFFLINE: {
+    title: "Big Red is Offline",
+    message: "Thanks for riding local — back soon!"
+  }
+};
+
+/* === PUSH SEND LOGIC === */
+document.getElementById("sendPush").onclick = async () => {
+  const templateKey = document.getElementById("pushTemplate").value;
+  const { title, message } = PUSH_TEMPLATES[templateKey];
+
+  try {
+    const res = await fetch(PUSH_WORKER, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ title, message })
+    });
+
+    if (!res.ok) throw new Error(await res.text());
+
+    showToast("📣 Push sent!");
+    logDebug("Push sent: " + title);
+
+  } catch (err) {
+    showToast("⚠️ Push failed");
+    logDebug("Push error: " + err.message);
+  }
+};
 
 /* === TOAST & DEBUG === */
 function showToast(msg, ms=2500){
@@ -288,7 +363,7 @@ document.getElementById("refreshPage").onclick = () => {
   setTimeout(() => location.reload(true), 350);
 };
 
-/* === FETCH STATUS FROM WORKER === */
+/* === FETCH STATUS === */
 async function fetchStatus(){
   try{
     const res = await fetch(`${STATUS_WORKER}/status?nocache=${Date.now()}`, { cache:"no-store" });
@@ -320,7 +395,7 @@ function renderStatusPill(state, iso){
   statusStamp.textContent = stamp;
 }
 
-/* === SAVE STATUS TO WORKER === */
+/* === SAVE STATUS === */
 document.getElementById("updateStatusBtn").onclick = async () => {
   const newStatus = select.value;
   const payload = { status:newStatus, updated:new Date().toISOString() };
@@ -350,7 +425,7 @@ document.getElementById("updateStatusBtn").onclick = async () => {
   }
 };
 
-/* === CAPTION VARIANTS === */
+/* === SHARE BUILDER === */
 let variants     = [];
 let captionIndex = 0;
 
@@ -376,7 +451,7 @@ function generateVariants(status){
       `🟡 Limited Availability — I can take select rides, just message me first.\n${CTA}`,
       `📩 Need a ride? I’m close — text RED and I’ll confirm ASAP.\n${CTA}`
     ];
-  } else { // offline
+  } else { 
     variants = [
       `🔴 Offline — Thank you for riding local! Back soon.\n${CTA}`,
       `😴 Signing off for now — see you later tonight or tomorrow.\n${CTA}`
@@ -398,7 +473,6 @@ document.getElementById("nextCaption").onclick = () => {
   captionBox.value = variants[captionIndex];
 };
 
-/* === IMAGE VARIANTS (full original set + scrolling) === */
 const dayImgs = [
   "3F34BE7E-5953-433C-B8D0-17AC9108107F.png",
   "B02AB3EA-1AF5-4BE4-8CBB-E5A1AA40711F.png",
@@ -429,9 +503,9 @@ let imageIndex   = 0;
 function pickImageSet(status){
   const now   = new Date();
   const hour  = now.getHours();
-  const month = now.getMonth(); // 0–11
+  const month = now.getMonth();
   const isDay     = hour >= 7 && hour < 18;
-  const isHoliday = (month === 10 || month === 11); // Nov/Dec
+  const isHoliday = (month === 10 || month === 11);
 
   if(status === "offline"){
     activeImages = isHoliday ? holidayImgs.slice() : offlineImgs.slice();
@@ -469,26 +543,12 @@ document.getElementById("nextImage").onclick = () => {
   applyImage();
 };
 
-/* === PREVIEW (ties captions + images together) === */
 function updatePreview(status){
   generateVariants(status);
   pickImageSet(status);
 }
 
-/* === COPY / SHARE === */
-document.getElementById("copyBtn").onclick = () => {
-  navigator.clipboard.writeText(captionBox.value);
-  showToast("Copied!");
-};
-document.getElementById("shareBtn").onclick = () => {
-  const c = encodeURIComponent(captionBox.value);
-  window.open(
-    `https://www.facebook.com/sharer/sharer.php?u=https://bigred202403.github.io/Big-Red-Connect/&quote=${c}`,
-    "_blank"
-  );
-};
-
-/* === POST TO LIVE (uses post-to-live-beta worker) === */
+/* === POST TO LIVE === */
 document.getElementById("postToLive").onclick = async () => {
   const status  = select.value;
   const caption = captionBox.value;
@@ -514,7 +574,7 @@ document.getElementById("postToLive").onclick = async () => {
   }
 };
 
-/* === GPS LOOP (original behaviour) === */
+/* === GPS LOOP === */
 let gpsTimerActive = false;
 let wakeLock       = null;
 
