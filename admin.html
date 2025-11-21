@@ -216,7 +216,7 @@ footer{
     </div>
   </section>
 
-  <!-- CONTROL -->
+  <!-- CONTROL SECTION -->
   <section id="control">
     <h2>Update Driving Status</h2>
     <div class="row">
@@ -233,7 +233,7 @@ footer{
     </div>
   </section>
 
-  <!-- QUICK SHARE BUILDER (unchanged except FB removed) -->
+  <!-- QUICK SHARE BUILDER -->
   <section id="share">
     <h2>Quick Share Builder</h2>
 
@@ -288,7 +288,7 @@ const captionBox  = document.getElementById("captionBox");
 const toast       = document.getElementById("toast");
 const imageEl     = document.getElementById("statusImage");
 
-/* === TEMPLATES === */
+/* === PUSH TEMPLATES === */
 const PUSH_TEMPLATES = {
   LIVE: {
     title: "Big Red is LIVE",
@@ -316,7 +316,7 @@ const PUSH_TEMPLATES = {
   }
 };
 
-/* === PUSH SEND LOGIC === */
+/* === PUSH SENDER === */
 document.getElementById("sendPush").onclick = async () => {
   const templateKey = document.getElementById("pushTemplate").value;
   const { title, message } = PUSH_TEMPLATES[templateKey];
@@ -325,7 +325,8 @@ document.getElementById("sendPush").onclick = async () => {
     const res = await fetch(PUSH_WORKER, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "X-Admin-Secret": AUTH_SECRET
       },
       body: JSON.stringify({ title, message })
     });
@@ -333,7 +334,7 @@ document.getElementById("sendPush").onclick = async () => {
     if (!res.ok) throw new Error(await res.text());
 
     showToast("📣 Push sent!");
-    logDebug("Push sent: " + title);
+    logDebug("Push sent OK: " + title);
 
   } catch (err) {
     showToast("⚠️ Push failed");
