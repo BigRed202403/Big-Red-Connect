@@ -13,36 +13,166 @@
 
 <style>
 :root { --red:#b30000; --bg:#000; --panel:#111; --muted:#aaa; }
-body{background:var(--bg);color:#fff;font-family:Arial,Helvetica,sans-serif;margin:0;text-align:center;}
-header{background:var(--panel);display:flex;justify-content:space-between;align-items:center;
-padding:10px 16px;border-bottom:2px solid var(--red);}
-.bar-left{color:#bbb;font-size:.92em;display:flex;gap:10px;align-items:center;}
-.pill{padding:4px 10px;border-radius:999px;font-weight:700;font-size:.85em;}
-.pill.online{background:#064;} .pill.away{background:#665500;} .pill.offline{background:#400;}
-.refresh-btn{background:var(--red);color:#fff;border:none;padding:8px 14px;border-radius:6px;cursor:pointer;font-weight:700;}
+body{
+  background:var(--bg);
+  color:#fff;
+  font-family:Arial,Helvetica,sans-serif;
+  margin:0;
+  text-align:center;
+}
+header{
+  background:var(--panel);
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:10px 16px;
+  border-bottom:2px solid var(--red);
+}
+.bar-left{
+  color:#bbb;
+  font-size:.92em;
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+.pill{
+  padding:4px 10px;
+  border-radius:999px;
+  font-weight:700;
+  font-size:.85em;
+}
+.pill.online{background:#064;}
+.pill.away{background:#665500;}
+.pill.offline{background:#400;}
+
+.refresh-btn{
+  background:var(--red);
+  color:#fff;
+  border:none;
+  padding:8px 14px;
+  border-radius:6px;
+  cursor:pointer;
+  font-weight:700;
+}
 .refresh-btn:hover{background:#cc0000;}
-h1{margin:18px 0 6px;color:var(--red);font-size:1.6rem;}
-.tagline{color:#ddd;margin:0 0 8px;font-size:.95rem;}
-.status{margin:10px auto;padding:10px;border-radius:6px;display:inline-block;min-width:280px;}
-.status.online{background:#064;} .status.away{background:#665500;} .status.offline{background:#400;}
-.grid{display:grid;grid-template-columns:1fr;gap:18px;max-width:880px;margin:0 auto;padding:10px 16px 24px;}
-section{background:var(--panel);border:1px solid #222;border-radius:8px;padding:14px;}
-section h2{margin:6px 0 8px;font-size:1.1rem;}
-select,button{padding:10px;border-radius:6px;border:none;margin:6px;font-weight:700;}
-.btn-primary{background:var(--red);color:#fff;} 
+
+h1{
+  margin:18px 0 6px;
+  color:var(--red);
+  font-size:1.6rem;
+}
+.tagline{
+  color:#ddd;
+  margin:0 0 8px;
+  font-size:.95rem;
+}
+
+.status{
+  margin:10px auto;
+  padding:10px;
+  border-radius:6px;
+  display:inline-block;
+  min-width:280px;
+}
+.status.online{background:#064;}
+.status.away{background:#665500;}
+.status.offline{background:#400;}
+
+.grid{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:18px;
+  max-width:880px;
+  margin:0 auto;
+  padding:10px 16px 24px;
+}
+section{
+  background:var(--panel);
+  border:1px solid #222;
+  border-radius:8px;
+  padding:14px;
+}
+section h2{
+  margin:6px 0 8px;
+  font-size:1.1rem;
+}
+select,button{
+  padding:10px;
+  border-radius:6px;
+  border:none;
+  margin:6px;
+  font-weight:700;
+}
+.btn-primary{background:var(--red);color:#fff;}
 .btn-secondary{background:#000;color:#fff;border:1px solid var(--red);}
 .btn-tertiary{background:#222;color:#fff;border:1px solid #555;}
-.row{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:6px;}
-.meta{color:var(--muted);font-size:.85em;margin-top:6px;}
-.img-box{max-width:95%;margin:10px auto;border:3px solid var(--red);border-radius:6px;padding:8px;}
-.img-box img{width:100%;border-radius:6px;}
-textarea{width:95%;max-width:780px;height:140px;background:#111;color:#fff;border:2px solid var(--red);
-border-radius:6px;padding:8px;}
-footer{margin:18px 0 24px;font-size:.9em;color:#777;}
-#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
-background:var(--red);color:#fff;padding:8px 16px;border-radius:6px;opacity:0;transition:opacity .35s;z-index:5;}
-#debugLog{font-family:monospace;font-size:0.75rem;color:#0f0;background:#000;
-padding:6px;max-height:200px;overflow:auto;text-align:left;border-top:1px solid #222;}
+
+.row{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:6px;
+}
+.meta{
+  color:var(--muted);
+  font-size:.85em;
+  margin-top:6px;
+}
+
+.img-box{
+  max-width:95%;
+  margin:10px auto 4px;
+  border:3px solid var(--red);
+  border-radius:6px;
+  padding:8px;
+}
+.img-box img{
+  width:100%;
+  border-radius:6px;
+}
+
+textarea{
+  width:95%;
+  max-width:780px;
+  height:140px;
+  background:#111;
+  color:#fff;
+  border:2px solid var(--red);
+  border-radius:6px;
+  padding:8px;
+}
+
+footer{
+  margin:18px 0 24px;
+  font-size:.9em;
+  color:#777;
+}
+
+#toast{
+  position:fixed;
+  bottom:20px;
+  left:50%;
+  transform:translateX(-50%);
+  background:var(--red);
+  color:#fff;
+  padding:8px 16px;
+  border-radius:6px;
+  opacity:0;
+  transition:opacity .35s;
+  z-index:5;
+}
+#debugLog{
+  font-family:monospace;
+  font-size:0.75rem;
+  color:#0f0;
+  background:#000;
+  padding:6px;
+  max-height:200px;
+  overflow:auto;
+  text-align:left;
+  border-top:1px solid #222;
+}
 </style>
 </head>
 <body>
@@ -82,12 +212,21 @@ padding:6px;max-height:200px;overflow:auto;text-align:left;border-top:1px solid 
   <!-- QUICK SHARE BUILDER -->
   <section id="share">
     <h2>Quick Share Builder</h2>
-    <div class="img-box"><img id="statusImage" src="" alt="Preview"></div>
+
+    <div class="img-box">
+      <img id="statusImage" src="" alt="Preview">
+    </div>
+
+    <!-- Image Variants -->
+    <div class="row">
+      <button id="prevImage" class="btn-tertiary">⬅ Image</button>
+      <button id="nextImage" class="btn-tertiary">Image ➡</button>
+    </div>
 
     <!-- Caption Variants -->
     <div class="row">
-      <button id="prevCaption" class="btn-tertiary">⬅ Prev</button>
-      <button id="nextCaption" class="btn-tertiary">Next ➡</button>
+      <button id="prevCaption" class="btn-tertiary">⬅ Caption</button>
+      <button id="nextCaption" class="btn-tertiary">Caption ➡</button>
     </div>
 
     <textarea id="captionBox" readonly>Loading caption...</textarea>
@@ -98,7 +237,9 @@ padding:6px;max-height:200px;overflow:auto;text-align:left;border-top:1px solid 
       <button class="btn-primary" id="postToLive">📢 Post to Live Page</button>
     </div>
 
-    <div class="meta">This preview + caption will appear on <strong>live.html</strong></div>
+    <div class="meta">
+      This preview + caption will appear on the public <strong>Live Map</strong> page.
+    </div>
   </section>
 </div>
 
@@ -107,225 +248,350 @@ padding:6px;max-height:200px;overflow:auto;text-align:left;border-top:1px solid 
 <div id="debugLog">[Debug log started]</div>
 
 <script>
-/* === CONFIG === */
-const STATUS_WORKER="https://bigred-status-updater.bigredtransportation.workers.dev";
-const LOCATION_WORKER="https://update-location.bigredtransportation.workers.dev";
-const POST_WORKER="https://post-to-live-beta.bigredtransportation.workers.dev";
-const AUTH_SECRET="BigRedPrivateKey2025";
-const TZ="America/Chicago";
+/* === CONFIG (original worker URLs) === */
+const STATUS_WORKER = "https://bigred-status-updater.bigredtransportation.workers.dev";
+const LOCATION_WORKER = "https://update-location.bigredtransportation.workers.dev";
+const POST_WORKER    = "https://post-to-live-beta.bigredtransportation.workers.dev";
+const AUTH_SECRET    = "BigRedPrivateKey2025";
+const TZ             = "America/Chicago";
 
 /* === ELEMENT REFERENCES === */
-const pill=document.getElementById("status-pill");
-const statusStamp=document.getElementById("statusStamp");
-const gpsStamp=document.getElementById("gpsStamp");
-const gpsRate=document.getElementById("gpsRate");
-const select=document.getElementById("statusSelect");
-const livePill=document.getElementById("livePill");
-const captionBox=document.getElementById("captionBox");
-const toast=document.getElementById("toast");
+const pill        = document.getElementById("status-pill");
+const statusStamp = document.getElementById("statusStamp");
+const gpsStamp    = document.getElementById("gpsStamp");
+const gpsRate     = document.getElementById("gpsRate");
+const select      = document.getElementById("statusSelect");
+const livePill    = document.getElementById("livePill");
+const captionBox  = document.getElementById("captionBox");
+const toast       = document.getElementById("toast");
+const imageEl     = document.getElementById("statusImage");
 
-function showToast(msg,ms=2500){toast.textContent=msg;toast.style.opacity=1;setTimeout(()=>toast.style.opacity=0,ms);}
-function logDebug(msg){
- const el=document.getElementById("debugLog");
- const now=new Date().toLocaleTimeString("en-US",{hour12:false});
- el.innerHTML=`[${now}] ${msg}<br>`+el.innerHTML;
+/* === TOAST & DEBUG === */
+function showToast(msg, ms=2500){
+  toast.textContent = msg;
+  toast.style.opacity = 1;
+  setTimeout(() => toast.style.opacity = 0, ms);
 }
-function fmtLocal(iso){if(!iso)return"—";return new Date(iso).toLocaleString("en-US",{timeZone:TZ});}
+function logDebug(msg){
+  const el = document.getElementById("debugLog");
+  const now = new Date().toLocaleTimeString("en-US",{hour12:false});
+  el.innerHTML = `[${now}] ${msg}<br>` + el.innerHTML;
+}
+function fmtLocal(iso){
+  if(!iso) return "—";
+  return new Date(iso).toLocaleString("en-US",{timeZone:TZ});
+}
 
 /* === REFRESH BUTTON === */
-document.getElementById("refreshPage").onclick=()=>{showToast("Refreshing…");setTimeout(()=>location.reload(true),350);};
+document.getElementById("refreshPage").onclick = () => {
+  showToast("Refreshing…");
+  setTimeout(() => location.reload(true), 350);
+};
 
-/* === FETCH STATUS === */
+/* === FETCH STATUS FROM WORKER === */
 async function fetchStatus(){
- try{
-  const res=await fetch(`${STATUS_WORKER}/status?nocache=${Date.now()}`,{cache:"no-store"});
-  const j=await res.json();
-  renderStatusPill(j.status,j.updated);
-  select.value=j.status;
-  updatePreview(j.status);
-  if(j.status==="online") startGPSLoop(30000);
-  else stopGPSLoop();
- }catch{renderStatusPill("offline");}
+  try{
+    const res = await fetch(`${STATUS_WORKER}/status?nocache=${Date.now()}`, { cache:"no-store" });
+    const j   = await res.json();
+    renderStatusPill(j.status, j.updated);
+    select.value = j.status;
+    updatePreview(j.status);
+    if(j.status === "online") startGPSLoop(30000);
+    else stopGPSLoop();
+  }catch(err){
+    logDebug("Status fetch error: " + err.message);
+    renderStatusPill("offline");
+  }
 }
 
-function renderStatusPill(state,iso){
- pill.classList.remove("online","away","offline");
- const stamp=fmtLocal(iso);
- if(state==="online"){pill.classList.add("online");pill.textContent=`🟢 Online — as of ${stamp}`;}
- else if(state==="away"){pill.classList.add("away");pill.textContent=`🟡 Limited — as of ${stamp}`;}
- else{pill.classList.add("offline");pill.textContent=`🔴 Offline — as of ${stamp}`;}
- statusStamp.textContent=stamp;
+function renderStatusPill(state, iso){
+  pill.classList.remove("online","away","offline");
+  const stamp = fmtLocal(iso);
+  if(state === "online"){
+    pill.classList.add("online");
+    pill.textContent = `🟢 Online — as of ${stamp}`;
+  } else if(state === "away"){
+    pill.classList.add("away");
+    pill.textContent = `🟡 Limited — as of ${stamp}`;
+  } else {
+    pill.classList.add("offline");
+    pill.textContent = `🔴 Offline — as of ${stamp}`;
+  }
+  statusStamp.textContent = stamp;
 }
 
-/* === SAVE STATUS === */
-document.getElementById("updateStatusBtn").onclick=async()=>{
- const newStatus=select.value;
- const payload={status:newStatus,updated:new Date().toISOString()};
- try{
-  const res=await fetch(`${STATUS_WORKER}/`,{
-    method:"PUT",
-    headers:{
-      "Content-Type":"application/json",
-      "X-Auth-Token":AUTH_SECRET
-    },
-    body:JSON.stringify(payload)
-  });
+/* === SAVE STATUS TO WORKER === */
+document.getElementById("updateStatusBtn").onclick = async () => {
+  const newStatus = select.value;
+  const payload = { status:newStatus, updated:new Date().toISOString() };
 
-  if(!res.ok) throw new Error(await res.text());
+  try{
+    const res = await fetch(`${STATUS_WORKER}/`,{
+      method:"PUT",
+      headers:{
+        "Content-Type":"application/json",
+        "X-Auth-Token":AUTH_SECRET
+      },
+      body:JSON.stringify(payload)
+    });
 
-  renderStatusPill(newStatus,payload.updated);
-  updatePreview(newStatus);
-  showToast("Status updated!");
+    if(!res.ok) throw new Error(await res.text());
 
-  if(newStatus==="online") startGPSLoop(30000);
-  else stopGPSLoop();
+    renderStatusPill(newStatus, payload.updated);
+    updatePreview(newStatus);
+    showToast("Status updated!");
 
- }catch(err){
-  showToast("⚠️ Update failed");
-  logDebug("Error: "+err.message);
- }
+    if(newStatus === "online") startGPSLoop(30000);
+    else stopGPSLoop();
+
+  }catch(err){
+    showToast("⚠️ Update failed");
+    logDebug("Status update error: " + err.message);
+  }
 };
 
 /* === CAPTION VARIANTS === */
-let variants=[];
-let currentIndex=0;
+let variants     = [];
+let captionIndex = 0;
 
 function generateVariants(status){
- const weekday=new Date().toLocaleString("en-US",{weekday:"long"});
- const CTA="\n\nNo surprises. Just solid local moves.\nText ‘RED’ to 405-378-4024 — your affordable flat-rate ride connection.\nVeteran Owned • Affordable • Local • Trusted.\nhttps://bigred202403.github.io/Big-Red-Connect/";
+  const weekday = new Date().toLocaleString("en-US",{weekday:"long"});
+  const CTA =
+    "\n\nNo surprises. Just solid local moves." +
+    "\nText ‘RED’ to 405-378-4024 — your affordable flat-rate ride connection." +
+    "\nVeteran Owned • Affordable • Local • Trusted." +
+    "\nhttps://bigred202403.github.io/Big-Red-Connect/";
 
- if(status==="online"){
-   variants=[
-     `🚗 ${weekday} Moves — Big Red Connect is LIVE! Let’s roll.\n${CTA}`,
-     `🌙 ${weekday} Nights — Out and about? Big Red’s on the move.\n${CTA}`,
-     `🎄 Holiday Run — Big Red is LIVE and rolling local tonight!\n${CTA}`,
-     `🚦 Rolling steady — your trusted flat-rate connection is LIVE.\n${CTA}`,
-     `📍 In the metro now — message me to plan your pickup.\n${CTA}`
-   ];
- }
- else if(status==="away"){
-   variants=[
-     `🕑 ${weekday} Update — I’m stepping away but still nearby. Text me if you need a connection.\n${CTA}`,
-     `🟡 Limited Availability — I can take select rides, just message me first.\n${CTA}`,
-     `📩 Need a ride? I’m close — text RED and I’ll confirm ASAP.\n${CTA}`
-   ];
- }
- else{
-   variants=[
-     `🔴 Offline — Thank you for riding local! Back soon.\n${CTA}`,
-     `😴 Signing off for now — see you later tonight or tomorrow.\n${CTA}`
-   ];
- }
+  if(status === "online"){
+    variants = [
+      `🚗 ${weekday} Moves — Big Red Connect is LIVE! Let’s roll.\n${CTA}`,
+      `🌙 ${weekday} Nights — Out and about? Big Red’s on the move.\n${CTA}`,
+      `🎄 Holiday Run — Big Red is LIVE and rolling local tonight!\n${CTA}`,
+      `🚦 Rolling steady — your trusted flat-rate connection is LIVE.\n${CTA}`,
+      `📍 In the metro now — message me to plan your pickup.\n${CTA}`
+    ];
+  } else if(status === "away"){
+    variants = [
+      `🕑 ${weekday} Update — I’m stepping away but still nearby. Text me if you need a connection.\n${CTA}`,
+      `🟡 Limited Availability — I can take select rides, just message me first.\n${CTA}`,
+      `📩 Need a ride? I’m close — text RED and I’ll confirm ASAP.\n${CTA}`
+    ];
+  } else { // offline
+    variants = [
+      `🔴 Offline — Thank you for riding local! Back soon.\n${CTA}`,
+      `😴 Signing off for now — see you later tonight or tomorrow.\n${CTA}`
+    ];
+  }
 
- currentIndex=0;
- captionBox.value=variants[0];
+  captionIndex = 0;
+  captionBox.value = variants[0] || "";
 }
 
-document.getElementById("prevCaption").onclick=()=>{
- if(variants.length===0)return;
- currentIndex=(currentIndex-1+variants.length)%variants.length;
- captionBox.value=variants[currentIndex];
+document.getElementById("prevCaption").onclick = () => {
+  if(variants.length === 0) return;
+  captionIndex = (captionIndex - 1 + variants.length) % variants.length;
+  captionBox.value = variants[captionIndex];
 };
-document.getElementById("nextCaption").onclick=()=>{
- if(variants.length===0)return;
- currentIndex=(currentIndex+1)%variants.length;
- captionBox.value=variants[currentIndex];
+document.getElementById("nextCaption").onclick = () => {
+  if(variants.length === 0) return;
+  captionIndex = (captionIndex + 1) % variants.length;
+  captionBox.value = variants[captionIndex];
 };
 
-/* === PREVIEW (IMAGE + VARIANTS) === */
+/* === IMAGE VARIANTS (full original set + scrolling) === */
+const dayImgs = [
+  "3F34BE7E-5953-433C-B8D0-17AC9108107F.png",
+  "B02AB3EA-1AF5-4BE4-8CBB-E5A1AA40711F.png",
+  "Big Red Live 2.png"
+];
+const nightImgs = [
+  "3673A967-4A2D-4F9C-8602-0C820D31D168.png",
+  "982ABF7A-D9F5-403D-BAE8-13777EC286FB.png",
+  "0081086F-89FA-41B2-85EB-E4EE97E9E8EF.png"
+];
+const holidayImgs = [
+  "B02AB3EA-1AF5-4BE4-8CBB-E5A1AA40711F.png",
+  "3673A967-4A2D-4F9C-8602-0C820D31D168.png",
+  "982ABF7A-D9F5-403D-BAE8-13777EC286FB.png",
+  "Big Red Live Holiday 1.png",
+  "Big Red Live Christmas.png",
+  "Big Red Live Thanksgiving.png"
+];
+const offlineImgs = [
+  "3673A967-4A2D-4F9C-8602-0C820D31D168.png",
+  "982ABF7A-D9F5-403D-BAE8-13777EC286FB.png",
+  "0081086F-89FA-41B2-85EB-E4EE97E9E8EF.png"
+];
+
+let activeImages = [];
+let imageIndex   = 0;
+
+function pickImageSet(status){
+  const now   = new Date();
+  const hour  = now.getHours();
+  const month = now.getMonth(); // 0–11
+  const isDay     = hour >= 7 && hour < 18;
+  const isHoliday = (month === 10 || month === 11); // Nov/Dec
+
+  if(status === "offline"){
+    activeImages = isHoliday ? holidayImgs.slice() : offlineImgs.slice();
+  } else if(isHoliday){
+    activeImages = holidayImgs.slice();
+  } else if(isDay){
+    activeImages = dayImgs.slice();
+  } else {
+    activeImages = nightImgs.slice();
+  }
+
+  if(activeImages.length === 0){
+    activeImages = dayImgs.slice();
+  }
+  imageIndex = 0;
+  applyImage();
+}
+
+function applyImage(){
+  if(activeImages.length === 0) return;
+  const filename = activeImages[imageIndex];
+  const url = "https://raw.githubusercontent.com/bigred202403/Big-Red-Connect/main/" +
+              encodeURIComponent(filename);
+  imageEl.src = url;
+}
+
+document.getElementById("prevImage").onclick = () => {
+  if(activeImages.length === 0) return;
+  imageIndex = (imageIndex - 1 + activeImages.length) % activeImages.length;
+  applyImage();
+};
+document.getElementById("nextImage").onclick = () => {
+  if(activeImages.length === 0) return;
+  imageIndex = (imageIndex + 1) % activeImages.length;
+  applyImage();
+};
+
+/* === PREVIEW (ties captions + images together) === */
 function updatePreview(status){
- generateVariants(status);
-
- const now=new Date();
- const hour=now.getHours();
- const isDay=hour>=7&&hour<18;
-
- const img=document.getElementById("statusImage");
- const dayImgs=[
-   "3F34BE7E-5953-433C-B8D0-17AC9108107F.png",
-   "B02AB3EA-1AF5-4BE4-8CBB-E5A1AA40711F.png"
- ];
- const nightImgs=[
-   "3673A967-4F9C-8602-0C820D31D168.png",
-   "982ABF7A-D9F5-403D-BAE8-13777EC286FB.png"
- ];
- const chosen=(isDay?dayImgs:nightImgs)[Math.floor(Math.random()*2)];
- img.src=`https://raw.githubusercontent.com/bigred202403/Big-Red-Connect/main/${chosen}`;
+  generateVariants(status);
+  pickImageSet(status);
 }
 
 /* === COPY / SHARE === */
-document.getElementById("copyBtn").onclick=()=>{navigator.clipboard.writeText(captionBox.value);showToast("Copied!");};
-document.getElementById("shareBtn").onclick=()=>{const c=encodeURIComponent(captionBox.value);
-window.open(`https://www.facebook.com/sharer/sharer.php?u=https://bigred202403.github.io/Big-Red-Connect/&quote=${c}`,"_blank");};
-
-/* === POST TO LIVE (same worker as beta) === */
-document.getElementById("postToLive").onclick=async()=>{
- const status=select.value;
- const caption=captionBox.value;
- const image=document.getElementById("statusImage").src;
-
- try{
-   const res=await fetch(POST_WORKER,{
-     method:"PUT",
-     headers:{
-       "Content-Type":"application/json",
-       "X-Admin-Secret":AUTH_SECRET
-     },
-     body:JSON.stringify({status,caption,image})
-   });
-
-   if(!res.ok) throw new Error(await res.text());
-
-   showToast("📢 Posted to live!");
-   logDebug("Posted to live successfully.");
- }catch(err){
-   showToast("⚠ Error posting to live");
-   logDebug("Error posting: "+err.message);
- }
+document.getElementById("copyBtn").onclick = () => {
+  navigator.clipboard.writeText(captionBox.value);
+  showToast("Copied!");
+};
+document.getElementById("shareBtn").onclick = () => {
+  const c = encodeURIComponent(captionBox.value);
+  window.open(
+    `https://www.facebook.com/sharer/sharer.php?u=https://bigred202403.github.io/Big-Red-Connect/&quote=${c}`,
+    "_blank"
+  );
 };
 
-/* === GPS LOOP === */
-let gpsTimerActive=false,wakeLock=null;
-function setLivePill(active,rateMs){
- livePill.classList.remove("online","away","offline");
- livePill.classList.add(active?"online":"offline");
- livePill.textContent=active?"📡 Tracking: ON":"📡 Tracking: OFF";
- gpsRate.textContent=active?`${Math.round(rateMs/1000)}s`:"—";
+/* === POST TO LIVE (uses post-to-live-beta worker) === */
+document.getElementById("postToLive").onclick = async () => {
+  const status  = select.value;
+  const caption = captionBox.value;
+  const image   = imageEl.src;
+
+  try{
+    const res = await fetch(POST_WORKER,{
+      method:"PUT",
+      headers:{
+        "Content-Type":"application/json",
+        "X-Admin-Secret":AUTH_SECRET
+      },
+      body:JSON.stringify({ status, caption, image })
+    });
+
+    if(!res.ok) throw new Error(await res.text());
+
+    showToast("📢 Posted to Live Map!");
+    logDebug("Posted to Live Map successfully.");
+  }catch(err){
+    showToast("⚠ Error posting to Live Map");
+    logDebug("Error posting: " + err.message);
+  }
+};
+
+/* === GPS LOOP (original behaviour) === */
+let gpsTimerActive = false;
+let wakeLock       = null;
+
+function setLivePill(active, rateMs){
+  livePill.classList.remove("online","away","offline");
+  livePill.classList.add(active ? "online" : "offline");
+  livePill.textContent = active ? "📡 Tracking: ON" : "📡 Tracking: OFF";
+  gpsRate.textContent  = active ? `${Math.round(rateMs/1000)}s` : "—";
 }
+
 async function sendGPS(lat,lng){
- const payload={latitude:lat,longitude:lng,timestamp:new Date().toISOString()};
- try{
-  logDebug(`GPS → ${lat.toFixed(5)}, ${lng.toFixed(5)}`);
-  const res=await fetch(LOCATION_WORKER,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
-  if(res.ok){gpsStamp.textContent=fmtLocal(payload.timestamp);logDebug("GPS OK");}
-  else logDebug("GPS FAIL "+res.status);
- }catch(err){logDebug("GPS ERR "+err.message);}
+  const payload = {
+    latitude : lat,
+    longitude: lng,
+    timestamp: new Date().toISOString()
+  };
+  try{
+    logDebug(`GPS → ${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+    const res = await fetch(LOCATION_WORKER,{
+      method:"PUT",
+      headers:{ "Content-Type":"application/json" },
+      body:JSON.stringify(payload)
+    });
+    if(res.ok){
+      gpsStamp.textContent = fmtLocal(payload.timestamp);
+      logDebug("GPS OK");
+    }else{
+      logDebug("GPS FAIL " + res.status);
+    }
+  }catch(err){
+    logDebug("GPS ERR " + err.message);
+  }
 }
+
 function startGPSLoop(intervalMs){
- stopGPSLoop();
- gpsTimerActive=true;setLivePill(true,intervalMs);requestWakeLock();
+  stopGPSLoop();
+  gpsTimerActive = true;
+  setLivePill(true, intervalMs);
+  requestWakeLock();
 
- const loop=()=>{
-   if(!gpsTimerActive)return;
-   if(navigator.geolocation){
-     navigator.geolocation.getCurrentPosition(
-       pos=>sendGPS(pos.coords.latitude,pos.coords.longitude),
-       err=>logDebug("GPS ERROR "+err.message),
-       {enableHighAccuracy:true,maximumAge:8000,timeout:8000}
-     );
-   }
-   setTimeout(loop,intervalMs);
- };
- loop();
+  const loop = () => {
+    if(!gpsTimerActive) return;
+    if(navigator.geolocation){
+      navigator.geolocation.getCurrentPosition(
+        pos => sendGPS(pos.coords.latitude, pos.coords.longitude),
+        err => logDebug("GPS ERROR " + err.message),
+        { enableHighAccuracy:true, maximumAge:8000, timeout:8000 }
+      );
+    }
+    setTimeout(loop, intervalMs);
+  };
+  loop();
 }
+
 function stopGPSLoop(){
- gpsTimerActive=false;setLivePill(false,0);releaseWakeLock();
+  gpsTimerActive = false;
+  setLivePill(false, 0);
+  releaseWakeLock();
 }
-async function requestWakeLock(){try{if('wakeLock'in navigator){wakeLock=await navigator.wakeLock.request('screen');}}catch{}}
-async function releaseWakeLock(){if(wakeLock){try{await wakeLock.release();}catch{}wakeLock=null;}}
 
-window.addEventListener("pagehide",()=>stopGPSLoop());
+async function requestWakeLock(){
+  try{
+    if("wakeLock" in navigator){
+      wakeLock = await navigator.wakeLock.request("screen");
+    }
+  }catch{}
+}
+async function releaseWakeLock(){
+  if(wakeLock){
+    try{ await wakeLock.release(); }catch{}
+    wakeLock = null;
+  }
+}
 
+window.addEventListener("pagehide", () => stopGPSLoop());
+
+/* INIT */
 fetchStatus();
 </script>
 
