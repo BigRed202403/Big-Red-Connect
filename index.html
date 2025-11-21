@@ -13,7 +13,7 @@
   <meta name="apple-mobile-web-app-title" content="Big Red Connect">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="theme-color" content="#000000">
+  <meta name="theme-color" content="#000">
 
   <!-- 🚫 No cache -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
@@ -25,19 +25,83 @@
 
   <!-- 🔔 OneSignal Web Push SDK -->
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+
   <script>
     window.OneSignalDeferred = window.OneSignalDeferred || [];
-    OneSignalDeferred.push(async function(OneSignal) {
+
+    // Utility to detect standalone PWA mode
+    function isStandalone() {
+      return window.matchMedia('(display-mode: standalone)').matches ||
+             window.navigator.standalone === true;
+    }
+
+    // Utility to detect iPhone Safari
+    function isIPhoneSafari() {
+      return /iPhone/i.test(navigator.userAgent) &&
+             !isStandalone();
+    }
+
+    // Render UI states
+    function showSubscribedState() {
+      const btn = document.getElementById("notifyBtn");
+      const msg = document.getElementById("notifyMsg");
+      const badge = document.getElementById("notifyBadge");
+      const tip = document.getElementById("iosTip");
+
+      if (btn) btn.style.display = "none";
+      if (msg) msg.style.display = "none";
+      if (tip) tip.style.display = "none";
+
+      if (badge) {
+        badge.style.display = "inline-block";
+      }
+    }
+
+    function showUnsubscribedState() {
+      const btn = document.getElementById("notifyBtn");
+      const msg = document.getElementById("notifyMsg");
+      const badge = document.getElementById("notifyBadge");
+      const tip = document.getElementById("iosTip");
+
+      if (badge) badge.style.display = "none";
+      if (btn) btn.style.display = "inline-block";
+      if (msg) msg.style.display = "block";
+
+      if (tip) {
+        tip.style.display = isIPhoneSafari() ? "block" : "none";
+      }
+    }
+
+    // INIT OneSignal
+    OneSignalDeferred.push(async function (OneSignal) {
       await OneSignal.init({
         appId: "64641a89-3619-4491-a25b-c0ab000bdfe0",
         notifyButton: { enable: false },
         serviceWorkerPath: "/OneSignalSDKWorker.js"
       });
+
+      // Give OneSignal a moment if needed
+      setTimeout(async () => {
+
+        const isSubscribed = await OneSignal.User.PushSubscription.isSubscribed();
+
+        if (isSubscribed) {
+          showSubscribedState();
+        } else {
+          showUnsubscribedState();
+        }
+
+      }, 300);
     });
 
+    // Manual subscribe trigger
     function subscribeToBigRed() {
-      window.OneSignalDeferred.push(function(OneSignal) {
-        OneSignal.showSlidedownPrompt();
+      window.OneSignalDeferred.push(async function (OneSignal) {
+        const isSubscribed = await OneSignal.User.PushSubscription.isSubscribed();
+
+        if (!isSubscribed) {
+          OneSignal.showSlidedownPrompt();
+        }
       });
     }
   </script>
@@ -66,9 +130,25 @@
     <a href="tel:14053784024" class="btn secondary">📞 Call Big Red</a>
   </div>
 
-  <!-- 🔔 Enable Notifications Button -->
+  <!-- 🔔 Notifications UI -->
   <div style="text-align:center; margin-top:18px;">
-    <button onclick="subscribeToBigRed()"
+
+    <!-- Subscribed Badge -->
+    <div id="notifyBadge" style="
+      display:none;
+      background:#0f8c0f;
+      color:white;
+      padding:10px 18px;
+      border-radius:8px;
+      font-size:1em;
+      font-weight:700;
+      box-shadow:0 3px 6px rgba(0,0,0,0.4);
+      margin-bottom:10px;">
+      ✔ Notifications Enabled
+    </div>
+
+    <!-- Enable Button -->
+    <button id="notifyBtn" onclick="subscribeToBigRed()"
       style="
         background:#b30000;
         color:white;
@@ -78,23 +158,33 @@
         font-weight:700;
         border-radius:8px;
         cursor:pointer;
+        display:none;
         box-shadow:0 3px 6px rgba(0,0,0,0.4);
       ">
       🔔 Enable Big Red Notifications
     </button>
-    <p style="font-size:0.8em; color:#aaa; margin-top:6px;">
+
+    <!-- Description -->
+    <p id="notifyMsg" style="font-size:0.8em; color:#aaa; margin-top:6px; display:none;">
       Get alerts when Big Red is LIVE, weekend rundowns, airport alerts, and more.
+    </p>
+
+    <!-- iPhone Tip -->
+    <p id="iosTip" style="font-size:0.8em; color:#ffcc66; margin-top:6px; display:none;">
+      👉 On iPhone: Tap the Share icon → Add to Home Screen → Then return to enable alerts.
     </p>
   </div>
 
   <!-- 🧭 “Where To?” -->
   <div class="info-section" style="text-align:center; margin-top:20px;">
     <h2 style="margin-bottom:10px;">Plan Your Connection</h2>
+
     <form id="quickDestination" onsubmit="goToFare(event)" style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
       <input id="quickWhere" type="text" placeholder="Where to?" required 
              style="flex:1;min-width:220px;max-width:420px;padding:12px;border-radius:10px;border:1px solid #333;background:#111;color:#fff;">
       <button type="submit" class="btn primary">➡️ Next</button>
     </form>
+
     <p style="font-size:0.9em;color:#888;margin-top:6px;">
       Tip: Start typing a place, business, or address — suggestions will appear.
     </p>
@@ -109,13 +199,10 @@
     <a href="https://www.facebook.com/share/1BWCx63CUt/?mibextid=wwXIfr" target="_blank" class="tile">👍<br>Follow on Facebook</a>
   </div>
 
-  <!-- 🧾 What I Do -->
+  <!-- What I Do -->
   <section class="info-section">
     <h2>What I Do</h2>
-    <p>
-      I offer local ride connections across the Oklahoma City metro — from workdays and class runs
-      to weekend nights, OU games, and airport trips.
-    </p>
+    <p>I offer local ride connections across the Oklahoma City metro — from workdays and class runs to weekend nights, OU games, and airport trips.</p>
     <ul>
       <li>Daily work, school, and appointment connections</li>
       <li>Airport and Tinker AFB flat-rate rides</li>
@@ -124,7 +211,7 @@
     </ul>
   </section>
 
-  <!-- ❤️ Why Choose Red -->
+  <!-- Why Choose Red -->
   <section class="info-section">
     <h2>Why Choose Red</h2>
     <ul>
@@ -134,7 +221,7 @@
     </ul>
   </section>
 
-  <!-- 💬 Reviews -->
+  <!-- Reviews -->
   <section class="info-section">
     <h2>What Riders Say</h2>
     <div class="review-card">
@@ -148,7 +235,7 @@
     <p><a href="reviews.html">See more reviews →</a></p>
   </section>
 
-  <!-- 🦶 Footer -->
+  <!-- Footer -->
   <footer>
     <p>Questions or ride connection requests?<br>Text <strong>“RED”</strong> to (405) 378-4024.</p>
     <p><a href="faq.html">FAQ & Policies</a> | <a href="reviews.html">Leave a Review</a></p>
@@ -160,7 +247,7 @@
     </p>
   </footer>
 
-  <!-- 🗺️ Google Places -->
+  <!-- Google Places -->
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places"></script>
   <script>
     let whereAuto;
@@ -180,19 +267,16 @@
     window.onload = initQuickSearch;
   </script>
 
-  <!-- 🚦 Global Status Pill -->
+  <!-- Status Pill -->
   <script src="status.js?v=20251026"></script>
 
-  <!-- 🔄 Smart Refresh Button Logic -->
+  <!-- Refresh Button Logic -->
   <script>
     const refreshBtn = document.getElementById("refreshButton");
     let refreshTimeout;
 
-    function showRefreshButton() {
-      refreshBtn.classList.add("visible");
-    }
-
-    function hideRefreshButton() {
+    function showRefreshButton(){ refreshBtn.classList.add("visible"); }
+    function hideRefreshButton(){
       refreshBtn.classList.remove("visible");
       clearTimeout(refreshTimeout);
       refreshTimeout = setTimeout(showRefreshButton, 30000);
@@ -208,8 +292,8 @@
     });
   </script>
 
+  <!-- Styling for Refresh Button -->
   <style>
-    /* Floating refresh styling */
     #refreshButton {
       position: fixed;
       bottom: 20px;
@@ -232,7 +316,10 @@
       opacity: 1;
       pointer-events: auto;
     }
-    #refreshButton:hover { background: #cc0000; }
+    #refreshButton:hover {
+      background: #cc0000;
+    }
   </style>
+
 </body>
 </html>
