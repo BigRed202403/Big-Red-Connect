@@ -93,15 +93,21 @@ section{
   padding:14px;
 }
 section h2{
-  margin:6px 0 8px;
-  font-size:1.1rem;
+  margin:6px 0 12px;
+  font-size:1.25rem;
 }
-select,button,input{
-  padding:10px;
+
+select,button,input,textarea{
+  font-family:inherit;
+  font-size:1rem;
+}
+button{
+  padding:10px 18px;
   border-radius:6px;
   border:none;
   margin:6px;
   font-weight:700;
+  cursor:pointer;
 }
 .btn-primary{background:var(--red);color:#fff;}
 .btn-secondary{background:#000;color:#fff;border:1px solid var(--red);}
@@ -142,11 +148,11 @@ textarea{
   padding:8px;
 }
 
-#captionPreview{
-  height:120px;
+#shareCaption{
+  height:160px;
 }
-#captionBox{
-  height:140px;
+#pushBody{
+  height:110px;
 }
 
 footer{
@@ -180,19 +186,70 @@ footer{
   border-top:1px solid #222;
 }
 
-label.custom-toggle{
+/* Push preview box */
+.push-preview{
+  border:1px solid #333;
+  border-radius:6px;
+  padding:8px;
+  text-align:left;
+  max-width:780px;
+  margin:10px auto 0;
+  background:#000;
+}
+.push-title-preview{
+  font-weight:700;
+  margin-bottom:4px;
+}
+.push-body-preview{
+  font-size:.9rem;
+}
+
+/* Share builder */
+.share-top-label{
+  text-align:left;
+  max-width:780px;
+  margin:6px auto 0;
+  font-size:.9rem;
+}
+.share-char{
+  text-align:left;
+  max-width:780px;
+  margin:4px auto 0;
+  font-size:.8rem;
+  color:var(--muted);
+}
+.share-char span{
+  font-weight:700;
+  color:#fff;
+}
+.share-bottom-note{
+  max-width:780px;
+  margin:8px auto 0;
+  font-size:.9rem;
+}
+.share-controls{
+  max-width:780px;
+  margin:0 auto;
+  text-align:left;
+}
+.share-controls label{
+  font-size:.95rem;
+}
+.share-preset-row{
   display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  justify-content:flex-start;
   align-items:center;
-  gap:8px;
-  justify-content:center;
-  margin-top:8px;
+  max-width:780px;
+  margin:6px auto 0;
 }
-label.custom-toggle input{
-  margin:0;
-  width:auto;
-}
-#charCount{
-  margin-right:6px;
+.share-preset-row select{
+  padding:8px 10px;
+  border-radius:6px;
+  border:1px solid #555;
+  background:#000;
+  color:#fff;
 }
 </style>
 </head>
@@ -222,28 +279,40 @@ label.custom-toggle input{
         <option value="LIVE">🚗 LIVE — Ready to Roll</option>
         <option value="AIRPORT">✈️ Airport Runs</option>
         <option value="WEEKEND">🍻 Weekend Night Run</option>
-        <option value="HOLIDAY">🎄 Holiday / Lights</option>
-        <option value="CAMPUS">🏫 Campus Corner Late Night</option>
+        <option value="HOLIDAY">🎄 Holiday Specials</option>
+        <option value="CAMPUS">🅿️ Campus Corner Late Night</option>
         <option value="OFFLINE">🔴 Going Offline</option>
       </select>
-      <button class="btn-tertiary" id="applyPushTemplate">Apply Template</button>
     </div>
 
-    <div class="row" style="flex-direction:column;align-items:center;">
-      <input id="pushTitle" type="text" style="width:95%;max-width:780px;"
-             placeholder="Notification title (e.g., Big Red is LIVE)">
-      <textarea id="pushMessage" style="margin-top:4px;height:90px;"
-                placeholder="Notification message body..."></textarea>
-      <input id="pushUrl" type="text" style="width:95%;max-width:780px;margin-top:4px;"
-             placeholder="Tap-through URL (optional, default = main site)">
+    <div class="share-controls" style="margin-top:8px;">
+      <div style="margin-bottom:6px;text-align:left;max-width:780px;margin-inline:auto;">
+        <label for="pushTitle">Title</label>
+      </div>
+      <input id="pushTitle" type="text"
+             style="width:95%;max-width:780px;background:#111;color:#fff;border:2px solid var(--red);border-radius:6px;padding:8px;"
+             placeholder="Notification title (e.g., Big Red is LIVE)" />
+
+      <div style="margin:10px auto 6px;text-align:left;max-width:780px;">
+        <label for="pushBody">Message</label>
+      </div>
+      <textarea id="pushBody" placeholder="Notification body text..."></textarea>
     </div>
 
-    <div class="row">
+    <div class="push-preview">
+      <div style="font-size:.8rem;color:var(--muted);margin-bottom:4px;">Preview</div>
+      <div class="push-title-preview" id="pushPreviewTitle">Big Red is LIVE</div>
+      <div class="push-body-preview" id="pushPreviewBody">
+        I’m on the road now — message me if you need a connection.
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:10px;">
       <button class="btn-primary" id="sendPush">📣 Send Push</button>
     </div>
 
     <div class="meta">
-      Sends instantly to every subscribed device.
+      Sends instantly to every subscriber who has enabled notifications.
     </div>
   </section>
 
@@ -268,52 +337,53 @@ label.custom-toggle input{
   <section id="share">
     <h2>Quick Share Builder</h2>
 
-    <!-- Preview text (what actually posts) -->
-    <textarea id="captionPreview" readonly>Preview will appear here…</textarea>
-
-    <!-- Image preview -->
     <div class="img-box">
       <img id="statusImage" src="" alt="Preview">
     </div>
 
-    <!-- Image switchers -->
     <div class="row">
       <button id="prevImage" class="btn-tertiary">⬅ Image</button>
       <button id="nextImage" class="btn-tertiary">Image ➡</button>
+      <button id="prevTemplate" class="btn-tertiary">⬅ Template</button>
+      <button id="nextTemplate" class="btn-tertiary">Template ➡</button>
     </div>
 
-    <!-- Caption templates navigation -->
-    <div class="row">
-      <button id="prevCaption" class="btn-tertiary">⬅ Template</button>
-      <button id="nextCaption" class="btn-tertiary">Template ➡</button>
+    <div class="share-controls">
+      <div style="margin-top:6px;">
+        <label>
+          <input type="checkbox" id="enableCustom" />
+          <span>Enable Custom Caption</span>
+        </label>
+      </div>
     </div>
 
-    <!-- Custom caption toggle -->
-    <label class="custom-toggle">
-      <input type="checkbox" id="customToggle">
-      <span>Enable Custom Caption</span>
-    </label>
+    <p class="share-top-label">
+      Caption for Facebook / Live Map:
+    </p>
 
-    <!-- Custom caption editor -->
-    <textarea id="captionBox" placeholder="Type your custom caption here..."></textarea>
+    <textarea id="shareCaption" placeholder="Type your custom caption here..."></textarea>
 
-    <div class="meta">
-      <span id="charCount">0 characters</span> •
+    <div class="share-char">
+      <span id="charCount">0</span> characters
+    </div>
+
+    <div class="share-preset-row">
       <select id="presetSelect">
-        <option value="">Insert saved caption…</option>
+        <option value="">Insert saved caption...</option>
       </select>
-      <button class="btn-tertiary" id="savePresetBtn">💾 Save Current as Preset</button>
+      <button class="btn-secondary" id="savePreset">💾 Save Current as Preset</button>
     </div>
 
-    <div class="row">
+    <div class="row" style="margin-top:10px;">
       <button class="btn-secondary" id="copyBtn">📋 Copy Caption</button>
       <button class="btn-primary" id="postToLive">📢 Post to Live Page</button>
     </div>
 
-    <div class="meta">
+    <p class="share-bottom-note">
       This caption + image appears on the public <strong>Live Map</strong> page.
-    </div>
+    </p>
   </section>
+
 </div>
 
 <footer>© 2025 Big Red Connect — Admin Panel</footer>
@@ -322,8 +392,8 @@ label.custom-toggle input{
 
 <script>
 /* === CONFIG === */
-const STATUS_WORKER = "https://bigred-status-updater.bigredtransportation.workers.dev";
-const LOCATION_WORKER = "https://update-location.bigredtransportation.workers.dev";
+const STATUS_WORKER  = "https://bigred-status-updater.bigredtransportation.workers.dev";
+const LOCATION_WORKER= "https://update-location.bigredtransportation.workers.dev";
 const POST_WORKER    = "https://post-to-live-beta.bigredtransportation.workers.dev";
 const PUSH_WORKER    = "https://bigred-send-push.bigredtransportation.workers.dev/";
 const AUTH_SECRET    = "BigRedPrivateKey2025";
@@ -336,101 +406,23 @@ const gpsStamp    = document.getElementById("gpsStamp");
 const gpsRate     = document.getElementById("gpsRate");
 const select      = document.getElementById("statusSelect");
 const livePill    = document.getElementById("livePill");
-
-const captionPreview = document.getElementById("captionPreview");
-const captionBox     = document.getElementById("captionBox");
-const customToggle   = document.getElementById("customToggle");
-const charCountEl    = document.getElementById("charCount");
-const presetSelect   = document.getElementById("presetSelect");
-const savePresetBtn  = document.getElementById("savePresetBtn");
-
 const toast       = document.getElementById("toast");
-const imageEl     = document.getElementById("statusImage");
+const debugEl     = document.getElementById("debugLog");
 
-/* === PUSH COMPOSER ELEMENTS === */
+/* Share builder elements */
+const imageEl       = document.getElementById("statusImage");
+const shareCaption  = document.getElementById("shareCaption");
+const enableCustom  = document.getElementById("enableCustom");
+const charCountEl   = document.getElementById("charCount");
+const presetSelect  = document.getElementById("presetSelect");
+const savePresetBtn = document.getElementById("savePreset");
+
+/* Push elements */
 const pushTemplateSel = document.getElementById("pushTemplate");
 const pushTitleInput  = document.getElementById("pushTitle");
-const pushMsgInput    = document.getElementById("pushMessage");
-const pushUrlInput    = document.getElementById("pushUrl");
-
-/* === TEMPLATES === */
-const PUSH_TEMPLATES = {
-  LIVE: {
-    title: "Big Red is LIVE",
-    message: "I’m on the road now — text RED if you need a flat-rate connection.",
-    url: "https://bigred202403.github.io/"
-  },
-  AIRPORT: {
-    title: "Airport Runs Open",
-    message: "Headed toward Will Rogers — text RED for a flat-rate airport ride.",
-    url: "https://bigred202403.github.io/Big-Red-Connect/"
-  },
-  WEEKEND: {
-    title: "Weekend Night Run",
-    message: "Rolling through the metro tonight — message RED to line up your ride.",
-    url: "https://bigred202403.github.io/Big-Red-Connect/"
-  },
-  HOLIDAY: {
-    title: "Holiday Lights & Rides",
-    message: "Holiday lights runs + flat rates — plan ahead with Big Red.",
-    url: "https://bigred202403.github.io/Big-Red-Connect/"
-  },
-  CAMPUS: {
-    title: "Campus Corner Late Night",
-    message: "OU late night runs are open — text RED when you’re ready to head home.",
-    url: "https://bigred202403.github.io/Big-Red-Connect/"
-  },
-  OFFLINE: {
-    title: "Big Red is Offline",
-    message: "Thanks for riding local — I’m offline for now but back soon.",
-    url: "https://bigred202403.github.io/"
-  }
-};
-
-/* === PUSH TEMPLATE APPLY === */
-function applyPushTemplateFromSelect(){
-  const key = pushTemplateSel.value;
-  const tmpl = PUSH_TEMPLATES[key];
-  if(!tmpl) return;
-  pushTitleInput.value = tmpl.title;
-  pushMsgInput.value   = tmpl.message;
-  pushUrlInput.value   = tmpl.url;
-}
-document.getElementById("applyPushTemplate").onclick = applyPushTemplateFromSelect;
-applyPushTemplateFromSelect();
-
-/* === PUSH SEND LOGIC === */
-document.getElementById("sendPush").onclick = async () => {
-  const title   = pushTitleInput.value.trim() || "Big Red Connect";
-  const message = pushMsgInput.value.trim();
-  const url     = (pushUrlInput.value || "").trim() || undefined;
-
-  if(!message){
-    showToast("⚠️ Message is required");
-    return;
-  }
-
-  try {
-    const res = await fetch(PUSH_WORKER, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Admin-Secret": AUTH_SECRET
-      },
-      body: JSON.stringify({ title, message, url })
-    });
-
-    const text = await res.text();
-    if (!res.ok) throw new Error(text || ("HTTP " + res.status));
-
-    showToast("📣 Push sent!");
-    logDebug("Push sent OK: " + title);
-
-  } catch (err) {
-    showToast("⚠️ Push failed");
-    logDebug("Push error: " + err.message);
-  }
-};
+const pushBodyInput   = document.getElementById("pushBody");
+const pushPreviewTitle= document.getElementById("pushPreviewTitle");
+const pushPreviewBody = document.getElementById("pushPreviewBody");
 
 /* === TOAST & DEBUG === */
 function showToast(msg, ms=2500){
@@ -439,9 +431,8 @@ function showToast(msg, ms=2500){
   setTimeout(() => toast.style.opacity = 0, ms);
 }
 function logDebug(msg){
-  const el = document.getElementById("debugLog");
   const now = new Date().toLocaleTimeString("en-US",{hour12:false});
-  el.innerHTML = `[${now}] ${msg}<br>` + el.innerHTML;
+  debugEl.innerHTML = `[${now}] ${msg}<br>` + debugEl.innerHTML;
 }
 function fmtLocal(iso){
   if(!iso) return "—";
@@ -454,19 +445,20 @@ document.getElementById("refreshPage").onclick = () => {
   setTimeout(() => location.reload(true), 350);
 };
 
-/* === FETCH STATUS === */
+/* === STATUS FETCH === */
 async function fetchStatus(){
   try{
     const res = await fetch(`${STATUS_WORKER}/status?nocache=${Date.now()}`, { cache:"no-store" });
     const j   = await res.json();
     renderStatusPill(j.status, j.updated);
-    select.value = j.status;
-    updatePreview(j.status);
+    select.value = j.status || "offline";
+    initShareBuilder(j.status || "offline");
     if(j.status === "online") startGPSLoop(30000);
     else stopGPSLoop();
   }catch(err){
     logDebug("Status fetch error: " + err.message);
     renderStatusPill("offline");
+    initShareBuilder("offline");
   }
 }
 
@@ -504,7 +496,9 @@ document.getElementById("updateStatusBtn").onclick = async () => {
     if(!res.ok) throw new Error(await res.text());
 
     renderStatusPill(newStatus, payload.updated);
-    updatePreview(newStatus);
+    if(!enableCustom.checked){
+      initShareBuilder(newStatus);
+    }
     showToast("Status updated!");
 
     if(newStatus === "online") startGPSLoop(30000);
@@ -514,254 +508,6 @@ document.getElementById("updateStatusBtn").onclick = async () => {
     showToast("⚠️ Update failed");
     logDebug("Status update error: " + err.message);
   }
-};
-
-/* === SHARE BUILDER TEMPLATES === */
-let variants     = [];
-let captionIndex = 0;
-let useCustom    = false;
-
-/* presets stored in localStorage */
-let captionPresets = [];
-const PRESET_KEY = "brcCaptionPresets_v1";
-
-function loadPresets(){
-  try{
-    const raw = localStorage.getItem(PRESET_KEY);
-    captionPresets = raw ? JSON.parse(raw) : [];
-  }catch{
-    captionPresets = [];
-  }
-  renderPresetOptions();
-}
-function savePresets(){
-  try{ localStorage.setItem(PRESET_KEY, JSON.stringify(captionPresets)); }catch{}
-}
-function renderPresetOptions(){
-  presetSelect.innerHTML = '<option value="">Insert saved caption…</option>';
-  captionPresets.forEach((txt, idx) => {
-    const label = (txt.length > 40 ? txt.slice(0,37)+"…" : txt) || `Preset ${idx+1}`;
-    const opt = document.createElement("option");
-    opt.value = idx.toString();
-    opt.textContent = label;
-    presetSelect.appendChild(opt);
-  });
-}
-loadPresets();
-
-function generateVariants(status){
-  const weekday = new Date().toLocaleString("en-US",{weekday:"long"});
-  const CTA =
-    "\n\nNo surprises. Just solid local moves." +
-    "\nText ‘RED’ to 405-378-4024 — your affordable flat-rate ride connection." +
-    "\nVeteran Owned • Affordable • Local • Trusted." +
-    "\nhttps://bigred202403.github.io/Big-Red-Connect/";
-
-  if(status === "online"){
-    variants = [
-      `🚗 ${weekday} Moves — Big Red Connect is LIVE! Let’s roll.\n${CTA}`,
-      `🌙 ${weekday} Nights — Out and about? Big Red’s on the move.\n${CTA}`,
-      `🎄 Holiday Run — Big Red is LIVE and rolling local tonight!\n${CTA}`,
-      `🚦 Rolling steady — your trusted flat-rate connection is LIVE.\n${CTA}`,
-      `📍 In the metro now — message me to plan your pickup.\n${CTA}`
-    ];
-  } else if(status === "away"){
-    variants = [
-      `🕑 ${weekday} Update — I’m stepping away but still nearby. Text me if you need a connection.\n${CTA}`,
-      `🟡 Limited Availability — I can take select rides, just message me first.\n${CTA}`,
-      `📩 Need a ride? I’m close — text RED and I’ll confirm ASAP.\n${CTA}`
-    ];
-  } else {
-    variants = [
-      `🔴 Offline — Thank you for riding local! Back soon.\n${CTA}`,
-      `😴 Signing off for now — see you later tonight or tomorrow.\n${CTA}`
-    ];
-  }
-
-  captionIndex = 0;
-  updatePreviewText();
-}
-
-/* compute the effective caption (template or custom) */
-function getBaseTemplate(){
-  if(variants.length === 0) return "";
-  return variants[(captionIndex % variants.length + variants.length)%variants.length];
-}
-function getEffectiveCaption(){
-  const base = getBaseTemplate();
-  const custom = captionBox.value.trim();
-  if(useCustom && custom) return custom;
-  return base || custom || "";
-}
-function updatePreviewText(){
-  const finalText = getEffectiveCaption();
-  captionPreview.value = finalText || "Preview will appear here…";
-  updateCharCount();
-}
-
-/* caption nav buttons */
-document.getElementById("prevCaption").onclick = () => {
-  if(variants.length === 0) return;
-  captionIndex = (captionIndex - 1 + variants.length) % variants.length;
-  updatePreviewText();
-};
-document.getElementById("nextCaption").onclick = () => {
-  if(variants.length === 0) return;
-  captionIndex = (captionIndex + 1) % variants.length;
-  updatePreviewText();
-};
-
-/* custom toggle */
-customToggle.addEventListener("change", () => {
-  useCustom = customToggle.checked;
-  updatePreviewText();
-});
-
-/* custom box typing */
-captionBox.addEventListener("input", () => {
-  updatePreviewText();
-});
-
-/* char counter */
-function updateCharCount(){
-  const len = captionBox.value.length;
-  charCountEl.textContent = `${len} character${len===1?"":"s"}`;
-}
-
-/* presets handling */
-savePresetBtn.addEventListener("click", () => {
-  const txt = captionBox.value.trim();
-  if(!txt){
-    showToast("Nothing to save");
-    return;
-  }
-  if(captionPresets.length >= 10){
-    captionPresets.shift();
-  }
-  captionPresets.push(txt);
-  savePresets();
-  renderPresetOptions();
-  showToast("Preset saved");
-});
-presetSelect.addEventListener("change", () => {
-  const idx = parseInt(presetSelect.value,10);
-  if(isNaN(idx) || idx < 0 || idx >= captionPresets.length) return;
-  captionBox.value = captionPresets[idx];
-  useCustom = true;
-  customToggle.checked = true;
-  updatePreviewText();
-  presetSelect.value = "";
-});
-
-/* === IMAGES === */
-const dayImgs = [
-  "3F34BE7E-5953-433C-B8D0-17AC9108107F.png",
-  "B02AB3EA-1AF5-4BE4-8CBB-E5A1AA40711F.png",
-  "Big Red Live 2.png"
-];
-const nightImgs = [
-  "3673A967-4A2D-4F9C-8602-0C820D31D168.png",
-  "982ABF7A-D9F5-403D-BAE8-13777EC286FB.png",
-  "0081086F-89FA-41B2-85EB-E4EE97E9E8EF.png"
-];
-const holidayImgs = [
-  "BA7E86CF-5782-4323-B0B2-19918EF67887.png",
-  "3673A967-4A2D-4F9C-8602-0C820D31D168.png",
-  "982ABF7A-D9F5-403D-BAE8-13777EC286FB.png",
-  "Big Red Live Holiday 1.png",
-  "Big Red Live Christmas.png",
-  "0081086F-89FA-41B2-85EB-E4EE97E9E8EF.png",
-  "3F34BE7E-5953-433C-B8D0-17AC9108107F.png",
-  "Big Red Live Thanksgiving.png"
-];
-const offlineImgs = [
-  "3673A967-4A2D-4F9C-8602-0C820D31D168.png",
-  "982ABF7A-D9F5-403D-BAE8-13777EC286FB.png",
-  "0081086F-89FA-41B2-85EB-E4EE97E9E8EF.png"
-];
-
-let activeImages = [];
-let imageIndex   = 0;
-
-function pickImageSet(status){
-  const now   = new Date();
-  const hour  = now.getHours();
-  const month = now.getMonth();
-  const isDay     = hour >= 7 && hour < 18;
-  const isHoliday = (month === 10 || month === 11);
-
-  if(status === "offline"){
-    activeImages = isHoliday ? holidayImgs.slice() : offlineImgs.slice();
-  } else if(isHoliday){
-    activeImages = holidayImgs.slice();
-  } else if(isDay){
-    activeImages = dayImgs.slice();
-  } else {
-    activeImages = nightImgs.slice();
-  }
-
-  if(activeImages.length === 0){
-    activeImages = dayImgs.slice();
-  }
-  imageIndex = 0;
-  applyImage();
-}
-
-function applyImage(){
-  if(activeImages.length === 0) return;
-  const filename = activeImages[imageIndex];
-  const url = "https://raw.githubusercontent.com/bigred202403/Big-Red-Connect/main/" +
-              encodeURIComponent(filename);
-  imageEl.src = url;
-}
-
-document.getElementById("prevImage").onclick = () => {
-  if(activeImages.length === 0) return;
-  imageIndex = (imageIndex - 1 + activeImages.length) % activeImages.length;
-  applyImage();
-};
-document.getElementById("nextImage").onclick = () => {
-  if(activeImages.length === 0) return;
-  imageIndex = (imageIndex + 1) % activeImages.length;
-  applyImage();
-};
-
-function updatePreview(status){
-  generateVariants(status);
-  pickImageSet(status);
-}
-
-/* === POST TO LIVE === */
-document.getElementById("postToLive").onclick = async () => {
-  const status  = select.value;
-  const caption = getEffectiveCaption();
-  const image   = imageEl.src;
-
-  try{
-    const res = await fetch(POST_WORKER,{
-      method:"PUT",
-      headers:{
-        "Content-Type":"application/json",
-        "X-Admin-Secret":AUTH_SECRET
-      },
-      body:JSON.stringify({ status, caption, image })
-    });
-
-    if(!res.ok) throw new Error(await res.text());
-
-    showToast("📢 Posted to Live Map!");
-    logDebug("Posted to Live Map successfully.");
-  }catch(err){
-    showToast("⚠ Error posting to Live Map");
-    logDebug("Error posting: " + err.message);
-  }
-};
-
-/* === COPY CAPTION === */
-document.getElementById("copyBtn").onclick = () => {
-  const text = getEffectiveCaption();
-  navigator.clipboard.writeText(text);
-  showToast("Copied!");
 };
 
 /* === GPS LOOP === */
@@ -841,7 +587,342 @@ async function releaseWakeLock(){
 
 window.addEventListener("pagehide", () => stopGPSLoop());
 
-/* INIT */
+/* === PUSH TEMPLATES === */
+const PUSH_TEMPLATES = {
+  LIVE: {
+    title: "Big Red is LIVE",
+    body : "I’m on the road now — message me if you need a connection."
+  },
+  AIRPORT: {
+    title: "Airport Runs Open",
+    body : "Headed toward Will Rogers — text RED if you need a flat-rate airport ride."
+  },
+  WEEKEND: {
+    title: "Weekend Night Run",
+    body : "Rolling through the metro tonight. Message me if you need a safe ride home."
+  },
+  HOLIDAY: {
+    title: "Holiday Lights & Rides",
+    body : "Holiday specials + lights tours — plan ahead and message RED to lock in your spot."
+  },
+  CAMPUS: {
+    title: "Campus Corner Late Night",
+    body : "OU late-night runs are open. Message RED if you need a ride off Campus Corner."
+  },
+  OFFLINE: {
+    title: "Big Red is Offline",
+    body : "Thanks for riding local with Big Red Connect — I’ll be back on the road soon."
+  }
+};
+
+function applyPushTemplate(key){
+  const tpl = PUSH_TEMPLATES[key] || PUSH_TEMPLATES.LIVE;
+  pushTemplateSel.value = key;
+  pushTitleInput.value  = tpl.title;
+  pushBodyInput.value   = tpl.body;
+  updatePushPreview();
+}
+
+function updatePushPreview(){
+  pushPreviewTitle.textContent = pushTitleInput.value.trim() || "Big Red Connect";
+  pushPreviewBody.textContent  = pushBodyInput.value.trim()  || "Notification body will appear here.";
+}
+
+pushTemplateSel.addEventListener("change", () => {
+  applyPushTemplate(pushTemplateSel.value);
+});
+pushTitleInput.addEventListener("input", updatePushPreview);
+pushBodyInput.addEventListener("input", updatePushPreview);
+
+document.getElementById("sendPush").onclick = async () => {
+  const title = pushTitleInput.value.trim() || "Big Red Connect";
+  const message = pushBodyInput.value.trim();
+  if(!message){
+    showToast("Add a message first.");
+    return;
+  }
+
+  try{
+    const res = await fetch(PUSH_WORKER, {
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        "X-Admin-Secret":AUTH_SECRET
+      },
+      body: JSON.stringify({ title, message })
+    });
+
+    const txt = await res.text();
+    if(!res.ok){
+      showToast("⚠️ Push failed");
+      logDebug("Push error: " + txt);
+      return;
+    }
+
+    showToast("📣 Push sent!");
+    logDebug("Push sent OK: " + title);
+  }catch(err){
+    showToast("⚠️ Push failed");
+    logDebug("Push error: " + err.message);
+  }
+};
+
+/* === SHARE BUILDER: IMAGES === */
+const dayImgs = [
+  "3F34BE7E-5953-433C-B8D0-17AC9108107F.png",
+  "B02AB3EA-1AF5-4BE4-8CBB-E5A1AA40711F.png",
+  "Big Red Live 2.png"
+];
+const nightImgs = [
+  "3673A967-4A2D-4F9C-8602-0C820D31D168.png",
+  "982ABF7A-D9F5-403D-BAE8-13777EC286FB.png",
+  "0081086F-89FA-41B2-85EB-E4EE97E9E8EF.png"
+];
+const holidayImgs = [
+  "BA7E86CF-5782-4323-B0B2-19918EF67887.png",
+  "3673A967-4A2D-4F9C-8602-0C820D31D168.png",
+  "982ABF7A-D9F5-403D-BAE8-13777EC286FB.png",
+  "Big Red Live Holiday 1.png",
+  "Big Red Live Christmas.png",
+  "0081086F-89FA-41B2-85EB-E4EE97E9E8EF.png",
+  "3F34BE7E-5953-433C-B8D0-17AC9108107F.png",
+  "Big Red Live Thanksgiving.png"
+];
+const offlineImgs = [
+  "3673A967-4A2D-4F9C-8602-0C820D31D168.png",
+  "982ABF7A-D9F5-403D-BAE8-13777EC286FB.png",
+  "0081086F-89FA-41B2-85EB-E4EE97E9E8EF.png"
+];
+
+let activeImages = [];
+let imageIndex   = 0;
+
+function pickImageSet(status){
+  const now   = new Date();
+  const hour  = now.getHours();
+  const month = now.getMonth();
+  const isDay     = hour >= 7 && hour < 18;
+  const isHoliday = (month === 10 || month === 11); // Nov / Dec
+
+  if(status === "offline"){
+    activeImages = isHoliday ? holidayImgs.slice() : offlineImgs.slice();
+  } else if(isHoliday){
+    activeImages = holidayImgs.slice();
+  } else if(isDay){
+    activeImages = dayImgs.slice();
+  } else {
+    activeImages = nightImgs.slice();
+  }
+
+  if(activeImages.length === 0){
+    activeImages = dayImgs.slice();
+  }
+  imageIndex = 0;
+  applyImage();
+}
+
+function applyImage(){
+  if(activeImages.length === 0) return;
+  const filename = activeImages[imageIndex];
+  const url = "https://raw.githubusercontent.com/bigred202403/Big-Red-Connect/main/" +
+              encodeURIComponent(filename);
+  imageEl.src = url;
+}
+
+document.getElementById("prevImage").onclick = () => {
+  if(activeImages.length === 0) return;
+  imageIndex = (imageIndex - 1 + activeImages.length) % activeImages.length;
+  applyImage();
+};
+document.getElementById("nextImage").onclick = () => {
+  if(activeImages.length === 0) return;
+  imageIndex = (imageIndex + 1) % activeImages.length;
+  applyImage();
+};
+
+/* === SHARE BUILDER: CAPTION VARIANTS === */
+let variants     = [];
+let captionIndex = 0;
+
+function buildCTA(){
+  return (
+    "\n\nNo surprises. Just solid local moves." +
+    "\nText ‘RED’ to 405-378-4024 — your affordable flat-rate ride connection." +
+    "\nVeteran Owned • Affordable • Local • Trusted." +
+    "\nhttps://bigred202403.github.io/Big-Red-Connect/"
+  );
+}
+
+function generateVariants(status){
+  const weekday = new Date().toLocaleString("en-US",{weekday:"long"});
+  const CTA = buildCTA();
+
+  if(status === "online"){
+    variants = [
+      `🚗 ${weekday} Moves — Big Red Connect is LIVE! Let’s roll.\n${CTA}`,
+      `🌙 ${weekday} Nights — Out and about? Big Red’s on the move.\n${CTA}`,
+      `🎄 Holiday Run — Big Red is LIVE and rolling local tonight!\n${CTA}`,
+      `🚦 Rolling steady — your trusted flat-rate connection is LIVE.\n${CTA}`,
+      `📍 In the metro now — message me to plan your pickup.\n${CTA}`
+    ];
+  } else if(status === "away"){
+    variants = [
+      `🕑 ${weekday} Update — I’m stepping away but still nearby. Text me if you need a connection.\n${CTA}`,
+      `🟡 Limited Availability — I can take select rides, just message me first.\n${CTA}`,
+      `📩 Need a ride? I’m close — text RED and I’ll confirm ASAP.\n${CTA}`
+    ];
+  } else {
+    variants = [
+      `🔴 Offline — Thank you for riding local! Back soon.\n${CTA}`,
+      `😴 Signing off for now — see you later tonight or tomorrow.\n${CTA}`
+    ];
+  }
+}
+
+function applyVariant(index){
+  if(!variants.length) return;
+  captionIndex = ((index % variants.length) + variants.length) % variants.length;
+  if(!enableCustom.checked){
+    shareCaption.value = variants[captionIndex];
+    updateCharCount();
+  }
+}
+
+function initShareBuilder(status){
+  pickImageSet(status);
+  generateVariants(status);
+  applyVariant(0);
+}
+
+document.getElementById("prevTemplate").onclick = () => {
+  if(enableCustom.checked){
+    showToast("Custom caption enabled — templates won’t overwrite.");
+    return;
+  }
+  if(!variants.length) return;
+  applyVariant(captionIndex - 1);
+};
+document.getElementById("nextTemplate").onclick = () => {
+  if(enableCustom.checked){
+    showToast("Custom caption enabled — templates won’t overwrite.");
+    return;
+  }
+  if(!variants.length) return;
+  applyVariant(captionIndex + 1);
+};
+
+/* === SHARE: CUSTOM + PRESETS === */
+function updateCharCount(){
+  charCountEl.textContent = shareCaption.value.length.toString();
+}
+shareCaption.addEventListener("input", updateCharCount);
+
+enableCustom.addEventListener("change", () => {
+  if(enableCustom.checked){
+    showToast("Custom caption mode enabled.");
+  }else{
+    // Reset to template based on current status
+    initShareBuilder(select.value || "offline");
+    showToast("Templates re-enabled.");
+  }
+});
+
+/* Presets in localStorage */
+const PRESET_KEY = "brc_caption_presets";
+
+function loadPresets(){
+  let list = [];
+  try{
+    const raw = localStorage.getItem(PRESET_KEY);
+    if(raw) list = JSON.parse(raw) || [];
+  }catch{}
+  presetSelect.innerHTML = "";
+  const baseOpt = document.createElement("option");
+  baseOpt.value = "";
+  baseOpt.textContent = "Insert saved caption...";
+  presetSelect.appendChild(baseOpt);
+
+  list.forEach((txt, idx) => {
+    const opt = document.createElement("option");
+    const preview = txt.replace(/\s+/g," ").trim().slice(0,60);
+    opt.value = idx.toString();
+    opt.textContent = preview || "(blank)";
+    presetSelect.appendChild(opt);
+  });
+}
+
+function savePresets(list){
+  try{
+    localStorage.setItem(PRESET_KEY, JSON.stringify(list));
+  }catch{}
+}
+
+savePresetBtn.addEventListener("click", () => {
+  const txt = shareCaption.value.trim();
+  if(!txt){
+    showToast("Nothing to save.");
+    return;
+  }
+  let list = [];
+  try{
+    const raw = localStorage.getItem(PRESET_KEY);
+    if(raw) list = JSON.parse(raw) || [];
+  }catch{}
+  list.push(txt);
+  savePresets(list);
+  loadPresets();
+  showToast("Caption preset saved.");
+});
+
+presetSelect.addEventListener("change", () => {
+  const idx = parseInt(presetSelect.value, 10);
+  if(isNaN(idx)) return;
+  let list = [];
+  try{
+    const raw = localStorage.getItem(PRESET_KEY);
+    if(raw) list = JSON.parse(raw) || [];
+  }catch{}
+  if(idx >= 0 && idx < list.length){
+    shareCaption.value = list[idx];
+    updateCharCount();
+  }
+});
+
+/* === SHARE: COPY & POST === */
+document.getElementById("copyBtn").onclick = () => {
+  navigator.clipboard.writeText(shareCaption.value || "");
+  showToast("Copied!");
+};
+
+document.getElementById("postToLive").onclick = async () => {
+  const status  = select.value || "offline";
+  const caption = shareCaption.value || "";
+  const image   = imageEl.src || "";
+
+  try{
+    const res = await fetch(POST_WORKER,{
+      method:"PUT",
+      headers:{
+        "Content-Type":"application/json",
+        "X-Admin-Secret":AUTH_SECRET
+      },
+      body:JSON.stringify({ status, caption, image })
+    });
+
+    if(!res.ok) throw new Error(await res.text());
+
+    showToast("📢 Posted to Live Map!");
+    logDebug("Posted to Live Map successfully.");
+  }catch(err){
+    showToast("⚠ Error posting to Live Map");
+    logDebug("Error posting: " + err.message);
+  }
+};
+
+/* === INIT === */
+loadPresets();
+applyPushTemplate("LIVE");
+updateCharCount();
 fetchStatus();
 </script>
 
