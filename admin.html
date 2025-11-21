@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Admin Big Red</title>
 
+<!-- Icons / PWA basics -->
 <link rel="apple-touch-icon" href="icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon.png">
 <link rel="shortcut icon" href="icon.png">
@@ -51,7 +52,7 @@ padding:6px;max-height:200px;overflow:auto;text-align:left;border-top:1px solid 
     <span>🔒 Internal Use Only</span>
     <span id="livePill" class="pill offline">📡 Tracking: OFF</span>
   </div>
-  <button class="refresh-btn" id="refreshPage">🔄 Refresh</button>
+  <button class="refresh-btn" id="refreshPage">🔄 Refresh Page</button>
 </header>
 
 <h1>Big Red Connect — Admin Console</h1>
@@ -61,6 +62,7 @@ padding:6px;max-height:200px;overflow:auto;text-align:left;border-top:1px solid 
 
 <div class="grid">
 
+  <!-- CONTROL -->
   <section id="control">
     <h2>Update Driving Status</h2>
     <div class="row">
@@ -69,7 +71,7 @@ padding:6px;max-height:200px;overflow:auto;text-align:left;border-top:1px solid 
         <option value="away">🟡 Limited Availability</option>
         <option value="offline">🔴 Offline</option>
       </select>
-      <button class="btn-primary" id="updateStatusBtn">💾 Save</button>
+      <button class="btn-primary" id="updateStatusBtn">💾 Save Status</button>
     </div>
     <div class="meta">
       <div>Last status update: <span id="statusStamp">—</span></div>
@@ -77,23 +79,22 @@ padding:6px;max-height:200px;overflow:auto;text-align:left;border-top:1px solid 
     </div>
   </section>
 
+  <!-- QUICK SHARE BUILDER -->
   <section id="share">
     <h2>Quick Share Builder</h2>
+    <div class="img-box"><img id="statusImage" src="" alt="Preview"></div>
 
-    <div class="img-box">
-      <img id="statusImage" src="" alt="Preview">
-    </div>
-
+    <!-- Caption Variants -->
     <div class="row">
       <button id="prevCaption" class="btn-tertiary">⬅ Prev</button>
       <button id="nextCaption" class="btn-tertiary">Next ➡</button>
     </div>
 
-    <textarea id="captionBox" readonly></textarea>
+    <textarea id="captionBox" readonly>Loading caption...</textarea>
 
     <div class="row">
-      <button class="btn-secondary" id="copyBtn">📋 Copy</button>
-      <button class="btn-primary" id="shareBtn">📤 Facebook</button>
+      <button class="btn-secondary" id="copyBtn">📋 Copy Caption</button>
+      <button class="btn-primary" id="shareBtn">📤 Share on Facebook</button>
       <button class="btn-primary" id="postToLive">📢 Post to Live Page</button>
     </div>
 
@@ -106,154 +107,227 @@ padding:6px;max-height:200px;overflow:auto;text-align:left;border-top:1px solid 
 <div id="debugLog">[Debug log started]</div>
 
 <script>
-/* ---------------------------------------------------
-   CONFIG
---------------------------------------------------- */
+/* === CONFIG === */
 const STATUS_WORKER="https://bigred-status-updater.bigredtransportation.workers.dev";
 const LOCATION_WORKER="https://update-location.bigredtransportation.workers.dev";
 const POST_WORKER="https://post-to-live-beta.bigredtransportation.workers.dev";
 const AUTH_SECRET="BigRedPrivateKey2025";
+const TZ="America/Chicago";
 
-/* ELEMENTS */
+/* === ELEMENT REFERENCES === */
 const pill=document.getElementById("status-pill");
 const statusStamp=document.getElementById("statusStamp");
 const gpsStamp=document.getElementById("gpsStamp");
 const gpsRate=document.getElementById("gpsRate");
 const select=document.getElementById("statusSelect");
+const livePill=document.getElementById("livePill");
 const captionBox=document.getElementById("captionBox");
 const toast=document.getElementById("toast");
 
-function showToast(msg){toast.textContent=msg;toast.style.opacity=1;setTimeout(()=>toast.style.opacity=0,2500);}
-function fmtLocal(iso){return iso?new Date(iso).toLocaleString(): "—";}
+function showToast(msg,ms=2500){toast.textContent=msg;toast.style.opacity=1;setTimeout(()=>toast.style.opacity=0,ms);}
+function logDebug(msg){
+ const el=document.getElementById("debugLog");
+ const now=new Date().toLocaleTimeString("en-US",{hour12:false});
+ el.innerHTML=`[${now}] ${msg}<br>`+el.innerHTML;
+}
+function fmtLocal(iso){if(!iso)return"—";return new Date(iso).toLocaleString("en-US",{timeZone:TZ});}
 
-/* ---------------------------------------------------
-   REFRESH BUTTON
---------------------------------------------------- */
-document.getElementById("refreshPage").onclick=()=>{location.reload();};
+/* === REFRESH BUTTON === */
+document.getElementById("refreshPage").onclick=()=>{showToast("Refreshing…");setTimeout(()=>location.reload(true),350);};
 
-/* ---------------------------------------------------
-   STATUS FETCH + RENDER
---------------------------------------------------- */
+/* === FETCH STATUS === */
 async function fetchStatus(){
-  try{
-    const res=await fetch(`${STATUS_WORKER}/status?nocache=${Date.now()}`);
-    const j=await res.json();
-    renderStatus(j.status,j.updated);
-    select.value=j.status;
-    updatePreview(j.status);
-  }catch{
-    renderStatus("offline");
-  }
-}
-function renderStatus(state,iso){
-  pill.className="status "+state;
-  pill.textContent=`${state.toUpperCase()} — as of ${fmtLocal(iso)}`;
-  statusStamp.textContent=fmtLocal(iso);
+ try{
+  const res=await fetch(`${STATUS_WORKER}/status?nocache=${Date.now()}`,{cache:"no-store"});
+  const j=await res.json();
+  renderStatusPill(j.status,j.updated);
+  select.value=j.status;
+  updatePreview(j.status);
+  if(j.status==="online") startGPSLoop(30000);
+  else stopGPSLoop();
+ }catch{renderStatusPill("offline");}
 }
 
-/* ---------------------------------------------------
-   SAVE STATUS
---------------------------------------------------- */
+function renderStatusPill(state,iso){
+ pill.classList.remove("online","away","offline");
+ const stamp=fmtLocal(iso);
+ if(state==="online"){pill.classList.add("online");pill.textContent=`🟢 Online — as of ${stamp}`;}
+ else if(state==="away"){pill.classList.add("away");pill.textContent=`🟡 Limited — as of ${stamp}`;}
+ else{pill.classList.add("offline");pill.textContent=`🔴 Offline — as of ${stamp}`;}
+ statusStamp.textContent=stamp;
+}
+
+/* === SAVE STATUS === */
 document.getElementById("updateStatusBtn").onclick=async()=>{
-  const status=select.value;
-  const payload={status,updated:new Date().toISOString()};
-  await fetch(STATUS_WORKER,{
+ const newStatus=select.value;
+ const payload={status:newStatus,updated:new Date().toISOString()};
+ try{
+  const res=await fetch(`${STATUS_WORKER}/`,{
     method:"PUT",
-    headers:{"Content-Type":"application/json","X-Auth-Token":AUTH_SECRET},
+    headers:{
+      "Content-Type":"application/json",
+      "X-Auth-Token":AUTH_SECRET
+    },
     body:JSON.stringify(payload)
   });
-  renderStatus(status,payload.updated);
-  updatePreview(status);
+
+  if(!res.ok) throw new Error(await res.text());
+
+  renderStatusPill(newStatus,payload.updated);
+  updatePreview(newStatus);
   showToast("Status updated!");
+
+  if(newStatus==="online") startGPSLoop(30000);
+  else stopGPSLoop();
+
+ }catch(err){
+  showToast("⚠️ Update failed");
+  logDebug("Error: "+err.message);
+ }
 };
 
-/* ---------------------------------------------------
-   CAPTION VARIANTS
---------------------------------------------------- */
+/* === CAPTION VARIANTS === */
 let variants=[];
-let idx=0;
+let currentIndex=0;
 
 function generateVariants(status){
-  const weekday=new Date().toLocaleString("en-US",{weekday:"long"});
-  const CTA="\n\nNo surprises. Just solid local moves.\nText ‘RED’ to 405-378-4024.\nVeteran Owned • Affordable • Local • Trusted.\nhttps://bigred202403.github.io/Big-Red-Connect/";
+ const weekday=new Date().toLocaleString("en-US",{weekday:"long"});
+ const CTA="\n\nNo surprises. Just solid local moves.\nText ‘RED’ to 405-378-4024 — your affordable flat-rate ride connection.\nVeteran Owned • Affordable • Local • Trusted.\nhttps://bigred202403.github.io/Big-Red-Connect/";
 
-  if(status==="online"){
-    variants=[
-      `🚗 ${weekday} Moves — Big Red is LIVE!\n${CTA}`,
-      `🌙 ${weekday} Nights — Out and about? I'm rolling.\n${CTA}`,
-      `🚦 Rolling steady — your flat-rate connection is LIVE.\n${CTA}`,
-      `📍 In the metro now — message me to plan ahead.\n${CTA}`,
-    ];
-  }else if(status==="away"){
-    variants=[
-      `🕑 ${weekday} Update — I'm close by, message to connect.\n${CTA}`,
-      `🟡 Limited Availability — text RED and I’ll confirm.\n${CTA}`,
-      `📩 Need a ride? I'm nearby.\n${CTA}`
-    ];
-  }else{
-    variants=[
-      `🔴 Offline — Thank you for riding local!\n${CTA}`,
-      `😴 Signing off — back soon.\n${CTA}`
-    ];
-  }
+ if(status==="online"){
+   variants=[
+     `🚗 ${weekday} Moves — Big Red Connect is LIVE! Let’s roll.\n${CTA}`,
+     `🌙 ${weekday} Nights — Out and about? Big Red’s on the move.\n${CTA}`,
+     `🎄 Holiday Run — Big Red is LIVE and rolling local tonight!\n${CTA}`,
+     `🚦 Rolling steady — your trusted flat-rate connection is LIVE.\n${CTA}`,
+     `📍 In the metro now — message me to plan your pickup.\n${CTA}`
+   ];
+ }
+ else if(status==="away"){
+   variants=[
+     `🕑 ${weekday} Update — I’m stepping away but still nearby. Text me if you need a connection.\n${CTA}`,
+     `🟡 Limited Availability — I can take select rides, just message me first.\n${CTA}`,
+     `📩 Need a ride? I’m close — text RED and I’ll confirm ASAP.\n${CTA}`
+   ];
+ }
+ else{
+   variants=[
+     `🔴 Offline — Thank you for riding local! Back soon.\n${CTA}`,
+     `😴 Signing off for now — see you later tonight or tomorrow.\n${CTA}`
+   ];
+ }
 
-  idx=0;
-  captionBox.value=variants[idx];
+ currentIndex=0;
+ captionBox.value=variants[0];
 }
 
 document.getElementById("prevCaption").onclick=()=>{
-  idx=(idx-1+variants.length)%variants.length;
-  captionBox.value=variants[idx];
+ if(variants.length===0)return;
+ currentIndex=(currentIndex-1+variants.length)%variants.length;
+ captionBox.value=variants[currentIndex];
 };
 document.getElementById("nextCaption").onclick=()=>{
-  idx=(idx+1)%variants.length;
-  captionBox.value=variants[idx];
+ if(variants.length===0)return;
+ currentIndex=(currentIndex+1)%variants.length;
+ captionBox.value=variants[currentIndex];
 };
 
-/* ---------------------------------------------------
-   PREVIEW IMAGE
---------------------------------------------------- */
+/* === PREVIEW (IMAGE + VARIANTS) === */
 function updatePreview(status){
-  generateVariants(status);
-  const img=document.getElementById("statusImage");
-  const imgs=[
-    "3F34BE7E-5953-433C-B8D0-17AC9108107F.png",
-    "B02AB3EA-1AF5-4BE4-8CBB-E5A1AA40711F.png",
-    "3673A967-4A2D-4F9C-8602-0C820D31D168.png",
-    "982ABF7A-D9F5-403D-BAE8-13777EC286FB.png"
-  ];
-  const chosen=imgs[Math.floor(Math.random()*imgs.length)];
-  img.src=`https://raw.githubusercontent.com/bigred202403/Big-Red-Connect/main/${chosen}`;
+ generateVariants(status);
+
+ const now=new Date();
+ const hour=now.getHours();
+ const isDay=hour>=7&&hour<18;
+
+ const img=document.getElementById("statusImage");
+ const dayImgs=[
+   "3F34BE7E-5953-433C-B8D0-17AC9108107F.png",
+   "B02AB3EA-1AF5-4BE4-8CBB-E5A1AA40711F.png"
+ ];
+ const nightImgs=[
+   "3673A967-4F9C-8602-0C820D31D168.png",
+   "982ABF7A-D9F5-403D-BAE8-13777EC286FB.png"
+ ];
+ const chosen=(isDay?dayImgs:nightImgs)[Math.floor(Math.random()*2)];
+ img.src=`https://raw.githubusercontent.com/bigred202403/Big-Red-Connect/main/${chosen}`;
 }
 
-/* ---------------------------------------------------
-   COPY + SHARE
---------------------------------------------------- */
+/* === COPY / SHARE === */
 document.getElementById("copyBtn").onclick=()=>{navigator.clipboard.writeText(captionBox.value);showToast("Copied!");};
-document.getElementById("shareBtn").onclick=()=>{window.open(`https://www.facebook.com/sharer/sharer.php?u=https://bigred202403.github.io/Big-Red-Connect/&quote=${encodeURIComponent(captionBox.value)}`);};
+document.getElementById("shareBtn").onclick=()=>{const c=encodeURIComponent(captionBox.value);
+window.open(`https://www.facebook.com/sharer/sharer.php?u=https://bigred202403.github.io/Big-Red-Connect/&quote=${c}`,"_blank");};
 
-/* ---------------------------------------------------
-   📢 POST TO LIVE PAGE
---------------------------------------------------- */
+/* === POST TO LIVE (same worker as beta) === */
 document.getElementById("postToLive").onclick=async()=>{
-  const body={
-    status:select.value,
-    caption:captionBox.value,
-    image:document.getElementById("statusImage").src
-  };
+ const status=select.value;
+ const caption=captionBox.value;
+ const image=document.getElementById("statusImage").src;
 
-  const res=await fetch(POST_WORKER,{
-    method:"PUT",
-    headers:{"Content-Type":"application/json","X-Admin-Secret":AUTH_SECRET},
-    body:JSON.stringify(body)
-  });
+ try{
+   const res=await fetch(POST_WORKER,{
+     method:"PUT",
+     headers:{
+       "Content-Type":"application/json",
+       "X-Admin-Secret":AUTH_SECRET
+     },
+     body:JSON.stringify({status,caption,image})
+   });
 
-  if(res.ok) showToast("📢 Posted to live page!");
-  else showToast("⚠ Error posting");
+   if(!res.ok) throw new Error(await res.text());
+
+   showToast("📢 Posted to live!");
+   logDebug("Posted to live successfully.");
+ }catch(err){
+   showToast("⚠ Error posting to live");
+   logDebug("Error posting: "+err.message);
+ }
 };
 
-/* INIT */
+/* === GPS LOOP === */
+let gpsTimerActive=false,wakeLock=null;
+function setLivePill(active,rateMs){
+ livePill.classList.remove("online","away","offline");
+ livePill.classList.add(active?"online":"offline");
+ livePill.textContent=active?"📡 Tracking: ON":"📡 Tracking: OFF";
+ gpsRate.textContent=active?`${Math.round(rateMs/1000)}s`:"—";
+}
+async function sendGPS(lat,lng){
+ const payload={latitude:lat,longitude:lng,timestamp:new Date().toISOString()};
+ try{
+  logDebug(`GPS → ${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+  const res=await fetch(LOCATION_WORKER,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+  if(res.ok){gpsStamp.textContent=fmtLocal(payload.timestamp);logDebug("GPS OK");}
+  else logDebug("GPS FAIL "+res.status);
+ }catch(err){logDebug("GPS ERR "+err.message);}
+}
+function startGPSLoop(intervalMs){
+ stopGPSLoop();
+ gpsTimerActive=true;setLivePill(true,intervalMs);requestWakeLock();
+
+ const loop=()=>{
+   if(!gpsTimerActive)return;
+   if(navigator.geolocation){
+     navigator.geolocation.getCurrentPosition(
+       pos=>sendGPS(pos.coords.latitude,pos.coords.longitude),
+       err=>logDebug("GPS ERROR "+err.message),
+       {enableHighAccuracy:true,maximumAge:8000,timeout:8000}
+     );
+   }
+   setTimeout(loop,intervalMs);
+ };
+ loop();
+}
+function stopGPSLoop(){
+ gpsTimerActive=false;setLivePill(false,0);releaseWakeLock();
+}
+async function requestWakeLock(){try{if('wakeLock'in navigator){wakeLock=await navigator.wakeLock.request('screen');}}catch{}}
+async function releaseWakeLock(){if(wakeLock){try{await wakeLock.release();}catch{}wakeLock=null;}}
+
+window.addEventListener("pagehide",()=>stopGPSLoop());
+
 fetchStatus();
 </script>
+
 </body>
 </html>
