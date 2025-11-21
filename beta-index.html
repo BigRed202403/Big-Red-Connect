@@ -235,5 +235,71 @@
     }
     #refreshButton:hover { background: #cc0000; }
   </style>
+  <!-- DEBUG PANEL (TEMPORARY) -->
+  <div id="debugPanel" style="
+    position:fixed;
+    bottom:0;
+    left:0;
+    right:0;
+    background:#111;
+    color:#0f0;
+    font-family:monospace;
+    max-height:40vh;
+    overflow:auto;
+    padding:10px;
+    font-size:12px;
+    border-top:2px solid #b30000;
+    z-index:9999;">
+    <strong>DEBUG OUTPUT</strong>
+    <pre id="debugOutput"></pre>
+  </div>
+  
+  <script>
+  (async () => {
+    const out = document.getElementById('debugOutput');
+  
+    function log(...msg) { 
+      out.textContent += msg.join(" ") + "\n"; 
+      console.log(...msg);
+    }
+  
+    log("---- DEBUG START ----");
+    log("URL:", location.href);
+  
+    // Check OneSignal
+    try {
+      log("typeof OneSignal:", typeof OneSignal);
+    } catch(e) {
+      log("OneSignal Error:", e);
+    }
+  
+    // Check service worker support
+    log("serviceWorker supported:", "serviceWorker" in navigator);
+  
+    // Check service worker controller
+    try {
+      log("controller:", navigator.serviceWorker.controller);
+    } catch(e) {
+      log("controller Error:", e);
+    }
+  
+    // Check registrations
+    try {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      log("registrations:", regs.length);
+      regs.forEach((r,i)=>log("Reg",i,":", r.scope));
+    } catch(e) {
+      log("getRegistrations Error:", e);
+    }
+  
+    // Check if page is running in PWA standalone mode
+    log("Is standalone mode:", window.matchMedia('(display-mode: standalone)').matches);
+  
+    // Check if button exists
+    log("Notification button exists:", !!document.querySelector('button[onclick="subscribeToBigRed()"]'));
+  
+    log("---- DEBUG END ----");
+  })();
+  </script>
 </body>
 </html>
