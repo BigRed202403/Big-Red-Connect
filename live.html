@@ -21,33 +21,86 @@
   <meta http-equiv="Expires" content="0" />
 
   <link rel="stylesheet" href="style.css" />
+
   <style>
-    body { text-align:center; color:#fff; background:#000; font-family:'Roboto',sans-serif; }
-    #map { height: 340px; width: 100%; border-radius: 10px; margin-top: 10px; }
+    body {
+      text-align:center;
+      color:#fff;
+      background:#000;
+      font-family:'Roboto',sans-serif;
+    }
+    #map {
+      height: 340px;
+      width: 100%;
+      border-radius: 10px;
+      margin-top: 10px;
+    }
     .info-section { max-width: 720px; margin: auto; padding: 0 12px; }
-    .panel { background:#111; border:1px solid #333; border-radius:10px; padding:14px; margin-top:14px; text-align:left; }
-    .cta-row { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin:12px 0; }
+    .panel {
+      background:#111;
+      border:1px solid #333;
+      border-radius:10px;
+      padding:14px;
+      margin-top:14px;
+      text-align:left;
+    }
+    .cta-row {
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      justify-content:center;
+      margin:12px 0;
+    }
     .muted { color:#aaa; font-size:0.9em; }
     .hidden { display:none !important; }
     input {
-      width:100%; height:48px;
-      background:#000; border:1px solid #555; border-radius:8px;
-      color:#fff; font-size:1em; padding:8px 10px;
+      width:100%;
+      height:48px;
+      background:#000;
+      border:1px solid #555;
+      border-radius:8px;
+      color:#fff;
+      font-size:1em;
+      padding:8px 10px;
     }
     #status-message {
-      background:#111; border:1px solid #b30000;
-      border-radius:8px; padding:18px; margin-top:20px;
-      color:#ccc; font-size:1em;
+      background:#111;
+      border:1px solid #b30000;
+      border-radius:8px;
+      padding:18px;
+      margin-top:20px;
+      color:#ccc;
+      font-size:1em;
     }
-    .pulse-marker {
-      position: absolute; width:20px; height:20px;
-      background: rgba(255,0,0,0.5); border-radius:50%;
-      animation: pulse 2s infinite; transform: translate(-10px, -10px);
+
+    /* 🔔 Announcement Card (Option B) */
+    .announcement-card {
+      background:#111;
+      border:1px solid #b30000;
+      border-radius:10px;
+      padding:14px;
+      margin:14px auto;
+      max-width:720px;
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
     }
-    @keyframes pulse {
-      0% { transform: scale(0.8); opacity: 0.6; }
-      50% { transform: scale(1.5); opacity: 0.3; }
-      100% { transform: scale(0.8); opacity: 0.6; }
+    .announcement-card img {
+      width:120px;
+      height:auto;
+      border-radius:8px;
+      border:1px solid #333;
+      flex-shrink:0;
+    }
+    .announcement-text {
+      text-align:left;
+      font-size:0.95em;
+      color:#ddd;
+    }
+    .announcement-text .time {
+      font-size:0.75em;
+      color:#888;
+      margin-top:6px;
     }
   </style>
 </head>
@@ -63,7 +116,11 @@
   <h1>Big Red Live Map & ETA</h1>
   <p class="tagline">See where Big Red is — and how long until arrival.</p>
 
+  <!-- 🔴 Global status pill from status.js -->
   <div id="status-pill" class="status status--loading">Checking status…</div>
+
+  <!-- 🚨 Driver Announcement (image + caption from post-to-live worker) -->
+  <div id="announcementWrap" class="hidden"></div>
 
   <section class="info-section">
     <div id="map" class="hidden"></div>
@@ -87,8 +144,7 @@
         <p id="whenLine" class="muted"></p>
         <div class="cta-row">
           <a id="gmLink" class="btn secondary" href="#" target="_blank">🗺️ Open in Maps</a>
-          <!-- ⬇️ regular fare calculator (not beta) -->
-          <a id="calcLink" href="farecalculator.html" class="btn primary">💲 Fare Calculator</a>
+          <a href="farecalculator.html" class="btn primary">💲 Fare Calculator</a>
           <a id="textRed" class="btn secondary" href="sms:+14053784024">📲 Text RED</a>
         </div>
       </div>
@@ -101,27 +157,70 @@
     <p>&copy; 2025 Big Red Connect — <a href="index.html">Return Home</a></p>
   </footer>
 
+  <!-- Status pill logic -->
   <script src="status.js"></script>
+
   <script>
-    const LOCATION_READER = "https://location-reader.bigredtransportation.workers.dev";
+    /* -----------------------------------------------
+       🔥 CONFIG
+    ----------------------------------------------- */
+    const POST_WORKER_URL = "https://post-to-live.bigredtransportation.workers.dev";
+    const LOCATION_READER = "https://update-location.bigredtransportation.workers.dev";
     const HQ = { lat: 35.3207, lng: -97.4929 };
     const STALE_MIN = 30;
 
-    let map, geocoder, directionsService, directionsRenderer;
-    let driverPos = null;
-    let riderPos = null;
+    let map, geocoder, directionsRenderer, directionsService;
+    let driverPos = null, riderPos = null;
     let currentStatus = "offline";
     let autocompleteManual;
-    let liveRefreshTimer = null;
 
-    const log = (...a)=>console.log(new Date().toLocaleTimeString(),"[LIVE]",...a);
+    /* -----------------------------------------------
+       🚨 1. ANNOUNCEMENT PANEL LOADER
+    ----------------------------------------------- */
+    async function loadAnnouncement() {
+      try {
+        const res = await fetch(POST_WORKER_URL + "?t=" + Date.now(), { cache:"no-store" });
+        if (!res.ok) return;
 
+        const post = await res.json();
+        if (!post || !post.caption || !post.image) return;
+
+        const wrap = document.getElementById("announcementWrap");
+        wrap.innerHTML = `
+          <div class="announcement-card">
+            <img src="${post.image}" alt="">
+            <div class="announcement-text">
+              ${post.caption.replace(/\n/g,"<br>")}
+              <div class="time">
+                Updated ${new Date(post.timestamp).toLocaleString("en-US",{
+                  hour:"numeric",
+                  minute:"2-digit"
+                })} CT
+              </div>
+            </div>
+          </div>
+        `;
+        wrap.classList.remove("hidden");
+      } catch(e) {
+        console.warn("Announcement fetch failed:", e);
+      }
+    }
+
+    // Auto-refresh every 60s
+    setInterval(loadAnnouncement, 60000);
+    document.addEventListener("DOMContentLoaded", loadAnnouncement);
+
+    /* -----------------------------------------------
+       🚦 STATUS SYNC
+    ----------------------------------------------- */
     document.addEventListener("statusUpdated", (e) => {
       currentStatus = (e.detail || "offline").toLowerCase();
-      log("statusUpdated →", currentStatus);
       updateVisibility();
     });
 
+    /* -----------------------------------------------
+       🗺️ GOOGLE MAP + ETA LOGIC
+    ----------------------------------------------- */
     window.initLiveMap = async function() {
       geocoder = new google.maps.Geocoder();
       directionsService = new google.maps.DirectionsService();
@@ -138,21 +237,18 @@
 
       autocompleteManual = new google.maps.places.Autocomplete(
         document.getElementById("manualAddr"),
-        { fields: ["geometry", "formatted_address", "name"], types: ["geocode", "establishment"] }
+        { fields: ["geometry", "formatted_address", "name"], types: ["geocode","establishment"] }
       );
-
       autocompleteManual.addListener("place_changed", async () => {
         const place = autocompleteManual.getPlace();
-        if (place.geometry && place.geometry.location) {
+        if (place.geometry?.location) {
           riderPos = place.geometry.location;
-          log("manual place selected →", place.formatted_address || place.name);
           await drawRoute(place.formatted_address || place.name);
         }
       });
 
       await getDriverLocation();
       updateVisibility();
-      startLiveRefresh();
     };
 
     async function getDriverLocation(){
@@ -162,16 +258,10 @@
         const lat = parseFloat(j.latitude), lng = parseFloat(j.longitude);
         const ts = j.timestamp ? new Date(j.timestamp) : null;
         const ageMin = ts ? (Date.now()-ts.getTime())/60000 : 999;
-        if (!isNaN(lat) && !isNaN(lng) && ageMin <= STALE_MIN) {
-          driverPos = {lat,lng};
-          log("driver live →", driverPos, "age(min):", Math.round(ageMin));
-        } else {
-          driverPos = HQ;
-          log("driver fallback HQ");
-        }
-      } catch (e) {
+        driverPos = (!isNaN(lat) && !isNaN(lng) && ageMin <= STALE_MIN)
+          ? {lat,lng} : HQ;
+      } catch {
         driverPos = HQ;
-        log("driver fetch error → HQ fallback", e?.message);
       }
     }
 
@@ -190,51 +280,19 @@
         etaDiv.classList.add("hidden");
         msg.style.display = "block";
         msg.innerHTML = currentStatus === "away"
-          ? `<strong>🟡 Limited Availability</strong><br>I’m between runs or outside my usual area.<br>Text <strong>“RED”</strong> to <strong>(405) 378-4024</strong> to plan ahead.`
-          : `<strong>🔴 Offline</strong><br>I’m off the road for now.<br>You can still line up your next connection anytime.`;
+          ? `<strong>🟡 Limited Availability</strong><br>I'm nearby but between rides — feel free to message!`
+          : `<strong>🔴 Offline</strong><br>I'm off the road for now. You can still plan your next connection anytime.`;
       }
     }
 
     function drawDriverMarker(){
       if (!map || !driverPos) return;
       if (window.driverMarker) window.driverMarker.setMap(null);
-      if (window.pulseOverlay) window.pulseOverlay.setMap(null);
 
-      window.driverMarker = new google.maps.Marker({ position: driverPos, map, label: "🚗", title: "Big Red (Live)" });
-
-      const pulseDiv = document.createElement("div");
-      pulseDiv.className = "pulse-marker";
-      window.pulseOverlay = new google.maps.OverlayView();
-      window.pulseOverlay.onAdd = function() { this.getPanes().overlayLayer.appendChild(pulseDiv); };
-      window.pulseOverlay.draw = function() {
-        const projection = this.getProjection();
-        const pos = projection.fromLatLngToDivPixel(new google.maps.LatLng(driverPos.lat, driverPos.lng));
-        if (pos) { pulseDiv.style.left = pos.x + "px"; pulseDiv.style.top = pos.y + "px"; }
-      };
-      window.pulseOverlay.onRemove = function() { if (pulseDiv.parentNode) pulseDiv.parentNode.removeChild(pulseDiv); };
-      window.pulseOverlay.setMap(map);
+      window.driverMarker = new google.maps.Marker({
+        position: driverPos, map, label:"🚗"
+      });
       map.setCenter(driverPos);
-      log("driver marker drawn at", driverPos);
-    }
-
-    function startLiveRefresh() {
-      if (liveRefreshTimer) clearInterval(liveRefreshTimer);
-      liveRefreshTimer = setInterval(async () => {
-        try {
-          const res = await fetch(LOCATION_READER + "?nocache=" + Date.now(), { cache:"no-store" });
-          const j = await res.json();
-          const lat = parseFloat(j.latitude), lng = parseFloat(j.longitude);
-          if (!isNaN(lat) && !isNaN(lng)) {
-            const newPos = { lat, lng };
-            if (!driverPos || Math.abs(lat - driverPos.lat) > 0.0001 || Math.abs(lng - driverPos.lng) > 0.0001) {
-              driverPos = newPos;
-              if (window.driverMarker) driverMarker.setPosition(driverPos);
-              map.panTo(driverPos);
-              log("driver refreshed →", driverPos);
-            }
-          }
-        } catch (e) { log("refresh failed", e?.message); }
-      }, 31000);
     }
 
     async function handleUseMyLocation(){
@@ -242,23 +300,20 @@
       await getDriverLocation();
       navigator.geolocation.getCurrentPosition(async pos=>{
         riderPos = new google.maps.LatLng(pos.coords.latitude,pos.coords.longitude);
-        log("rider from GPS →", pos.coords.latitude, pos.coords.longitude);
         await drawRoute();
-      },()=>document.getElementById("manualRow").classList.remove("hidden"),
-      {enableHighAccuracy:true,timeout:10000});
+      });
     }
 
     async function handleManualUse(){
       if (currentStatus !== "online") return;
       await getDriverLocation();
       const addr=document.getElementById("manualAddr").value.trim();
-      if(!addr)return alert("Enter your location/address.");
+      if(!addr)return alert("Enter a valid address.");
       geocoder.geocode({address:addr},async(res,status)=>{
         if(status==="OK"&&res[0]?.geometry?.location){
           riderPos=res[0].geometry.location;
-          log("rider manual addr geocoded →", addr);
           await drawRoute(addr);
-        }else alert("Could not find that address.");
+        }
       });
     }
 
@@ -276,30 +331,30 @@
           (r,s)=>s==="OK"?resolve(r):reject(s));
       });
       directionsRenderer.setDirections(route);
+
       const leg=route.routes[0].legs[0];
       const miles=leg.distance.value/1609.34;
       const mins=Math.round(leg.duration.value/60);
+
       document.getElementById("etaLine").textContent=`ETA ≈ ${mins} min`;
       document.getElementById("distLine").textContent=`Distance ≈ ${miles.toFixed(1)} mi`;
-      document.getElementById("whenLine").textContent=`Calculated at ${new Date().toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})} CT`;
+      document.getElementById("whenLine").textContent=
+        `Calculated at ${new Date().toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})} CT`;
 
       const address = optionalAddr || leg.end_address || "Pinned on map";
-      localStorage.setItem("bigred_last_rider", JSON.stringify({
-        address, lat: riderPos.lat(), lng: riderPos.lng(), timestamp: Date.now()
-      }));
-      log("handoff saved →", address);
 
       const gm=`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(driverPos.lat+","+driverPos.lng)}&destination=${encodeURIComponent(address)}`;
       document.getElementById("gmLink").href=gm;
+
       document.getElementById("resultPanel").classList.remove("hidden");
 
       const bounds=new google.maps.LatLngBounds();
       bounds.extend(driverPos);
       bounds.extend(riderPos);
       map.fitBounds(bounds);
-      log("route drawn →", miles.toFixed(1),"mi", mins,"min");
     }
 
+    // Text RED pre-filled SMS
     document.addEventListener("DOMContentLoaded",()=>{
       const textBtn=document.getElementById("textRed");
       if(!textBtn)return;
