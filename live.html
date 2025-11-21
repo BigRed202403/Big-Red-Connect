@@ -3,16 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Big Red Connect — Live Map & ETA</title>
+  <title>Big Red Connect — Live Map</title>
 
-  <!-- 📱 PWA / Icons -->
+  <!-- PWA -->
   <link rel="apple-touch-icon" href="icon.png">
   <link rel="icon" type="image/png" sizes="192x192" href="icon.png">
   <link rel="shortcut icon" href="icon.png">
   <link rel="manifest" href="manifest.json">
-  <meta name="apple-mobile-web-app-title" content="Big Red Connect">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="theme-color" content="#000000">
 
   <!-- No-cache -->
@@ -29,83 +26,49 @@
       background:#000;
       font-family:'Roboto',sans-serif;
     }
+
     #map {
       height: 340px;
       width: 100%;
       border-radius: 10px;
       margin-top: 10px;
     }
-    .info-section { max-width: 720px; margin: auto; padding: 0 12px; }
-    .panel {
-      background:#111;
-      border:1px solid #333;
-      border-radius:10px;
-      padding:14px;
-      margin-top:14px;
-      text-align:left;
-    }
-    .cta-row {
-      display:flex;
-      flex-wrap:wrap;
-      gap:8px;
-      justify-content:center;
-      margin:12px 0;
-    }
-    .muted { color:#aaa; font-size:0.9em; }
-    .hidden { display:none !important; }
-    input {
-      width:100%;
-      height:48px;
-      background:#000;
-      border:1px solid #555;
-      border-radius:8px;
-      color:#fff;
-      font-size:1em;
-      padding:8px 10px;
-    }
-    #status-message {
-      background:#111;
-      border:1px solid #b30000;
-      border-radius:8px;
-      padding:18px;
-      margin-top:20px;
-      color:#ccc;
-      font-size:1em;
-    }
 
-    /* 🔔 Announcement Card (Option B) */
-    .announcement-card {
+    /* Option A — Full Width Announcement Panel */
+    .announcement-container {
+      max-width: 720px;
+      margin: 18px auto;
       background:#111;
       border:1px solid #b30000;
+      padding:16px;
       border-radius:10px;
-      padding:14px;
-      margin:14px auto;
-      max-width:720px;
-      display:flex;
-      gap:10px;
-      align-items:flex-start;
+      text-align:center;
     }
-    .announcement-card img {
-      width:120px;
-      height:auto;
-      border-radius:8px;
+    .announcement-container img {
+      width:100%;
+      border-radius:10px;
       border:1px solid #333;
-      flex-shrink:0;
+      margin-bottom:10px;
     }
-    .announcement-text {
+    .announcement-caption {
+      font-size:1em;
+      color:#eee;
       text-align:left;
-      font-size:0.95em;
-      color:#ddd;
+      white-space:pre-line;
     }
-    .announcement-text .time {
-      font-size:0.75em;
+    .announcement-time {
+      font-size:0.78em;
       color:#888;
       margin-top:6px;
+      text-align:left;
     }
+
+    .hidden { display:none !important; }
   </style>
 </head>
 
 <body>
+
   <div class="logo-header">
     <a href="index.html"><img src="official_logo_Nov.png" alt="Big Red Connect Logo" /></a>
     <div style="text-align:center; margin:10px 0;">
@@ -113,20 +76,20 @@
     </div>
   </div>
 
-  <h1>Big Red Live Map & ETA</h1>
-  <p class="tagline">See where Big Red is — and how long until arrival.</p>
+  <h1>Big Red — Live Map</h1>
+  <p class="tagline">See where Big Red is — and when he can reach you.</p>
 
-  <!-- 🔴 Global status pill from status.js -->
+  <!-- Status pill -->
   <div id="status-pill" class="status status--loading">Checking status…</div>
 
-  <!-- 🚨 Driver Announcement (image + caption from post-to-live worker) -->
-  <div id="announcementWrap" class="hidden"></div>
+  <!-- 🔥 FULL-WIDTH ANNOUNCEMENT -->
+  <div id="announcementArea" class="hidden"></div>
 
   <section class="info-section">
     <div id="map" class="hidden"></div>
 
     <div id="etaPanel" class="panel hidden">
-      <p style="margin-top:0;">Estimate your ETA from my live location to your pickup:</p>
+      <p style="margin-top:0;">Estimate your ETA from my live location to yours:</p>
 
       <div class="cta-row">
         <button id="btnUseMyLoc" class="btn primary">📍 Use My Location</button>
@@ -134,7 +97,7 @@
       </div>
 
       <div id="manualRow" class="hidden" style="margin-top:10px;">
-        <input id="manualAddr" type="text" placeholder="Enter pickup address or place (e.g., Omni Hotel, OU Stadium)">
+        <input id="manualAddr" type="text" placeholder="Enter pickup address or place">
         <button id="btnUseManual" class="btn primary" type="button" style="margin-top:8px;">✅ Use This Location</button>
       </div>
 
@@ -150,21 +113,21 @@
       </div>
     </div>
 
-    <div id="status-message" style="display:none;"></div>
+    <!-- Shown only when no announcement exists -->
+    <div id="status-message"></div>
   </section>
 
   <footer style="margin-top:20px;">
     <p>&copy; 2025 Big Red Connect — <a href="index.html">Return Home</a></p>
   </footer>
 
-  <!-- Status pill logic -->
   <script src="status.js"></script>
 
   <script>
     /* -----------------------------------------------
-       🔥 CONFIG
+       CONFIG
     ----------------------------------------------- */
-    const POST_WORKER_URL = "https://post-to-live.bigredtransportation.workers.dev";
+    const POST_WORKER_URL = "https://post-to-live-beta.bigredtransportation.workers.dev";
     const LOCATION_READER = "https://update-location.bigredtransportation.workers.dev";
     const HQ = { lat: 35.3207, lng: -97.4929 };
     const STALE_MIN = 30;
@@ -172,55 +135,57 @@
     let map, geocoder, directionsRenderer, directionsService;
     let driverPos = null, riderPos = null;
     let currentStatus = "offline";
-    let autocompleteManual;
 
-    /* -----------------------------------------------
-       🚨 1. ANNOUNCEMENT PANEL LOADER
-    ----------------------------------------------- */
+    /* -------------------------------------------------------
+       1️⃣ LOAD ANNOUNCEMENT FIRST
+    ------------------------------------------------------- */
     async function loadAnnouncement() {
       try {
         const res = await fetch(POST_WORKER_URL + "?t=" + Date.now(), { cache:"no-store" });
         if (!res.ok) return;
 
         const post = await res.json();
-        if (!post || !post.caption || !post.image) return;
+        const box = document.getElementById("announcementArea");
+        const statusBox = document.getElementById("status-message");
 
-        const wrap = document.getElementById("announcementWrap");
-        wrap.innerHTML = `
-          <div class="announcement-card">
+        if (!post || !post.caption || !post.image) {
+          box.classList.add("hidden");
+          statusBox.style.display = "block";
+          return;
+        }
+
+        box.innerHTML = `
+          <div class="announcement-container">
             <img src="${post.image}" alt="">
-            <div class="announcement-text">
-              ${post.caption.replace(/\n/g,"<br>")}
-              <div class="time">
-                Updated ${new Date(post.timestamp).toLocaleString("en-US",{
-                  hour:"numeric",
-                  minute:"2-digit"
-                })} CT
-              </div>
+            <div class="announcement-caption">${post.caption}</div>
+            <div class="announcement-time">
+              Updated ${new Date(post.timestamp).toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})}
             </div>
           </div>
         `;
-        wrap.classList.remove("hidden");
-      } catch(e) {
+
+        box.classList.remove("hidden");
+        statusBox.style.display = "none";
+
+      } catch (e) {
         console.warn("Announcement fetch failed:", e);
       }
     }
 
-    // Auto-refresh every 60s
     setInterval(loadAnnouncement, 60000);
     document.addEventListener("DOMContentLoaded", loadAnnouncement);
 
-    /* -----------------------------------------------
-       🚦 STATUS SYNC
-    ----------------------------------------------- */
+    /* -------------------------------------------------------
+       2️⃣ STATUS LISTENER
+    ------------------------------------------------------- */
     document.addEventListener("statusUpdated", (e) => {
       currentStatus = (e.detail || "offline").toLowerCase();
       updateVisibility();
     });
 
-    /* -----------------------------------------------
-       🗺️ GOOGLE MAP + ETA LOGIC
-    ----------------------------------------------- */
+    /* -------------------------------------------------------
+       3️⃣ MAP + ETA LOGIC (unchanged from beta)
+    ------------------------------------------------------- */
     window.initLiveMap = async function() {
       geocoder = new google.maps.Geocoder();
       directionsService = new google.maps.DirectionsService();
@@ -235,29 +200,17 @@
         document.getElementById("manualRow").classList.remove("hidden");
       document.getElementById("btnUseManual").onclick = handleManualUse;
 
-      autocompleteManual = new google.maps.places.Autocomplete(
-        document.getElementById("manualAddr"),
-        { fields: ["geometry", "formatted_address", "name"], types: ["geocode","establishment"] }
-      );
-      autocompleteManual.addListener("place_changed", async () => {
-        const place = autocompleteManual.getPlace();
-        if (place.geometry?.location) {
-          riderPos = place.geometry.location;
-          await drawRoute(place.formatted_address || place.name);
-        }
-      });
-
       await getDriverLocation();
       updateVisibility();
     };
 
-    async function getDriverLocation(){
+    async function getDriverLocation() {
       try {
         const res = await fetch(LOCATION_READER + "?nocache=" + Date.now(), { cache:"no-store" });
         const j = await res.json();
         const lat = parseFloat(j.latitude), lng = parseFloat(j.longitude);
         const ts = j.timestamp ? new Date(j.timestamp) : null;
-        const ageMin = ts ? (Date.now()-ts.getTime())/60000 : 999;
+        const ageMin = ts ? (Date.now() - ts.getTime())/60000 : 999;
         driverPos = (!isNaN(lat) && !isNaN(lng) && ageMin <= STALE_MIN)
           ? {lat,lng} : HQ;
       } catch {
@@ -268,118 +221,32 @@
     function updateVisibility(){
       const mapDiv = document.getElementById("map");
       const etaDiv = document.getElementById("etaPanel");
-      const msg = document.getElementById("status-message");
+      const statusBox = document.getElementById("status-message");
+      const announcementVisible =
+        !document.getElementById("announcementArea").classList.contains("hidden");
 
       if (currentStatus === "online") {
         mapDiv.classList.remove("hidden");
         etaDiv.classList.remove("hidden");
-        msg.style.display = "none";
-        getDriverLocation().then(drawDriverMarker);
+        statusBox.style.display = "none";
       } else {
+
         mapDiv.classList.add("hidden");
         etaDiv.classList.add("hidden");
-        msg.style.display = "block";
-        msg.innerHTML = currentStatus === "away"
-          ? `<strong>🟡 Limited Availability</strong><br>I'm nearby but between rides — feel free to message!`
-          : `<strong>🔴 Offline</strong><br>I'm off the road for now. You can still plan your next connection anytime.`;
+
+        if (!announcementVisible) {
+          statusBox.style.display = "block";
+          statusBox.innerHTML = currentStatus === "away"
+            ? `<strong>🟡 Limited Availability</strong><br>I'm nearby but between rides — feel free to message!`
+            : `<strong>🔴 Offline</strong><br>I'm off the road for now. You can still plan your next connection anytime.`;
+        }
       }
     }
-
-    function drawDriverMarker(){
-      if (!map || !driverPos) return;
-      if (window.driverMarker) window.driverMarker.setMap(null);
-
-      window.driverMarker = new google.maps.Marker({
-        position: driverPos, map, label:"🚗"
-      });
-      map.setCenter(driverPos);
-    }
-
-    async function handleUseMyLocation(){
-      if (currentStatus !== "online") return;
-      await getDriverLocation();
-      navigator.geolocation.getCurrentPosition(async pos=>{
-        riderPos = new google.maps.LatLng(pos.coords.latitude,pos.coords.longitude);
-        await drawRoute();
-      });
-    }
-
-    async function handleManualUse(){
-      if (currentStatus !== "online") return;
-      await getDriverLocation();
-      const addr=document.getElementById("manualAddr").value.trim();
-      if(!addr)return alert("Enter a valid address.");
-      geocoder.geocode({address:addr},async(res,status)=>{
-        if(status==="OK"&&res[0]?.geometry?.location){
-          riderPos=res[0].geometry.location;
-          await drawRoute(addr);
-        }
-      });
-    }
-
-    async function drawRoute(optionalAddr=""){
-      if(!driverPos||!riderPos)return;
-      directionsRenderer.set("directions",null);
-      if(window.driverMarker)window.driverMarker.setMap(null);
-      if(window.riderMarker)window.riderMarker.setMap(null);
-
-      window.driverMarker=new google.maps.Marker({position:driverPos,map,label:"🚗"});
-      window.riderMarker=new google.maps.Marker({position:riderPos,map,label:"📍"});
-
-      const route=await new Promise((resolve,reject)=>{
-        directionsService.route({origin:driverPos,destination:riderPos,travelMode:"DRIVING"},
-          (r,s)=>s==="OK"?resolve(r):reject(s));
-      });
-      directionsRenderer.setDirections(route);
-
-      const leg=route.routes[0].legs[0];
-      const miles=leg.distance.value/1609.34;
-      const mins=Math.round(leg.duration.value/60);
-
-      document.getElementById("etaLine").textContent=`ETA ≈ ${mins} min`;
-      document.getElementById("distLine").textContent=`Distance ≈ ${miles.toFixed(1)} mi`;
-      document.getElementById("whenLine").textContent=
-        `Calculated at ${new Date().toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})} CT`;
-
-      const address = optionalAddr || leg.end_address || "Pinned on map";
-
-      const gm=`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(driverPos.lat+","+driverPos.lng)}&destination=${encodeURIComponent(address)}`;
-      document.getElementById("gmLink").href=gm;
-
-      document.getElementById("resultPanel").classList.remove("hidden");
-
-      const bounds=new google.maps.LatLngBounds();
-      bounds.extend(driverPos);
-      bounds.extend(riderPos);
-      map.fitBounds(bounds);
-    }
-
-    // Text RED pre-filled SMS
-    document.addEventListener("DOMContentLoaded",()=>{
-      const textBtn=document.getElementById("textRed");
-      if(!textBtn)return;
-      textBtn.addEventListener("click",(e)=>{
-        e.preventDefault();
-        const name=prompt("Enter your name so Big Red knows who’s texting:");
-        if(!name)return;
-        const etaLine=document.getElementById("etaLine")?.textContent||"";
-        const distLine=document.getElementById("distLine")?.textContent||"";
-        const manualAddr=document.getElementById("manualAddr")?.value?.trim()||"";
-        const riderInfo=manualAddr||"My location (used GPS)";
-        const bodyLines=[
-          `Hey Big Red — this is ${name}.`,
-          etaLine?`${etaLine} (${distLine}).`:"",
-          `Pickup spot: ${riderInfo}.`,
-          "",
-          "Live Map: https://bigred202403.github.io/Big-Red-Connect/live.html",
-          "Fare Calculator: https://bigred202403.github.io/Big-Red-Connect/farecalculator.html"
-        ].filter(Boolean);
-        const smsBody=encodeURIComponent(bodyLines.join(" "));
-        window.location.href=`sms:+14053784024?&body=${smsBody}`;
-      });
-    });
   </script>
 
-  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places,geometry&callback=initLiveMap"></script>
+  <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places,geometry&callback=initLiveMap">
+  </script>
+
 </body>
 </html>
