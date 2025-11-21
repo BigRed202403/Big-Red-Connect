@@ -22,6 +22,26 @@
 
   <!-- 🎨 Styles -->
   <link rel="stylesheet" href="style.css" />
+
+  <!-- 🔔 OneSignal Web Push SDK -->
+  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+  <script>
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    OneSignalDeferred.push(async function(OneSignal) {
+      await OneSignal.init({
+        appId: "64641a89-3619-4491-a25b-c0ab000bdfe0",
+        notifyButton: { enable: false },
+        serviceWorkerPath: "/OneSignalSDKWorker.js"
+      });
+    });
+
+    function subscribeToBigRed() {
+      window.OneSignalDeferred.push(function(OneSignal) {
+        OneSignal.showSlidedownPrompt();
+      });
+    }
+  </script>
+
 </head>
 
 <body>
@@ -44,6 +64,27 @@
   <div class="cta-group">
     <a href="sms:14053784024" class="btn primary">📲 Text “RED”</a>
     <a href="tel:14053784024" class="btn secondary">📞 Call Big Red</a>
+  </div>
+
+  <!-- 🔔 Enable Notifications Button -->
+  <div style="text-align:center; margin-top:18px;">
+    <button onclick="subscribeToBigRed()"
+      style="
+        background:#b30000;
+        color:white;
+        border:none;
+        padding:12px 22px;
+        font-size:1em;
+        font-weight:700;
+        border-radius:8px;
+        cursor:pointer;
+        box-shadow:0 3px 6px rgba(0,0,0,0.4);
+      ">
+      🔔 Enable Big Red Notifications
+    </button>
+    <p style="font-size:0.8em; color:#aaa; margin-top:6px;">
+      Get alerts when Big Red is LIVE, weekend rundowns, airport alerts, and more.
+    </p>
   </div>
 
   <!-- 🧭 “Where To?” -->
