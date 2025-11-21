@@ -96,7 +96,7 @@ section h2{
   margin:6px 0 8px;
   font-size:1.1rem;
 }
-select,button{
+select,button,input{
   padding:10px;
   border-radius:6px;
   border:none;
@@ -135,12 +135,18 @@ select,button{
 textarea{
   width:95%;
   max-width:780px;
-  height:140px;
   background:#111;
   color:#fff;
   border:2px solid var(--red);
   border-radius:6px;
   padding:8px;
+}
+
+#captionPreview{
+  height:120px;
+}
+#captionBox{
+  height:140px;
 }
 
 footer{
@@ -173,6 +179,21 @@ footer{
   text-align:left;
   border-top:1px solid #222;
 }
+
+label.custom-toggle{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  justify-content:center;
+  margin-top:8px;
+}
+label.custom-toggle input{
+  margin:0;
+  width:auto;
+}
+#charCount{
+  margin-right:6px;
+}
 </style>
 </head>
 <body>
@@ -192,77 +213,107 @@ footer{
 
 <div class="grid">
 
-<!-- PUSH NOTIFICATIONS -->
-<section id="push">
-  <h2>Send Push Notification</h2>
+  <!-- PUSH NOTIFICATION SECTION -->
+  <section id="push">
+    <h2>Send Push Notification</h2>
 
-  <div class="row">
-    <select id="pushTemplate">
-      <option value="LIVE">🚗 LIVE — Ready to Roll</option>
-      <option value="AIRPORT">✈️ Airport Runs</option>
-      <option value="WEEKEND">🍻 Weekend Night Run</option>
-      <option value="HOLIDAY">🎄 Holiday Specials</option>
-      <option value="CAMPUS">🅿️ Campus Corner Late Night</option>
-      <option value="CUSTOM">✏️ Custom Message</option>
-    </select>
-  </div>
+    <div class="row">
+      <select id="pushTemplate">
+        <option value="LIVE">🚗 LIVE — Ready to Roll</option>
+        <option value="AIRPORT">✈️ Airport Runs</option>
+        <option value="WEEKEND">🍻 Weekend Night Run</option>
+        <option value="HOLIDAY">🎄 Holiday / Lights</option>
+        <option value="CAMPUS">🏫 Campus Corner Late Night</option>
+        <option value="OFFLINE">🔴 Going Offline</option>
+      </select>
+      <button class="btn-tertiary" id="applyPushTemplate">Apply Template</button>
+    </div>
 
-  <!-- Custom push message field -->
-  <textarea id="pushCustom" style="display:none;" placeholder="Type your custom push notification message here..."></textarea>
+    <div class="row" style="flex-direction:column;align-items:center;">
+      <input id="pushTitle" type="text" style="width:95%;max-width:780px;"
+             placeholder="Notification title (e.g., Big Red is LIVE)">
+      <textarea id="pushMessage" style="margin-top:4px;height:90px;"
+                placeholder="Notification message body..."></textarea>
+      <input id="pushUrl" type="text" style="width:95%;max-width:780px;margin-top:4px;"
+             placeholder="Tap-through URL (optional, default = main site)">
+    </div>
 
-  <div class="row">
-    <button class="btn-primary" id="sendPush">📣 Send Push</button>
-  </div>
-  <div class="meta">Sends instantly to every subscriber.</div>
-</section>
+    <div class="row">
+      <button class="btn-primary" id="sendPush">📣 Send Push</button>
+    </div>
 
-<!-- DRIVING STATUS -->
-<section id="control">
-  <h2>Update Driving Status</h2>
-  <div class="row">
-    <select id="statusSelect">
-      <option value="online">🟢 On the Road</option>
-      <option value="away">🟡 Limited Availability</option>
-      <option value="offline">🔴 Offline</option>
-    </select>
-    <button class="btn-primary" id="updateStatusBtn">💾 Save Status</button>
-  </div>
-  <div class="meta">
-    <div>Last status update: <span id="statusStamp">—</span></div>
-    <div>Last GPS ping: <span id="gpsStamp">—</span> • Interval: <span id="gpsRate">—</span></div>
-  </div>
-</section>
+    <div class="meta">
+      Sends instantly to every subscribed device.
+    </div>
+  </section>
 
-<!-- SHARE BUILDER -->
-<section id="share">
-  <h2>Quick Share Builder</h2>
+  <!-- CONTROL -->
+  <section id="control">
+    <h2>Update Driving Status</h2>
+    <div class="row">
+      <select id="statusSelect">
+        <option value="online">🟢 On the Road</option>
+        <option value="away">🟡 Limited Availability</option>
+        <option value="offline">🔴 Offline</option>
+      </select>
+      <button class="btn-primary" id="updateStatusBtn">💾 Save Status</button>
+    </div>
+    <div class="meta">
+      <div>Last status update: <span id="statusStamp">—</span></div>
+      <div>Last GPS ping: <span id="gpsStamp">—</span> • Interval: <span id="gpsRate">—</span></div>
+    </div>
+  </section>
 
-  <div class="img-box">
-    <img id="statusImage" src="" alt="Preview">
-  </div>
+  <!-- QUICK SHARE BUILDER -->
+  <section id="share">
+    <h2>Quick Share Builder</h2>
 
-  <div class="row">
-    <button id="prevImage" class="btn-tertiary">⬅ Image</button>
-    <button id="nextImage" class="btn-tertiary">Image ➡</button>
-  </div>
+    <!-- Preview text (what actually posts) -->
+    <textarea id="captionPreview" readonly>Preview will appear here…</textarea>
 
-  <div style="max-width:780px; margin:0 auto;">
-    <label style="display:flex; align-items:center; gap:8px; margin:6px 0; font-size:0.9rem;">
-      <input type="checkbox" id="customCaptionToggle">
+    <!-- Image preview -->
+    <div class="img-box">
+      <img id="statusImage" src="" alt="Preview">
+    </div>
+
+    <!-- Image switchers -->
+    <div class="row">
+      <button id="prevImage" class="btn-tertiary">⬅ Image</button>
+      <button id="nextImage" class="btn-tertiary">Image ➡</button>
+    </div>
+
+    <!-- Caption templates navigation -->
+    <div class="row">
+      <button id="prevCaption" class="btn-tertiary">⬅ Template</button>
+      <button id="nextCaption" class="btn-tertiary">Template ➡</button>
+    </div>
+
+    <!-- Custom caption toggle -->
+    <label class="custom-toggle">
+      <input type="checkbox" id="customToggle">
       <span>Enable Custom Caption</span>
     </label>
-  </div>
 
-  <textarea id="captionBox">Loading caption...</textarea>
+    <!-- Custom caption editor -->
+    <textarea id="captionBox" placeholder="Type your custom caption here..."></textarea>
 
-  <div class="row">
-    <button class="btn-secondary" id="copyBtn">📋 Copy Caption</button>
-    <button class="btn-primary" id="postToLive">📢 Post to Live Page</button>
-  </div>
+    <div class="meta">
+      <span id="charCount">0 characters</span> •
+      <select id="presetSelect">
+        <option value="">Insert saved caption…</option>
+      </select>
+      <button class="btn-tertiary" id="savePresetBtn">💾 Save Current as Preset</button>
+    </div>
 
-  <div class="meta">This caption + image appears on the public Live Map page.</div>
-</section>
+    <div class="row">
+      <button class="btn-secondary" id="copyBtn">📋 Copy Caption</button>
+      <button class="btn-primary" id="postToLive">📢 Post to Live Page</button>
+    </div>
 
+    <div class="meta">
+      This caption + image appears on the public <strong>Live Map</strong> page.
+    </div>
+  </section>
 </div>
 
 <footer>© 2025 Big Red Connect — Admin Panel</footer>
@@ -270,9 +321,7 @@ footer{
 <div id="debugLog">[Debug log started]</div>
 
 <script>
-/* ------------------------------------------------------------------
-   CONFIG
------------------------------------------------------------------- */
+/* === CONFIG === */
 const STATUS_WORKER = "https://bigred-status-updater.bigredtransportation.workers.dev";
 const LOCATION_WORKER = "https://update-location.bigredtransportation.workers.dev";
 const POST_WORKER    = "https://post-to-live-beta.bigredtransportation.workers.dev";
@@ -280,85 +329,102 @@ const PUSH_WORKER    = "https://bigred-send-push.bigredtransportation.workers.de
 const AUTH_SECRET    = "BigRedPrivateKey2025";
 const TZ             = "America/Chicago";
 
-/* ------------------------------------------------------------------
-   ELEMENTS
------------------------------------------------------------------- */
+/* === ELEMENT REFERENCES === */
 const pill        = document.getElementById("status-pill");
 const statusStamp = document.getElementById("statusStamp");
 const gpsStamp    = document.getElementById("gpsStamp");
 const gpsRate     = document.getElementById("gpsRate");
 const select      = document.getElementById("statusSelect");
 const livePill    = document.getElementById("livePill");
-const captionBox  = document.getElementById("captionBox");
+
+const captionPreview = document.getElementById("captionPreview");
+const captionBox     = document.getElementById("captionBox");
+const customToggle   = document.getElementById("customToggle");
+const charCountEl    = document.getElementById("charCount");
+const presetSelect   = document.getElementById("presetSelect");
+const savePresetBtn  = document.getElementById("savePresetBtn");
+
 const toast       = document.getElementById("toast");
 const imageEl     = document.getElementById("statusImage");
-const customToggle = document.getElementById("customCaptionToggle");
 
-/* ------------------------------------------------------------------
-   PUSH TEMPLATES
------------------------------------------------------------------- */
+/* === PUSH COMPOSER ELEMENTS === */
+const pushTemplateSel = document.getElementById("pushTemplate");
+const pushTitleInput  = document.getElementById("pushTitle");
+const pushMsgInput    = document.getElementById("pushMessage");
+const pushUrlInput    = document.getElementById("pushUrl");
+
+/* === TEMPLATES === */
 const PUSH_TEMPLATES = {
   LIVE: {
     title: "Big Red is LIVE",
-    message: "I'm rolling through the metro — text RED if you need a connection."
+    message: "I’m on the road now — text RED if you need a flat-rate connection.",
+    url: "https://bigred202403.github.io/"
   },
   AIRPORT: {
     title: "Airport Runs Open",
-    message: "Headed near Will Rogers — message RED if you need a flat-rate airport ride."
+    message: "Headed toward Will Rogers — text RED for a flat-rate airport ride.",
+    url: "https://bigred202403.github.io/Big-Red-Connect/"
   },
   WEEKEND: {
     title: "Weekend Night Run",
-    message: "Out and about tonight? Big Red is rolling — message RED to line up your connection."
+    message: "Rolling through the metro tonight — message RED to line up your ride.",
+    url: "https://bigred202403.github.io/Big-Red-Connect/"
   },
   HOLIDAY: {
     title: "Holiday Lights & Rides",
-    message: "Holiday rides + lights tours available — message RED to plan ahead!"
+    message: "Holiday lights runs + flat rates — plan ahead with Big Red.",
+    url: "https://bigred202403.github.io/Big-Red-Connect/"
   },
   CAMPUS: {
     title: "Campus Corner Late Night",
-    message: "OU students — late night runs available. Message RED if you need a ride back."
+    message: "OU late night runs are open — text RED when you’re ready to head home.",
+    url: "https://bigred202403.github.io/Big-Red-Connect/"
+  },
+  OFFLINE: {
+    title: "Big Red is Offline",
+    message: "Thanks for riding local — I’m offline for now but back soon.",
+    url: "https://bigred202403.github.io/"
   }
 };
 
-/* ------------------------------------------------------------------
-   SEND PUSH
------------------------------------------------------------------- */
-document.getElementById("pushTemplate").onchange = () => {
-  const sel = document.getElementById("pushTemplate").value;
-  const custom = document.getElementById("pushCustom");
+/* === PUSH TEMPLATE APPLY === */
+function applyPushTemplateFromSelect(){
+  const key = pushTemplateSel.value;
+  const tmpl = PUSH_TEMPLATES[key];
+  if(!tmpl) return;
+  pushTitleInput.value = tmpl.title;
+  pushMsgInput.value   = tmpl.message;
+  pushUrlInput.value   = tmpl.url;
+}
+document.getElementById("applyPushTemplate").onclick = applyPushTemplateFromSelect;
+applyPushTemplateFromSelect();
 
-  custom.style.display = sel === "CUSTOM" ? "block" : "none";
-};
-
+/* === PUSH SEND LOGIC === */
 document.getElementById("sendPush").onclick = async () => {
-  const sel = document.getElementById("pushTemplate").value;
-  let title, message;
+  const title   = pushTitleInput.value.trim() || "Big Red Connect";
+  const message = pushMsgInput.value.trim();
+  const url     = (pushUrlInput.value || "").trim() || undefined;
 
-  if (sel === "CUSTOM") {
-    title = "Big Red Connect";
-    message = document.getElementById("pushCustom").value.trim();
-    if (!message) {
-      showToast("Enter a custom message first!");
-      return;
-    }
-  } else {
-    title = PUSH_TEMPLATES[sel].title;
-    message = PUSH_TEMPLATES[sel].message;
+  if(!message){
+    showToast("⚠️ Message is required");
+    return;
   }
 
   try {
     const res = await fetch(PUSH_WORKER, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, message })
+      headers: {
+        "Content-Type": "application/json",
+        "X-Admin-Secret": AUTH_SECRET
+      },
+      body: JSON.stringify({ title, message, url })
     });
 
-    const txt = await res.text();
-
-    if (!res.ok) throw new Error(txt);
+    const text = await res.text();
+    if (!res.ok) throw new Error(text || ("HTTP " + res.status));
 
     showToast("📣 Push sent!");
-    logDebug("Push sent OK: " + txt);
+    logDebug("Push sent OK: " + title);
 
   } catch (err) {
     showToast("⚠️ Push failed");
@@ -366,9 +432,7 @@ document.getElementById("sendPush").onclick = async () => {
   }
 };
 
-/* ------------------------------------------------------------------
-   UTILITY
------------------------------------------------------------------- */
+/* === TOAST & DEBUG === */
 function showToast(msg, ms=2500){
   toast.textContent = msg;
   toast.style.opacity = 1;
@@ -384,31 +448,13 @@ function fmtLocal(iso){
   return new Date(iso).toLocaleString("en-US",{timeZone:TZ});
 }
 
-/* ------------------------------------------------------------------
-   CUSTOM CAPTION MODE
------------------------------------------------------------------- */
-customToggle.addEventListener("change", e => {
-  if (e.target.checked) {
-    captionBox.removeAttribute("readonly");
-    logDebug("Custom caption mode enabled");
-  } else {
-    captionBox.setAttribute("readonly", true);
-    generateVariants(select.value);
-    logDebug("Custom caption disabled → template restored");
-  }
-});
-
-/* ------------------------------------------------------------------
-   REFRESH BUTTON
------------------------------------------------------------------- */
+/* === REFRESH BUTTON === */
 document.getElementById("refreshPage").onclick = () => {
   showToast("Refreshing…");
   setTimeout(() => location.reload(true), 350);
 };
 
-/* ------------------------------------------------------------------
-   FETCH STATUS
------------------------------------------------------------------- */
+/* === FETCH STATUS === */
 async function fetchStatus(){
   try{
     const res = await fetch(`${STATUS_WORKER}/status?nocache=${Date.now()}`, { cache:"no-store" });
@@ -440,9 +486,7 @@ function renderStatusPill(state, iso){
   statusStamp.textContent = stamp;
 }
 
-/* ------------------------------------------------------------------
-   SAVE STATUS
------------------------------------------------------------------- */
+/* === SAVE STATUS === */
 document.getElementById("updateStatusBtn").onclick = async () => {
   const newStatus = select.value;
   const payload = { status:newStatus, updated:new Date().toISOString() };
@@ -472,11 +516,38 @@ document.getElementById("updateStatusBtn").onclick = async () => {
   }
 };
 
-/* ------------------------------------------------------------------
-   TEMPLATE CAPTIONS
------------------------------------------------------------------- */
+/* === SHARE BUILDER TEMPLATES === */
 let variants     = [];
 let captionIndex = 0;
+let useCustom    = false;
+
+/* presets stored in localStorage */
+let captionPresets = [];
+const PRESET_KEY = "brcCaptionPresets_v1";
+
+function loadPresets(){
+  try{
+    const raw = localStorage.getItem(PRESET_KEY);
+    captionPresets = raw ? JSON.parse(raw) : [];
+  }catch{
+    captionPresets = [];
+  }
+  renderPresetOptions();
+}
+function savePresets(){
+  try{ localStorage.setItem(PRESET_KEY, JSON.stringify(captionPresets)); }catch{}
+}
+function renderPresetOptions(){
+  presetSelect.innerHTML = '<option value="">Insert saved caption…</option>';
+  captionPresets.forEach((txt, idx) => {
+    const label = (txt.length > 40 ? txt.slice(0,37)+"…" : txt) || `Preset ${idx+1}`;
+    const opt = document.createElement("option");
+    opt.value = idx.toString();
+    opt.textContent = label;
+    presetSelect.appendChild(opt);
+  });
+}
+loadPresets();
 
 function generateVariants(status){
   const weekday = new Date().toLocaleString("en-US",{weekday:"long"});
@@ -484,7 +555,7 @@ function generateVariants(status){
     "\n\nNo surprises. Just solid local moves." +
     "\nText ‘RED’ to 405-378-4024 — your affordable flat-rate ride connection." +
     "\nVeteran Owned • Affordable • Local • Trusted." +
-    "\nhttps://bigred202403.github.io/";
+    "\nhttps://bigred202403.github.io/Big-Red-Connect/";
 
   if(status === "online"){
     variants = [
@@ -508,25 +579,81 @@ function generateVariants(status){
   }
 
   captionIndex = 0;
-  captionBox.value = variants[0] || "";
+  updatePreviewText();
 }
 
+/* compute the effective caption (template or custom) */
+function getBaseTemplate(){
+  if(variants.length === 0) return "";
+  return variants[(captionIndex % variants.length + variants.length)%variants.length];
+}
+function getEffectiveCaption(){
+  const base = getBaseTemplate();
+  const custom = captionBox.value.trim();
+  if(useCustom && custom) return custom;
+  return base || custom || "";
+}
+function updatePreviewText(){
+  const finalText = getEffectiveCaption();
+  captionPreview.value = finalText || "Preview will appear here…";
+  updateCharCount();
+}
+
+/* caption nav buttons */
 document.getElementById("prevCaption").onclick = () => {
-  if (customToggle.checked) return;
   if(variants.length === 0) return;
   captionIndex = (captionIndex - 1 + variants.length) % variants.length;
-  captionBox.value = variants[captionIndex];
+  updatePreviewText();
 };
 document.getElementById("nextCaption").onclick = () => {
-  if (customToggle.checked) return;
   if(variants.length === 0) return;
   captionIndex = (captionIndex + 1) % variants.length;
-  captionBox.value = variants[captionIndex];
+  updatePreviewText();
 };
 
-/* ------------------------------------------------------------------
-   IMAGES
------------------------------------------------------------------- */
+/* custom toggle */
+customToggle.addEventListener("change", () => {
+  useCustom = customToggle.checked;
+  updatePreviewText();
+});
+
+/* custom box typing */
+captionBox.addEventListener("input", () => {
+  updatePreviewText();
+});
+
+/* char counter */
+function updateCharCount(){
+  const len = captionBox.value.length;
+  charCountEl.textContent = `${len} character${len===1?"":"s"}`;
+}
+
+/* presets handling */
+savePresetBtn.addEventListener("click", () => {
+  const txt = captionBox.value.trim();
+  if(!txt){
+    showToast("Nothing to save");
+    return;
+  }
+  if(captionPresets.length >= 10){
+    captionPresets.shift();
+  }
+  captionPresets.push(txt);
+  savePresets();
+  renderPresetOptions();
+  showToast("Preset saved");
+});
+presetSelect.addEventListener("change", () => {
+  const idx = parseInt(presetSelect.value,10);
+  if(isNaN(idx) || idx < 0 || idx >= captionPresets.length) return;
+  captionBox.value = captionPresets[idx];
+  useCustom = true;
+  customToggle.checked = true;
+  updatePreviewText();
+  presetSelect.value = "";
+});
+
+/* === IMAGES === */
 const dayImgs = [
   "3F34BE7E-5953-433C-B8D0-17AC9108107F.png",
   "B02AB3EA-1AF5-4BE4-8CBB-E5A1AA40711F.png",
@@ -599,12 +726,15 @@ document.getElementById("nextImage").onclick = () => {
   applyImage();
 };
 
-/* ------------------------------------------------------------------
-   POST TO LIVE PAGE
------------------------------------------------------------------- */
+function updatePreview(status){
+  generateVariants(status);
+  pickImageSet(status);
+}
+
+/* === POST TO LIVE === */
 document.getElementById("postToLive").onclick = async () => {
   const status  = select.value;
-  const caption = captionBox.value;
+  const caption = getEffectiveCaption();
   const image   = imageEl.src;
 
   try{
@@ -627,9 +757,14 @@ document.getElementById("postToLive").onclick = async () => {
   }
 };
 
-/* ------------------------------------------------------------------
-   GPS LOOP
------------------------------------------------------------------- */
+/* === COPY CAPTION === */
+document.getElementById("copyBtn").onclick = () => {
+  const text = getEffectiveCaption();
+  navigator.clipboard.writeText(text);
+  showToast("Copied!");
+};
+
+/* === GPS LOOP === */
 let gpsTimerActive = false;
 let wakeLock       = null;
 
@@ -706,9 +841,7 @@ async function releaseWakeLock(){
 
 window.addEventListener("pagehide", () => stopGPSLoop());
 
-/* ------------------------------------------------------------------
-   INIT
------------------------------------------------------------------- */
+/* INIT */
 fetchStatus();
 </script>
 
