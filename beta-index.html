@@ -22,6 +22,26 @@
 
   <!-- 🎨 Styles -->
   <link rel="stylesheet" href="style.css" />
+
+  <!-- 🔔 OneSignal Web Push SDK -->
+  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+  <script>
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    OneSignalDeferred.push(async function(OneSignal) {
+      await OneSignal.init({
+        appId: "64641a89-3619-4491-a25b-c0ab000bdfe0",
+        notifyButton: { enable: false }
+      });
+    });
+
+    // Manually trigger the OneSignal prompt
+    function subscribeToBigRed() {
+      window.OneSignalDeferred.push(function(OneSignal) {
+        OneSignal.showSlidedownPrompt();
+      });
+    }
+  </script>
+
 </head>
 
 <body>
@@ -46,29 +66,32 @@
     <a href="tel:14053784024" class="btn secondary">📞 Call Big Red</a>
   </div>
 
-  <!-- 🔔 PUSH NOTIFICATION CTA (added here) -->
-  <div style="text-align:center; margin:25px 0 10px;">
-    <button id="brcNotifyBtn" style="
-      background:#b30000;
-      color:#fff;
-      padding:12px 20px;
-      border:none;
-      border-radius:8px;
-      font-size:1.1rem;
-      cursor:pointer;
-    ">
+  <!-- 🔔 Enable Notifications Button -->
+  <div style="text-align:center; margin-top:18px;">
+    <button onclick="subscribeToBigRed()"
+      style="
+        background:#b30000;
+        color:white;
+        border:none;
+        padding:12px 22px;
+        font-size:1em;
+        font-weight:700;
+        border-radius:8px;
+        cursor:pointer;
+        box-shadow:0 3px 6px rgba(0,0,0,0.4);
+      ">
       🔔 Enable Big Red Notifications
     </button>
-    <p style="color:#888; font-size:0.8em; margin-top:8px;">
-      Get alerts when Big Red goes live or posts updates.
+    <p style="font-size:0.8em; color:#aaa; margin-top:6px;">
+      Get alerts when Big Red is LIVE, weekend rundowns, airport alerts, and more.
     </p>
   </div>
 
   <!-- 🧭 “Where To?” -->
   <div class="info-section" style="text-align:center; margin-top:20px;">
-    <h2 style="margin-bottom:10px;">Where To?</h2>
+    <h2 style="margin-bottom:10px;">Plan Your Connection</h2>
     <form id="quickDestination" onsubmit="goToFare(event)" style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
-      <input id="quickWhere" type="text" placeholder="Plan Your Connection" required 
+      <input id="quickWhere" type="text" placeholder="Where to?" required 
              style="flex:1;min-width:220px;max-width:420px;padding:12px;border-radius:10px;border:1px solid #333;background:#111;color:#fff;">
       <button type="submit" class="btn primary">➡️ Next</button>
     </form>
@@ -185,45 +208,8 @@
     });
   </script>
 
-  <!-- 🔔 PUSH NOTIFICATION SYSTEM -->
-  <script>
-    const VAPID_PUBLIC_KEY = "BJL8FZcE3mzZzkfBTF5OolYcFcA24KYhWGKtfN8H_nd7t5nAq6oHNE2Vc7pCqzi6Qy5EslN3tT1v97isG6CVVis";;
-
-    async function urlBase64ToUint8Array(base64String) {
-      const padding = '='.repeat((4 - base64String.length % 4) % 4);
-      const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-      const raw = atob(base64);
-      return Uint8Array.from([...raw].map(char => char.charCodeAt(0)));
-    }
-
-    async function subscribeForNotifications() {
-      if (!("serviceWorker" in navigator)) {
-        alert("Notifications not supported on this device.");
-        return;
-      }
-
-      const registration = await navigator.serviceWorker.register("/service-worker.js");
-
-      const subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: await urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
-      });
-
-      await fetch("https://YOUR_WORKER_URL_HERE/saveSubscription", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(subscription)
-      });
-
-      alert("Notifications enabled! You'll get alerts when Big Red is live.");
-    }
-
-    document.getElementById("brcNotifyBtn")
-      .addEventListener("click", subscribeForNotifications);
-  </script>
-
-  <!-- STYLE: Floating refresh -->
   <style>
+    /* Floating refresh styling */
     #refreshButton {
       position: fixed;
       bottom: 20px;
@@ -248,6 +234,5 @@
     }
     #refreshButton:hover { background: #cc0000; }
   </style>
-
 </body>
 </html>
