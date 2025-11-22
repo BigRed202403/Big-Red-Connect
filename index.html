@@ -27,117 +27,24 @@
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 
   <script>
-    /* -----------------------------------------
-       UTILITIES
-    ----------------------------------------- */
-
-    function isStandalone() {
-      return window.matchMedia('(display-mode: standalone)').matches ||
-             window.navigator.standalone === true;
-    }
-
-    function isIPhoneSafari() {
-      return /iPhone/i.test(navigator.userAgent) && !isStandalone();
-    }
-
-    function getSoftDisable() {
-      return localStorage.getItem("brc_push_disabled") === "1";
-    }
-
-    function setSoftDisable(v) {
-      localStorage.setItem("brc_push_disabled", v ? "1" : "0");
-    }
-
-    /* -----------------------------------------
-       UI STATES
-    ----------------------------------------- */
-
-    function renderStateEnabled() {
-      document.getElementById("notifyEnableBtn").style.display = "none";
-      document.getElementById("notifyDisableBtn").style.display = "inline-block";
-
-      const badge = document.getElementById("notifyBadge");
-      badge.textContent = "✔ Notifications Enabled";
-      badge.style.background = "#0f8c0f";
-      badge.style.display = "inline-block";
-
-      document.getElementById("notifyMsg").style.display = "none";
-      document.getElementById("iosTip").style.display = "none";
-    }
-
-    function renderStateDisabled() {
-      document.getElementById("notifyEnableBtn").style.display = "inline-block";
-      document.getElementById("notifyDisableBtn").style.display = "none";
-
-      const badge = document.getElementById("notifyBadge");
-      badge.textContent = "⚠ Notifications Disabled";
-      badge.style.background = "#b30000";
-      badge.style.display = "inline-block";
-
-      document.getElementById("notifyMsg").style.display = "block";
-      document.getElementById("iosTip").style.display = isIPhoneSafari() ? "block" : "none";
-    }
-
-    function renderStateNotSubscribed() {
-      document.getElementById("notifyEnableBtn").style.display = "inline-block";
-      document.getElementById("notifyDisableBtn").style.display = "none";
-
-      document.getElementById("notifyBadge").style.display = "none";
-      document.getElementById("notifyMsg").style.display = "block";
-      document.getElementById("iosTip").style.display = isIPhoneSafari() ? "block" : "none";
-    }
-
-    /* -----------------------------------------
-       INIT OneSignal
-    ----------------------------------------- */
-
+    // Initialize OneSignal using your lowercase filenames
     window.OneSignalDeferred = window.OneSignalDeferred || [];
 
-    OneSignalDeferred.push(async function (OneSignal) {
+    OneSignalDeferred.push(async function(OneSignal) {
       await OneSignal.init({
         appId: "64641a89-3619-4491-a25b-c0ab000bdfe0",
         notifyButton: { enable: false },
-        serviceWorkerPath: "/onesignalsdkworker.js?v=4",
+        serviceWorkerPath: "/onesignalsdkworker.js?v=3",
+        serviceWorkerUpdaterPath: "/onesignalsdkupdaterworker.js?v=3",
         path: "/"
       });
-
-      setTimeout(async () => {
-        const osSubscribed = await OneSignal.User.PushSubscription.isSubscribed();
-        const softDisabled = getSoftDisable();
-
-        if (!osSubscribed) {
-          renderStateNotSubscribed();
-        } else if (softDisabled) {
-          renderStateDisabled();
-        } else {
-          renderStateEnabled();
-        }
-      }, 450);
     });
 
-    /* -----------------------------------------
-       ACTION BUTTONS
-    ----------------------------------------- */
-
-    async function enableNotifications() {
-      window.OneSignalDeferred.push(async function (OneSignal) {
-        const osSubscribed = await OneSignal.User.PushSubscription.isSubscribed();
-
-        // If they are not subscribed → show prompt
-        if (!osSubscribed) {
-          OneSignal.showSlidedownPrompt();
-          return;
-        }
-
-        // Already subscribed → simply re-enable
-        setSoftDisable(false);
-        renderStateEnabled();
+    // Button action to show OneSignal's subscription slide
+    function enableBigRedNotifications() {
+      window.OneSignalDeferred.push(async function(OneSignal) {
+        OneSignal.showSlidedownPrompt();
       });
-    }
-
-    function disableNotifications() {
-      setSoftDisable(true);
-      renderStateDisabled();
     }
   </script>
 
@@ -168,23 +75,7 @@
 
   <!-- 🔔 Notification Controls -->
   <div style="text-align:center; margin-top:18px;">
-
-    <!-- Status Badge -->
-    <div id="notifyBadge" style="
-      display:none;
-      background:#444;
-      color:white;
-      padding:10px 18px;
-      border-radius:8px;
-      font-size:1em;
-      font-weight:700;
-      margin-bottom:10px;
-      box-shadow:0 3px 6px rgba(0,0,0,0.4);
-    "></div>
-
-    <!-- Enable Button -->
-    <button id="notifyEnableBtn" onclick="enableNotifications()" style="
-      display:none;
+    <button onclick="enableBigRedNotifications()" style="
       background:#b30000;
       color:white;
       border:none;
@@ -193,43 +84,20 @@
       font-weight:700;
       border-radius:8px;
       cursor:pointer;
-      box-shadow:0 3px 6px rgba(0,0,0,0.4);
+      box-shadow:0 3px 6px rgba(0,0,0,0.40);
     ">
       🔔 Enable Notifications
     </button>
 
-    <!-- Disable Button -->
-    <button id="notifyDisableBtn" onclick="disableNotifications()" style="
-      display:none;
-      background:#555;
-      color:white;
-      border:none;
-      padding:12px 22px;
-      font-size:1em;
-      font-weight:700;
-      border-radius:8px;
-      cursor:pointer;
-      box-shadow:0 3px 6px rgba(0,0,0,0.4);
-      margin-top:8px;
-    ">
-      🔕 Disable Notifications
-    </button>
-
-    <!-- Description -->
-    <p id="notifyMsg" style="font-size:0.8em; color:#aaa; margin-top:6px; display:none;">
+    <p style="font-size:0.8em; color:#aaa; margin-top:6px;">
       Get alerts when Big Red is LIVE, weekend rundowns, airport alerts, and more.
     </p>
-
-    <!-- iOS Tip -->
-    <p id="iosTip" style="font-size:0.8em; color:#ffcc66; margin-top:6px; display:none;">
-      👉 On iPhone: Tap the Share icon → Add to Home Screen → Then return to enable alerts.
-    </p>
-
   </div>
 
   <!-- 🧭 “Where To?” -->
   <div class="info-section" style="text-align:center; margin-top:20px;">
     <h2 style="margin-bottom:10px;">Plan Your Connection</h2>
+
     <form id="quickDestination" onsubmit="goToFare(event)" style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
       <input id="quickWhere" type="text" placeholder="Where to?" required 
              style="flex:1;min-width:220px;max-width:420px;padding:12px;border-radius:10px;border:1px solid #333;background:#111;color:#fff;">
