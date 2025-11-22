@@ -23,62 +23,67 @@
   <!-- 🎨 Styles -->
   <link rel="stylesheet" href="style.css" />
 
-  <!-- 🔔 OneSignal Web Push SDK -->
+  <!-- 🔔 OneSignal SDK (v16 loader, v17 engine) -->
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 
   <script>
-    // ---------------------------------------------------
-    // SIMPLE, CLEAN, UNIVERSAL NOTIFICATION HANDLER
-    // ---------------------------------------------------
+    /* ---------------------------------------------------------
+       OneSignal INIT — fully v17-safe
+    --------------------------------------------------------- */
     window.OneSignalDeferred = window.OneSignalDeferred || [];
-
-    OneSignalDeferred.push(async function (OneSignal) {
+    OneSignalDeferred.push(async function(OneSignal) {
       try {
         await OneSignal.init({
           appId: "64641a89-3619-4491-a25b-c0ab000bdfe0",
-          notifyButton: { enable: false },
           serviceWorkerPath: "/onesignalsdkworker.js?v=3",
-          path: "/"
+          path: "/",
+          notifyButton: { enable: false }
         });
-      } catch (err) {
-        document.getElementById("notifyDebug").textContent =
-          "Init error: " + err.message;
+
+        // Optional: basic logging for us
+        const dbg = document.getElementById("notifyDebug");
+        if (dbg) dbg.textContent = "OneSignal initialized.";
+      } 
+      catch (e) {
+        const dbg = document.getElementById("notifyDebug");
+        if (dbg) dbg.textContent = "Init error: " + e.message;
       }
     });
 
-    // ---------------------------------------------------
-    // Button: show slidedown OR notify user they’re subscribed
-    // ---------------------------------------------------
-    async function enableBigRedAlerts() {
-      window.OneSignalDeferred.push(async function (OneSignal) {
+    /* ---------------------------------------------------------
+       CLICK HANDLER — v17-safe push logic
+    --------------------------------------------------------- */
+    function handleNotifyClick() {
+      window.OneSignalDeferred.push(async function(OneSignal) {
 
         const dbg = document.getElementById("notifyDebug");
 
         try {
-          // 1) Check support
-          if (!OneSignal.Notifications.isPushSupported()) {
-            alert("Notifications aren’t supported on this browser.");
-            dbg.textContent = "Push not supported";
+          // 1) Check support first
+          const supported = OneSignal.Notifications.isPushSupported();
+          if (!supported) {
+            alert("This browser does not support push notifications.");
+            if (dbg) dbg.textContent = "Push not supported.";
             return;
           }
 
-          // 2) Check permission state
-          const isAllowed = OneSignal.Notifications.permission === true;
-          const isSubscribed = await OneSignal.User.PushSubscription.isSubscribed();
+          // 2) Check permission status
+          const permission = OneSignal.Notifications.permission;
 
-          if (isAllowed && isSubscribed) {
-            alert("You’re already set! You’ll receive Big Red alerts on this device.");
-            dbg.textContent = "Already subscribed";
+          if (permission === true) {
+            // Already subscribed
+            alert("You're already subscribed to Big Red Alerts on this device!");
+            if (dbg) dbg.textContent = "Already subscribed.";
             return;
           }
 
-          // 3) Trigger OneSignal’s built-in prompt
-          dbg.textContent = "Prompting…";
+          // 3) Not subscribed → show slidedown prompt
+          if (dbg) dbg.textContent = "Prompting user…";
           await OneSignal.Slidedown.promptPush();
-          dbg.textContent = "Prompt shown";
+          if (dbg) dbg.textContent = "Slidedown shown.";
 
-        } catch (e) {
-          dbg.textContent = "Error: " + e.message;
+        } catch (err) {
+          if (dbg) dbg.textContent = "Error: " + err.message;
         }
       });
     }
@@ -109,9 +114,10 @@
     <a href="tel:14053784024" class="btn secondary">📞 Call Big Red</a>
   </div>
 
-  <!-- 🔔 ENABLE NOTIFICATIONS -->
+  <!-- 🔔 NOTIFICATION SECTION -->
   <div style="text-align:center; margin-top:18px;">
-    <button onclick="enableBigRedAlerts()" style="
+
+    <button id="notifyBtn" onclick="handleNotifyClick()" style="
       background:#b30000;
       color:white;
       border:none;
@@ -126,26 +132,29 @@
     </button>
 
     <p style="font-size:0.8em; color:#aaa; margin-top:6px;">
-      Get live driver updates, night-run alerts, and weekend rundowns.
+      Get live updates when Big Red is driving and available in your area.
     </p>
 
+    <!-- Hidden debug line -->
     <p id="notifyDebug" style="font-size:0.7em; color:#666; margin-top:4px;"></p>
   </div>
 
-  <!-- 🧭 WHERE TO -->
+  <!-- 🧭 “Where To?” -->
   <div class="info-section" style="text-align:center; margin-top:20px;">
     <h2 style="margin-bottom:10px;">Plan Your Connection</h2>
+
     <form id="quickDestination" onsubmit="goToFare(event)" style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
       <input id="quickWhere" type="text" placeholder="Where to?" required 
              style="flex:1;min-width:220px;max-width:420px;padding:12px;border-radius:10px;border:1px solid #333;background:#111;color:#fff;">
       <button type="submit" class="btn primary">➡️ Next</button>
     </form>
+
     <p style="font-size:0.9em;color:#888;margin-top:6px;">
       Tip: Start typing a place, business, or address — suggestions will appear.
     </p>
   </div>
 
-  <!-- 🧱 NAV TILE GRID -->
+  <!-- 🧱 Navigation Tiles -->
   <div class="tile-grid">
     <a href="farecalculator.html" class="tile">💲<br>Fare Calculator</a>
     <a href="live.html" class="tile">🗺️<br>Live Map</a>
