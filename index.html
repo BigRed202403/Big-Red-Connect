@@ -24,10 +24,26 @@
   <link rel="stylesheet" href="style.css" />
 
   <!-- 🔔 OneSignal Web Push SDK -->
-  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+  <script src="https://cdn.onesignal.com/sdks/web/v16/onesignalsdk.page.js" defer></script>
 
   <script>
-    // Initialize OneSignal using your lowercase filenames
+    /* ----------------------------------------------------
+       UTILITIES
+    ---------------------------------------------------- */
+
+    function isStandalone() {
+      return window.matchMedia('(display-mode: standalone)').matches ||
+             window.navigator.standalone === true;
+    }
+
+    function isIPhoneSafari() {
+      return /iPhone/i.test(navigator.userAgent) && !isStandalone();
+    }
+
+    /* ----------------------------------------------------
+       INIT ONESIGNAL
+    ---------------------------------------------------- */
+
     window.OneSignalDeferred = window.OneSignalDeferred || [];
 
     OneSignalDeferred.push(async function(OneSignal) {
@@ -40,9 +56,19 @@
       });
     });
 
-    // Button action to show OneSignal's subscription slide
+    /* ----------------------------------------------------
+       ENABLE NOTIFICATIONS (with "already subscribed" popup)
+    ---------------------------------------------------- */
+
     function enableBigRedNotifications() {
-      window.OneSignalDeferred.push(async function(OneSignal) {
+      window.OneSignalDeferred.push(async function (OneSignal) {
+        const isSubscribed = await OneSignal.User.PushSubscription.isSubscribed();
+
+        if (isSubscribed) {
+          alert("You're already subscribed! Big Red alerts are active on this device.");
+          return;
+        }
+
         OneSignal.showSlidedownPrompt();
       });
     }
@@ -75,7 +101,9 @@
 
   <!-- 🔔 Notification Controls -->
   <div style="text-align:center; margin-top:18px;">
-    <button onclick="enableBigRedNotifications()" style="
+
+    <!-- Enable Button -->
+    <button id="notifyEnableBtn" onclick="enableBigRedNotifications()" style="
       background:#b30000;
       color:white;
       border:none;
@@ -84,26 +112,31 @@
       font-weight:700;
       border-radius:8px;
       cursor:pointer;
-      box-shadow:0 3px 6px rgba(0,0,0,0.40);
+      box-shadow:0 3px 6px rgba(0,0,0,0.4);
     ">
       🔔 Enable Notifications
     </button>
 
+    <!-- Description -->
     <p style="font-size:0.8em; color:#aaa; margin-top:6px;">
       Get alerts when Big Red is LIVE, weekend rundowns, airport alerts, and more.
     </p>
+
+    <!-- iOS Tip -->
+    <p id="iosTip" style="font-size:0.8em; color:#ffcc66; margin-top:6px;">
+      👉 On iPhone: Tap the Share icon → Add to Home Screen → Then return to enable alerts.
+    </p>
+
   </div>
 
   <!-- 🧭 “Where To?” -->
   <div class="info-section" style="text-align:center; margin-top:20px;">
     <h2 style="margin-bottom:10px;">Plan Your Connection</h2>
-
     <form id="quickDestination" onsubmit="goToFare(event)" style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
       <input id="quickWhere" type="text" placeholder="Where to?" required 
              style="flex:1;min-width:220px;max-width:420px;padding:12px;border-radius:10px;border:1px solid #333;background:#111;color:#fff;">
       <button type="submit" class="btn primary">➡️ Next</button>
     </form>
-
     <p style="font-size:0.9em;color:#888;margin-top:6px;">
       Tip: Start typing a place, business, or address — suggestions will appear.
     </p>
