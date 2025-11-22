@@ -55,10 +55,12 @@
     function renderStateEnabled() {
       document.getElementById("notifyEnableBtn").style.display = "none";
       document.getElementById("notifyDisableBtn").style.display = "inline-block";
+
       const badge = document.getElementById("notifyBadge");
       badge.textContent = "✔ Notifications Enabled";
       badge.style.background = "#0f8c0f";
       badge.style.display = "inline-block";
+
       document.getElementById("notifyMsg").style.display = "none";
       document.getElementById("iosTip").style.display = "none";
     }
@@ -66,10 +68,12 @@
     function renderStateDisabled() {
       document.getElementById("notifyEnableBtn").style.display = "inline-block";
       document.getElementById("notifyDisableBtn").style.display = "none";
+
       const badge = document.getElementById("notifyBadge");
       badge.textContent = "⚠ Notifications Disabled";
       badge.style.background = "#b30000";
       badge.style.display = "inline-block";
+
       document.getElementById("notifyMsg").style.display = "block";
       document.getElementById("iosTip").style.display = isIPhoneSafari() ? "block" : "none";
     }
@@ -77,6 +81,7 @@
     function renderStateNotSubscribed() {
       document.getElementById("notifyEnableBtn").style.display = "inline-block";
       document.getElementById("notifyDisableBtn").style.display = "none";
+
       document.getElementById("notifyBadge").style.display = "none";
       document.getElementById("notifyMsg").style.display = "block";
       document.getElementById("iosTip").style.display = isIPhoneSafari() ? "block" : "none";
@@ -92,8 +97,8 @@
       await OneSignal.init({
         appId: "64641a89-3619-4491-a25b-c0ab000bdfe0",
         notifyButton: { enable: false },
-        serviceWorkerPath: "/onesignalsdkworker.js?v=3",
-        path: "/",
+        serviceWorkerPath: "/onesignalsdkworker.js?v=4",
+        path: "/"
       });
 
       setTimeout(async () => {
@@ -107,7 +112,7 @@
         } else {
           renderStateEnabled();
         }
-      }, 400);
+      }, 450);
     });
 
     /* -----------------------------------------
@@ -118,11 +123,13 @@
       window.OneSignalDeferred.push(async function (OneSignal) {
         const osSubscribed = await OneSignal.User.PushSubscription.isSubscribed();
 
+        // If they are not subscribed → show prompt
         if (!osSubscribed) {
           OneSignal.showSlidedownPrompt();
           return;
         }
 
+        // Already subscribed → simply re-enable
         setSoftDisable(false);
         renderStateEnabled();
       });
