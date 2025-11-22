@@ -106,7 +106,7 @@
       100% { transform: scale(0.8); opacity: 0.6; }
     }
 
-    /* 🔔 Driver announcement card (image + caption) */
+    /* 🔔 Driver announcement card */
     .announcement-card {
       background:#111;
       border:1px solid #b30000;
@@ -142,7 +142,6 @@
 </head>
 
 <body>
-  <!-- Logo / header -->
   <div class="logo-header">
     <a href="index.html"><img src="official_logo_Nov.png" alt="Big Red Connect Logo" /></a>
     <div style="text-align:center; margin:10px 0;">
@@ -153,17 +152,14 @@
   <h1>Big Red Live Map & ETA</h1>
   <p class="tagline">See where Big Red is — and how long until arrival.</p>
 
-  <!-- Global status pill (from status.js) -->
   <div id="status-pill" class="status status--loading">Checking status…</div>
 
-  <!-- 🔔 Announcement from Admin (image + caption) -->
+  <!-- Announcement -->
   <div id="announcementWrap" class="hidden"></div>
 
   <section class="info-section">
-    <!-- Map -->
     <div id="map" class="hidden"></div>
 
-    <!-- ETA Panel -->
     <div id="etaPanel" class="panel hidden">
       <p style="margin-top:0;">Estimate your ETA from my live location to your pickup:</p>
 
@@ -190,7 +186,6 @@
       </div>
     </div>
 
-    <!-- Offline / Away message (hidden when announcement is active) -->
     <div id="status-message" style="display:none;"></div>
   </section>
 
@@ -198,17 +193,15 @@
     <p>&copy; 2025 Big Red Connect — <a href="index.html">Return Home</a></p>
   </footer>
 
-  <!-- 🔁 Global status pill logic -->
+  <!-- Status pill logic -->
   <script src="status.js"></script>
 
   <script>
-    /* -----------------------------------------------
-       🔧 CONFIG
-    ----------------------------------------------- */
+    /* ----------------------------------------------- */
     const POST_WORKER_URL = "https://post-to-live-beta.bigredtransportation.workers.dev";
     const LOCATION_READER = "https://update-location.bigredtransportation.workers.dev";
-    const HQ = { lat: 35.3207, lng: -97.4929 };  // Moore baseline
-    const STALE_MIN = 30; // minutes before treating GPS as stale
+    const HQ = { lat: 35.3207, lng: -97.4929 };
+    const STALE_MIN = 30;
 
     let map, geocoder, directionsService, directionsRenderer;
     let driverPos = null;
@@ -219,12 +212,7 @@
 
     const log = (...args) => console.log(new Date().toLocaleTimeString(), "[LIVE]", ...args);
 
-    /* -----------------------------------------------
-       1️⃣ Driver Announcement Loader
-       - Pulls from POST_WORKER_URL
-       - Shows image + caption
-       - Hides offline/away status box when active
-    ----------------------------------------------- */
+    /* Announcement Loader */
     async function loadAnnouncement() {
       try {
         const res = await fetch(POST_WORKER_URL + "?t=" + Date.now(), { cache:"no-store" });
@@ -235,84 +223,65 @@
         const statusBox = document.getElementById("status-message");
 
         if (!post || !post.caption || !post.image) {
-          // No active post → clear card, allow offline/away message
           wrap.classList.add("hidden");
           wrap.innerHTML = "";
-          if (currentStatus !== "online") {
-            statusBox.style.display = "block";
-          }
+          if (currentStatus !== "online") statusBox.style.display = "block";
           return;
         }
 
-        // Build announcement card
         wrap.innerHTML = `
           <div class="announcement-card">
             <img src="${post.image}" alt="">
             <div class="announcement-text">
               ${post.caption.replace(/\n/g, "<br>")}
               <div class="time">
-                Updated ${new Date(post.timestamp).toLocaleString("en-US", {
-                  hour: "numeric",
-                  minute: "2-digit"
-                })}
+                Updated ${new Date(post.timestamp).toLocaleString("en-US",{hour:"numeric",minute:"2-digit"})}
               </div>
             </div>
           </div>
         `;
         wrap.classList.remove("hidden");
-
-        // When an announcement is active and you're not online,
-        // we hide the normal offline/away block to avoid duplicate messaging.
-        if (currentStatus !== "online") {
-          statusBox.style.display = "none";
-        }
+        if (currentStatus !== "online") statusBox.style.display = "none";
 
       } catch (e) {
         console.warn("Announcement fetch failed:", e);
       }
     }
 
-    // First load + refresh every 60 seconds
     document.addEventListener("DOMContentLoaded", loadAnnouncement);
     setInterval(loadAnnouncement, 60000);
 
-    /* -----------------------------------------------
-       2️⃣ Status Listener from status.js
-    ----------------------------------------------- */
+    /* Listen for status updates from status.js */
     document.addEventListener("statusUpdated", (e) => {
       currentStatus = (e.detail || "offline").toLowerCase();
       log("statusUpdated →", currentStatus);
       updateVisibility();
     });
 
-    /* -----------------------------------------------
-       3️⃣ Map + ETA logic
-    ----------------------------------------------- */
+    /* Map Init */
     window.initLiveMap = async function() {
       geocoder = new google.maps.Geocoder();
       directionsService = new google.maps.DirectionsService();
       directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers:true });
 
       map = new google.maps.Map(document.getElementById("map"), {
-        center: { lat:35.4676, lng:-97.5164 }, // OKC center
+        center: { lat:35.4676, lng:-97.5164 },
         zoom: 11
       });
       directionsRenderer.setMap(map);
 
-      // Button wiring
       document.getElementById("btnUseMyLoc").onclick = handleUseMyLocation;
       document.getElementById("btnEnterAddress").onclick = () =>
         document.getElementById("manualRow").classList.remove("hidden");
       document.getElementById("btnUseManual").onclick = handleManualUse;
 
-      // Predictive address input
       autocompleteManual = new google.maps.places.Autocomplete(
         document.getElementById("manualAddr"),
         { fields: ["geometry", "formatted_address", "name"], types: ["geocode","establishment"] }
       );
       autocompleteManual.addListener("place_changed", async () => {
         const place = autocompleteManual.getPlace();
-        if (place.geometry && place.geometry.location) {
+        if (place.geometry?.location) {
           riderPos = place.geometry.location;
           log("manual place selected →", place.formatted_address || place.name);
           await drawRoute(place.formatted_address || place.name);
@@ -335,14 +304,12 @@
 
         if (!isNaN(lat) && !isNaN(lng) && ageMin <= STALE_MIN) {
           driverPos = { lat, lng };
-          log("driver live →", driverPos, "age(min):", Math.round(ageMin));
+          log("driver live →", driverPos);
         } else {
           driverPos = HQ;
-          log("driver fallback HQ (stale or invalid)");
         }
-      } catch (e) {
+      } catch {
         driverPos = HQ;
-        log("driver fetch error → HQ fallback", e?.message);
       }
     }
 
@@ -364,8 +331,8 @@
         if (!announcementVisible) {
           statusBox.style.display = "block";
           statusBox.innerHTML = currentStatus === "away"
-            ? `<strong>🟡 Limited Availability</strong><br>I’m between runs or outside my usual area.<br>Text <strong>“RED”</strong> to <strong>(405) 378-4024</strong> to plan ahead.`
-            : `<strong>🔴 Offline</strong><br>I’m off the road for now.<br>You can still line up your next connection anytime.`;
+            ? `<strong>🟡 Limited Availability</strong><br>I’m between runs — text “RED” to plan ahead.`
+            : `<strong>🔴 Offline</strong><br>I’m off the road — plan your next connection anytime.`;
         } else {
           statusBox.style.display = "none";
         }
@@ -378,7 +345,6 @@
       if (window.driverMarker) window.driverMarker.setMap(null);
       if (window.pulseOverlay) window.pulseOverlay.setMap(null);
 
-      // 🚗 Marker
       window.driverMarker = new google.maps.Marker({
         position: driverPos,
         map,
@@ -386,7 +352,6 @@
         title: "Big Red (Live)"
       });
 
-      // 🔴 Pulse overlay
       const pulseDiv = document.createElement("div");
       pulseDiv.className = "pulse-marker";
 
@@ -409,11 +374,11 @@
       window.pulseOverlay.setMap(map);
 
       map.setCenter(driverPos);
-      log("driver marker drawn at", driverPos);
     }
 
     function startLiveRefresh() {
       if (liveRefreshTimer) clearInterval(liveRefreshTimer);
+
       liveRefreshTimer = setInterval(async () => {
         try {
           const res = await fetch(LOCATION_READER + "?nocache=" + Date.now(), { cache:"no-store" });
@@ -423,38 +388,39 @@
           if (isNaN(lat) || isNaN(lng)) return;
 
           const newPos = { lat, lng };
+
           if (!driverPos ||
               Math.abs(lat - driverPos.lat) > 0.0001 ||
               Math.abs(lng - driverPos.lng) > 0.0001) {
+
             driverPos = newPos;
-            if (window.driverMarker) driverMarker.setPosition(driverPos);
+
+            /* 🔥 FIXED LINE BELOW */
+            if (window.driverMarker) window.driverMarker.setPosition(driverPos);
+
             map.panTo(driverPos);
             log("driver refreshed →", driverPos);
           }
         } catch (e) {
           log("refresh failed", e?.message);
         }
-      }, 31000); // ~31s to stay desynced from admin 30s
+      }, 31000);
     }
 
-    /* -----------------------------------------------
-       4️⃣ Rider interaction (Use My Location / Manual)
-    ----------------------------------------------- */
+    /* User Location */
     async function handleUseMyLocation(){
       if (currentStatus !== "online") return;
       await getDriverLocation();
 
       if (!navigator.geolocation) {
-        alert("Location services are not available on this device.");
+        alert("Location unavailable");
         return;
       }
 
       navigator.geolocation.getCurrentPosition(async pos => {
         riderPos = new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude);
-        log("rider from GPS →", pos.coords.latitude, pos.coords.longitude);
         await drawRoute();
       }, () => {
-        // If GPS fails, prompt for manual instead
         document.getElementById("manualRow").classList.remove("hidden");
       }, { enableHighAccuracy:true, timeout:10000 });
     }
@@ -464,12 +430,11 @@
       await getDriverLocation();
 
       const addr = document.getElementById("manualAddr").value.trim();
-      if (!addr) return alert("Enter your location/address.");
+      if (!addr) return alert("Enter your address");
 
       geocoder.geocode({ address: addr }, async (res, status) => {
         if (status === "OK" && res[0]?.geometry?.location) {
           riderPos = res[0].geometry.location;
-          log("rider manual addr geocoded →", addr);
           await drawRoute(addr);
         } else {
           alert("Could not find that address.");
@@ -489,17 +454,14 @@
 
       const route = await new Promise((resolve, reject) => {
         directionsService.route(
-          {
-            origin: driverPos,
-            destination: riderPos,
-            travelMode: "DRIVING"
-          },
+          { origin: driverPos, destination: riderPos, travelMode: "DRIVING" },
           (r, s) => s === "OK" ? resolve(r) : reject(s)
         );
       });
 
       directionsRenderer.setDirections(route);
       const leg = route.routes[0].legs[0];
+
       const miles = leg.distance.value / 1609.34;
       const mins = Math.round(leg.duration.value / 60);
 
@@ -508,18 +470,9 @@
       document.getElementById("whenLine").textContent =
         `Calculated at ${new Date().toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})} CT`;
 
-      const address = optionalAddr || leg.end_address || "Pinned on map";
+      const addr = optionalAddr || leg.end_address || "Pinned on map";
 
-      // Save handoff info (if you ever want to reuse it)
-      localStorage.setItem("bigred_last_rider", JSON.stringify({
-        address,
-        lat: riderPos.lat(),
-        lng: riderPos.lng(),
-        timestamp: Date.now()
-      }));
-      log("handoff saved →", address);
-
-      const gm = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(driverPos.lat + "," + driverPos.lng)}&destination=${encodeURIComponent(address)}`;
+      const gm = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(driverPos.lat+","+driverPos.lng)}&destination=${encodeURIComponent(addr)}`;
       document.getElementById("gmLink").href = gm;
 
       document.getElementById("resultPanel").classList.remove("hidden");
@@ -528,43 +481,34 @@
       bounds.extend(driverPos);
       bounds.extend(riderPos);
       map.fitBounds(bounds);
-
-      log("route drawn →", miles.toFixed(1), "mi", mins, "min");
     }
 
-    /* -----------------------------------------------
-       5️⃣ Text RED helper (pre-fills SMS)
-    ----------------------------------------------- */
+    /* Text RED helper */
     document.addEventListener("DOMContentLoaded", () => {
       const textBtn = document.getElementById("textRed");
       if (!textBtn) return;
 
       textBtn.addEventListener("click", (e) => {
         e.preventDefault();
-        const name = prompt("Enter your name so Big Red knows who’s texting:");
+        const name = prompt("Enter your name so Big Red knows who's texting:");
         if (!name) return;
 
         const etaLine = document.getElementById("etaLine")?.textContent || "";
         const distLine = document.getElementById("distLine")?.textContent || "";
         const manualAddr = document.getElementById("manualAddr")?.value?.trim() || "";
-        const riderInfo = manualAddr || "My location (used GPS)";
 
-        const bodyLines = [
-          `Hey Big Red — this is ${name}.`,
-          etaLine ? `${etaLine} (${distLine}).` : "",
-          `Pickup spot: ${riderInfo}.`,
-          "",
-          "Live Map: https://bigred202403.github.io/Big-Red-Connect/live.html",
-          "Fare Calculator: https://bigred202403.github.io/Big-Red-Connect/farecalculator.html"
-        ].filter(Boolean);
+        const riderInfo = manualAddr || "Using GPS location";
 
-        const smsBody = encodeURIComponent(bodyLines.join(" "));
-        window.location.href = `sms:+14053784024?&body=${smsBody}`;
+        const body = encodeURIComponent(
+          `Hey Big Red — this is ${name}. ${etaLine} ${distLine}. Pickup: ${riderInfo}.`
+        );
+
+        window.location.href = `sms:+14053784024?&body=${body}`;
       });
     });
   </script>
 
-  <!-- 🗺️ Google Maps API -->
+  <!-- Google Maps API -->
   <script async defer
     src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places,geometry&callback=initLiveMap">
   </script>
