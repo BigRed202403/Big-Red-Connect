@@ -24,12 +24,75 @@
   <link rel="stylesheet" href="style.css" />
 
   <!-- 🔔 OneSignal Web Push SDK -->
-  <script src="https://cdn.onesignal.com/sdks/web/v16/onesignalsdk.page.js" defer></script>
+  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+
+  <style>
+    /* 🔍 Bottom debug console (always visible) */
+    #debug-console {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 140px;
+      background: #000;
+      border-top: 1px solid #333;
+      font-family: monospace;
+      font-size: 11px;
+      color: #0f0;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+    }
+    #debug-header {
+      background: #111;
+      color: #fff;
+      padding: 4px 8px;
+      font-weight: 700;
+      font-size: 11px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    #debug-body {
+      flex: 1;
+      padding: 4px 8px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+    }
+    #debug-header button {
+      background: #333;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 10px;
+      cursor: pointer;
+    }
+  </style>
 
   <script>
-    /* ----------------------------------------------------
-       UTILITIES
-    ---------------------------------------------------- */
+    /* -----------------------------------------
+       SIMPLE LOGGER + UTILITIES
+    ----------------------------------------- */
+    function logDebug(msg) {
+      try {
+        const box = document.getElementById("debug-body");
+        if (!box) return;
+        const now = new Date().toISOString().split("T")[1].split(".")[0]; // HH:MM:SS
+        box.textContent = `[${now}] ${msg}\n` + box.textContent;
+      } catch (e) {
+        // last-resort, avoid crashing
+        console.log("Debug log error:", e);
+      }
+    }
+
+    window.addEventListener("error", function (e) {
+      logDebug("JS error: " + e.message);
+    });
+
+    window.addEventListener("unhandledrejection", function (e) {
+      logDebug("Unhandled promise rejection: " + (e.reason && e.reason.message ? e.reason.message : e.reason));
+    });
 
     function isStandalone() {
       return window.matchMedia('(display-mode: standalone)').matches ||
@@ -40,37 +103,107 @@
       return /iPhone/i.test(navigator.userAgent) && !isStandalone();
     }
 
-    /* ----------------------------------------------------
-       INIT ONESIGNAL
-    ---------------------------------------------------- */
-
+    /* -----------------------------------------
+       ONE SIGNAL INIT (NO SOFT-DISABLE)
+       - Always show "Enable Notifications" button
+       - If already subscribed → alert & log
+       - If not subscribed → show slidedown
+    ----------------------------------------- */
     window.OneSignalDeferred = window.OneSignalDeferred || [];
 
-    OneSignalDeferred.push(async function(OneSignal) {
-      await OneSignal.init({
-        appId: "64641a89-3619-4491-a25b-c0ab000bdfe0",
-        notifyButton: { enable: false },
-        serviceWorkerPath: "/onesignalsdkworker.js?v=3",
-        serviceWorkerUpdaterPath: "/onesignalsdkupdaterworker.js?v=3",
-        path: "/"
-      });
-    });
+    OneSignalDeferred.push(async function (OneSignal) {
+      logDebug("OneSignal init starting...");
 
-    /* ----------------------------------------------------
-       ENABLE NOTIFICATIONS (with "already subscribed" popup)
-    ---------------------------------------------------- */
+      try {
+        await OneSignal.init({
+          appId: "64641a89-3619-4491-a25b-c0ab000bdfe0",
+          notifyButton: { enable: false },
+          serviceWorkerPath: "/onesignalsdkworker.js?v=4",
+          path: "/"
+        });
+        logDebug("OneSignal.init() completed.");
+      } catch (err) {
+        logDebug("OneSignal.init() FAILED: " + err.message);
+        return;
+      }
 
-    function enableBigRedNotifications() {
-      window.OneSignalDeferred.push(async function (OneSignal) {
-        const isSubscribed = await OneSignal.User.PushSubscription.isSubscribed();
+      // After init, check subscription
+      try {
+        const supported = await OneSignal.User.PushSubscription.isPushSupported();
+        logDebug("Push supported: " + supported);
 
-        if (isSubscribed) {
-          alert("You're already subscribed! Big Red alerts are active on this device.");
+        if (!supported) {
+          const statusEl = document.getElementById("notifyStatus");
+          if (statusEl) statusEl.textContent = "Status: Not supported on this device.";
           return;
         }
 
-        OneSignal.showSlidedownPrompt();
+        const isSubscribed = await OneSignal.User.PushSubscription.isSubscribed();
+        logDebug("Initial isSubscribed: " + isSubscribed);
+
+        const statusEl = document.getElementById("notifyStatus");
+        if (statusEl) {
+          statusEl.textContent = isSubscribed
+            ? "Status: Notifications enabled on this device."
+            : "Status: Notifications not yet enabled.";
+        }
+
+        const tipEl = document.getElementById("iosTip");
+        if (tipEl) {
+          tipEl.style.display = isIPhoneSafari() && !isSubscribed ? "block" : "none";
+        }
+
+        // Observe subscription changes
+        OneSignal.User.PushSubscription.addObserver(async (state) => {
+          logDebug("Subscription observer fired. isSubscribed=" + state.to.isSubscribed);
+          const statusEl2 = document.getElementById("notifyStatus");
+          if (statusEl2) {
+            statusEl2.textContent = state.to.isSubscribed
+              ? "Status: Notifications enabled on this device."
+              : "Status: Notifications not yet enabled.";
+          }
+        });
+
+      } catch (err) {
+        logDebug("Error after init (status check): " + err.message);
+      }
+    });
+
+    // Called when button is tapped
+    function handleNotificationButton() {
+      logDebug("Notification button clicked.");
+      window.OneSignalDeferred.push(async function (OneSignal) {
+        try {
+          const supported = await OneSignal.User.PushSubscription.isPushSupported();
+          logDebug("handleClick → isPushSupported: " + supported);
+          if (!supported) {
+            alert("Notifications are not supported on this device/browser.");
+            return;
+          }
+
+          const isSubscribed = await OneSignal.User.PushSubscription.isSubscribed();
+          logDebug("handleClick → isSubscribed: " + isSubscribed);
+
+          if (isSubscribed) {
+            alert("Notifications are already enabled on this device.");
+            const statusEl = document.getElementById("notifyStatus");
+            if (statusEl) {
+              statusEl.textContent = "Status: Notifications enabled on this device.";
+            }
+          } else {
+            logDebug("Showing OneSignal slidedown prompt...");
+            OneSignal.showSlidedownPrompt();
+          }
+        } catch (err) {
+          logDebug("handleNotificationButton error: " + err.message);
+        }
       });
+    }
+
+    // Clear debug console button
+    function clearDebugConsole() {
+      const box = document.getElementById("debug-body");
+      if (box) box.textContent = "";
     }
   </script>
 
@@ -99,11 +232,10 @@
     <a href="tel:14053784024" class="btn secondary">📞 Call Big Red</a>
   </div>
 
-  <!-- 🔔 Notification Controls -->
+  <!-- 🔔 Notification Controls (simple) -->
   <div style="text-align:center; margin-top:18px;">
 
-    <!-- Enable Button -->
-    <button id="notifyEnableBtn" onclick="enableBigRedNotifications()" style="
+    <button id="notifyEnableBtn" onclick="handleNotificationButton()" style="
       background:#b30000;
       color:white;
       border:none;
@@ -114,19 +246,16 @@
       cursor:pointer;
       box-shadow:0 3px 6px rgba(0,0,0,0.4);
     ">
-      🔔 Enable Notifications
+      🔔 Enable / Manage Notifications
     </button>
 
-    <!-- Description -->
-    <p style="font-size:0.8em; color:#aaa; margin-top:6px;">
-      Get alerts when Big Red is LIVE, weekend rundowns, airport alerts, and more.
+    <p id="notifyStatus" style="font-size:0.8em; color:#aaa; margin-top:6px;">
+      Status: Checking notification status…
     </p>
 
-    <!-- iOS Tip -->
-    <p id="iosTip" style="font-size:0.8em; color:#ffcc66; margin-top:6px;">
+    <p id="iosTip" style="font-size:0.8em; color:#ffcc66; margin-top:6px; display:none;">
       👉 On iPhone: Tap the Share icon → Add to Home Screen → Then return to enable alerts.
     </p>
-
   </div>
 
   <!-- 🧭 “Where To?” -->
@@ -242,7 +371,7 @@
   <style>
     #refreshButton {
       position: fixed;
-      bottom: 20px;
+      bottom: 150px; /* pushed up so it doesn't sit under debug console */
       right: 20px;
       background: #b30000;
       color:#fff;
@@ -264,6 +393,15 @@
     }
     #refreshButton:hover { background:#cc0000; }
   </style>
+
+  <!-- 🔍 Debug console markup -->
+  <div id="debug-console">
+    <div id="debug-header">
+      <span>Debug Console — Big Red Connect</span>
+      <button type="button" onclick="clearDebugConsole()">Clear</button>
+    </div>
+    <div id="debug-body">[Debug console ready…]</div>
+  </div>
 
 </body>
 </html>
