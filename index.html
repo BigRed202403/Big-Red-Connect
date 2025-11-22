@@ -55,9 +55,10 @@
     function renderStateEnabled() {
       document.getElementById("notifyEnableBtn").style.display = "none";
       document.getElementById("notifyDisableBtn").style.display = "inline-block";
-      document.getElementById("notifyBadge").textContent = "✔ Notifications Enabled";
-      document.getElementById("notifyBadge").style.background = "#0f8c0f";
-      document.getElementById("notifyBadge").style.display = "inline-block";
+      const badge = document.getElementById("notifyBadge");
+      badge.textContent = "✔ Notifications Enabled";
+      badge.style.background = "#0f8c0f";
+      badge.style.display = "inline-block";
       document.getElementById("notifyMsg").style.display = "none";
       document.getElementById("iosTip").style.display = "none";
     }
@@ -65,17 +66,12 @@
     function renderStateDisabled() {
       document.getElementById("notifyEnableBtn").style.display = "inline-block";
       document.getElementById("notifyDisableBtn").style.display = "none";
-      document.getElementById("notifyBadge").textContent = "⚠ Notifications Disabled";
-      document.getElementById("notifyBadge").style.background = "#b30000";
-      document.getElementById("notifyBadge").style.display = "inline-block";
-
+      const badge = document.getElementById("notifyBadge");
+      badge.textContent = "⚠ Notifications Disabled";
+      badge.style.background = "#b30000";
+      badge.style.display = "inline-block";
       document.getElementById("notifyMsg").style.display = "block";
-
-      if (isIPhoneSafari()) {
-        document.getElementById("iosTip").style.display = "block";
-      } else {
-        document.getElementById("iosTip").style.display = "none";
-      }
+      document.getElementById("iosTip").style.display = isIPhoneSafari() ? "block" : "none";
     }
 
     function renderStateNotSubscribed() {
@@ -126,14 +122,12 @@
           return;
         }
 
-        // User already subscribed → just enable soft flag
         setSoftDisable(false);
         renderStateEnabled();
       });
     }
 
     function disableNotifications() {
-      // SOFT disable → do NOT unsubscribe from OneSignal
       setSoftDisable(true);
       renderStateDisabled();
     }
@@ -167,7 +161,7 @@
   <!-- 🔔 Notification Controls -->
   <div style="text-align:center; margin-top:18px;">
 
-    <!-- State Badge -->
+    <!-- Status Badge -->
     <div id="notifyBadge" style="
       display:none;
       background:#444;
@@ -225,16 +219,19 @@
 
   </div>
 
-  <!-- The rest of your page… (unchanged) -->
   <!-- 🧭 “Where To?” -->
   <div class="info-section" style="text-align:center; margin-top:20px;">
     <h2 style="margin-bottom:10px;">Plan Your Connection</h2>
+
     <form id="quickDestination" onsubmit="goToFare(event)" style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
       <input id="quickWhere" type="text" placeholder="Where to?" required 
              style="flex:1;min-width:220px;max-width:420px;padding:12px;border-radius:10px;border:1px solid #333;background:#111;color:#fff;">
       <button type="submit" class="btn primary">➡️ Next</button>
     </form>
-    <p style="font-size:0.9em;color:#888;margin-top:6px;">Tip: Start typing a place, business, or address — suggestions will appear.</p>
+
+    <p style="font-size:0.9em;color:#888;margin-top:6px;">
+      Tip: Start typing a place, business, or address — suggestions will appear.
+    </p>
   </div>
 
   <!-- 🧱 Navigation Tiles -->
