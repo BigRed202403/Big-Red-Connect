@@ -29,50 +29,35 @@
   <script>
     window.OneSignalDeferred = window.OneSignalDeferred || [];
 
-    // Utility to detect standalone PWA mode
+    /* --- Display helpers --- */
     function isStandalone() {
       return window.matchMedia('(display-mode: standalone)').matches ||
              window.navigator.standalone === true;
     }
-
-    // Utility to detect iPhone Safari
     function isIPhoneSafari() {
-      return /iPhone/i.test(navigator.userAgent) &&
-             !isStandalone();
+      return /iPhone/i.test(navigator.userAgent) && !isStandalone();
     }
 
-    // Render UI states
     function showSubscribedState() {
-      const btn = document.getElementById("notifyBtn");
-      const msg = document.getElementById("notifyMsg");
-      const badge = document.getElementById("notifyBadge");
-      const tip = document.getElementById("iosTip");
-
-      if (btn) btn.style.display = "none";
-      if (msg) msg.style.display = "none";
-      if (tip) tip.style.display = "none";
-
-      if (badge) {
-        badge.style.display = "inline-block";
-      }
+      document.getElementById("notifyBtn").style.display = "none";
+      document.getElementById("notifyMsg").style.display = "none";
+      document.getElementById("iosTip").style.display = "none";
+      document.getElementById("notifyBadge").style.display = "inline-block";
     }
 
     function showUnsubscribedState() {
-      const btn = document.getElementById("notifyBtn");
-      const msg = document.getElementById("notifyMsg");
-      const badge = document.getElementById("notifyBadge");
-      const tip = document.getElementById("iosTip");
+      document.getElementById("notifyBadge").style.display = "none";
+      document.getElementById("notifyBtn").style.display = "inline-block";
+      document.getElementById("notifyMsg").style.display = "block";
 
-      if (badge) badge.style.display = "none";
-      if (btn) btn.style.display = "inline-block";
-      if (msg) msg.style.display = "block";
-
-      if (tip) {
-        tip.style.display = isIPhoneSafari() ? "block" : "none";
+      if (isIPhoneSafari()) {
+        document.getElementById("iosTip").style.display = "block";
+      } else {
+        document.getElementById("iosTip").style.display = "none";
       }
     }
 
-    // INIT OneSignal
+    /* --- OneSignal Initialization --- */
     OneSignalDeferred.push(async function (OneSignal) {
       await OneSignal.init({
         appId: "64641a89-3619-4491-a25b-c0ab000bdfe0",
@@ -80,27 +65,27 @@
         serviceWorkerPath: "/OneSignalSDKWorker.js"
       });
 
-      // Give OneSignal a moment if needed
+      // Wait a moment for OneSignal to fully initialize
       setTimeout(async () => {
-
-        const isSubscribed = await OneSignal.User.PushSubscription.isSubscribed();
-
-        if (isSubscribed) {
-          showSubscribedState();
-        } else {
-          showUnsubscribedState();
-        }
-
-      }, 300);
+        const subId = await OneSignal.User.PushSubscription.getSubscriptionId();
+        if (subId) showSubscribedState();
+        else showUnsubscribedState();
+      }, 400);
     });
 
-    // Manual subscribe trigger
+    /* --- Manual Subscribe Trigger --- */
     function subscribeToBigRed() {
       window.OneSignalDeferred.push(async function (OneSignal) {
-        const isSubscribed = await OneSignal.User.PushSubscription.isSubscribed();
+        const already = await OneSignal.User.PushSubscription.getSubscriptionId();
 
-        if (!isSubscribed) {
-          OneSignal.showSlidedownPrompt();
+        if (!already) {
+          await OneSignal.User.PushSubscription.optIn();
+
+          // Re-check after subscription completes
+          setTimeout(async () => {
+            const newId = await OneSignal.User.PushSubscription.getSubscriptionId();
+            if (newId) showSubscribedState();
+          }, 1200);
         }
       });
     }
