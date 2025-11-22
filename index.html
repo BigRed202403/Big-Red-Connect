@@ -27,27 +27,48 @@
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 
   <script>
-    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    /* -----------------------------------------
+       UTILITIES
+    ----------------------------------------- */
 
-    /* --- Display helpers --- */
     function isStandalone() {
       return window.matchMedia('(display-mode: standalone)').matches ||
              window.navigator.standalone === true;
     }
+
     function isIPhoneSafari() {
       return /iPhone/i.test(navigator.userAgent) && !isStandalone();
     }
 
-    function showSubscribedState() {
-      document.getElementById("notifyBtn").style.display = "none";
-      document.getElementById("notifyMsg").style.display = "none";
-      document.getElementById("iosTip").style.display = "none";
-      document.getElementById("notifyBadge").style.display = "inline-block";
+    function getSoftDisable() {
+      return localStorage.getItem("brc_push_disabled") === "1";
     }
 
-    function showUnsubscribedState() {
-      document.getElementById("notifyBadge").style.display = "none";
-      document.getElementById("notifyBtn").style.display = "inline-block";
+    function setSoftDisable(v) {
+      localStorage.setItem("brc_push_disabled", v ? "1" : "0");
+    }
+
+    /* -----------------------------------------
+       UI STATES
+    ----------------------------------------- */
+
+    function renderStateEnabled() {
+      document.getElementById("notifyEnableBtn").style.display = "none";
+      document.getElementById("notifyDisableBtn").style.display = "inline-block";
+      document.getElementById("notifyBadge").textContent = "✔ Notifications Enabled";
+      document.getElementById("notifyBadge").style.background = "#0f8c0f";
+      document.getElementById("notifyBadge").style.display = "inline-block";
+      document.getElementById("notifyMsg").style.display = "none";
+      document.getElementById("iosTip").style.display = "none";
+    }
+
+    function renderStateDisabled() {
+      document.getElementById("notifyEnableBtn").style.display = "inline-block";
+      document.getElementById("notifyDisableBtn").style.display = "none";
+      document.getElementById("notifyBadge").textContent = "⚠ Notifications Disabled";
+      document.getElementById("notifyBadge").style.background = "#b30000";
+      document.getElementById("notifyBadge").style.display = "inline-block";
+
       document.getElementById("notifyMsg").style.display = "block";
 
       if (isIPhoneSafari()) {
@@ -57,7 +78,20 @@
       }
     }
 
-    /* --- OneSignal Initialization --- */
+    function renderStateNotSubscribed() {
+      document.getElementById("notifyEnableBtn").style.display = "inline-block";
+      document.getElementById("notifyDisableBtn").style.display = "none";
+      document.getElementById("notifyBadge").style.display = "none";
+      document.getElementById("notifyMsg").style.display = "block";
+      document.getElementById("iosTip").style.display = isIPhoneSafari() ? "block" : "none";
+    }
+
+    /* -----------------------------------------
+       INIT OneSignal
+    ----------------------------------------- */
+
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+
     OneSignalDeferred.push(async function (OneSignal) {
       await OneSignal.init({
         appId: "64641a89-3619-4491-a25b-c0ab000bdfe0",
@@ -65,35 +99,50 @@
         serviceWorkerPath: "/OneSignalSDKWorker.js"
       });
 
-      // Wait a moment for OneSignal to fully initialize
       setTimeout(async () => {
-        const subId = await OneSignal.User.PushSubscription.getSubscriptionId();
-        if (subId) showSubscribedState();
-        else showUnsubscribedState();
+        const osSubscribed = await OneSignal.User.PushSubscription.isSubscribed();
+        const softDisabled = getSoftDisable();
+
+        if (!osSubscribed) {
+          renderStateNotSubscribed();
+        } else if (softDisabled) {
+          renderStateDisabled();
+        } else {
+          renderStateEnabled();
+        }
       }, 400);
     });
 
-    /* --- Manual Subscribe Trigger --- */
-    function subscribeToBigRed() {
+    /* -----------------------------------------
+       ACTION BUTTONS
+    ----------------------------------------- */
+
+    async function enableNotifications() {
       window.OneSignalDeferred.push(async function (OneSignal) {
-        const already = await OneSignal.User.PushSubscription.getSubscriptionId();
+        const osSubscribed = await OneSignal.User.PushSubscription.isSubscribed();
 
-        if (!already) {
-          await OneSignal.User.PushSubscription.optIn();
-
-          // Re-check after subscription completes
-          setTimeout(async () => {
-            const newId = await OneSignal.User.PushSubscription.getSubscriptionId();
-            if (newId) showSubscribedState();
-          }, 1200);
+        if (!osSubscribed) {
+          OneSignal.showSlidedownPrompt();
+          return;
         }
+
+        // User already subscribed → just enable soft flag
+        setSoftDisable(false);
+        renderStateEnabled();
       });
+    }
+
+    function disableNotifications() {
+      // SOFT disable → do NOT unsubscribe from OneSignal
+      setSoftDisable(true);
+      renderStateDisabled();
     }
   </script>
 
 </head>
 
 <body>
+
   <!-- 🌆 Hero -->
   <div class="hero"></div>
 
@@ -115,38 +164,53 @@
     <a href="tel:14053784024" class="btn secondary">📞 Call Big Red</a>
   </div>
 
-  <!-- 🔔 Notifications UI -->
+  <!-- 🔔 Notification Controls -->
   <div style="text-align:center; margin-top:18px;">
 
-    <!-- Subscribed Badge -->
+    <!-- State Badge -->
     <div id="notifyBadge" style="
       display:none;
-      background:#0f8c0f;
+      background:#444;
       color:white;
       padding:10px 18px;
       border-radius:8px;
       font-size:1em;
       font-weight:700;
+      margin-bottom:10px;
       box-shadow:0 3px 6px rgba(0,0,0,0.4);
-      margin-bottom:10px;">
-      ✔ Notifications Enabled
-    </div>
+    "></div>
 
     <!-- Enable Button -->
-    <button id="notifyBtn" onclick="subscribeToBigRed()"
-      style="
-        background:#b30000;
-        color:white;
-        border:none;
-        padding:12px 22px;
-        font-size:1em;
-        font-weight:700;
-        border-radius:8px;
-        cursor:pointer;
-        display:none;
-        box-shadow:0 3px 6px rgba(0,0,0,0.4);
-      ">
-      🔔 Enable Big Red Notifications
+    <button id="notifyEnableBtn" onclick="enableNotifications()" style="
+      display:none;
+      background:#b30000;
+      color:white;
+      border:none;
+      padding:12px 22px;
+      font-size:1em;
+      font-weight:700;
+      border-radius:8px;
+      cursor:pointer;
+      box-shadow:0 3px 6px rgba(0,0,0,0.4);
+    ">
+      🔔 Enable Notifications
+    </button>
+
+    <!-- Disable Button -->
+    <button id="notifyDisableBtn" onclick="disableNotifications()" style="
+      display:none;
+      background:#555;
+      color:white;
+      border:none;
+      padding:12px 22px;
+      font-size:1em;
+      font-weight:700;
+      border-radius:8px;
+      cursor:pointer;
+      box-shadow:0 3px 6px rgba(0,0,0,0.4);
+      margin-top:8px;
+    ">
+      🔕 Disable Notifications
     </button>
 
     <!-- Description -->
@@ -154,25 +218,23 @@
       Get alerts when Big Red is LIVE, weekend rundowns, airport alerts, and more.
     </p>
 
-    <!-- iPhone Tip -->
+    <!-- iOS Tip -->
     <p id="iosTip" style="font-size:0.8em; color:#ffcc66; margin-top:6px; display:none;">
       👉 On iPhone: Tap the Share icon → Add to Home Screen → Then return to enable alerts.
     </p>
+
   </div>
 
+  <!-- The rest of your page… (unchanged) -->
   <!-- 🧭 “Where To?” -->
   <div class="info-section" style="text-align:center; margin-top:20px;">
     <h2 style="margin-bottom:10px;">Plan Your Connection</h2>
-
     <form id="quickDestination" onsubmit="goToFare(event)" style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
       <input id="quickWhere" type="text" placeholder="Where to?" required 
              style="flex:1;min-width:220px;max-width:420px;padding:12px;border-radius:10px;border:1px solid #333;background:#111;color:#fff;">
       <button type="submit" class="btn primary">➡️ Next</button>
     </form>
-
-    <p style="font-size:0.9em;color:#888;margin-top:6px;">
-      Tip: Start typing a place, business, or address — suggestions will appear.
-    </p>
+    <p style="font-size:0.9em;color:#888;margin-top:6px;">Tip: Start typing a place, business, or address — suggestions will appear.</p>
   </div>
 
   <!-- 🧱 Navigation Tiles -->
@@ -225,11 +287,6 @@
     <p>Questions or ride connection requests?<br>Text <strong>“RED”</strong> to (405) 378-4024.</p>
     <p><a href="faq.html">FAQ & Policies</a> | <a href="reviews.html">Leave a Review</a></p>
     <p>&copy; 2025 Big Red Connect</p>
-    <p style="font-size:0.8em;color:#777;margin-top:10px;line-height:1.4;">
-      Vehicle imagery features actual Big Red Connect fleet vehicles.<br>
-      Some backgrounds created with AI-assisted design tools for illustrative purposes only.<br>
-      Brand names (Chevrolet® and GMC®) are property of their respective owners and used descriptively.
-    </p>
   </footer>
 
   <!-- Google Places -->
@@ -277,33 +334,30 @@
     });
   </script>
 
-  <!-- Styling for Refresh Button -->
   <style>
     #refreshButton {
       position: fixed;
       bottom: 20px;
       right: 20px;
       background: #b30000;
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      padding: 10px 16px;
-      font-size: 0.95em;
-      font-weight: 700;
-      cursor: pointer;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.4);
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.5s ease;
-      z-index: 10;
+      color:#fff;
+      border:none;
+      border-radius:6px;
+      padding:10px 16px;
+      font-size:0.95em;
+      font-weight:700;
+      cursor:pointer;
+      box-shadow:0 2px 6px rgba(0,0,0,0.4);
+      opacity:0;
+      pointer-events:none;
+      transition:opacity .5s ease;
+      z-index:10;
     }
     #refreshButton.visible {
-      opacity: 1;
-      pointer-events: auto;
+      opacity:1;
+      pointer-events:auto;
     }
-    #refreshButton:hover {
-      background: #cc0000;
-    }
+    #refreshButton:hover { background:#cc0000; }
   </style>
 
 </body>
