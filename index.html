@@ -23,68 +23,53 @@
   <!-- 🎨 Styles -->
   <link rel="stylesheet" href="style.css" />
 
-  <!-- 🔔 OneSignal SDK (v16 loader, v17 engine) -->
+  <!-- 🔔 OneSignal Web Push SDK -->
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 
   <script>
-    /* ---------------------------------------------------------
-       OneSignal INIT — fully v17-safe
-    --------------------------------------------------------- */
-    window.OneSignalDeferred = window.OneSignalDeferred || [];
-    OneSignalDeferred.push(async function(OneSignal) {
-      try {
-        await OneSignal.init({
-          appId: "64641a89-3619-4491-a25b-c0ab000bdfe0",
-          serviceWorkerPath: "/onesignalsdkworker.js?v=3",
-          path: "/",
-          notifyButton: { enable: false }
-        });
+    // ----- Utilities -----
+    function isIPhoneSafari() {
+      return /iPhone/i.test(navigator.userAgent) &&
+             !window.matchMedia('(display-mode: standalone)').matches &&
+             !navigator.standalone;
+    }
 
-        // Optional: basic logging for us
-        const dbg = document.getElementById("notifyDebug");
-        if (dbg) dbg.textContent = "OneSignal initialized.";
-      } 
-      catch (e) {
-        const dbg = document.getElementById("notifyDebug");
-        if (dbg) dbg.textContent = "Init error: " + e.message;
-      }
+    // ----- Initialize OneSignal -----
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    OneSignalDeferred.push(async function (OneSignal) {
+      await OneSignal.init({
+        appId: "64641a89-3619-4491-a25b-c0ab000bdfe0",
+        notifyButton: { enable: false },
+        serviceWorkerPath: "/onesignalsdkworker.js?v=3",
+        path: "/"
+      });
     });
 
-    /* ---------------------------------------------------------
-       CLICK HANDLER — v17-safe push logic
-    --------------------------------------------------------- */
-    function handleNotifyClick() {
-      window.OneSignalDeferred.push(async function(OneSignal) {
+    // ----- Handle Enable Button -----
+    function handleEnableAlerts() {
+      window.OneSignalDeferred.push(async function (OneSignal) {
 
-        const dbg = document.getElementById("notifyDebug");
-
-        try {
-          // 1) Check support first
-          const supported = OneSignal.Notifications.isPushSupported();
-          if (!supported) {
-            alert("This browser does not support push notifications.");
-            if (dbg) dbg.textContent = "Push not supported.";
-            return;
-          }
-
-          // 2) Check permission status
-          const permission = OneSignal.Notifications.permission;
-
-          if (permission === true) {
-            // Already subscribed
-            alert("You're already subscribed to Big Red Alerts on this device!");
-            if (dbg) dbg.textContent = "Already subscribed.";
-            return;
-          }
-
-          // 3) Not subscribed → show slidedown prompt
-          if (dbg) dbg.textContent = "Prompting user…";
-          await OneSignal.Slidedown.promptPush();
-          if (dbg) dbg.textContent = "Slidedown shown.";
-
-        } catch (err) {
-          if (dbg) dbg.textContent = "Error: " + err.message;
+        const supported = OneSignal.Notifications.isPushSupported();
+        if (!supported) {
+          alert("This browser does not support notifications.");
+          return;
         }
+
+        const permission = OneSignal.Notifications.permission;
+
+        // Already fully allowed — subscribed or not
+        if (permission === "granted" || permission === true) {
+          alert("You're already set to receive Big Red Alerts on this device!");
+          return;
+        }
+
+        // If we're on iPhone Safari and OneSignal won't show anything → helper tip
+        if (isIPhoneSafari()) {
+          document.getElementById("iosAlertTip").style.display = "block";
+        }
+
+        // Request the OneSignal slide prompt
+        await OneSignal.Slidedown.promptPush();
       });
     }
   </script>
@@ -114,10 +99,10 @@
     <a href="tel:14053784024" class="btn secondary">📞 Call Big Red</a>
   </div>
 
-  <!-- 🔔 NOTIFICATION SECTION -->
+  <!-- 🔔 Notifications -->
   <div style="text-align:center; margin-top:18px;">
 
-    <button id="notifyBtn" onclick="handleNotifyClick()" style="
+    <button onclick="handleEnableAlerts()" style="
       background:#b30000;
       color:white;
       border:none;
@@ -132,17 +117,24 @@
     </button>
 
     <p style="font-size:0.8em; color:#aaa; margin-top:6px;">
-      Get live updates when Big Red is driving and available in your area.
+      Get live updates when Big Red is on-duty and available.
     </p>
 
-    <!-- Hidden debug line -->
-    <p id="notifyDebug" style="font-size:0.7em; color:#666; margin-top:4px;"></p>
+    <!-- iPhone helper tip ONLY when needed -->
+    <p id="iosAlertTip" style="
+      font-size:0.8em;
+      color:#ffcc66;
+      margin-top:10px;
+      display:none;
+    ">
+      👉 <strong>iPhone users:</strong> If nothing pops up, tap the Share icon → <em>Add to Home Screen</em> → then reopen the app and tap “Enable Alerts” again.
+    </p>
+
   </div>
 
   <!-- 🧭 “Where To?” -->
   <div class="info-section" style="text-align:center; margin-top:20px;">
     <h2 style="margin-bottom:10px;">Plan Your Connection</h2>
-
     <form id="quickDestination" onsubmit="goToFare(event)" style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
       <input id="quickWhere" type="text" placeholder="Where to?" required 
              style="flex:1;min-width:220px;max-width:420px;padding:12px;border-radius:10px;border:1px solid #333;background:#111;color:#fff;">
@@ -209,21 +201,19 @@
   <!-- Google Places -->
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places"></script>
   <script>
-    let whereAuto;
     function initQuickSearch() {
-      whereAuto = new google.maps.places.Autocomplete(
+      new google.maps.places.Autocomplete(
         document.getElementById("quickWhere"),
         { fields: ["formatted_address", "name"] }
       );
     }
+    window.onload = initQuickSearch;
+
     function goToFare(e) {
       e.preventDefault();
       const dest = document.getElementById("quickWhere").value.trim();
-      if (dest) {
-        window.location.href = "farecalculator.html?dropoff=" + encodeURIComponent(dest);
-      }
+      if (dest) window.location.href = "farecalculator.html?dropoff=" + encodeURIComponent(dest);
     }
-    window.onload = initQuickSearch;
   </script>
 
   <!-- Status Pill -->
