@@ -92,9 +92,8 @@
       await OneSignal.init({
         appId: "64641a89-3619-4491-a25b-c0ab000bdfe0",
         notifyButton: { enable: false },
-        serviceWorkerPath: "/OneSignalSDKWorker.js",
-        serviceWorkerParam: { scope: "/" },   // ⭐ REQUIRED FIX
-        path: "/"                             // ⭐ REQUIRED FIX
+        serviceWorkerPath: "/onesignalsdkworker.js?v=3",
+        path: "/",
       });
 
       setTimeout(async () => {
@@ -224,7 +223,6 @@
   <!-- 🧭 “Where To?” -->
   <div class="info-section" style="text-align:center; margin-top:20px;">
     <h2 style="margin-bottom:10px;">Plan Your Connection</h2>
-
     <form id="quickDestination" onsubmit="goToFare(event)" style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
       <input id="quickWhere" type="text" placeholder="Where to?" required 
              style="flex:1;min-width:220px;max-width:420px;padding:12px;border-radius:10px;border:1px solid #333;background:#111;color:#fff;">
