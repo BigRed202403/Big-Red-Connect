@@ -26,6 +26,7 @@
   <!-- 🔔 OneSignal Web Push SDK -->
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 
+  <!-- 🔧 FIXED NOTIFICATION LOGIC -->
   <script>
     /* -----------------------------------------
        UTILITIES
@@ -55,10 +56,12 @@
     function renderStateEnabled() {
       document.getElementById("notifyEnableBtn").style.display = "none";
       document.getElementById("notifyDisableBtn").style.display = "inline-block";
+
       const badge = document.getElementById("notifyBadge");
       badge.textContent = "✔ Notifications Enabled";
       badge.style.background = "#0f8c0f";
       badge.style.display = "inline-block";
+
       document.getElementById("notifyMsg").style.display = "none";
       document.getElementById("iosTip").style.display = "none";
     }
@@ -66,10 +69,12 @@
     function renderStateDisabled() {
       document.getElementById("notifyEnableBtn").style.display = "inline-block";
       document.getElementById("notifyDisableBtn").style.display = "none";
+
       const badge = document.getElementById("notifyBadge");
       badge.textContent = "⚠ Notifications Disabled";
       badge.style.background = "#b30000";
       badge.style.display = "inline-block";
+
       document.getElementById("notifyMsg").style.display = "block";
       document.getElementById("iosTip").style.display = isIPhoneSafari() ? "block" : "none";
     }
@@ -92,12 +97,22 @@
       await OneSignal.init({
         appId: "64641a89-3619-4491-a25b-c0ab000bdfe0",
         notifyButton: { enable: false },
-        serviceWorkerPath: "/OneSignalSDKWorker.js"
+        serviceWorkerPath: "/OneSignalSDKWorker.js",
+        serviceWorkerUpdaterPath: "/OneSignalSDKUpdaterWorker.js"
       });
 
       setTimeout(async () => {
-        const osSubscribed = await OneSignal.User.PushSubscription.isSubscribed();
+        let osSubscribed = await OneSignal.User.PushSubscription.isSubscribed();
         const softDisabled = getSoftDisable();
+
+        /* -----------------------------------------
+           iOS FIX: Safari often reports false 
+           even when subscribed. We detect actual
+           permission instead.
+        ----------------------------------------- */
+        if (Notification.permission === "granted" && osSubscribed === false) {
+          osSubscribed = true;
+        }
 
         if (!osSubscribed) {
           renderStateNotSubscribed();
@@ -106,7 +121,7 @@
         } else {
           renderStateEnabled();
         }
-      }, 400);
+      }, 500);
     });
 
     /* -----------------------------------------
