@@ -15,13 +15,9 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="theme-color" content="#000000">
 
-  <!-- No cache -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-
-  <!-- OneSignal SDK -->
-  <script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async></script>
 
   <style>
     :root {
@@ -33,9 +29,7 @@
       --accent: #ffcc00;
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
@@ -47,12 +41,8 @@
       flex-direction: column;
     }
 
-    a {
-      color: #fff;
-      text-decoration: none;
-    }
+    a { color: #fff; text-decoration: none; }
 
-    /* Header */
     header {
       display: flex;
       align-items: center;
@@ -138,14 +128,6 @@
       color: var(--accent);
     }
 
-    .pill-push {
-      cursor: pointer;
-      font-size: 0.75rem;
-    }
-
-    .pill-push.ok { color: #8f8; border-color: #3a3; }
-    .pill-push.off { color: #f8c; border-color: #a36; }
-
     .hdr-actions {
       display: flex;
       gap: 6px;
@@ -167,20 +149,15 @@
       background: var(--red);
       color: #fff;
     }
-    .btn-primary:active {
-      opacity: 0.85;
-    }
+    .btn-primary:active { opacity: 0.85; }
 
     .btn-ghost {
       background: transparent;
       color: #fff;
       border: 1px solid #444;
     }
-    .btn-ghost:active {
-      background: #111;
-    }
+    .btn-ghost:active { background: #111; }
 
-    /* Main grid */
     main {
       flex: 1;
       padding: 10px 10px 16px;
@@ -199,9 +176,7 @@
       flex-wrap: wrap;
     }
 
-    .blurb strong {
-      color: #fff;
-    }
+    .blurb strong { color: #fff; }
 
     .grid {
       display: grid;
@@ -262,7 +237,6 @@
       padding: 20px 8px;
     }
 
-    /* Booking cards */
     .card {
       background: #111;
       border-radius: 9px;
@@ -302,13 +276,9 @@
       color: var(--accent);
     }
 
-    .badge-status {
-      border-color: #999;
-    }
+    .badge-status { border-color: #999; }
 
-    .badge-est {
-      border-color: #666;
-    }
+    .badge-est { border-color: #666; }
 
     .badge-time {
       border-color: #555;
@@ -391,9 +361,7 @@
       color: #ffd6a3;
     }
 
-    .chip-btn:active {
-      opacity: 0.85;
-    }
+    .chip-btn:active { opacity: 0.85; }
 
     .card-meta {
       font-size: 0.7rem;
@@ -401,7 +369,6 @@
       text-align: right;
     }
 
-    /* Toast / inline status */
     #toast {
       position: fixed;
       bottom: 16px;
@@ -433,6 +400,9 @@
       color: #777;
     }
   </style>
+
+  <!-- OneSignal SDK -->
+  <script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async></script>
 </head>
 <body>
 
@@ -448,6 +418,9 @@
   </div>
   <div class="hdr-right">
     <div class="hdr-actions">
+      <button class="btn btn-ghost" id="btnNotify">
+        🔔 Alerts
+      </button>
       <button class="btn btn-ghost" id="btnRefresh">
         🔄 Refresh
       </button>
@@ -455,12 +428,11 @@
         📋 View: <span id="scopeLabel">Active</span>
       </button>
     </div>
-    <div style="display:flex; gap:4px; margin-top:2px; flex-wrap:wrap; justify-content:flex-end;">
+    <div style="display:flex; gap:4px; margin-top:2px;">
       <div class="pill pill-sync" id="syncPill">Last sync: —</div>
       <div class="pill pill-scope" id="countPill">
         Total: <strong>0</strong>
       </div>
-      <div class="pill pill-push off" id="pushPill">Push: Off</div>
     </div>
   </div>
 </header>
@@ -468,7 +440,7 @@
 <main>
   <div class="blurb">
     <span>
-      <strong>New Requests</strong> → swipe decisions.<br/>
+      <strong>New Requests</strong> → quick decisions.<br/>
       <strong>Active Trips</strong> → where you are now.<br/>
       <strong>Completed</strong> → log & history.
     </span>
@@ -476,45 +448,30 @@
   </div>
 
   <div class="grid">
-    <!-- New Requests -->
     <section class="column" id="colNew">
       <div class="col-header">
-        <div class="col-title">
-          🆕 New Requests
-        </div>
-        <div class="col-count">
-          <span id="countNew">0</span>
-        </div>
+        <div class="col-title">🆕 New Requests</div>
+        <div class="col-count"><span id="countNew">0</span></div>
       </div>
       <div class="col-body" id="listNew">
         <div class="empty-text">Nothing pending right now.</div>
       </div>
     </section>
 
-    <!-- Active Trips -->
     <section class="column" id="colActive">
       <div class="col-header">
-        <div class="col-title">
-          🚦 Active Trips
-        </div>
-        <div class="col-count">
-          <span id="countActive">0</span>
-        </div>
+        <div class="col-title">🚦 Active Trips</div>
+        <div class="col-count"><span id="countActive">0</span></div>
       </div>
       <div class="col-body" id="listActive">
         <div class="empty-text">No active trips at the moment.</div>
       </div>
     </section>
 
-    <!-- Completed / History -->
     <section class="column" id="colDone">
       <div class="col-header">
-        <div class="col-title">
-          ✅ Completed / Log
-        </div>
-        <div class="col-count">
-          <span id="countDone">0</span>
-        </div>
+        <div class="col-title">✅ Completed / Log</div>
+        <div class="col-count"><span id="countDone">0</span></div>
       </div>
       <div class="col-body" id="listDone">
         <div class="empty-text">Completed & cancelled trips will land here.</div>
@@ -530,25 +487,21 @@
 <div id="toast"></div>
 
 <script>
-  // ===============================
-  //  CONFIG
-  // ===============================
   const API_BASE = "https://bigred-bookings.bigredtransportation.workers.dev";
-  const ONESIGNAL_APP_ID = "YOUR-ONESIGNAL-APP-ID-HERE"; // 🔁 same as myride/admin
+  const ONESIGNAL_APP_ID = "64641a89-3619-4491-a25b-c0ab000bdfe0";
 
-  let currentScope = "active"; // "active" | "upcoming" | "all"
+  let currentScope = "active";
   let pollingTimer = null;
   let lastDataSnapshot = [];
 
   const qs = (sel) => document.querySelector(sel);
-  const qsa = (sel) => Array.from(document.querySelectorAll(sel));
 
   const syncPill = qs("#syncPill");
   const countPill = qs("#countPill");
   const scopeLabel = qs("#scopeLabel");
   const btnScopeToggle = qs("#btnScopeToggle");
   const btnRefresh = qs("#btnRefresh");
-  const pushPill = qs("#pushPill");
+  const btnNotify = qs("#btnNotify");
 
   const listNew = qs("#listNew");
   const listActive = qs("#listActive");
@@ -559,9 +512,6 @@
 
   const toastEl = qs("#toast");
 
-  // ===============================
-  //  UTILITIES
-  // ===============================
   function showToast(msg, ms = 2200) {
     toastEl.textContent = msg;
     toastEl.classList.add("show");
@@ -620,7 +570,7 @@
     return ["COMPLETED","CANCELLED"].includes(s);
   }
 
-  function statusLabel(status) {
+  function statusLabelText(status) {
     const s = classifyStatus(status);
     switch (s) {
       case "REQUESTED":  return "Requested";
@@ -638,9 +588,6 @@
     return t === "RESERVATION" ? "Reservation" : "Instant";
   }
 
-  // ===============================
-  //  RENDER
-  // ===============================
   function renderBookings(bookings) {
     lastDataSnapshot = bookings.slice();
 
@@ -696,7 +643,7 @@
         <div>
           <strong>${typeLabel(b.type)}</strong>
           <div class="card-badge-row">
-            <span class="badge badge-status">${statusLabel(s)}</span>
+            <span class="badge badge-status">${statusLabelText(s)}</span>
             <span class="badge badge-est">Est: ${estVal}</span>
             ${isRes && hasEta ? `<span class="badge badge-time">⏰ ${fmtShortTime(b.scheduledFor)}</span>` : ""}
             ${isRes ? `<span class="badge badge-type">📅 Reservation</span>` : `<span class="badge badge-type">⚡ Instant</span>`}
@@ -733,6 +680,7 @@
         <div style="margin-top:4px;font-size:0.75rem;color:#bbb;">
           ${b.metrics?.miles != null ? `📏 ${b.metrics.miles} mi` : ""}
           ${b.metrics?.minutes != null ? ` • ⏱️ ${b.metrics.minutes} min` : ""}
+          ${b.rider?.partySize ? ` • 👥 ${b.rider.partySize}` : ""}
         </div>
       `;
       card.appendChild(main);
@@ -777,7 +725,6 @@
       footer.appendChild(meta);
 
       card.appendChild(footer);
-
       container.appendChild(card);
     }
   }
@@ -791,26 +738,12 @@
     return btn;
   }
 
-  // ===============================
-  //  API
-  // ===============================
   async function fetchBookings() {
     const url = `${API_BASE}/api/driver/bookings?scope=${encodeURIComponent(currentScope)}&t=${Date.now()}`;
-
     setSyncState("loading");
-
     try {
-      const res = await fetch(url, {
-        method: "GET",
-        headers: {
-          "Accept": "application/json"
-        }
-      });
-
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`);
-      }
-
+      const res = await fetch(url, { method: "GET", headers: { "Accept": "application/json" } });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       renderBookings(Array.isArray(data) ? data : []);
       setSyncState("ok");
@@ -823,20 +756,15 @@
 
   async function updateBookingStatus(id, newStatus) {
     if (!id || !newStatus) return;
-
     const url = `${API_BASE}/api/driver/bookings/${encodeURIComponent(id)}`;
     const body = { status: newStatus };
-
     setSyncState("loading");
     try {
       const res = await fetch(url, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body)
       });
-
       if (!res.ok) {
         const txt = await res.text();
         console.error("Update failed:", txt);
@@ -844,7 +772,6 @@
         setSyncState("err");
         return;
       }
-
       const updated = await res.json();
       const idx = lastDataSnapshot.findIndex(b => b.id === updated.id);
       if (idx !== -1) {
@@ -853,9 +780,8 @@
       } else {
         fetchBookings();
       }
-
       setSyncState("ok");
-      showToast(`Status → ${statusLabel(updated.status)}`);
+      showToast(`Status → ${statusLabelText(updated.status)}`);
     } catch (err) {
       console.error("Update error:", err);
       setSyncState("err");
@@ -868,7 +794,6 @@
       hour: "numeric",
       minute: "2-digit"
     });
-
     syncPill.classList.remove("ok", "err");
     if (state === "ok") {
       syncPill.classList.add("ok");
@@ -908,72 +833,86 @@
     pollingTimer = null;
   }
 
-  // ===============================
-  //  OneSignal — driver registration
-  // ===============================
-  window.OneSignal = window.OneSignal || [];
-  OneSignal.push(function() {
-    OneSignal.init({
-      appId: ONESIGNAL_APP_ID,
-      notifyButton: { enable: false },
-      allowLocalhostAsSecureOrigin: true
+  // OneSignal driver registration
+  function initOneSignalForDriver() {
+    window.OneSignal = window.OneSignal || [];
+    OneSignal.push(function() {
+      OneSignal.init({
+        appId: ONESIGNAL_APP_ID,
+        notifyButton: { enable: false },
+        allowLocalhostAsSecureOrigin: true
+      });
+
+      OneSignal.on('subscriptionChange', async function(isSubscribed) {
+        if (!isSubscribed) return;
+        try {
+          const playerId = await OneSignal.getUserId();
+          if (playerId) {
+            await fetch(`${API_BASE}/api/driver/push/register`, {
+              method: "POST",
+              headers: { "Content-Type":"application/json" },
+              body: JSON.stringify({ playerId })
+            });
+            showToast("Driver alerts enabled.");
+          }
+        } catch (e) {
+          console.error("driver push register error:", e);
+        }
+      });
+
+      OneSignal.isPushNotificationsEnabled(async function(enabled) {
+        if (enabled) {
+          try {
+            const playerId = await OneSignal.getUserId();
+            if (playerId) {
+              await fetch(`${API_BASE}/api/driver/push/register`, {
+                method: "POST",
+                headers: { "Content-Type":"application/json" },
+                body: JSON.stringify({ playerId })
+              });
+            }
+          } catch (e) {
+            console.error("driver push re-register error:", e);
+          }
+        }
+      });
     });
+  }
 
-    OneSignal.isPushNotificationsEnabled(function(enabled) {
-      if (enabled) {
-        pushPill.textContent = "Push: On";
-        pushPill.classList.remove("off");
-        pushPill.classList.add("ok");
-      } else {
-        pushPill.textContent = "Push: Off";
-        pushPill.classList.remove("ok");
-        pushPill.classList.add("off");
-      }
-    });
-
-    // Prompt once if disabled
-    OneSignal.isPushNotificationsEnabled(function(enabled) {
-      if (!enabled) {
-        OneSignal.showSlidedownPrompt();
-      }
-    });
-
-    // Tag as driver
-    OneSignal.sendTags({ role: "driver" });
-  });
-
-  // ===============================
-  //  EVENT WIRING
-  // ===============================
   document.addEventListener("DOMContentLoaded", () => {
     fetchBookings();
     startPolling();
+    initOneSignalForDriver();
 
-    btnScopeToggle.addEventListener("click", () => {
-      toggleScope();
-    });
+    btnScopeToggle.addEventListener("click", toggleScope);
 
     btnRefresh.addEventListener("click", () => {
       fetchBookings();
       showToast("Refreshing bookings…");
     });
 
+    btnNotify.addEventListener("click", () => {
+      if (window.OneSignal && OneSignal.showNativePrompt) {
+        OneSignal.showNativePrompt();
+      } else if (window.OneSignal && OneSignal.showSlidedownPrompt) {
+        OneSignal.showSlidedownPrompt();
+      } else {
+        alert("Your browser may not support push notifications here.");
+      }
+    });
+
     document.body.addEventListener("click", (e) => {
       const btn = e.target.closest(".chip-btn");
       if (!btn) return;
-
       const card = e.target.closest(".card");
       if (!card) return;
-
       const id = card.dataset.id;
       const statusTarget = btn.dataset.statusTarget;
       if (!id || !statusTarget) return;
-
       if (statusTarget === "CANCELLED") {
         const ok = confirm("Cancel this trip?");
         if (!ok) return;
       }
-
       updateBookingStatus(id, statusTarget);
     });
 
@@ -983,17 +922,6 @@
         fetchBookings();
         startPolling();
       }
-    });
-
-    // Allow tap on Push pill to re-open prompt if off
-    pushPill.addEventListener("click", () => {
-      OneSignal.isPushNotificationsEnabled(function(enabled) {
-        if (!enabled) {
-          OneSignal.showSlidedownPrompt();
-        } else {
-          showToast("Push notifications are already on.");
-        }
-      });
     });
   });
 </script>
