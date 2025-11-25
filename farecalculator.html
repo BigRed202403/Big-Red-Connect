@@ -162,7 +162,7 @@
     directionsRenderer.setMap(map);
 
     const acPickup = new google.maps.places.Autocomplete(document.getElementById("pickup"));
-    const acDrop   = new google.maps.places.Autocomplete(document.getElementElementById("dropoff"));
+    const acDrop   = new google.maps.places.Autocomplete(document.getElementById("dropoff"));
 
     acPickup.addListener("place_changed", async () => {
       const p = acPickup.getPlace(); if (!p.geometry) return;
