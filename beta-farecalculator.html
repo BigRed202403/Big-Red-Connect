@@ -99,9 +99,7 @@
 
     <button class="btn primary" id="calcBtn" style="display:block;margin:20px auto;">💲 Calculate Fare</button>
 
-    <div id="text-red-wrapper" style="margin-top:10px;text-align:center;">
-      <a href="sms:+14053784024?&body=Hey%20Big%20Red%20—%20I’d%20like%20to%20plan%20a%20ride%20connection." class="btn secondary">📲 Text RED</a>
-    </div>
+    <!-- Static Text RED button removed on purpose (we now use an in-result fallback link) -->
 
     <div id="result" style="display:none;"></div>
     <p class="disclaimer">*Estimates only. Final fare may vary slightly based on route or wait time.</p>
@@ -199,16 +197,30 @@
 
   function setMode(m){
     mode=m;
-    const now=document.getElementById("modeNow"),res=document.getElementById("modeReserve"),ctr=document.getElementById("reserveControls");
-    if(m==="now"){now.classList.add("active");res.classList.remove("active");ctr.style.display="none";smartRideTypeDefault();}
-    else{res.classList.add("active");now.classList.remove("active");ctr.style.display="block";}
+    const now=document.getElementById("modeNow"),
+          res=document.getElementById("modeReserve"),
+          ctr=document.getElementById("reserveControls");
+    if(m==="now"){
+      now.classList.add("active");
+      res.classList.remove("active");
+      ctr.style.display="none";
+      smartRideTypeDefault();
+    } else {
+      res.classList.add("active");
+      now.classList.remove("active");
+      ctr.style.display="block";
+    }
   }
+
   function smartRideTypeDefault(){
     const now=new Date();
     if(weekdayRushHour(now)){
-      setTripType("15"); document.getElementById("rushhour-note").innerHTML="🚦 Weekday Rush Hour pricing (5–9 AM / 3–7 PM)";
+      setTripType("15");
+      document.getElementById("rushhour-note").innerHTML="🚦 Weekday Rush Hour pricing (5–9 AM / 3–7 PM)";
     }else{
-      if(document.getElementById("tripType").value!=="15_airport"&&document.getElementById("tripType").value!=="20"){ setTripType("10"); }
+      if(document.getElementById("tripType").value!=="15_airport"&&document.getElementById("tripType").value!=="20"){
+        setTripType("10");
+      }
       document.getElementById("rushhour-note").innerHTML="";
     }
   }
@@ -406,41 +418,34 @@
     };
 
     const resDiv=document.getElementById("result");
-    resDiv.innerHTML=`<div class="total">$${total}</div>
+    resDiv.innerHTML = `
+      <div class="total">$${total}</div>
       <p><strong>Base:</strong> $${base.toFixed(2)}</p>
       <p><strong>Mileage:</strong> $${milesSub.toFixed(2)}</p>
-      ${fair>0?`<p><strong>Travel Fairness Fee:</strong> $${fair.toFixed(2)}</p>`:""}
-      <p><strong>Payment:</strong> ${pay==="card"?"Card (incl. fees)":"Cash / Venmo / Cash App"}</p>
+      ${fair>0 ? `<p><strong>Travel Fairness Fee:</strong> $${fair.toFixed(2)}</p>` : ""}
+      <p><strong>Payment:</strong> ${pay==="card" ? "Card (incl. fees)" : "Cash / Venmo / Cash App"}</p>
       <p>📏 ${miles} mi  ⏱️ ${Math.round(duration)} min</p>
+
       <p style="text-align:center;margin-top:15px;">
-        <button class="btn primary" id="textRedBtn">📲 Text RED with Trip Details</button>
-      </p>
-      <p style="text-align:center;margin-top:8px;">
-        <button class="btn secondary" id="sendRequestBtn">
-          ${mode === "reserve" ? "🕒 Send Reservation Request" : "📩 Send Ride Request to Big Red"}
+        <button class="btn primary" id="sendUnifiedBtn">
+          ${mode === "reserve"
+            ? "🕒 Send My Reservation Request"
+            : "🚗 Send My Ride Request"}
         </button>
       </p>
-      <p style="text-align:center;color:#888;margin-top:10px;">No surprises. Just solid local moves.</p>`;
-    resDiv.style.display="block";
 
-    document.getElementById("textRedBtn").onclick=()=>{
-      const name=prompt("Enter your name for Big Red:");
-      const lines=[];
-      lines.push(`Hey Big Red — this is ${name||"a rider"}.`);
-      lines.push(`Ride estimate: $${total}`);
-      lines.push(`From: ${pickup}`);
-      if(stops.length) lines.push(`Stops: ${stops.map(s=>s.location).join(" → ")}`);
-      lines.push(`To: ${dropoff}`);
-      lines.push(`Distance: ${miles} mi`);
-      lines.push(`Time: ${Math.round(duration)} min`);
-      if(fair>0) lines.push(`Includes travel fairness fee: $${fair.toFixed(2)}.`);
-      if(isAirport) lines.push("(Airport base applied)");
-      const routeLink=`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(pickup)}&destination=${encodeURIComponent(dropoff)}`;
-      lines.push(`Route: ${routeLink}`);
-      lines.push("No surprises. Just solid local moves.");
-      const smsBody=encodeURIComponent(lines.join(" "));
-      window.location.href=`sms:+14053784024?&body=${smsBody}`;
-    };
+      <p style="text-align:center;margin-top:6px;font-size:0.9em;color:#aaa;">
+        Having trouble or prefer text?
+        <a href="#" id="smsFallbackLink" style="color:#fff;text-decoration:underline;">
+          Tap here to text RED instead.
+        </a>
+      </p>
+
+      <p style="text-align:center;color:#888;margin-top:10px;">
+        No surprises. Just solid local moves.
+      </p>
+    `;
+    resDiv.style.display="block";
   }
 
   // =====================================================
@@ -475,6 +480,9 @@
     const q = window.lastQuote;
     const scheduledFor = buildScheduledFor(q);
 
+    // Use scheduled time (if present) to decide rate plan for reservations
+    const whenForRate = scheduledFor ? new Date(scheduledFor) : new Date();
+
     const booking = {
       type: q.mode === "reserve" || scheduledFor ? "RESERVATION" : "INSTANT",
       pickup: {
@@ -488,7 +496,7 @@
       stops: q.stops.map(addr => ({ address: addr })),
 
       rider: {
-        name: "",   // optional: can prompt later
+        name: "",   // optional: can prompt later or be filled in admin
         phone: "",
         partySize: 1
       },
@@ -499,7 +507,7 @@
         travelFee: q.fairnessFee,
         ratePlan: q.isAirport
           ? "AIRPORT"
-          : (weekdayRushHour(new Date()) ? "RUSH_HOUR" : "STANDARD")
+          : (weekdayRushHour(whenForRate) ? "RUSH_HOUR" : "STANDARD")
       },
 
       metrics: {
@@ -548,11 +556,46 @@
     }
   }
 
-  // Attach handler for dynamic button
+  function buildSmsBodyFromLastQuote() {
+    if (!window.lastQuote) {
+      return encodeURIComponent("Hey Big Red — I had trouble submitting the form, can you help me plan a ride?");
+    }
+    const q = window.lastQuote;
+    const lines = [];
+
+    lines.push(`Hey Big Red — I had trouble submitting the form, can you help me confirm this ${q.mode === "reserve" ? "reservation" : "ride"}?`);
+    lines.push(`Estimate: $${q.total.toFixed(2)}`);
+    lines.push(`From: ${q.pickup}`);
+    if (q.stops && q.stops.length) {
+      lines.push(`Stops: ${q.stops.join(" → ")}`);
+    }
+    lines.push(`To: ${q.dropoff}`);
+    lines.push(`Distance: ${q.miles} mi`);
+    lines.push(`Time: ${q.minutes} min`);
+    if (q.fairnessFee > 0) {
+      lines.push(`Includes travel fairness fee: $${q.fairnessFee.toFixed(2)}.`);
+    }
+    if (q.isAirport) {
+      lines.push("(Airport base applied)");
+    }
+    if (q.mode === "reserve" && q.reserveDate && q.reserveTime) {
+      lines.push(`Requested for: ${q.reserveDate} at ${q.reserveTime} (${q.planBy === "dropoff" ? "drop-off time" : "pickup time"}).`);
+    }
+    lines.push("No surprises. Just solid local moves.");
+
+    return encodeURIComponent(lines.join(" "));
+  }
+
+  // Attach handlers for dynamic primary button + SMS fallback
   document.addEventListener("click", (e) => {
-    if (e.target && e.target.id === "sendRequestBtn") {
+    if (e.target && e.target.id === "sendUnifiedBtn") {
       e.preventDefault();
       submitBooking();
+    }
+    if (e.target && e.target.id === "smsFallbackLink") {
+      e.preventDefault();
+      const body = buildSmsBodyFromLastQuote();
+      window.location.href = `sms:+14053784024?&body=${body}`;
     }
   });
   </script>
