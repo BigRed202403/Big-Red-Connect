@@ -62,7 +62,7 @@
         <option value="dropoff">Drop-Off Time</option>
       </select>
       <div id="reserveHint" style="color:#ccc;font-size:0.9em;margin:6px 0 10px;">
-        Choose a date/time. Rush hour auto-applies if the pickup is a weekday 5–9 AM or 3–7 PM.
+        Choose a date/time. Rush hour & holiday pricing apply based on your requested time.
       </div>
     </div>
 
@@ -88,7 +88,7 @@
       <option value="10">Standard ($10 base)</option>
       <option value="15">Rush Hour ($15 base)</option>
       <option value="15_airport">Airport ($15 base)</option>
-      <option value="20">Special Event ($20 base)</option>
+      <option value="20">Special Event / Holiday ($20 base)</option>
     </select>
 
     <label for="payment">Payment Method</label>
@@ -97,10 +97,12 @@
       <option value="card">Card (+3.3% booking + 2.4% fuel)</option>
     </select>
 
+    <label for="partySize" style="margin-top:10px;">Number of Passengers</label>
+    <input id="partySize" type="number" min="1" max="8" value="1" />
+
     <button class="btn primary" id="calcBtn" style="display:block;margin:20px auto;">💲 Calculate Fare</button>
 
-    <!-- Static Text RED button removed on purpose (we now use an in-result fallback link) -->
-
+    <!-- Result & actions -->
     <div id="result" style="display:none;"></div>
     <p class="disclaimer">*Estimates only. Final fare may vary slightly based on route or wait time.</p>
   </section>
@@ -127,6 +129,26 @@
   function distMi(a,b){return google.maps.geometry.spherical.computeDistanceBetween(new google.maps.LatLng(a.lat,a.lng),new google.maps.LatLng(b.lat,b.lng))/1609.34;}
   function weekdayRushHour(d){const day=d.getDay(),h=d.getHours();return day>=1&&day<=5&&((h>=5&&h<9)||(h>=15&&h<19));}
 
+  function isThanksgiving(date){
+    const y = date.getFullYear();
+    const first = new Date(y,10,1);
+    const firstDay = first.getDay();
+    const offsetToThu = (4 - firstDay + 7) % 7;
+    const firstThu = 1 + offsetToThu;
+    const fourthThu = firstThu + 21;
+    return date.getMonth() === 10 && date.getDate() === fourthThu;
+  }
+  function isHoliday(date){
+    const d = new Date(date);
+    const m = d.getMonth()+1;
+    const day = d.getDate();
+    if (m===1 && day===1) return true;
+    if (m===7 && day===4) return true;
+    if (m===12 && (day===24 || day===25 || day===31)) return true;
+    if (isThanksgiving(d)) return true;
+    return false;
+  }
+
   // --- Handoff & auto-fill
   window.addEventListener("DOMContentLoaded", async () => {
     try {
@@ -147,7 +169,6 @@
           input.parentNode.insertBefore(msg, input);
           setTimeout(() => msg.remove(), 6000);
           log("handoff loaded →", address || `${lat},${lng}`, "age(min):", Math.round(ageMin));
-          // Force geocode of the pickup so fairness fee can run even if user doesn't edit the field
           await ensurePickupLatLngFromCurrentInput();
         }
       }
@@ -192,7 +213,7 @@
 
     smartRideTypeDefault();
     await getDriverLocation();
-    await maybeShowFairnessNotePreview(); // show hint if we already have pickup from handoff
+    await maybeShowFairnessNotePreview();
   };
 
   function setMode(m){
@@ -294,7 +315,7 @@
         log("pickup set via GPS →", addr);
         await maybeShowFairnessNotePreview();
       }else{
-        dropoffLatLng=new google.maps.LatLng(latlng.lat,latlng.lng);
+        dropoffLatLng=new google.maps.LatLng(latlng.lat,lng:latlng.lng);
         if(window.dropoffMarker) window.dropoffMarker.setMap(null);
         window.dropoffMarker=new google.maps.Marker({position:dropoffLatLng,map,label:"D"});
         log("dropoff set via GPS →", addr);
@@ -325,18 +346,30 @@
     document.getElementById("fairness-note").innerHTML = msg || "";
   }
 
+  function getReservationDateForPricing(){
+    if (mode !== "reserve") return null;
+    const dStr = document.getElementById("reserveDate").value;
+    const tStr = document.getElementById("reserveTime").value;
+    if (!dStr || !tStr) return null;
+    const [y, m, d] = dStr.split("-").map(n => parseInt(n,10));
+    const [hh, mm] = tStr.split(":").map(n => parseInt(n,10));
+    if (!y || !m || !d || isNaN(hh) || isNaN(mm)) return null;
+    return new Date(y, m-1, d, hh, mm, 0);
+  }
+
   async function calculateFare(){
     const pickup=document.getElementById("pickup").value.trim(),
           dropoff=document.getElementById("dropoff").value.trim();
     if(!pickup||!dropoff){ alert("Please enter both pickup and drop-off."); return; }
 
-    // Ensure pickupLatLng exists even when pickup came from handoff text
+    const partySizeRaw = document.getElementById("partySize").value;
+    const partySize = Math.max(1, parseInt(partySizeRaw || "1", 10) || 1);
+
     if (!pickupLatLng) { await ensurePickupLatLngFromCurrentInput(); }
 
     await getDriverLocation();
     const ref = isValidCoords(driverPos)? driverPos : HQ;
 
-    // Build waypoints from stops
     const stops=[];
     for(const id of window.stopInputs||[]){
       const v=document.getElementById(id)?.value.trim();
@@ -354,14 +387,24 @@
     const miles=Math.round(rawMiles);
     const duration=legs.reduce((t,l)=>t+(l.duration?.value||0),0)/60;
 
-    // Priority base logic
+    // Priority base logic (now uses reservation time / holiday)
     const combo=((pickupPlace?.name||"")+(pickupPlace?.formatted_address||"")+(dropPlace?.name||"")+(dropPlace?.formatted_address||"")).toLowerCase();
     const isAirport=(combo.includes("airport") && !combo.includes("tinker"));
-    let base = isAirport ? 15 : 10;
-    const now=new Date();
-    if(!isAirport && weekdayRushHour(now)) base = 15;
 
-    // Event area check (best-effort)
+    let pricingDate = new Date();
+    const resDate = getReservationDateForPricing();
+    if (resDate) pricingDate = resDate;
+
+    let base = 10;
+    if (isAirport) {
+      base = 15;
+    } else if (isHoliday(pricingDate)) {
+      base = 20;
+    } else if (weekdayRushHour(pricingDate)) {
+      base = 15;
+    }
+
+    // Event area check can still bump to $20
     try{
       if (!EVENT_VENUES) {
         const r=await fetch("event-venues.json",{cache:"no-store"});
@@ -370,22 +413,20 @@
       const inRad=(pt,c,r)=>distMi(c,pt)<=r;
       let inside=null;
       if(pickupLatLng){
-        const p={lat:pickupLatLng.lat(),lng:pickupLatLng.lng()};
-        for(const v of (EVENT_VENUES.venues||[])){ if(inRad(p,{lat:v.lat,lng:v.lng},v.radius_mi)){inside=v;break;} }
+        const pp={lat:pickupLatLng.lat(),lng:pickupLatLng.lng()};
+        for(const v of (EVENT_VENUES.venues||[])){ if(inRad(pp,{lat:v.lat,lng:v.lng},v.radius_mi)){inside=v;break;} }
       }
       if(!inside && dropoffLatLng){
-        const d={lat:dropoffLatLng.lat(),lng:dropoffLatLng.lng()};
-        for(const v of (EVENT_VENUES.venues||[])){ if(inRad(d,{lat:v.lat,lng:v.lng},v.radius_mi)){inside=v;break;} }
+        const dd={lat:dropoffLatLng.lat(),lng:dropoffLatLng.lng()};
+        for(const v of (EVENT_VENUES.venues||[])){ if(inRad(dd,{lat:v.lat,lng:v.lng},v.radius_mi)){inside=v;break;} }
       }
       if(inside){ base = 20; log("event zone →", inside.name); }
-    }catch(_){/* ignore */ }
+    }catch(_){}
 
-    // Mileage tiers
     const tier2=Math.max(0,Math.min(10,miles-10))*1.25;
     const tier3=Math.max(0,miles-20)*1.0;
     const milesSub=tier2+tier3;
 
-    // Fairness fee (driver→pickup)
     const fair=calcFairnessFee(ref, pickupLatLng);
 
     let fare=base+milesSub+fair;
@@ -395,7 +436,10 @@
     const total=fare.toFixed(2);
     log(`fare breakdown → base:$${base.toFixed(2)} miles:$${milesSub.toFixed(2)} fairness:$${fair.toFixed(2)} pay:${pay} total:$${total}`);
 
-    // 🔹 Save last quote details for booking / reservation submission
+    const reserveDate = document.getElementById("reserveDate")?.value || null;
+    const reserveTime = document.getElementById("reserveTime")?.value || null;
+    const planBy = document.getElementById("planBy")?.value || "pickup";
+
     window.lastQuote = {
       mode,
       pickup,
@@ -412,11 +456,10 @@
       payMethod: pay,
       total: parseFloat(total),
       isAirport,
-      reserveDate: document.getElementById("reserveDate")?.value || null,
-      reserveTime: document.getElementById("reserveTime")?.value || null,
-      planBy: document.getElementById("planBy")?.value || "pickup",
-      riderName: null,
-      riderPartySize: 1
+      reserveDate,
+      reserveTime,
+      planBy,
+      partySize
     };
 
     const resDiv=document.getElementById("result");
@@ -426,6 +469,7 @@
       <p><strong>Mileage:</strong> $${milesSub.toFixed(2)}</p>
       ${fair>0 ? `<p><strong>Travel Fairness Fee:</strong> $${fair.toFixed(2)}</p>` : ""}
       <p><strong>Payment:</strong> ${pay==="card" ? "Card (incl. fees)" : "Cash / Venmo / Cash App"}</p>
+      <p><strong>Passengers:</strong> Party of ${partySize}</p>
       <p>📏 ${miles} mi  ⏱️ ${Math.round(duration)} min</p>
 
       <p style="text-align:center;margin-top:15px;">
@@ -449,10 +493,6 @@
     `;
     resDiv.style.display="block";
   }
-
-  // =====================================================
-  //  BOOKING SUBMISSION → Big Red Bookings Worker
-  // =====================================================
 
   function buildScheduledFor(quote) {
     if (quote.mode !== "reserve") return null;
@@ -481,8 +521,6 @@
     }
     const q = window.lastQuote;
     const scheduledFor = buildScheduledFor(q);
-
-    // Use scheduled time (if present) to decide rate plan for reservations
     const whenForRate = scheduledFor ? new Date(scheduledFor) : new Date();
 
     const booking = {
@@ -498,9 +536,9 @@
       stops: q.stops.map(addr => ({ address: addr })),
 
       rider: {
-        name: q.riderName || "",
+        name: "",
         phone: "",
-        partySize: q.riderPartySize || 1
+        partySize: q.partySize || 1
       },
 
       pricing: {
@@ -509,7 +547,9 @@
         travelFee: q.fairnessFee,
         ratePlan: q.isAirport
           ? "AIRPORT"
-          : (weekdayRushHour(whenForRate) ? "RUSH_HOUR" : "STANDARD")
+          : (isHoliday(whenForRate)
+              ? "HOLIDAY"
+              : (weekdayRushHour(whenForRate) ? "RUSH_HOUR" : "STANDARD"))
       },
 
       metrics: {
@@ -547,33 +587,38 @@
       const created = await res.json();
       console.log("Booking created:", created);
 
-      const msg =
+      alert(
         booking.type === "RESERVATION"
-          ? "Reservation request sent to Big Red! You’ll get a confirmation by text.\n\nWe’ll take you to your My Ride page now so you can track it."
-          : "Ride request sent to Big Red! If I’m available, I’ll confirm by text.\n\nWe’ll take you to your My Ride page now so you can track it.";
+          ? "Reservation request sent to Big Red! You’ll get a confirmation by text."
+          : "Ride request sent to Big Red! If I’m available, I’ll confirm by text."
+      );
 
-      alert(msg);
-
-      // Redirect rider to their My Ride page (root-level myride.html)
-      const trackUrl = `myride.html?id=${encodeURIComponent(created.id)}`;
-      window.location.href = trackUrl;
+      // Optional: send them to /myride for live status
+      const myRideUrl = `https://bigred202403.github.io/myride.html?id=${created.id}`;
+      const go = confirm("Want to view live status for this ride?");
+      if (go) {
+        window.location.href = myRideUrl;
+      }
     } catch (err) {
       console.error("Booking network error:", err);
       alert("Network error sending your request. Please text RED instead.");
     }
   }
 
-  function buildSmsBodyFromLastQuote(nameOverride, partyOverride) {
+  function buildSmsBodyFromLastQuote() {
     if (!window.lastQuote) {
       return encodeURIComponent("Hey Big Red — I had trouble submitting the form, can you help me plan a ride?");
     }
     const q = window.lastQuote;
-    const name = (nameOverride || q.riderName || "a rider").trim();
-    const party = partyOverride || q.riderPartySize || 1;
-
     const lines = [];
 
-    lines.push(`Hey Big Red — this is ${name}.`);
+    const name = prompt("Enter your name for Big Red:");
+    if (name) {
+      lines.push(`Hey Big Red — this is ${name}.`);
+    } else {
+      lines.push("Hey Big Red — this is a rider.");
+    }
+
     lines.push(`I’d like to confirm this ${q.mode === "reserve" ? "reservation" : "ride"}:`);
     lines.push(`Estimate: $${q.total.toFixed(2)}`);
     lines.push(`From: ${q.pickup}`);
@@ -581,9 +626,8 @@
       lines.push(`Stops: ${q.stops.join(" → ")}`);
     }
     lines.push(`To: ${q.dropoff}`);
-    lines.push(`Party size: ${party}`);
-    lines.push(`Distance: ${q.miles} mi`);
-    lines.push(`Time: ${q.minutes} min`);
+    lines.push(`Distance: ${q.miles} mi • ${q.minutes} min`);
+    lines.push(`Party size: ${q.partySize || 1}`);
     if (q.fairnessFee > 0) {
       lines.push(`Includes travel fairness fee: $${q.fairnessFee.toFixed(2)}.`);
     }
@@ -598,72 +642,14 @@
     return encodeURIComponent(lines.join(" "));
   }
 
-  // Attach handlers for dynamic primary button + SMS fallback
   document.addEventListener("click", (e) => {
-    // Unified booking button
     if (e.target && e.target.id === "sendUnifiedBtn") {
       e.preventDefault();
-      if (!window.lastQuote) {
-        alert("Please calculate a fare first.");
-        return;
-      }
-
-      // Prompt for rider name
-      const currentName = window.lastQuote.riderName || "";
-      let name = prompt("Enter your name for Big Red:", currentName);
-      if (name === null) return; // user cancelled
-      name = name.trim();
-      if (!name) {
-        name = "Rider";
-      }
-      window.lastQuote.riderName = name;
-
-      // Prompt for party size
-      let party = window.lastQuote.riderPartySize || 1;
-      let partyInput = prompt("How many riders in your party? (1–6)", party);
-      if (partyInput === null) return; // cancelled
-      partyInput = partyInput.trim();
-      let parsed = parseInt(partyInput, 10);
-      if (isNaN(parsed) || parsed < 1 || parsed > 6) {
-        parsed = 1;
-      }
-      window.lastQuote.riderPartySize = parsed;
-
       submitBooking();
     }
-
-    // SMS fallback link
     if (e.target && e.target.id === "smsFallbackLink") {
       e.preventDefault();
-
-      // Make sure we have at least a basic quote
-      if (!window.lastQuote) {
-        alert("Please calculate a fare first, then you can text the details.");
-        return;
-      }
-
-      // Prompt for name
-      const currentName = window.lastQuote.riderName || "";
-      let name = prompt("Enter your name for Big Red:", currentName);
-      if (name === null) return; // cancelled
-      name = name.trim();
-      if (!name) {
-        name = "Rider";
-      }
-      window.lastQuote.riderName = name;
-
-      // Prompt for party size
-      let party = window.lastQuote.riderPartySize || 1;
-      let partyInput = prompt("How many riders in your party? (1–6)", party);
-      if (partyInput === null) return; // cancelled
-      partyInput = partyInput.trim();
-      let parsed = parseInt(partyInput, 10);
-      if (isNaN(parsed) || parsed < 1 || parsed > 6) {
-        parsed = 1;
-      }
-      window.lastQuote.riderPartySize = parsed;
-
-      const body = buildSmsBodyFromLastQuote(name, parsed);
+      const body = buildSmsBodyFromLastQuote();
       window.location.href = `sms:+14053784024?&body=${body}`;
     }
   });
