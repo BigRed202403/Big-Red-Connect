@@ -22,6 +22,9 @@
 
   <link rel="stylesheet" href="style.css" />
 
+  <!-- OneSignal SDK (non-breaking if not used globally) -->
+  <script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async></script>
+
   <!-- Google Maps -->
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places,geometry&callback=initGoogle" async defer></script>
 </head>
@@ -62,7 +65,7 @@
         <option value="dropoff">Drop-Off Time</option>
       </select>
       <div id="reserveHint" style="color:#ccc;font-size:0.9em;margin:6px 0 10px;">
-        Choose a date/time. Rush hour & holiday pricing apply based on your requested time.
+        Choose a date/time. Rush hour & holiday pricing are based on your scheduled pickup window.
       </div>
     </div>
 
@@ -82,6 +85,7 @@
     <div id="airport-note"></div>
     <div id="event-note"></div>
     <div id="rushhour-note"></div>
+    <div id="holiday-note"></div>
     <div id="fairness-note"></div>
 
     <select id="tripType" style="display:none;">
@@ -97,13 +101,21 @@
       <option value="card">Card (+3.3% booking + 2.4% fuel)</option>
     </select>
 
-    <label for="partySize" style="margin-top:10px;">Number of Passengers</label>
-    <input id="partySize" type="number" min="1" max="8" value="1" />
+    <label for="partySize" style="margin-top:10px;">How many riders?</label>
+    <select id="partySize">
+      <option value="1" selected>1</option>
+      <option value="2">2</option>
+      <option value="3">3</option>
+      <option value="4">4</option>
+      <option value="5">5</option>
+      <option value="6">6</option>
+    </select>
 
     <button class="btn primary" id="calcBtn" style="display:block;margin:20px auto;">💲 Calculate Fare</button>
 
-    <!-- Result & actions -->
+    <!-- Result area (buttons are injected here after calculation) -->
     <div id="result" style="display:none;"></div>
+
     <p class="disclaimer">*Estimates only. Final fare may vary slightly based on route or wait time.</p>
   </section>
 
@@ -113,6 +125,7 @@
 
   <script src="status.js"></script>
   <script>
+  // ============ BASIC LOG / CONSTANTS ============
   const log = (...a)=>console.log(new Date().toLocaleTimeString(),"[FAIR]",...a);
 
   const HQ = { lat: 35.3207, lng: -97.4929 };
@@ -125,32 +138,79 @@
   let driverPos = null, driverSource = "HQ";
   let mode = "now", EVENT_VENUES = null;
 
+  let riderPushId = null;   // OneSignal player id (if available)
+  let lastNamePrompt = "";  // cache rider name between actions
+
   function isValidCoords(o){return o&&typeof o.lat==="number"&&typeof o.lng==="number"&&!isNaN(o.lat)&&!isNaN(o.lng);}
   function distMi(a,b){return google.maps.geometry.spherical.computeDistanceBetween(new google.maps.LatLng(a.lat,a.lng),new google.maps.LatLng(b.lat,b.lng))/1609.34;}
   function weekdayRushHour(d){const day=d.getDay(),h=d.getHours();return day>=1&&day<=5&&((h>=5&&h<9)||(h>=15&&h<19));}
 
-  function isThanksgiving(date){
-    const y = date.getFullYear();
-    const first = new Date(y,10,1);
-    const firstDay = first.getDay();
-    const offsetToThu = (4 - firstDay + 7) % 7;
-    const firstThu = 1 + offsetToThu;
-    const fourthThu = firstThu + 21;
-    return date.getMonth() === 10 && date.getDate() === fourthThu;
-  }
-  function isHoliday(date){
-    const d = new Date(date);
-    const m = d.getMonth()+1;
-    const day = d.getDate();
-    if (m===1 && day===1) return true;
-    if (m===7 && day===4) return true;
-    if (m===12 && (day===24 || day===25 || day===31)) return true;
-    if (isThanksgiving(d)) return true;
+  // Simple US-holiday checker for your special-event/holiday base rate
+  function isHolidayDate(d) {
+    if (!d || isNaN(d.getTime())) return false;
+    const y = d.getFullYear();
+    const m = d.getMonth();   // 0–11
+    const day = d.getDate();  // 1–31
+
+    // Fixed-date: New Year's Day, Independence Day, Christmas, NYE
+    if ((m === 0 && day === 1) ||          // Jan 1
+        (m === 6 && day === 4) ||          // Jul 4
+        (m === 11 && (day === 24 || day === 25 || day === 31))) {  // Dec 24/25/31
+      return true;
+    }
+
+    // Helper to find Nth weekday of month (0=Sun..6=Sat)
+    function nthWeekday(month, weekday, n) {
+      const first = new Date(y, month, 1);
+      let offset = (weekday - first.getDay() + 7) % 7;
+      const date = 1 + offset + (n - 1) * 7;
+      return new Date(y, month, date);
+    }
+
+    // Helper: last weekday of month
+    function lastWeekday(month, weekday) {
+      const last = new Date(y, month + 1, 0);
+      let offset = (last.getDay() - weekday + 7) % 7;
+      return new Date(y, month + 1, last.getDate() - offset);
+    }
+
+    // Memorial Day: last Monday in May
+    const memorial = lastWeekday(4, 1); // May, Monday
+    if (m === 4 && day === memorial.getDate()) return true;
+
+    // Labor Day: first Monday in September
+    const labor = nthWeekday(8, 1, 1); // Sep, Monday, 1st
+    if (m === 8 && day === labor.getDate()) return true;
+
+    // Thanksgiving: 4th Thursday in November
+    const thanks = nthWeekday(10, 4, 4); // Nov, Thu, 4th
+    if (m === 10 && day === thanks.getDate()) return true;
+
     return false;
   }
 
-  // --- Handoff & auto-fill
-  window.addEventListener("DOMContentLoaded", async () => {
+  // OneSignal: read existing player ID if SDK is already wired
+  function setupOneSignalListener() {
+    try {
+      if (!window.OneSignal || !window.OneSignal.push) return;
+      window.OneSignal.push(function() {
+        if (!window.OneSignal.getUserId) return;
+        window.OneSignal.getUserId(function(userId) {
+          if (userId) {
+            riderPushId = userId;
+            log("OneSignal playerId:", userId);
+          }
+        });
+      });
+    } catch (e) {
+      log("OneSignal hook error:", e.message);
+    }
+  }
+
+  // --- Handoff & auto-fill from status page
+  document.addEventListener("DOMContentLoaded", async () => {
+    setupOneSignalListener();
+
     try {
       const url = new URL(window.location.href);
       const drop = url.searchParams.get("dropoff");
@@ -169,12 +229,14 @@
           input.parentNode.insertBefore(msg, input);
           setTimeout(() => msg.remove(), 6000);
           log("handoff loaded →", address || `${lat},${lng}`, "age(min):", Math.round(ageMin));
+          // Force geocode of the pickup so fairness fee can run even if user doesn't edit the field
           await ensurePickupLatLngFromCurrentInput();
         }
       }
     } catch (e) { log("handoff load err", e?.message); }
   });
 
+  // Google Maps init (callback from script URL)
   window.initGoogle = async function () {
     geocoder = new google.maps.Geocoder();
     directionsService = new google.maps.DirectionsService();
@@ -206,29 +268,29 @@
 
     document.getElementById("modeNow").onclick = () => setMode("now");
     document.getElementById("modeReserve").onclick = () => setMode("reserve");
-    document.getElementById("calcBtn").onclick = calculateFare;
+    document.getElementById("calcBtn").onclick = () => { calculateFare().catch(e => log("calc err", e.message)); };
     document.getElementById("addStopBtn").onclick = addStopField;
     document.getElementById("useLocPickup").onclick = () => useMyLocation("pickup");
     document.getElementById("useLocDrop").onclick = () => useMyLocation("dropoff");
 
     smartRideTypeDefault();
     await getDriverLocation();
-    await maybeShowFairnessNotePreview();
+    await maybeShowFairnessNotePreview(); // show hint if we already have pickup from handoff
   };
 
   function setMode(m){
     mode=m;
-    const now=document.getElementById("modeNow"),
-          res=document.getElementById("modeReserve"),
+    const nowBtn=document.getElementById("modeNow"),
+          resBtn=document.getElementById("modeReserve"),
           ctr=document.getElementById("reserveControls");
     if(m==="now"){
-      now.classList.add("active");
-      res.classList.remove("active");
+      nowBtn.classList.add("active");
+      resBtn.classList.remove("active");
       ctr.style.display="none";
       smartRideTypeDefault();
     } else {
-      res.classList.add("active");
-      now.classList.remove("active");
+      resBtn.classList.add("active");
+      nowBtn.classList.remove("active");
       ctr.style.display="block";
     }
   }
@@ -244,6 +306,7 @@
       }
       document.getElementById("rushhour-note").innerHTML="";
     }
+    document.getElementById("holiday-note").innerHTML = "";
   }
   function setTripType(v){ document.getElementById("tripType").value=v; }
 
@@ -315,7 +378,7 @@
         log("pickup set via GPS →", addr);
         await maybeShowFairnessNotePreview();
       }else{
-        dropoffLatLng=new google.maps.LatLng(latlng.lat,lng:latlng.lng);
+        dropoffLatLng=new google.maps.LatLng(latlng.lat,latlng.lng);
         if(window.dropoffMarker) window.dropoffMarker.setMap(null);
         window.dropoffMarker=new google.maps.Marker({position:dropoffLatLng,map,label:"D"});
         log("dropoff set via GPS →", addr);
@@ -346,15 +409,27 @@
     document.getElementById("fairness-note").innerHTML = msg || "";
   }
 
-  function getReservationDateForPricing(){
-    if (mode !== "reserve") return null;
-    const dStr = document.getElementById("reserveDate").value;
-    const tStr = document.getElementById("reserveTime").value;
-    if (!dStr || !tStr) return null;
-    const [y, m, d] = dStr.split("-").map(n => parseInt(n,10));
-    const [hh, mm] = tStr.split(":").map(n => parseInt(n,10));
-    if (!y || !m || !d || isNaN(hh) || isNaN(mm)) return null;
-    return new Date(y, m-1, d, hh, mm, 0);
+  function getEffectiveDateTimeForPricing(currentMode) {
+    if (currentMode === "reserve") {
+      const dStr = document.getElementById("reserveDate").value;
+      const tStr = document.getElementById("reserveTime").value;
+      if (dStr && tStr) {
+        const partsD = dStr.split("-");
+        const partsT = tStr.split(":");
+        if (partsD.length === 3 && partsT.length === 2) {
+          const y = Number(partsD[0]);
+          const m = Number(partsD[1]);
+          const day = Number(partsD[2]);
+          const hh = Number(partsT[0]);
+          const mm = Number(partsT[1]);
+          if (!isNaN(y) && !isNaN(m) && !isNaN(day) && !isNaN(hh) && !isNaN(mm)) {
+            return new Date(y, m - 1, day, hh, mm, 0);
+          }
+        }
+      }
+    }
+    // Fallback: now
+    return new Date();
   }
 
   async function calculateFare(){
@@ -362,14 +437,13 @@
           dropoff=document.getElementById("dropoff").value.trim();
     if(!pickup||!dropoff){ alert("Please enter both pickup and drop-off."); return; }
 
-    const partySizeRaw = document.getElementById("partySize").value;
-    const partySize = Math.max(1, parseInt(partySizeRaw || "1", 10) || 1);
-
+    // Ensure pickupLatLng exists even when pickup came from handoff text
     if (!pickupLatLng) { await ensurePickupLatLngFromCurrentInput(); }
 
     await getDriverLocation();
     const ref = isValidCoords(driverPos)? driverPos : HQ;
 
+    // Build waypoints from stops
     const stops=[];
     for(const id of window.stopInputs||[]){
       const v=document.getElementById(id)?.value.trim();
@@ -387,24 +461,31 @@
     const miles=Math.round(rawMiles);
     const duration=legs.reduce((t,l)=>t+(l.duration?.value||0),0)/60;
 
-    // Priority base logic (now uses reservation time / holiday)
+    // Priority base logic (uses reservation time if reserve mode)
     const combo=((pickupPlace?.name||"")+(pickupPlace?.formatted_address||"")+(dropPlace?.name||"")+(dropPlace?.formatted_address||"")).toLowerCase();
     const isAirport=(combo.includes("airport") && !combo.includes("tinker"));
 
-    let pricingDate = new Date();
-    const resDate = getReservationDateForPricing();
-    if (resDate) pricingDate = resDate;
+    const pricingClock = getEffectiveDateTimeForPricing(mode);
+    const holiday = isHolidayDate(pricingClock);
 
-    let base = 10;
-    if (isAirport) {
-      base = 15;
-    } else if (isHoliday(pricingDate)) {
-      base = 20;
-    } else if (weekdayRushHour(pricingDate)) {
-      base = 15;
+    let base;
+    if (holiday) {
+      base = 20;  // Holiday / special-event base
+    } else if (isAirport) {
+      base = 15;  // Airport base
+    } else if (weekdayRushHour(pricingClock)) {
+      base = 15;  // Rush-hour base
+      document.getElementById("rushhour-note").innerHTML = "🚦 Rush hour window based on your scheduled time.";
+    } else {
+      base = 10;  // Standard
+      document.getElementById("rushhour-note").innerHTML = "";
     }
 
-    // Event area check can still bump to $20
+    document.getElementById("holiday-note").innerHTML = holiday
+      ? "🎉 Holiday / special-event base rate applied."
+      : "";
+
+    // Event area check (best-effort overlay: bumps to $20 if within special zone)
     try{
       if (!EVENT_VENUES) {
         const r=await fetch("event-venues.json",{cache:"no-store"});
@@ -413,20 +494,22 @@
       const inRad=(pt,c,r)=>distMi(c,pt)<=r;
       let inside=null;
       if(pickupLatLng){
-        const pp={lat:pickupLatLng.lat(),lng:pickupLatLng.lng()};
-        for(const v of (EVENT_VENUES.venues||[])){ if(inRad(pp,{lat:v.lat,lng:v.lng},v.radius_mi)){inside=v;break;} }
+        const p={lat:pickupLatLng.lat(),lng:pickupLatLng.lng()};
+        for(const v of (EVENT_VENUES.venues||[])){ if(inRad(p,{lat:v.lat,lng:v.lng},v.radius_mi)){inside=v;break;} }
       }
       if(!inside && dropoffLatLng){
-        const dd={lat:dropoffLatLng.lat(),lng:dropoffLatLng.lng()};
-        for(const v of (EVENT_VENUES.venues||[])){ if(inRad(dd,{lat:v.lat,lng:v.lng},v.radius_mi)){inside=v;break;} }
+        const d={lat:dropoffLatLng.lat(),lng:dropoffLatLng.lng()};
+        for(const v of (EVENT_VENUES.venues||[])){ if(inRad(d,{lat:v.lat,lng:v.lng},v.radius_mi)){inside=v;break;} }
       }
       if(inside){ base = 20; log("event zone →", inside.name); }
-    }catch(_){}
+    }catch(_){/* ignore */ }
 
+    // Mileage tiers
     const tier2=Math.max(0,Math.min(10,miles-10))*1.25;
     const tier3=Math.max(0,miles-20)*1.0;
     const milesSub=tier2+tier3;
 
+    // Fairness fee (driver→pickup)
     const fair=calcFairnessFee(ref, pickupLatLng);
 
     let fare=base+milesSub+fair;
@@ -436,10 +519,9 @@
     const total=fare.toFixed(2);
     log(`fare breakdown → base:$${base.toFixed(2)} miles:$${milesSub.toFixed(2)} fairness:$${fair.toFixed(2)} pay:${pay} total:$${total}`);
 
-    const reserveDate = document.getElementById("reserveDate")?.value || null;
-    const reserveTime = document.getElementById("reserveTime")?.value || null;
-    const planBy = document.getElementById("planBy")?.value || "pickup";
+    const partySizeVal = parseInt(document.getElementById("partySize").value, 10) || 1;
 
+    // 🔹 Save last quote details for booking / reservation submission
     window.lastQuote = {
       mode,
       pickup,
@@ -456,10 +538,13 @@
       payMethod: pay,
       total: parseFloat(total),
       isAirport,
-      reserveDate,
-      reserveTime,
-      planBy,
-      partySize
+      isHoliday: holiday,
+      reserveDate: document.getElementById("reserveDate")?.value || null,
+      reserveTime: document.getElementById("reserveTime")?.value || null,
+      planBy: document.getElementById("planBy")?.value || "pickup",
+      pricingTimeIso: pricingClock.toISOString(),
+      partySize: partySizeVal,
+      riderName: lastNamePrompt || ""
     };
 
     const resDiv=document.getElementById("result");
@@ -469,8 +554,8 @@
       <p><strong>Mileage:</strong> $${milesSub.toFixed(2)}</p>
       ${fair>0 ? `<p><strong>Travel Fairness Fee:</strong> $${fair.toFixed(2)}</p>` : ""}
       <p><strong>Payment:</strong> ${pay==="card" ? "Card (incl. fees)" : "Cash / Venmo / Cash App"}</p>
-      <p><strong>Passengers:</strong> Party of ${partySize}</p>
       <p>📏 ${miles} mi  ⏱️ ${Math.round(duration)} min</p>
+      <p>👥 Party size: ${partySizeVal}</p>
 
       <p style="text-align:center;margin-top:15px;">
         <button class="btn primary" id="sendUnifiedBtn">
@@ -493,6 +578,10 @@
     `;
     resDiv.style.display="block";
   }
+
+  // =====================================================
+  //  BOOKING SUBMISSION → Big Red Bookings Worker
+  // =====================================================
 
   function buildScheduledFor(quote) {
     if (quote.mode !== "reserve") return null;
@@ -521,7 +610,15 @@
     }
     const q = window.lastQuote;
     const scheduledFor = buildScheduledFor(q);
-    const whenForRate = scheduledFor ? new Date(scheduledFor) : new Date();
+
+    // Use the same pricing time that was used for the estimate
+    const whenForRate = q.pricingTimeIso ? new Date(q.pricingTimeIso) : new Date();
+
+    const ratePlan = q.isAirport
+      ? "AIRPORT"
+      : (q.isHoliday
+          ? "HOLIDAY"
+          : (weekdayRushHour(whenForRate) ? "RUSH_HOUR" : "STANDARD"));
 
     const booking = {
       type: q.mode === "reserve" || scheduledFor ? "RESERVATION" : "INSTANT",
@@ -536,7 +633,7 @@
       stops: q.stops.map(addr => ({ address: addr })),
 
       rider: {
-        name: "",
+        name: q.riderName || "",
         phone: "",
         partySize: q.partySize || 1
       },
@@ -545,11 +642,7 @@
         estimate: q.total,
         finalFare: null,
         travelFee: q.fairnessFee,
-        ratePlan: q.isAirport
-          ? "AIRPORT"
-          : (isHoliday(whenForRate)
-              ? "HOLIDAY"
-              : (weekdayRushHour(whenForRate) ? "RUSH_HOUR" : "STANDARD"))
+        ratePlan
       },
 
       metrics: {
@@ -558,13 +651,28 @@
       },
 
       source: "FARE_CALCULATOR",
-      scheduledFor
+      scheduledFor,
+      pushPlayerId: riderPushId || null
     };
 
     return booking;
   }
 
   async function submitBooking() {
+    if (!window.lastQuote) {
+      alert("Please calculate a fare first.");
+      return;
+    }
+
+    // Prompt for name once; reuse for both booking + SMS
+    if (!window.lastQuote.riderName) {
+      const nm = prompt("Enter your name for Big Red (optional):", lastNamePrompt || "");
+      if (nm !== null) {
+        lastNamePrompt = nm.trim();
+        window.lastQuote.riderName = lastNamePrompt;
+      }
+    }
+
     const booking = buildBookingPayload();
     if (!booking) return;
 
@@ -593,11 +701,9 @@
           : "Ride request sent to Big Red! If I’m available, I’ll confirm by text."
       );
 
-      // Optional: send them to /myride for live status
-      const myRideUrl = `https://bigred202403.github.io/myride.html?id=${created.id}`;
-      const go = confirm("Want to view live status for this ride?");
-      if (go) {
-        window.location.href = myRideUrl;
+      // Send them to their My Ride page
+      if (created.id) {
+        window.location.href = `https://bigred202403.github.io/myride.html?id=${encodeURIComponent(created.id)}`;
       }
     } catch (err) {
       console.error("Booking network error:", err);
@@ -612,27 +718,26 @@
     const q = window.lastQuote;
     const lines = [];
 
-    const name = prompt("Enter your name for Big Red:");
-    if (name) {
-      lines.push(`Hey Big Red — this is ${name}.`);
-    } else {
-      lines.push("Hey Big Red — this is a rider.");
-    }
-
-    lines.push(`I’d like to confirm this ${q.mode === "reserve" ? "reservation" : "ride"}:`);
+    const nm = q.riderName && q.riderName.trim().length ? q.riderName.trim() : "a rider";
+    lines.push(`Hey Big Red — this is ${nm}.`);
+    lines.push(`Can you help me confirm this ${q.mode === "reserve" ? "reservation" : "ride"}?`);
     lines.push(`Estimate: $${q.total.toFixed(2)}`);
     lines.push(`From: ${q.pickup}`);
     if (q.stops && q.stops.length) {
       lines.push(`Stops: ${q.stops.join(" → ")}`);
     }
     lines.push(`To: ${q.dropoff}`);
-    lines.push(`Distance: ${q.miles} mi • ${q.minutes} min`);
+    lines.push(`Distance: ${q.miles} mi`);
+    lines.push(`Time: ${q.minutes} min`);
     lines.push(`Party size: ${q.partySize || 1}`);
     if (q.fairnessFee > 0) {
       lines.push(`Includes travel fairness fee: $${q.fairnessFee.toFixed(2)}.`);
     }
     if (q.isAirport) {
       lines.push("(Airport base applied)");
+    }
+    if (q.isHoliday) {
+      lines.push("(Holiday / special-event base applied)");
     }
     if (q.mode === "reserve" && q.reserveDate && q.reserveTime) {
       lines.push(`Requested for: ${q.reserveDate} at ${q.reserveTime} (${q.planBy === "dropoff" ? "drop-off time" : "pickup time"}).`);
@@ -642,13 +747,30 @@
     return encodeURIComponent(lines.join(" "));
   }
 
+  // Attach handlers for dynamic primary button + SMS fallback
   document.addEventListener("click", (e) => {
-    if (e.target && e.target.id === "sendUnifiedBtn") {
+    const target = e.target;
+
+    if (target && target.id === "sendUnifiedBtn") {
       e.preventDefault();
       submitBooking();
     }
-    if (e.target && e.target.id === "smsFallbackLink") {
+
+    if (target && target.id === "smsFallbackLink") {
       e.preventDefault();
+
+      // Name prompt before SMS, same as you requested
+      if (!window.lastQuote) {
+        window.lastQuote = { riderName: "" };
+      }
+      if (!window.lastQuote.riderName) {
+        const nm = prompt("Enter your name for Big Red (optional):", lastNamePrompt || "");
+        if (nm !== null) {
+          lastNamePrompt = nm.trim();
+          window.lastQuote.riderName = lastNamePrompt;
+        }
+      }
+
       const body = buildSmsBodyFromLastQuote();
       window.location.href = `sms:+14053784024?&body=${body}`;
     }
