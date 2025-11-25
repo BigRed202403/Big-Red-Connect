@@ -20,6 +20,9 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
 
+  <!-- OneSignal SDK -->
+  <script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async></script>
+
   <style>
     :root {
       --red: #b30000;
@@ -134,6 +137,14 @@
     .pill-scope strong {
       color: var(--accent);
     }
+
+    .pill-push {
+      cursor: pointer;
+      font-size: 0.75rem;
+    }
+
+    .pill-push.ok { color: #8f8; border-color: #3a3; }
+    .pill-push.off { color: #f8c; border-color: #a36; }
 
     .hdr-actions {
       display: flex;
@@ -444,11 +455,12 @@
         📋 View: <span id="scopeLabel">Active</span>
       </button>
     </div>
-    <div style="display:flex; gap:4px; margin-top:2px;">
+    <div style="display:flex; gap:4px; margin-top:2px; flex-wrap:wrap; justify-content:flex-end;">
       <div class="pill pill-sync" id="syncPill">Last sync: —</div>
       <div class="pill pill-scope" id="countPill">
         Total: <strong>0</strong>
       </div>
+      <div class="pill pill-push off" id="pushPill">Push: Off</div>
     </div>
   </div>
 </header>
@@ -522,6 +534,8 @@
   //  CONFIG
   // ===============================
   const API_BASE = "https://bigred-bookings.bigredtransportation.workers.dev";
+  const ONESIGNAL_APP_ID = "YOUR-ONESIGNAL-APP-ID-HERE"; // 🔁 same as myride/admin
+
   let currentScope = "active"; // "active" | "upcoming" | "all"
   let pollingTimer = null;
   let lastDataSnapshot = [];
@@ -534,6 +548,7 @@
   const scopeLabel = qs("#scopeLabel");
   const btnScopeToggle = qs("#btnScopeToggle");
   const btnRefresh = qs("#btnRefresh");
+  const pushPill = qs("#pushPill");
 
   const listNew = qs("#listNew");
   const listActive = qs("#listActive");
@@ -591,7 +606,6 @@
   function isNewBucket(b) {
     const s = classifyStatus(b.status);
     if (s === "REQUESTED") return true;
-    // reservations that are REQUESTED but scheduled in future
     if (b.type === "RESERVATION" && s === "REQUESTED") return true;
     return false;
   }
@@ -672,12 +686,10 @@
         ? (isRes ? `Scheduled ${fmtTime(b.scheduledFor)}` : `Time: ${fmtTime(b.scheduledFor)}`)
         : `Requested ${fmtTime(b.requestedAt)}`;
 
-      // Estimate / pricing
       const estVal = typeof b.pricing?.estimate === "number"
         ? `$${b.pricing.estimate.toFixed(2)}`
         : "—";
 
-      // Card header
       const header = document.createElement("div");
       header.className = "card-header-row";
       header.innerHTML = `
@@ -697,7 +709,6 @@
       `;
       card.appendChild(header);
 
-      // Main body
       const main = document.createElement("div");
       main.className = "card-main";
 
@@ -726,22 +737,18 @@
       `;
       card.appendChild(main);
 
-      // Footer with actions
       const footer = document.createElement("div");
       footer.className = "card-footer";
 
       const actions = document.createElement("div");
       actions.className = "card-actions";
 
-      // Decide which buttons show based on bucket + status
       if (bucket === "new") {
-        // New requests: Accept / Decline
         const acceptBtn = makeChip("✅ Accept", "primary", "ACCEPTED");
         const declineBtn = makeChip("✖ Cancel", "warn", "CANCELLED");
         actions.appendChild(acceptBtn);
         actions.appendChild(declineBtn);
       } else if (bucket === "active") {
-        // Active trips: progress along the flow
         if (s === "ACCEPTED") {
           actions.appendChild(makeChip("🚗 En Route", "primary", "ENROUTE"));
           actions.appendChild(makeChip("✖ Cancel", "warn", "CANCELLED"));
@@ -754,12 +761,9 @@
         } else if (s === "ONBOARD") {
           actions.appendChild(makeChip("✅ Complete", "good", "COMPLETED"));
         } else {
-          // Fallback
           actions.appendChild(makeChip("✅ Complete", "good", "COMPLETED"));
           actions.appendChild(makeChip("✖ Cancel", "warn", "CANCELLED"));
         }
-      } else {
-        // Done bucket: no status changes, maybe future "add note" etc.
       }
 
       footer.appendChild(actions);
@@ -842,13 +846,11 @@
       }
 
       const updated = await res.json();
-      // Update local snapshot optimistically
       const idx = lastDataSnapshot.findIndex(b => b.id === updated.id);
       if (idx !== -1) {
         lastDataSnapshot[idx] = updated;
         renderBookings(lastDataSnapshot);
       } else {
-        // Fallback: just refetch
         fetchBookings();
       }
 
@@ -862,7 +864,6 @@
   }
 
   function setSyncState(state) {
-    // state: "ok" | "err" | "loading"
     const nowStr = new Date().toLocaleTimeString("en-US", {
       hour: "numeric",
       minute: "2-digit"
@@ -908,25 +909,55 @@
   }
 
   // ===============================
+  //  OneSignal — driver registration
+  // ===============================
+  window.OneSignal = window.OneSignal || [];
+  OneSignal.push(function() {
+    OneSignal.init({
+      appId: ONESIGNAL_APP_ID,
+      notifyButton: { enable: false },
+      allowLocalhostAsSecureOrigin: true
+    });
+
+    OneSignal.isPushNotificationsEnabled(function(enabled) {
+      if (enabled) {
+        pushPill.textContent = "Push: On";
+        pushPill.classList.remove("off");
+        pushPill.classList.add("ok");
+      } else {
+        pushPill.textContent = "Push: Off";
+        pushPill.classList.remove("ok");
+        pushPill.classList.add("off");
+      }
+    });
+
+    // Prompt once if disabled
+    OneSignal.isPushNotificationsEnabled(function(enabled) {
+      if (!enabled) {
+        OneSignal.showSlidedownPrompt();
+      }
+    });
+
+    // Tag as driver
+    OneSignal.sendTags({ role: "driver" });
+  });
+
+  // ===============================
   //  EVENT WIRING
   // ===============================
   document.addEventListener("DOMContentLoaded", () => {
-    // Initial sync
     fetchBookings();
     startPolling();
 
-    // Scope toggle
     btnScopeToggle.addEventListener("click", () => {
       toggleScope();
     });
 
-    // Manual refresh
     btnRefresh.addEventListener("click", () => {
       fetchBookings();
       showToast("Refreshing bookings…");
     });
 
-    // Action buttons via event delegation
     document.body.addEventListener("click", (e) => {
       const btn = e.target.closest(".chip-btn");
       if (!btn) return;
@@ -938,7 +969,6 @@
       const statusTarget = btn.dataset.statusTarget;
       if (!id || !statusTarget) return;
 
-      // Optional tiny confirm on destructive actions
       if (statusTarget === "CANCELLED") {
         const ok = confirm("Cancel this trip?");
         if (!ok) return;
@@ -947,13 +977,23 @@
       updateBookingStatus(id, statusTarget);
     });
 
-    // Pause polling when tab is hidden (battery-friendly)
     document.addEventListener("visibilitychange", () => {
       if (document.hidden) stopPolling();
       else {
         fetchBookings();
         startPolling();
       }
+    });
+
+    // Allow tap on Push pill to re-open prompt if off
+    pushPill.addEventListener("click", () => {
+      OneSignal.isPushNotificationsEnabled(function(enabled) {
+        if (!enabled) {
+          OneSignal.showSlidedownPrompt();
+        } else {
+          showToast("Push notifications are already on.");
+        }
+      });
     });
   });
 </script>
