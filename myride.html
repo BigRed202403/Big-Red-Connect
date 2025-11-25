@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Ride – Big Red Connect</title>
+
+  <!-- 📱 PWA / Icons -->
+  <link rel="apple-touch-icon" href="icon.PNG">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon.png">
+  <link rel="shortcut icon" href="icon.PNG">
+  <link rel="manifest" href="manifest.json">
+  <meta name="apple-mobile-web-app-title" content="Big Red Connect">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="theme-color" content="#000000">
+
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- OneSignal Web SDK -->
+  <script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async=""></script>
+</head>
+
+<body>
+  <!-- Header -->
+  <div class="logo-header">
+    <a href="index.html" title="Return to Home">
+      <img src="official_logo_Nov.png" alt="Big Red Connect Logo" style="cursor:pointer;" />
+    </a>
+  </div>
+
+  <!-- Centered Home Button -->
+  <div class="top-home-btn" style="text-align:center; margin-top:10px; margin-bottom:10px;">
+    <a href="index.html" class="btn secondary">🏠 Home</a>
+  </div>
+
+  <h1>My Ride</h1>
+  <p class="tagline">Track your connection with Big Red in real time.</p>
+
+  <section class="info-section calculator" id="rideSection" style="max-width:700px;margin:0 auto;">
+    <div id="rideError" style="display:none;color:#ff7777;margin-bottom:10px;"></div>
+
+    <div id="rideMeta" style="margin-bottom:15px;display:none;">
+      <p><strong>Ride ID:</strong> <span id="rideId"></span></p>
+      <p><strong>Requested:</strong> <span id="rideRequested"></span></p>
+      <p><strong>Scheduled For:</strong> <span id="rideScheduled"></span></p>
+    </div>
+
+    <div id="rideStatusCard" style="padding:15px;border-radius:10px;background:#111;margin-bottom:15px;">
+      <p style="margin:0;font-size:0.9em;color:#aaa;">Current Status</p>
+      <p id="rideStatusText" style="margin:6px 0 0;font-size:1.3em;font-weight:bold;">Loading…</p>
+    </div>
+
+    <div id="rideAddresses" style="margin-bottom:15px;display:none;">
+      <p><strong>Pickup:</strong><br><span id="ridePickup"></span></p>
+      <p><strong>Stops:</strong><br><span id="rideStops"></span></p>
+      <p><strong>Drop-off:</strong><br><span id="rideDropoff"></span></p>
+    </div>
+
+    <div id="ridePricing" style="margin-bottom:15px;display:none;">
+      <p><strong>Estimated Fare:</strong> $<span id="rideEstimate"></span></p>
+      <p><strong>Travel Fee:</strong> $<span id="rideTravelFee"></span></p>
+      <p><strong>Rate Plan:</strong> <span id="rideRatePlan"></span></p>
+      <p><strong>Distance / Time:</strong> <span id="rideMetrics"></span></p>
+    </div>
+
+    <div style="margin-top:20px;text-align:center;">
+      <a href="sms:+14053784024?&body=Hey%20Big%20Red%20—%20I’m%20checking%20on%20my%20ride."
+         class="btn primary">📲 Text Big Red</a>
+    </div>
+
+    <p style="text-align:center;color:#888;margin-top:12px;font-size:0.9em;">
+      Notifications are enabled so you’ll get updates as your ride moves.
+    </p>
+  </section>
+
+  <footer>
+    <p>&copy; 2025 Big Red Connect — <a href="index.html">Return to Home</a></p>
+  </footer>
+
+  <script>
+    const BOOKING_WORKER_URL = "https://bigred-bookings.bigredtransportation.workers.dev";
+
+    // 1) Pull bookingId from URL
+    const params = new URLSearchParams(window.location.search);
+    const bookingId = params.get("id");
+
+    const rideError    = document.getElementById("rideError");
+    const rideMeta     = document.getElementById("rideMeta");
+    const rideIdSpan   = document.getElementById("rideId");
+    const rideReqSpan  = document.getElementById("rideRequested");
+    const rideSchSpan  = document.getElementById("rideScheduled");
+    const rideStatusEl = document.getElementById("rideStatusText");
+    const rideAddrWrap = document.getElementById("rideAddresses");
+    const ridePickup   = document.getElementById("ridePickup");
+    const rideStops    = document.getElementById("rideStops");
+    const rideDropoff  = document.getElementById("rideDropoff");
+    const ridePricing  = document.getElementById("ridePricing");
+    const rideEstimate = document.getElementById("rideEstimate");
+    const rideTravel   = document.getElementById("rideTravelFee");
+    const rideRatePlan = document.getElementById("rideRatePlan");
+    const rideMetrics  = document.getElementById("rideMetrics");
+
+    if (!bookingId) {
+      rideError.textContent = "No ride information was found. Make sure you opened this from your fare estimate or request link.";
+      rideError.style.display = "block";
+    } else {
+      rideIdSpan.textContent = bookingId;
+      rideMeta.style.display = "block";
+      startBookingPolling();
+    }
+
+    function formatIso(iso) {
+      if (!iso) return "—";
+      const d = new Date(iso);
+      if (Number.isNaN(d.getTime())) return iso;
+      return d.toLocaleString();
+    }
+
+    function statusToFriendly(status) {
+      switch (status) {
+        case "REQUESTED": return "Request Received";
+        case "ACCEPTED":  return "Ride Accepted";
+        case "ENROUTE":   return "Big Red Is On the Way";
+        case "ARRIVED":   return "Big Red Has Arrived";
+        case "ONBOARD":   return "On the Move";
+        case "COMPLETED": return "Ride Complete — Thank You!";
+        case "CANCELLED": return "Ride Cancelled";
+        default:          return status || "Unknown";
+      }
+    }
+
+    async function fetchBooking() {
+      if (!bookingId) return;
+      try {
+        const res = await fetch(`${BOOKING_WORKER_URL}/api/driver/bookings/${bookingId}`, {
+          cache: "no-store"
+        });
+        if (!res.ok) {
+          rideError.textContent = "This ride could not be found. It may have expired or been removed.";
+          rideError.style.display = "block";
+          return;
+        }
+        const b = await res.json();
+
+        // Update status card
+        rideStatusEl.textContent = statusToFriendly(b.status);
+
+        // Basic meta
+        rideReqSpan.textContent = formatIso(b.requestedAt);
+        rideSchSpan.textContent = b.scheduledFor ? formatIso(b.scheduledFor) : "Not scheduled";
+
+        // Addresses
+        ridePickup.textContent = b.pickup?.address || "—";
+        rideDropoff.textContent = b.dropoff?.address || "—";
+        if (Array.isArray(b.stops) && b.stops.length > 0) {
+          rideStops.textContent = b.stops.map(s => s.address || "").filter(Boolean).join(" → ");
+        } else {
+          rideStops.textContent = "None";
+        }
+        rideAddrWrap.style.display = "block";
+
+        // Pricing / metrics
+        if (b.pricing) {
+          rideEstimate.textContent = typeof b.pricing.estimate === "number"
+            ? b.pricing.estimate.toFixed(2)
+            : "—";
+          rideTravel.textContent = typeof b.pricing.travelFee === "number"
+            ? b.pricing.travelFee.toFixed(2)
+            : "0.00";
+          rideRatePlan.textContent = b.pricing.ratePlan || "STANDARD";
+        }
+        if (b.metrics) {
+          const miles = b.metrics.miles != null ? b.metrics.miles : "—";
+          const mins  = b.metrics.minutes != null ? b.metrics.minutes : "—";
+          rideMetrics.textContent = `${miles} mi / ${mins} min`;
+        }
+        ridePricing.style.display = "block";
+
+      } catch (_) {
+        // If offline / transient problem, just show a soft message once
+        if (!rideError.textContent) {
+          rideError.textContent = "Having trouble updating your ride. It will refresh automatically when the connection is back.";
+          rideError.style.display = "block";
+        }
+      }
+    }
+
+    function startBookingPolling() {
+      fetchBooking();
+      setInterval(fetchBooking, 10000); // every 10s
+    }
+
+    // 2) OneSignal auto-prompt + tag bookingId
+    window.OneSignal = window.OneSignal || [];
+    OneSignal.push(function() {
+      OneSignal.init({
+        appId: "YOUR-ONESIGNAL-APP-ID",
+        notifyButton: {
+          enable: false
+        },
+        promptOptions: {
+          slidedown: {
+            autoPrompt: true
+          }
+        }
+      });
+
+      // When the user is subscribed, tag with this bookingId
+      if (bookingId) {
+        OneSignal.on('subscriptionChange', function(isSubscribed) {
+          if (isSubscribed) {
+            OneSignal.sendTag("bookingId", bookingId);
+          }
+        });
+
+        // If already subscribed when page loads, tag immediately
+        OneSignal.isPushNotificationsEnabled(function(isEnabled) {
+          if (isEnabled) {
+            OneSignal.sendTag("bookingId", bookingId);
+          }
+        });
+      }
+    });
+  </script>
+</body>
+</html>
