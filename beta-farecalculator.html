@@ -294,6 +294,16 @@
         log("pickup set via GPS →", addr);
         await maybeShowFairnessNotePreview();
       }else{
+        dropoffLatLng=new google.maps.LatLng(latlng.lat,lng:p.coords.longitude)};
+      const addr=await new Promise(r=>geocoder.geocode({location:latlng},(res,s)=>r(s==="OK"&&res[0]?res[0].formatted_address:`${latlng.lat},${latlng.lng}`)));
+      document.getElementById(id).value = addr;
+      if(id==="pickup"){
+        pickupLatLng=new google.maps.LatLng(latlng.lat,latlng.lng);
+        if(window.pickupMarker) window.pickupMarker.setMap(null);
+        window.pickupMarker=new google.maps.Marker({position:pickupLatLng,map,label:"P"});
+        log("pickup set via GPS →", addr);
+        await maybeShowFairnessNotePreview();
+      }else{
         dropoffLatLng=new google.maps.LatLng(latlng.lat,latlng.lng);
         if(window.dropoffMarker) window.dropoffMarker.setMap(null);
         window.dropoffMarker=new google.maps.Marker({position:dropoffLatLng,map,label:"D"});
@@ -472,7 +482,7 @@
     return dt.toISOString();
   }
 
-  function buildBookingPayload() {
+  function buildBookingPayload(riderName) {
     if (!window.lastQuote) {
       alert("Please calculate a fare first.");
       return null;
@@ -496,7 +506,7 @@
       stops: q.stops.map(addr => ({ address: addr })),
 
       rider: {
-        name: "",   // optional: can prompt later or be filled in admin
+        name: riderName || "",
         phone: "",
         partySize: 1
       },
@@ -522,8 +532,25 @@
     return booking;
   }
 
+  async function ensureRiderName() {
+    try {
+      let stored = (localStorage.getItem("bigred_rider_name") || "").trim();
+      if (stored) return stored;
+
+      const entered = (prompt("Enter your name for Big Red:") || "").trim();
+      if (!entered) return "";
+      localStorage.setItem("bigred_rider_name", entered);
+      return entered;
+    } catch {
+      // localStorage might fail (private mode etc.) – just fall back to prompt-only use.
+      const entered = (prompt("Enter your name for Big Red:") || "").trim();
+      return entered;
+    }
+  }
+
   async function submitBooking() {
-    const booking = buildBookingPayload();
+    const riderName = await ensureRiderName(); // may be "" if they cancel
+    const booking = buildBookingPayload(riderName);
     if (!booking) return;
 
     try {
@@ -556,14 +583,25 @@
     }
   }
 
-  function buildSmsBodyFromLastQuote() {
+  async function buildSmsBodyFromLastQuote() {
+    const name = await ensureRiderName();
+
     if (!window.lastQuote) {
-      return encodeURIComponent("Hey Big Red — I had trouble submitting the form, can you help me plan a ride?");
+      const base = name
+        ? `Hey Big Red — this is ${name}. I had trouble submitting the form, can you help me plan a ride?`
+        : "Hey Big Red — I had trouble submitting the form, can you help me plan a ride?";
+      return encodeURIComponent(base);
     }
+
     const q = window.lastQuote;
     const lines = [];
 
-    lines.push(`Hey Big Red — I had trouble submitting the form, can you help me confirm this ${q.mode === "reserve" ? "reservation" : "ride"}?`);
+    if (name) {
+      lines.push(`Hey Big Red — this is ${name}. I had trouble submitting the form, can you help me confirm this ${q.mode === "reserve" ? "reservation" : "ride"}?`);
+    } else {
+      lines.push(`Hey Big Red — I had trouble submitting the form, can you help me confirm this ${q.mode === "reserve" ? "reservation" : "ride"}?`);
+    }
+
     lines.push(`Estimate: $${q.total.toFixed(2)}`);
     lines.push(`From: ${q.pickup}`);
     if (q.stops && q.stops.length) {
@@ -587,14 +625,14 @@
   }
 
   // Attach handlers for dynamic primary button + SMS fallback
-  document.addEventListener("click", (e) => {
+  document.addEventListener("click", async (e) => {
     if (e.target && e.target.id === "sendUnifiedBtn") {
       e.preventDefault();
-      submitBooking();
+      await submitBooking();
     }
     if (e.target && e.target.id === "smsFallbackLink") {
       e.preventDefault();
-      const body = buildSmsBodyFromLastQuote();
+      const body = await buildSmsBodyFromLastQuote();
       window.location.href = `sms:+14053784024?&body=${body}`;
     }
   });
