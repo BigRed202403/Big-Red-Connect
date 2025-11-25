@@ -5,222 +5,411 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>My Ride – Big Red Connect</title>
 
-  <!-- 📱 PWA / Icons -->
-  <link rel="apple-touch-icon" href="icon.PNG">
+  <!-- PWA / Icons (same style as others) -->
+  <link rel="apple-touch-icon" href="icon.png">
   <link rel="icon" type="image/png" sizes="192x192" href="icon.png">
-  <link rel="shortcut icon" href="icon.PNG">
+  <link rel="shortcut icon" href="icon.png">
   <link rel="manifest" href="manifest.json">
   <meta name="apple-mobile-web-app-title" content="Big Red Connect">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="theme-color" content="#000000">
 
+  <!-- No-cache -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+
   <link rel="stylesheet" href="style.css" />
 
-  <!-- OneSignal Web SDK -->
-  <script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async=""></script>
+  <style>
+    body {
+      background:#000;
+      color:#fff;
+      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      text-align:center;
+    }
+    .info-section {
+      max-width:720px;
+      margin:0 auto 30px;
+      padding:0 12px 20px;
+      text-align:left;
+    }
+    .panel {
+      background:#111;
+      border:1px solid #333;
+      border-radius:10px;
+      padding:14px;
+      margin-top:14px;
+    }
+    .status-chip {
+      display:inline-block;
+      padding:4px 10px;
+      border-radius:999px;
+      font-size:0.85em;
+      font-weight:600;
+      margin-bottom:8px;
+    }
+    .status-REQUESTED { background:#222; color:#fff; }
+    .status-ACCEPTED { background:#004d26; }
+    .status-ENROUTE  { background:#006699; }
+    .status-ARRIVED  { background:#665500; }
+    .status-ONBOARD  { background:#663399; }
+    .status-COMPLETED{ background:#004400; }
+    .status-CANCELLED{ background:#660000; }
+
+    .label {
+      font-size:0.85em;
+      color:#aaa;
+      text-transform:uppercase;
+      letter-spacing:0.03em;
+    }
+    .value {
+      font-size:1em;
+      margin-bottom:4px;
+    }
+    .grid {
+      display:grid;
+      grid-template-columns:1fr;
+      gap:10px;
+      margin-top:8px;
+    }
+    @media (min-width:600px){
+      .grid {
+        grid-template-columns:1fr 1fr;
+      }
+    }
+    input, select {
+      width:100%;
+      padding:8px 10px;
+      border-radius:8px;
+      border:1px solid #444;
+      background:#000;
+      color:#fff;
+      font-size:0.95em;
+    }
+    .btn-row {
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      justify-content:center;
+      margin-top:12px;
+    }
+    .muted {
+      color:#aaa;
+      font-size:0.85em;
+    }
+  </style>
+
+  <!-- OneSignal SDK -->
+  <script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async></script>
 </head>
-
 <body>
-  <!-- Header -->
-  <div class="logo-header">
-    <a href="index.html" title="Return to Home">
-      <img src="official_logo_Nov.png" alt="Big Red Connect Logo" style="cursor:pointer;" />
-    </a>
-  </div>
 
-  <!-- Centered Home Button -->
-  <div class="top-home-btn" style="text-align:center; margin-top:10px; margin-bottom:10px;">
-    <a href="index.html" class="btn secondary">🏠 Home</a>
+  <div class="logo-header">
+    <a href="index.html">
+      <img src="official_logo_Nov.png" alt="Big Red Connect Logo" />
+    </a>
+    <div style="text-align:center;margin:10px 0;">
+      <a href="index.html" class="btn secondary">🏠 Home</a>
+    </div>
   </div>
 
   <h1>My Ride</h1>
   <p class="tagline">Track your connection with Big Red in real time.</p>
 
-  <section class="info-section calculator" id="rideSection" style="max-width:700px;margin:0 auto;">
-    <div id="rideError" style="display:none;color:#ff7777;margin-bottom:10px;"></div>
-
-    <div id="rideMeta" style="margin-bottom:15px;display:none;">
-      <p><strong>Ride ID:</strong> <span id="rideId"></span></p>
-      <p><strong>Requested:</strong> <span id="rideRequested"></span></p>
-      <p><strong>Scheduled For:</strong> <span id="rideScheduled"></span></p>
+  <section class="info-section">
+    <div id="errorBox" class="panel" style="display:none;background:#330000;border-color:#660000;">
+      <p id="errorText"></p>
     </div>
 
-    <div id="rideStatusCard" style="padding:15px;border-radius:10px;background:#111;margin-bottom:15px;">
-      <p style="margin:0;font-size:0.9em;color:#aaa;">Current Status</p>
-      <p id="rideStatusText" style="margin:6px 0 0;font-size:1.3em;font-weight:bold;">Loading…</p>
-    </div>
+    <div id="ridePanel" class="panel" style="display:none;">
+      <div id="statusChipWrap"></div>
+      <p class="muted" id="statusDetail"></p>
 
-    <div id="rideAddresses" style="margin-bottom:15px;display:none;">
-      <p><strong>Pickup:</strong><br><span id="ridePickup"></span></p>
-      <p><strong>Stops:</strong><br><span id="rideStops"></span></p>
-      <p><strong>Drop-off:</strong><br><span id="rideDropoff"></span></p>
-    </div>
+      <div style="margin-top:10px;">
+        <div class="label">Pickup</div>
+        <div class="value" id="pickupVal">—</div>
 
-    <div id="ridePricing" style="margin-bottom:15px;display:none;">
-      <p><strong>Estimated Fare:</strong> $<span id="rideEstimate"></span></p>
-      <p><strong>Travel Fee:</strong> $<span id="rideTravelFee"></span></p>
-      <p><strong>Rate Plan:</strong> <span id="rideRatePlan"></span></p>
-      <p><strong>Distance / Time:</strong> <span id="rideMetrics"></span></p>
-    </div>
+        <div class="label">Drop-off</div>
+        <div class="value" id="dropoffVal">—</div>
 
-    <div style="margin-top:20px;text-align:center;">
-      <a href="sms:+14053784024?&body=Hey%20Big%20Red%20—%20I’m%20checking%20on%20my%20ride."
-         class="btn primary">📲 Text Big Red</a>
-    </div>
+        <div class="grid">
+          <div>
+            <div class="label">When</div>
+            <div class="value" id="whenVal">—</div>
+          </div>
+          <div>
+            <div class="label">Estimate</div>
+            <div class="value" id="estimateVal">—</div>
+          </div>
+        </div>
+      </div>
 
-    <p style="text-align:center;color:#888;margin-top:12px;font-size:0.9em;">
-      Notifications are enabled so you’ll get updates as your ride moves.
-    </p>
+      <hr style="border-color:#333;margin:12px 0;">
+
+      <div>
+        <h3 style="margin:0 0 8px;font-size:1rem;">Your Details</h3>
+        <div class="grid">
+          <div>
+            <div class="label">Your Name</div>
+            <input id="riderName" type="text" placeholder="First name or nickname" />
+          </div>
+          <div>
+            <div class="label">Passengers</div>
+            <input id="partySize" type="number" min="1" max="8" value="1" />
+          </div>
+        </div>
+        <div style="text-align:right;margin-top:8px;">
+          <button class="btn secondary" id="saveRiderBtn">💾 Save Rider Info</button>
+        </div>
+        <p class="muted" id="riderSavedNote" style="display:none;margin-top:6px;">
+          ✅ Saved — Big Red can see your name and party size.
+        </p>
+      </div>
+
+      <hr style="border-color:#333;margin:12px 0;">
+
+      <div>
+        <h3 style="margin:0 0 8px;font-size:1rem;">Live Updates</h3>
+        <p class="muted">
+          You’ll get a notification when your status changes
+          (accepted, on the way, arrived, onboard, completed).
+        </p>
+      </div>
+
+      <div class="btn-row">
+        <a href="#" id="textRedBtn" class="btn primary">📲 Text Big Red</a>
+      </div>
+
+      <p class="muted" style="margin-top:10px;">
+        No surprises. Just solid local moves.
+      </p>
+    </div>
   </section>
 
-  <footer>
-    <p>&copy; 2025 Big Red Connect — <a href="index.html">Return to Home</a></p>
+  <footer style="margin-top:10px;">
+    <p>&copy; 2025 Big Red Connect — Veteran Owned • Affordable • Local • Trusted</p>
   </footer>
 
   <script>
     const BOOKING_WORKER_URL = "https://bigred-bookings.bigredtransportation.workers.dev";
 
-    // 1) Pull bookingId from URL
-    const params = new URLSearchParams(window.location.search);
-    const bookingId = params.get("id");
+    let bookingId = null;
+    let currentBooking = null;
 
-    const rideError    = document.getElementById("rideError");
-    const rideMeta     = document.getElementById("rideMeta");
-    const rideIdSpan   = document.getElementById("rideId");
-    const rideReqSpan  = document.getElementById("rideRequested");
-    const rideSchSpan  = document.getElementById("rideScheduled");
-    const rideStatusEl = document.getElementById("rideStatusText");
-    const rideAddrWrap = document.getElementById("rideAddresses");
-    const ridePickup   = document.getElementById("ridePickup");
-    const rideStops    = document.getElementById("rideStops");
-    const rideDropoff  = document.getElementById("rideDropoff");
-    const ridePricing  = document.getElementById("ridePricing");
-    const rideEstimate = document.getElementById("rideEstimate");
-    const rideTravel   = document.getElementById("rideTravelFee");
-    const rideRatePlan = document.getElementById("rideRatePlan");
-    const rideMetrics  = document.getElementById("rideMetrics");
-
-    if (!bookingId) {
-      rideError.textContent = "No ride information was found. Make sure you opened this from your fare estimate or request link.";
-      rideError.style.display = "block";
-    } else {
-      rideIdSpan.textContent = bookingId;
-      rideMeta.style.display = "block";
-      startBookingPolling();
+    function showError(msg) {
+      const box = document.getElementById("errorBox");
+      const text = document.getElementById("errorText");
+      text.textContent = msg;
+      box.style.display = "block";
+      document.getElementById("ridePanel").style.display = "none";
     }
 
-    function formatIso(iso) {
-      if (!iso) return "—";
-      const d = new Date(iso);
-      if (Number.isNaN(d.getTime())) return iso;
-      return d.toLocaleString();
+    function fmtDateTime(iso) {
+      if (!iso) return "As soon as possible";
+      const dt = new Date(iso);
+      return dt.toLocaleString("en-US", {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit"
+      });
     }
 
-    function statusToFriendly(status) {
+    function fmtEstimate(booking) {
+      const est = booking.pricing?.estimate;
+      if (typeof est === "number") {
+        return `$${est.toFixed(2)} (estimate)`;
+      }
+      return "TBD";
+    }
+
+    function statusDetailText(status, booking) {
       switch (status) {
-        case "REQUESTED": return "Request Received";
-        case "ACCEPTED":  return "Ride Accepted";
-        case "ENROUTE":   return "Big Red Is On the Way";
-        case "ARRIVED":   return "Big Red Has Arrived";
-        case "ONBOARD":   return "On the Move";
-        case "COMPLETED": return "Ride Complete — Thank You!";
-        case "CANCELLED": return "Ride Cancelled";
-        default:          return status || "Unknown";
+        case "REQUESTED":
+          return "Your request is in — Big Red is reviewing it.";
+        case "ACCEPTED":
+          return "Your ride has been accepted and will be scheduled.";
+        case "ENROUTE":
+          return "Big Red is on the way to your pickup.";
+        case "ARRIVED":
+          return "Big Red is at or very close to your pickup point.";
+        case "ONBOARD":
+          return "You’re on the move. Ride in progress.";
+        case "COMPLETED":
+          return "Your ride is completed. Thank you for riding local!";
+        case "CANCELLED":
+          return "This ride was cancelled.";
+        default:
+          return "Status updated.";
       }
     }
 
-    async function fetchBooking() {
-      if (!bookingId) return;
+    function renderBooking(booking) {
+      currentBooking = booking;
+
+      const status = booking.status || "REQUESTED";
+      const chipWrap = document.getElementById("statusChipWrap");
+      chipWrap.innerHTML = "";
+
+      const chip = document.createElement("span");
+      chip.className = "status-chip status-" + status;
+      chip.textContent = status;
+      chipWrap.appendChild(chip);
+
+      document.getElementById("statusDetail").textContent = statusDetailText(status, booking);
+
+      document.getElementById("pickupVal").textContent = booking.pickup?.address || "—";
+      document.getElementById("dropoffVal").textContent = booking.dropoff?.address || "—";
+
+      const when = booking.scheduledFor || booking.requestedAt;
+      document.getElementById("whenVal").textContent = fmtDateTime(when);
+      document.getElementById("estimateVal").textContent = fmtEstimate(booking);
+
+      document.getElementById("riderName").value = booking.rider?.name || "";
+      document.getElementById("partySize").value =
+        typeof booking.rider?.partySize === "number" && booking.rider.partySize > 0
+          ? booking.rider.partySize
+          : 1;
+
+      // Text link with a little context
+      const textBtn = document.getElementById("textRedBtn");
+      const baseMsg = `Hey Big Red — this is a rider checking on booking ${booking.id}. Current status: ${status}.`;
+      const smsBody = encodeURIComponent(baseMsg);
+      textBtn.href = `sms:+14053784024?&body=${smsBody}`;
+
+      document.getElementById("ridePanel").style.display = "block";
+      document.getElementById("errorBox").style.display = "none";
+    }
+
+    async function loadBooking() {
+      if (!bookingId) {
+        showError("Missing ride link. Please check the link you were sent.");
+        return;
+      }
       try {
-        const res = await fetch(`${BOOKING_WORKER_URL}/api/driver/bookings/${bookingId}`, {
-          cache: "no-store"
-        });
+        const res = await fetch(
+          BOOKING_WORKER_URL + "/api/driver/bookings/" + encodeURIComponent(bookingId),
+          { cache: "no-store" }
+        );
         if (!res.ok) {
-          rideError.textContent = "This ride could not be found. It may have expired or been removed.";
-          rideError.style.display = "block";
+          showError("Could not find this ride. It may have expired or been removed.");
           return;
         }
-        const b = await res.json();
-
-        // Update status card
-        rideStatusEl.textContent = statusToFriendly(b.status);
-
-        // Basic meta
-        rideReqSpan.textContent = formatIso(b.requestedAt);
-        rideSchSpan.textContent = b.scheduledFor ? formatIso(b.scheduledFor) : "Not scheduled";
-
-        // Addresses
-        ridePickup.textContent = b.pickup?.address || "—";
-        rideDropoff.textContent = b.dropoff?.address || "—";
-        if (Array.isArray(b.stops) && b.stops.length > 0) {
-          rideStops.textContent = b.stops.map(s => s.address || "").filter(Boolean).join(" → ");
-        } else {
-          rideStops.textContent = "None";
-        }
-        rideAddrWrap.style.display = "block";
-
-        // Pricing / metrics
-        if (b.pricing) {
-          rideEstimate.textContent = typeof b.pricing.estimate === "number"
-            ? b.pricing.estimate.toFixed(2)
-            : "—";
-          rideTravel.textContent = typeof b.pricing.travelFee === "number"
-            ? b.pricing.travelFee.toFixed(2)
-            : "0.00";
-          rideRatePlan.textContent = b.pricing.ratePlan || "STANDARD";
-        }
-        if (b.metrics) {
-          const miles = b.metrics.miles != null ? b.metrics.miles : "—";
-          const mins  = b.metrics.minutes != null ? b.metrics.minutes : "—";
-          rideMetrics.textContent = `${miles} mi / ${mins} min`;
-        }
-        ridePricing.style.display = "block";
-
-      } catch (_) {
-        // If offline / transient problem, just show a soft message once
-        if (!rideError.textContent) {
-          rideError.textContent = "Having trouble updating your ride. It will refresh automatically when the connection is back.";
-          rideError.style.display = "block";
-        }
+        const booking = await res.json();
+        renderBooking(booking);
+      } catch (err) {
+        showError("Network error loading your ride. Please try again.");
       }
     }
 
-    function startBookingPolling() {
-      fetchBooking();
-      setInterval(fetchBooking, 10000); // every 10s
+    async function saveRiderInfo() {
+      if (!bookingId) return;
+      const name = document.getElementById("riderName").value.trim();
+      const partySizeRaw = document.getElementById("partySize").value;
+      let partySize = parseInt(partySizeRaw, 10);
+      if (!Number.isFinite(partySize) || partySize < 1) partySize = 1;
+
+      try {
+        const res = await fetch(
+          BOOKING_WORKER_URL + "/api/bookings/" + encodeURIComponent(bookingId),
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              rider: {
+                name,
+                partySize
+              }
+            })
+          }
+        );
+        if (!res.ok) {
+          console.log("Rider update failed");
+          return;
+        }
+        const updated = await res.json();
+        renderBooking(updated);
+        const note = document.getElementById("riderSavedNote");
+        note.style.display = "block";
+        setTimeout(() => (note.style.display = "none"), 4000);
+      } catch (err) {
+        console.log("Rider update error", err);
+      }
     }
 
-    // 2) OneSignal auto-prompt + tag bookingId
+    async function attachPushToBooking(pushId) {
+      if (!bookingId || !pushId) return;
+      try {
+        await fetch(
+          BOOKING_WORKER_URL + "/api/bookings/" + encodeURIComponent(bookingId),
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              rider: {
+                pushId: pushId
+              }
+            })
+          }
+        );
+      } catch (err) {
+        console.log("push attach failed", err);
+      }
+    }
+
+    function startPolling() {
+      setInterval(loadBooking, 20000); // every 20s
+    }
+
+    // Init logic
+    document.addEventListener("DOMContentLoaded", () => {
+      const url = new URL(window.location.href);
+      bookingId = url.searchParams.get("id");
+
+      if (!bookingId) {
+        showError("This ride link is missing an ID. Please ask Big Red to resend your link.");
+        return;
+      }
+
+      // Button handlers
+      document.getElementById("saveRiderBtn").addEventListener("click", saveRiderInfo);
+
+      loadBooking();
+      startPolling();
+    });
+
+    // OneSignal wiring
     window.OneSignal = window.OneSignal || [];
     OneSignal.push(function() {
       OneSignal.init({
-        appId: "YOUR-ONESIGNAL-APP-ID",
-        notifyButton: {
-          enable: false
-        },
-        promptOptions: {
-          slidedown: {
-            autoPrompt: true
-          }
+        appId: "64641a89-3619-4491-a25b-c0ab000bdfe0",  // 🔁 REPLACE with your actual OneSignal app ID
+        notifyButton: { enable: false },
+        allowLocalhostAsSecureOrigin: true
+      });
+
+      // Ask user if they want notifications (if not already granted)
+      OneSignal.showSlidedownPrompt();
+
+      // Once ready / subscribed, grab player id and attach it
+      OneSignal.on("subscriptionChange", function(isSubscribed) {
+        if (isSubscribed) {
+          OneSignal.getUserId().then(function(playerId) {
+            if (playerId) {
+              attachPushToBooking(playerId);
+            }
+          });
         }
       });
 
-      // When the user is subscribed, tag with this bookingId
-      if (bookingId) {
-        OneSignal.on('subscriptionChange', function(isSubscribed) {
-          if (isSubscribed) {
-            OneSignal.sendTag("bookingId", bookingId);
-          }
-        });
-
-        // If already subscribed when page loads, tag immediately
-        OneSignal.isPushNotificationsEnabled(function(isEnabled) {
-          if (isEnabled) {
-            OneSignal.sendTag("bookingId", bookingId);
-          }
-        });
-      }
+      // Also try once on load in case they were already subscribed
+      OneSignal.getUserId().then(function(playerId) {
+        if (playerId) {
+          attachPushToBooking(playerId);
+        }
+      });
     });
   </script>
 </body>
