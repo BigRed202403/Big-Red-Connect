@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Fare Calculator – Big Red Connect</title>
+
+  <!-- 📱 PWA / Icons -->
+  <link rel="apple-touch-icon" href="icon.PNG">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon.png">
+  <link rel="shortcut icon" href="icon.PNG">
+  <link rel="manifest" href="manifest.json">
+  <meta name="apple-mobile-web-app-title" content="Big Red Connect">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="theme-color" content="#000000">
+
+  <!-- No cache -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- Google Maps -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places,geometry&callback=initGoogle" async defer></script>
+</head>
+
+<body>
+
+  <!-- Header -->
+  <div class="logo-header">
+    <a href="index.html" title="Return to Home">
+      <img src="official_logo_Nov.png" alt="Big Red Connect Logo" style="cursor:pointer;" />
+    </a>
+  </div>
+
+  <!-- Centered Home Button -->
+  <div class="top-home-btn" style="text-align:center; margin-top:10px; margin-bottom:10px;">
+    <a href="index.html" class="btn secondary">🏠 Home</a>
+  </div>
+
+  <h1>Fare Calculator</h1>
+  <p class="tagline">Plan your next ride connection — quick, simple, and local.</p>
+
+  <div id="status-pill" class="status">Checking status…</div>
+
+  <section class="info-section calculator">
+    <div class="ride-mode-toggle" aria-label="Choose ride mode">
+      <button id="modeNow" class="btn btn-toggle active" type="button">🚗 Ride Now</button>
+      <button id="modeReserve" class="btn btn-toggle" type="button">🕒 Reserve Ride</button>
+    </div>
+
+    <div id="reserveControls" style="display:none;">
+      <label for="reserveDate">Date</label>
+      <input id="reserveDate" type="date" />
+      <label for="reserveTime">Time</label>
+      <input id="reserveTime" type="time" />
+      <label for="planBy">Plan By</label>
+      <select id="planBy">
+        <option value="pickup">Pickup Time</option>
+        <option value="dropoff">Drop-Off Time</option>
+      </select>
+      <div id="reserveHint" style="color:#ccc;font-size:0.9em;margin:6px 0 10px;">
+        Choose a date/time. Rush hour auto-applies if the pickup is a weekday 5–9 AM or 3–7 PM.
+      </div>
+    </div>
+
+    <label for="pickup">Pickup Location</label>
+    <input id="pickup" type="text" placeholder="Enter pickup address or place" />
+    <button id="useLocPickup" class="btn primary" type="button" style="margin-top:8px;">📍 Use My Location for Pickup</button>
+
+    <div id="stopsWrap"></div>
+    <button id="addStopBtn" class="btn primary" type="button">➕ Add Stop</button>
+
+    <label for="dropoff">Drop-off Location</label>
+    <input id="dropoff" type="text" placeholder="Enter drop-off address or place" />
+    <button id="useLocDrop" class="btn secondary" type="button" style="margin-top:8px;">📍 Use My Location for Drop-off</button>
+
+    <div id="map" style="height:250px;margin-top:15px;border-radius:10px;"></div>
+
+    <div id="airport-note"></div>
+    <div id="event-note"></div>
+    <div id="rushhour-note"></div>
+    <div id="fairness-note"></div>
+
+    <select id="tripType" style="display:none;">
+      <option value="10">Standard ($10 base)</option>
+      <option value="15">Rush Hour ($15 base)</option>
+      <option value="15_airport">Airport ($15 base)</option>
+      <option value="20">Special Event ($20 base)</option>
+    </select>
+
+    <label for="payment">Payment Method</label>
+    <select id="payment">
+      <option value="cash">Cash / Venmo / Cash App (no fees)</option>
+      <option value="card">Card (+3.3% booking + 2.4% fuel)</option>
+    </select>
+
+    <button class="btn primary" id="calcBtn" style="display:block;margin:20px auto;">💲 Calculate Fare</button>
+
+    <div id="text-red-wrapper" style="margin-top:10px;text-align:center;">
+      <a href="sms:+14053784024?&body=Hey%20Big%20Red%20—%20I’d%20like%20to%20plan%20a%20ride%20connection." class="btn secondary">📲 Text RED</a>
+    </div>
+
+    <div id="result" style="display:none;"></div>
+    <p class="disclaimer">*Estimates only. Final fare may vary slightly based on route or wait time.</p>
+  </section>
+
+  <footer>
+    <p>&copy; 2025 Big Red Connect — <a href="index.html">Return to Home</a></p>
+  </footer>
+
+  <script src="status.js"></script>
+  <script>
+  const log = (...a)=>console.log(new Date().toLocaleTimeString(),"[FAIR]",...a);
+
+  const HQ = { lat: 35.3207, lng: -97.4929 };
+  const WORKER_URL = "https://location-reader.bigredtransportation.workers.dev"; // ✅ reader endpoint
+  const BOOKING_WORKER_URL = "https://bigred-bookings.bigredtransportation.workers.dev"; // 🌐 bookings API
+  const STALE_MINUTES = 60;
+
+  let map, geocoder, directionsService, directionsRenderer;
+  let pickupLatLng = null, dropoffLatLng = null, pickupPlace = null, dropPlace = null;
+  let driverPos = null, driverSource = "HQ";
+  let mode = "now", EVENT_VENUES = null;
+
+  function isValidCoords(o){return o&&typeof o.lat==="number"&&typeof o.lng==="number"&&!isNaN(o.lat)&&!isNaN(o.lng);}
+  function distMi(a,b){return google.maps.geometry.spherical.computeDistanceBetween(new google.maps.LatLng(a.lat,a.lng),new google.maps.LatLng(b.lat,b.lng))/1609.34;}
+  function weekdayRushHour(d){const day=d.getDay(),h=d.getHours();return day>=1&&day<=5&&((h>=5&&h<9)||(h>=15&&h<19));}
+
+  // --- Handoff & auto-fill
+  window.addEventListener("DOMContentLoaded", async () => {
+    try {
+      const url = new URL(window.location.href);
+      const drop = url.searchParams.get("dropoff");
+      if (drop) document.getElementById("dropoff").value = drop;
+
+      const saved = localStorage.getItem("bigred_last_rider");
+      if (saved) {
+        const { address, lat, lng, timestamp } = JSON.parse(saved);
+        const ageMin = (Date.now() - timestamp) / 60000;
+        if (ageMin <= 15) {
+          const input = document.getElementById("pickup");
+          input.value = address ? address : `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+          const msg = document.createElement("div");
+          msg.textContent = "✅ Pickup auto-filled from your recent ETA check.";
+          msg.style.cssText = "background:#112;color:#9f9;padding:8px;border-radius:6px;font-size:.9em;margin-bottom:10px;text-align:center;";
+          input.parentNode.insertBefore(msg, input);
+          setTimeout(() => msg.remove(), 6000);
+          log("handoff loaded →", address || `${lat},${lng}`, "age(min):", Math.round(ageMin));
+          // Force geocode of the pickup so fairness fee can run even if user doesn't edit the field
+          await ensurePickupLatLngFromCurrentInput();
+        }
+      }
+    } catch (e) { log("handoff load err", e?.message); }
+  });
+
+  window.initGoogle = async function () {
+    geocoder = new google.maps.Geocoder();
+    directionsService = new google.maps.DirectionsService();
+    directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers: true });
+    map = new google.maps.Map(document.getElementById("map"), { center: { lat:35.4676, lng:-97.5164 }, zoom: 11 });
+    directionsRenderer.setMap(map);
+
+    const acPickup = new google.maps.places.Autocomplete(document.getElementById("pickup"));
+    const acDrop   = new google.maps.places.Autocomplete(document.getElementById("dropoff"));
+
+    acPickup.addListener("place_changed", async () => {
+      const p = acPickup.getPlace(); if (!p.geometry) return;
+      pickupPlace = p; pickupLatLng = p.geometry.location;
+      if (window.pickupMarker) window.pickupMarker.setMap(null);
+      window.pickupMarker = new google.maps.Marker({ position: pickupLatLng, map, label:"P" });
+      map.setCenter(pickupLatLng);
+      log("pickup set via autocomplete →", p.formatted_address || p.name);
+      await maybeShowFairnessNotePreview();
+    });
+
+    acDrop.addListener("place_changed", async () => {
+      const p = acDrop.getPlace(); if (!p.geometry) return;
+      dropPlace = p; dropoffLatLng = p.geometry.location;
+      if (window.dropoffMarker) window.dropoffMarker.setMap(null);
+      window.dropoffMarker = new google.maps.Marker({ position: dropoffLatLng, map, label:"D" });
+      map.panTo(dropoffLatLng);
+      log("dropoff set via autocomplete →", p.formatted_address || p.name);
+    });
+
+    document.getElementById("modeNow").onclick = () => setMode("now");
+    document.getElementById("modeReserve").onclick = () => setMode("reserve");
+    document.getElementById("calcBtn").onclick = calculateFare;
+    document.getElementById("addStopBtn").onclick = addStopField;
+    document.getElementById("useLocPickup").onclick = () => useMyLocation("pickup");
+    document.getElementById("useLocDrop").onclick = () => useMyLocation("dropoff");
+
+    smartRideTypeDefault();
+    await getDriverLocation();
+    await maybeShowFairnessNotePreview(); // show hint if we already have pickup from handoff
+  };
+
+  function setMode(m){
+    mode=m;
+    const now=document.getElementById("modeNow"),res=document.getElementById("modeReserve"),ctr=document.getElementById("reserveControls");
+    if(m==="now"){now.classList.add("active");res.classList.remove("active");ctr.style.display="none";smartRideTypeDefault();}
+    else{res.classList.add("active");now.classList.remove("active");ctr.style.display="block";}
+  }
+  function smartRideTypeDefault(){
+    const now=new Date();
+    if(weekdayRushHour(now)){
+      setTripType("15"); document.getElementById("rushhour-note").innerHTML="🚦 Weekday Rush Hour pricing (5–9 AM / 3–7 PM)";
+    }else{
+      if(document.getElementById("tripType").value!=="15_airport"&&document.getElementById("tripType").value!=="20"){ setTripType("10"); }
+      document.getElementById("rushhour-note").innerHTML="";
+    }
+  }
+  function setTripType(v){ document.getElementById("tripType").value=v; }
+
+  async function getDriverLocation(){
+    try{
+      const r = await fetch(WORKER_URL+"?n="+Date.now(),{cache:"no-store"});
+      const j = await r.json();
+      const lat = parseFloat(j.latitude), lng = parseFloat(j.longitude);
+      const t = j.timestamp ? new Date(j.timestamp) : null;
+      const age = t ? (Date.now()-t.getTime())/60000 : 999;
+      if (!isNaN(lat) && !isNaN(lng) && age <= STALE_MINUTES){
+        driverPos = {lat,lng}; driverSource="live";
+      } else {
+        driverPos = HQ; driverSource="HQ";
+      }
+    }catch{
+      driverPos = HQ; driverSource="HQ";
+    }
+    log("driver source:", driverSource, "→", driverPos);
+  }
+
+  async function ensurePickupLatLngFromCurrentInput(){
+    const val = document.getElementById("pickup").value.trim();
+    if (!val) return;
+    return new Promise((resolve) => {
+      geocoder.geocode({ address: val }, (res, s) => {
+        if (s === "OK" && res?.[0]) {
+          pickupLatLng = res[0].geometry.location;
+          if (window.pickupMarker) window.pickupMarker.setMap(null);
+          window.pickupMarker = new google.maps.Marker({ position: pickupLatLng, map, label:"P" });
+          log("pickup geocoded from input →", val);
+        } else {
+          log("pickup geocode failed for input →", val);
+        }
+        resolve();
+      });
+    });
+  }
+
+  function addStopField(){
+    if ((window.stopInputs||[]).length>=3){alert("Limit 3 stops.");return;}
+    if(!window.stopInputs) window.stopInputs=[];
+    const id=`stop_${Date.now()}`; window.stopInputs.push(id);
+    const wrap=document.getElementById("stopsWrap");
+    const div=document.createElement("div");
+    div.className="stop-row"; div.id=`row_${id}`;
+    div.innerHTML=`<label for="${id}">Stop ${window.stopInputs.length}</label>
+    <div style="display:flex;gap:6px;align-items:center;"><input id="${id}" type="text" placeholder="Enter stop address or place" style="flex:1;">
+    <button type="button" class="remove-stop" onclick="removeStop('${id}')">✖</button></div>`;
+    wrap.appendChild(div);
+    new google.maps.places.Autocomplete(document.getElementById(id));
+  }
+  function removeStop(id){
+    document.getElementById(`row_${id}`)?.remove();
+    window.stopInputs=(window.stopInputs||[]).filter(s=>s!==id);
+    document.querySelectorAll("#stopsWrap label").forEach((l,i)=>l.textContent=`Stop ${i+1}`);
+  }
+
+  async function useMyLocation(id){
+    if(!navigator.geolocation){alert("Location not supported.");return;}
+    navigator.geolocation.getCurrentPosition(async (p)=>{
+      const latlng={lat:p.coords.latitude,lng:p.coords.longitude};
+      const addr=await new Promise(r=>geocoder.geocode({location:latlng},(res,s)=>r(s==="OK"&&res[0]?res[0].formatted_address:`${latlng.lat},${latlng.lng}`)));
+      document.getElementById(id).value = addr;
+      if(id==="pickup"){
+        pickupLatLng=new google.maps.LatLng(latlng.lat,latlng.lng);
+        if(window.pickupMarker) window.pickupMarker.setMap(null);
+        window.pickupMarker=new google.maps.Marker({position:pickupLatLng,map,label:"P"});
+        log("pickup set via GPS →", addr);
+        await maybeShowFairnessNotePreview();
+      }else{
+        dropoffLatLng=new google.maps.LatLng(latlng.lat,lng:latlng.lng);
+        dropoffLatLng=new google.maps.LatLng(latlng.lat,latlng.lng);
+        if(window.dropoffMarker) window.dropoffMarker.setMap(null);
+        window.dropoffMarker=new google.maps.Marker({position:dropoffLatLng,map,label:"D"});
+        log("dropoff set via GPS →", addr);
+      }
+    });
+  }
+
+  // 🔧 Refined fairness thresholds (driver reference → pickup):
+  //   <=20 mi: $0   |  >20–40 mi: $10   |   >40 mi: $20
+  function calcFairnessFee(ref, pLL){
+    if(!pLL || !ref) return 0;
+    const d = distMi(ref, {lat:pLL.lat(), lng:pLL.lng()});
+    let fee = 0;
+    if (d > 40) fee = 20;
+    else if (d > 20) fee = 10;
+    log(`driver→pickup ${d.toFixed(1)} mi → fairness $${fee}`);
+    return fee;
+  }
+
+  async function maybeShowFairnessNotePreview(){
+    if(!pickupLatLng){ document.getElementById("fairness-note").innerHTML=""; return; }
+    await getDriverLocation();
+    const ref = isValidCoords(driverPos)? driverPos : HQ;
+    const d = distMi(ref, {lat:pickupLatLng.lat(), lng:pickupLatLng.lng()});
+    let msg="";
+    if (d > 40) msg = "A travel fairness fee may apply ($20 zone).";
+    else if (d > 20) msg = "A small travel fairness fee may apply ($10 zone).";
+    document.getElementById("fairness-note").innerHTML = msg || "";
+  }
+
+  async function calculateFare(){
+    const pickup=document.getElementById("pickup").value.trim(),
+          dropoff=document.getElementById("dropoff").value.trim();
+    if(!pickup||!dropoff){ alert("Please enter both pickup and drop-off."); return; }
+
+    // Ensure pickupLatLng exists even when pickup came from handoff text
+    if (!pickupLatLng) { await ensurePickupLatLngFromCurrentInput(); }
+
+    await getDriverLocation();
+    const ref = isValidCoords(driverPos)? driverPos : HQ;
+
+    // Build waypoints from stops
+    const stops=[];
+    for(const id of window.stopInputs||[]){
+      const v=document.getElementById(id)?.value.trim();
+      if(v) stops.push({location:v,stopover:true});
+    }
+
+    const route=await new Promise((res,rej)=>directionsService.route(
+      {origin:pickup,destination:dropoff,waypoints:stops,travelMode:"DRIVING"},
+      (r,s)=>s==="OK"?res(r):rej(s)
+    ));
+
+    directionsRenderer.setDirections(route);
+    const legs=route.routes[0].legs;
+    const rawMiles=legs.reduce((m,l)=>m+(l.distance?.value||0),0)/1609.34;
+    const miles=Math.round(rawMiles);
+    const duration=legs.reduce((t,l)=>t+(l.duration?.value||0),0)/60;
+
+    // Priority base logic
+    const combo=((pickupPlace?.name||"")+(pickupPlace?.formatted_address||"")+(dropPlace?.name||"")+(dropPlace?.formatted_address||"")).toLowerCase();
+    const isAirport=(combo.includes("airport") && !combo.includes("tinker"));
+    let base = isAirport ? 15 : 10;
+    const now=new Date();
+    if(!isAirport && weekdayRushHour(now)) base = 15;
+
+    // Event area check (best-effort)
+    try{
+      if (!EVENT_VENUES) {
+        const r=await fetch("event-venues.json",{cache:"no-store"});
+        EVENT_VENUES=await r.json();
+      }
+      const inRad=(pt,c,r)=>distMi(c,pt)<=r;
+      let inside=null;
+      if(pickupLatLng){
+        const p={lat:pickupLatLng.lat(),lng:pickupLatLng.lng()};
+        for(const v of (EVENT_VENUES.venues||[])){ if(inRad(p,{lat:v.lat,lng:v.lng},v.radius_mi)){inside=v;break;} }
+      }
+      if(!inside && dropoffLatLng){
+        const d={lat:dropoffLatLng.lat(),lng:dropoffLatLng.lng()};
+        for(const v of (EVENT_VENUES.venues||[])){ if(inRad(d,{lat:v.lat,lng:v.lng},v.radius_mi)){inside=v;break;} }
+      }
+      if(inside){ base = 20; log("event zone →", inside.name); }
+    }catch(_){/* ignore */ }
+
+    // Mileage tiers
+    const tier2=Math.max(0,Math.min(10,miles-10))*1.25;
+    const tier3=Math.max(0,miles-20)*1.0;
+    const milesSub=tier2+tier3;
+
+    // Fairness fee (driver→pickup)
+    const fair=calcFairnessFee(ref, pickupLatLng);
+
+    let fare=base+milesSub+fair;
+    const pay=document.getElementById("payment").value;
+    if(pay==="card") fare += fare*0.033 + fare*0.024;
+
+    const total=fare.toFixed(2);
+    log(`fare breakdown → base:$${base.toFixed(2)} miles:$${milesSub.toFixed(2)} fairness:$${fair.toFixed(2)} pay:${pay} total:$${total}`);
+
+    // 🔹 Save last quote details for booking / reservation submission
+    window.lastQuote = {
+      mode,
+      pickup,
+      dropoff,
+      stops: (window.stopInputs || []).map(id => {
+        const v = document.getElementById(id)?.value.trim();
+        return v ? v : null;
+      }).filter(Boolean),
+      miles,
+      minutes: Math.round(duration),
+      base,
+      mileageComponent: milesSub,
+      fairnessFee: fair,
+      payMethod: pay,
+      total: parseFloat(total),
+      isAirport,
+      reserveDate: document.getElementById("reserveDate")?.value || null,
+      reserveTime: document.getElementById("reserveTime")?.value || null,
+      planBy: document.getElementById("planBy")?.value || "pickup"
+    };
+
+    const resDiv=document.getElementById("result");
+    resDiv.innerHTML=`<div class="total">$${total}</div>
+      <p><strong>Base:</strong> $${base.toFixed(2)}</p>
+      <p><strong>Mileage:</strong> $${milesSub.toFixed(2)}</p>
+      ${fair>0?`<p><strong>Travel Fairness Fee:</strong> $${fair.toFixed(2)}</p>`:""}
+      <p><strong>Payment:</strong> ${pay==="card"?"Card (incl. fees)":"Cash / Venmo / Cash App"}</p>
+      <p>📏 ${miles} mi  ⏱️ ${Math.round(duration)} min</p>
+      <p style="text-align:center;margin-top:15px;">
+        <button class="btn primary" id="textRedBtn">📲 Text RED with Trip Details</button>
+      </p>
+      <p style="text-align:center;margin-top:8px;">
+        <button class="btn secondary" id="sendRequestBtn">
+          ${mode === "reserve" ? "🕒 Send Reservation Request" : "📩 Send Ride Request to Big Red"}
+        </button>
+      </p>
+      <p style="text-align:center;color:#888;margin-top:10px;">No surprises. Just solid local moves.</p>`;
+    resDiv.style.display="block";
+
+    document.getElementById("textRedBtn").onclick=()=>{
+      const name=prompt("Enter your name for Big Red:");
+      const lines=[];
+      lines.push(`Hey Big Red — this is ${name||"a rider"}.`);
+      lines.push(`Ride estimate: $${total}`);
+      lines.push(`From: ${pickup}`);
+      if(stops.length) lines.push(`Stops: ${stops.map(s=>s.location).join(" → ")}`);
+      lines.push(`To: ${dropoff}`);
+      lines.push(`Distance: ${miles} mi`);
+      lines.push(`Time: ${Math.round(duration)} min`);
+      if(fair>0) lines.push(`Includes travel fairness fee: $${fair.toFixed(2)}.`);
+      if(isAirport) lines.push("(Airport base applied)");
+      const routeLink=`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(pickup)}&destination=${encodeURIComponent(dropoff)}`;
+      lines.push(`Route: ${routeLink}`);
+      lines.push("No surprises. Just solid local moves.");
+      const smsBody=encodeURIComponent(lines.join(" "));
+      window.location.href=`sms:+14053784024?&body=${smsBody}`;
+    };
+  }
+
+  // =====================================================
+  //  BOOKING SUBMISSION → Big Red Bookings Worker
+  // =====================================================
+
+  function buildScheduledFor(quote) {
+    if (quote.mode !== "reserve") return null;
+    if (!quote.reserveDate || !quote.reserveTime) return null;
+
+    const partsDate = quote.reserveDate.split("-");
+    const partsTime = quote.reserveTime.split(":");
+    if (partsDate.length !== 3 || partsTime.length !== 2) return null;
+
+    const year = Number(partsDate[0]);
+    const month = Number(partsDate[1]);
+    const day = Number(partsDate[2]);
+    const h = Number(partsTime[0]);
+    const m = Number(partsTime[1]);
+
+    if (!year || !month || !day || isNaN(h) || isNaN(m)) return null;
+
+    const dt = new Date(year, month - 1, day, h, m, 0);
+    return dt.toISOString();
+  }
+
+  function buildBookingPayload() {
+    if (!window.lastQuote) {
+      alert("Please calculate a fare first.");
+      return null;
+    }
+    const q = window.lastQuote;
+    const scheduledFor = buildScheduledFor(q);
+
+    const booking = {
+      type: q.mode === "reserve" || scheduledFor ? "RESERVATION" : "INSTANT",
+      pickup: {
+        address: q.pickup,
+        notes: ""
+      },
+      dropoff: {
+        address: q.dropoff,
+        notes: ""
+      },
+      stops: q.stops.map(addr => ({ address: addr })),
+
+      rider: {
+        name: "",   // optional: can prompt later
+        phone: "",
+        partySize: 1
+      },
+
+      pricing: {
+        estimate: q.total,
+        finalFare: null,
+        travelFee: q.fairnessFee,
+        ratePlan: q.isAirport
+          ? "AIRPORT"
+          : (weekdayRushHour(new Date()) ? "RUSH_HOUR" : "STANDARD")
+      },
+
+      metrics: {
+        miles: q.miles,
+        minutes: q.minutes
+      },
+
+      source: "FARE_CALCULATOR",
+      scheduledFor
+    };
+
+    return booking;
+  }
+
+  async function submitBooking() {
+    const booking = buildBookingPayload();
+    if (!booking) return;
+
+    try {
+      const res = await fetch(BOOKING_WORKER_URL + "/api/bookings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(booking)
+      });
+
+      if (!res.ok) {
+        const txt = await res.text();
+        console.error("Booking error:", txt);
+        alert("Hmm, something went wrong sending your request. Please text RED instead.");
+        return;
+      }
+
+      const created = await res.json();
+      console.log("Booking created:", created);
+
+      alert(
+        booking.type === "RESERVATION"
+          ? "Reservation request sent to Big Red! You’ll get a confirmation by text."
+          : "Ride request sent to Big Red! If I’m available, I’ll confirm by text."
+      );
+    } catch (err) {
+      console.error("Booking network error:", err);
+      alert("Network error sending your request. Please text RED instead.");
+    }
+  }
+
+  // Attach handler for dynamic button
+  document.addEventListener("click", (e) => {
+    if (e.target && e.target.id === "sendRequestBtn") {
+      e.preventDefault();
+      submitBooking();
+    }
+  });
+  </script>
+</body>
+</html>
