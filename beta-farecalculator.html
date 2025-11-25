@@ -180,7 +180,7 @@
       const p = acDrop.getPlace(); if (!p.geometry) return;
       dropPlace = p; dropoffLatLng = p.geometry.location;
       if (window.dropoffMarker) window.dropoffMarker.setMap(null);
-      window.dropoffMarker = new google.maps.Marker({ position: dropoffLatLng, map, label:"D" });
+      window.dropoffMarker = new google.maps.Marker({ position:dropoffLatLng, map, label:"D" });
       map.panTo(dropoffLatLng);
       log("dropoff set via autocomplete →", p.formatted_address || p.name);
     });
@@ -282,7 +282,6 @@
         log("pickup set via GPS →", addr);
         await maybeShowFairnessNotePreview();
       }else{
-        dropoffLatLng=new google.maps.LatLng(latlng.lat,lng:latlng.lng);
         dropoffLatLng=new google.maps.LatLng(latlng.lat,latlng.lng);
         if(window.dropoffMarker) window.dropoffMarker.setMap(null);
         window.dropoffMarker=new google.maps.Marker({position:dropoffLatLng,map,label:"D"});
