@@ -123,10 +123,6 @@
   let driverPos = null, driverSource = "HQ";
   let mode = "now", EVENT_VENUES = null;
 
-  // simple in-memory rider info until profile exists
-  let riderName = "";
-  let riderPhone = "";
-
   function isValidCoords(o){return o&&typeof o.lat==="number"&&typeof o.lng==="number"&&!isNaN(o.lat)&&!isNaN(o.lng);}
   function distMi(a,b){return google.maps.geometry.spherical.computeDistanceBetween(new google.maps.LatLng(a.lat,a.lng),new google.maps.LatLng(b.lat,b.lng))/1609.34;}
   function weekdayRushHour(d){const day=d.getDay(),h=d.getHours();return day>=1&&day<=5&&((h>=5&&h<9)||(h>=15&&h<19));}
@@ -144,18 +140,18 @@
         const ageMin = (Date.now() - timestamp) / 60000;
         if (ageMin <= 15) {
           const input = document.getElementById("pickup");
-          input.value = address ? address : (lat.toFixed(5) + ", " + lng.toFixed(5));
+          input.value = address ? address : `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
           const msg = document.createElement("div");
           msg.textContent = "✅ Pickup auto-filled from your recent ETA check.";
           msg.style.cssText = "background:#112;color:#9f9;padding:8px;border-radius:6px;font-size:.9em;margin-bottom:10px;text-align:center;";
           input.parentNode.insertBefore(msg, input);
           setTimeout(() => msg.remove(), 6000);
-          log("handoff loaded →", address || (lat + "," + lng), "age(min):", Math.round(ageMin));
+          log("handoff loaded →", address || `${lat},${lng}`, "age(min):", Math.round(ageMin));
           // Force geocode of the pickup so fairness fee can run even if user doesn't edit the field
           await ensurePickupLatLngFromCurrentInput();
         }
       }
-    } catch (e) { log("handoff load err", e && e.message); }
+    } catch (e) { log("handoff load err", e?.message); }
   });
 
   window.initGoogle = async function () {
@@ -166,7 +162,7 @@
     directionsRenderer.setMap(map);
 
     const acPickup = new google.maps.places.Autocomplete(document.getElementById("pickup"));
-    const acDrop   = new google.maps.places.Autocomplete(document.getElementById("dropoff"));
+    const acDrop   = new google.maps.places.Autocomplete(document.getElementElementById("dropoff"));
 
     acPickup.addListener("place_changed", async () => {
       const p = acPickup.getPlace(); if (!p.geometry) return;
@@ -187,12 +183,12 @@
       log("dropoff set via autocomplete →", p.formatted_address || p.name);
     });
 
-    document.getElementById("modeNow").onclick = function(){ setMode("now"); };
-    document.getElementById("modeReserve").onclick = function(){ setMode("reserve"); };
-    document.getElementById("calcBtn").onclick = function(){ calculateFare(); };
-    document.getElementById("addStopBtn").onclick = function(){ addStopField(); };
-    document.getElementById("useLocPickup").onclick = function(){ useMyLocation("pickup"); };
-    document.getElementById("useLocDrop").onclick = function(){ useMyLocation("dropoff"); };
+    document.getElementById("modeNow").onclick = () => setMode("now");
+    document.getElementById("modeReserve").onclick = () => setMode("reserve");
+    document.getElementById("calcBtn").onclick = calculateFare;
+    document.getElementById("addStopBtn").onclick = addStopField;
+    document.getElementById("useLocPickup").onclick = () => useMyLocation("pickup");
+    document.getElementById("useLocDrop").onclick = () => useMyLocation("dropoff");
 
     smartRideTypeDefault();
     await getDriverLocation();
@@ -238,11 +234,11 @@
       const t = j.timestamp ? new Date(j.timestamp) : null;
       const age = t ? (Date.now()-t.getTime())/60000 : 999;
       if (!isNaN(lat) && !isNaN(lng) && age <= STALE_MINUTES){
-        driverPos = {lat:lat,lng:lng}; driverSource="live";
+        driverPos = {lat,lng}; driverSource="live";
       } else {
         driverPos = HQ; driverSource="HQ";
       }
-    }catch(e){
+    }catch{
       driverPos = HQ; driverSource="HQ";
     }
     log("driver source:", driverSource, "→", driverPos);
@@ -253,7 +249,7 @@
     if (!val) return;
     return new Promise((resolve) => {
       geocoder.geocode({ address: val }, (res, s) => {
-        if (s === "OK" && res && res[0]) {
+        if (s === "OK" && res?.[0]) {
           pickupLatLng = res[0].geometry.location;
           if (window.pickupMarker) window.pickupMarker.setMap(null);
           window.pickupMarker = new google.maps.Marker({ position: pickupLatLng, map, label:"P" });
@@ -269,49 +265,38 @@
   function addStopField(){
     if ((window.stopInputs||[]).length>=3){alert("Limit 3 stops.");return;}
     if(!window.stopInputs) window.stopInputs=[];
-    const id="stop_"+Date.now(); window.stopInputs.push(id);
+    const id=`stop_${Date.now()}`; window.stopInputs.push(id);
     const wrap=document.getElementById("stopsWrap");
     const div=document.createElement("div");
-    div.className="stop-row"; div.id="row_"+id;
-    div.innerHTML='<label for="'+id+'">Stop '+window.stopInputs.length+'</label>\
-    <div style="display:flex;gap:6px;align-items:center;">\
-      <input id="'+id+'" type="text" placeholder="Enter stop address or place" style="flex:1;">\
-      <button type="button" class="remove-stop" onclick="removeStop(\''+id+'\')">✖</button>\
-    </div>';
+    div.className="stop-row"; div.id=`row_${id}`;
+    div.innerHTML=`<label for="${id}">Stop ${window.stopInputs.length}</label>
+    <div style="display:flex;gap:6px;align-items:center;"><input id="${id}" type="text" placeholder="Enter stop address or place" style="flex:1;">
+    <button type="button" class="remove-stop" onclick="removeStop('${id}')">✖</button></div>`;
     wrap.appendChild(div);
     new google.maps.places.Autocomplete(document.getElementById(id));
   }
   function removeStop(id){
-    const row=document.getElementById("row_"+id);
-    if(row) row.remove();
-    window.stopInputs=(window.stopInputs||[]).filter(function(s){return s!==id;});
-    const labels=document.querySelectorAll("#stopsWrap label");
-    for(var i=0;i<labels.length;i++){
-      labels[i].textContent="Stop "+(i+1);
-    }
+    document.getElementById(`row_${id}`)?.remove();
+    window.stopInputs=(window.stopInputs||[]).filter(s=>s!==id);
+    document.querySelectorAll("#stopsWrap label").forEach((l,i)=>l.textContent=`Stop ${i+1}`);
   }
 
   async function useMyLocation(id){
     if(!navigator.geolocation){alert("Location not supported.");return;}
-    navigator.geolocation.getCurrentPosition(async function(p){
+    navigator.geolocation.getCurrentPosition(async (p)=>{
       const latlng={lat:p.coords.latitude,lng:p.coords.longitude};
-      const addr=await new Promise(function(r){
-        geocoder.geocode({location:latlng},function(res,s){
-          if(s==="OK" && res && res[0]) r(res[0].formatted_address);
-          else r(latlng.lat+", "+latlng.lng);
-        });
-      });
+      const addr=await new Promise(r=>geocoder.geocode({location:latlng},(res,s)=>r(s==="OK"&&res[0]?res[0].formatted_address:`${latlng.lat},${latlng.lng}`)));
       document.getElementById(id).value = addr;
       if(id==="pickup"){
         pickupLatLng=new google.maps.LatLng(latlng.lat,latlng.lng);
         if(window.pickupMarker) window.pickupMarker.setMap(null);
-        window.pickupMarker=new google.maps.Marker({position:pickupLatLng,map:map,label:"P"});
+        window.pickupMarker=new google.maps.Marker({position:pickupLatLng,map,label:"P"});
         log("pickup set via GPS →", addr);
         await maybeShowFairnessNotePreview();
       }else{
         dropoffLatLng=new google.maps.LatLng(latlng.lat,latlng.lng);
         if(window.dropoffMarker) window.dropoffMarker.setMap(null);
-        window.dropoffMarker=new google.maps.Marker({position:dropoffLatLng,map:map,label:"D"});
+        window.dropoffMarker=new google.maps.Marker({position:dropoffLatLng,map,label:"D"});
         log("dropoff set via GPS →", addr);
       }
     });
@@ -325,7 +310,7 @@
     let fee = 0;
     if (d > 40) fee = 20;
     else if (d > 20) fee = 10;
-    log("driver→pickup "+d.toFixed(1)+" mi → fairness $"+fee);
+    log(`driver→pickup ${d.toFixed(1)} mi → fairness $${fee}`);
     return fee;
   }
 
@@ -341,8 +326,8 @@
   }
 
   async function calculateFare(){
-    const pickup=document.getElementById("pickup").value.trim();
-    const dropoff=document.getElementById("dropoff").value.trim();
+    const pickup=document.getElementById("pickup").value.trim(),
+          dropoff=document.getElementById("dropoff").value.trim();
     if(!pickup||!dropoff){ alert("Please enter both pickup and drop-off."); return; }
 
     // Ensure pickupLatLng exists even when pickup came from handoff text
@@ -353,31 +338,25 @@
 
     // Build waypoints from stops
     const stops=[];
-    (window.stopInputs||[]).forEach(function(id){
-      const el=document.getElementById(id);
-      const v=el ? el.value.trim() : "";
+    for(const id of window.stopInputs||[]){
+      const v=document.getElementById(id)?.value.trim();
       if(v) stops.push({location:v,stopover:true});
-    });
+    }
 
-    const route=await new Promise(function(res,rej){
-      directionsService.route(
-        {origin:pickup,destination:dropoff,waypoints:stops,travelMode:"DRIVING"},
-        function(r,s){ if(s==="OK") res(r); else rej(s); }
-      );
-    });
+    const route=await new Promise((res,rej)=>directionsService.route(
+      {origin:pickup,destination:dropoff,waypoints:stops,travelMode:"DRIVING"},
+      (r,s)=>s==="OK"?res(r):rej(s)
+    ));
 
     directionsRenderer.setDirections(route);
     const legs=route.routes[0].legs;
-    const rawMiles=legs.reduce(function(m,l){return m+(l.distance?l.distance.value:0);},0)/1609.34;
+    const rawMiles=legs.reduce((m,l)=>m+(l.distance?.value||0),0)/1609.34;
     const miles=Math.round(rawMiles);
-    const duration=legs.reduce(function(t,l){return t+(l.duration?l.duration.value:0);},0)/60;
+    const duration=legs.reduce((t,l)=>t+(l.duration?.value||0),0)/60;
 
     // Priority base logic
-    const combo=((pickupPlace && (pickupPlace.name||"") || "")+
-                 (pickupPlace && (pickupPlace.formatted_address||"") || "")+
-                 (dropPlace && (dropPlace.name||"") || "")+
-                 (dropPlace && (dropPlace.formatted_address||"") || "")).toLowerCase();
-    const isAirport=(combo.indexOf("airport")!==-1 && combo.indexOf("tinker")===-1);
+    const combo=((pickupPlace?.name||"")+(pickupPlace?.formatted_address||"")+(dropPlace?.name||"")+(dropPlace?.formatted_address||"")).toLowerCase();
+    const isAirport=(combo.includes("airport") && !combo.includes("tinker"));
     let base = isAirport ? 15 : 10;
     const now=new Date();
     if(!isAirport && weekdayRushHour(now)) base = 15;
@@ -388,24 +367,18 @@
         const r=await fetch("event-venues.json",{cache:"no-store"});
         EVENT_VENUES=await r.json();
       }
-      const inRad=function(pt,c,r){
-        return distMi(c,pt)<=r;
-      };
+      const inRad=(pt,c,r)=>distMi(c,pt)<=r;
       let inside=null;
       if(pickupLatLng){
         const p={lat:pickupLatLng.lat(),lng:pickupLatLng.lng()};
-        (EVENT_VENUES.venues||[]).forEach(function(v){
-          if(!inside && inRad(p,{lat:v.lat,lng:v.lng},v.radius_mi)){inside=v;}
-        });
+        for(const v of (EVENT_VENUES.venues||[])){ if(inRad(p,{lat:v.lat,lng:v.lng},v.radius_mi)){inside=v;break;} }
       }
       if(!inside && dropoffLatLng){
-        const dpt={lat:dropoffLatLng.lat(),lng:dropoffLatLng.lng()};
-        (EVENT_VENUES.venues||[]).forEach(function(v){
-          if(!inside && inRad(dpt,{lat:v.lat,lng:v.lng},v.radius_mi)){inside=v;}
-        });
+        const d={lat:dropoffLatLng.lat(),lng:dropoffLatLng.lng()};
+        for(const v of (EVENT_VENUES.venues||[])){ if(inRad(d,{lat:v.lat,lng:v.lng},v.radius_mi)){inside=v;break;} }
       }
-      if(inside){ base = 20; log("event zone → "+inside.name); }
-    }catch(e){ /* ignore */ }
+      if(inside){ base = 20; log("event zone →", inside.name); }
+    }catch(_){/* ignore */ }
 
     // Mileage tiers
     const tier2=Math.max(0,Math.min(10,miles-10))*1.25;
@@ -419,86 +392,62 @@
     const pay=document.getElementById("payment").value;
     if(pay==="card") fare += fare*0.033 + fare*0.024;
 
-    const total=parseFloat(fare.toFixed(2));
-    log("fare breakdown → base:$"+base.toFixed(2)+" miles:$"+milesSub.toFixed(2)+" fairness:$"+fair.toFixed(2)+" pay:"+pay+" total:$"+total.toFixed(2));
+    const total=fare.toFixed(2);
+    log(`fare breakdown → base:$${base.toFixed(2)} miles:$${milesSub.toFixed(2)} fairness:$${fair.toFixed(2)} pay:${pay} total:$${total}`);
 
     // 🔹 Save last quote details for booking / reservation submission
     window.lastQuote = {
-      mode: mode,
-      pickup: pickup,
-      dropoff: dropoff,
-      stops: (window.stopInputs || []).map(function(id){
-        const el=document.getElementById(id);
-        const v = el ? el.value.trim() : "";
+      mode,
+      pickup,
+      dropoff,
+      stops: (window.stopInputs || []).map(id => {
+        const v = document.getElementById(id)?.value.trim();
         return v ? v : null;
-      }).filter(function(x){return !!x;}),
-      miles: miles,
+      }).filter(Boolean),
+      miles,
       minutes: Math.round(duration),
-      base: base,
+      base,
       mileageComponent: milesSub,
       fairnessFee: fair,
       payMethod: pay,
-      total: total,
-      isAirport: isAirport,
-      reserveDate: (document.getElementById("reserveDate") && document.getElementById("reserveDate").value) || null,
-      reserveTime: (document.getElementById("reserveTime") && document.getElementById("reserveTime").value) || null,
-      planBy: (document.getElementById("planBy") && document.getElementById("planBy").value) || "pickup"
+      total: parseFloat(total),
+      isAirport,
+      reserveDate: document.getElementById("reserveDate")?.value || null,
+      reserveTime: document.getElementById("reserveTime")?.value || null,
+      planBy: document.getElementById("planBy")?.value || "pickup",
+      riderName: null,
+      riderPartySize: 1
     };
 
-    var fairnessHtml = "";
-    if(fair>0){
-      fairnessHtml = '<p><strong>Travel Fairness Fee:</strong> $'+fair.toFixed(2)+'</p>';
-    }
-
     const resDiv=document.getElementById("result");
-    resDiv.innerHTML =
-      '<div class="total">$'+total.toFixed(2)+'</div>' +
-      '<p><strong>Base:</strong> $'+base.toFixed(2)+'</p>' +
-      '<p><strong>Mileage:</strong> $'+milesSub.toFixed(2)+'</p>' +
-      fairnessHtml +
-      '<p><strong>Payment:</strong> '+(pay==="card" ? "Card (incl. fees)" : "Cash / Venmo / Cash App")+'</p>' +
-      '<p>📏 '+miles+' mi  ⏱️ '+Math.round(duration)+' min</p>' +
+    resDiv.innerHTML = `
+      <div class="total">$${total}</div>
+      <p><strong>Base:</strong> $${base.toFixed(2)}</p>
+      <p><strong>Mileage:</strong> $${milesSub.toFixed(2)}</p>
+      ${fair>0 ? `<p><strong>Travel Fairness Fee:</strong> $${fair.toFixed(2)}</p>` : ""}
+      <p><strong>Payment:</strong> ${pay==="card" ? "Card (incl. fees)" : "Cash / Venmo / Cash App"}</p>
+      <p>📏 ${miles} mi  ⏱️ ${Math.round(duration)} min</p>
 
-      '<p style="text-align:center;margin-top:15px;">' +
-        '<button class="btn primary" id="sendUnifiedBtn">' +
-          (mode === "reserve"
-            ? '🕒 Send My Reservation Request'
-            : '🚗 Send My Ride Request') +
-        '</button>' +
-      '</p>' +
+      <p style="text-align:center;margin-top:15px;">
+        <button class="btn primary" id="sendUnifiedBtn">
+          ${mode === "reserve"
+            ? "🕒 Send My Reservation Request"
+            : "🚗 Send My Ride Request"}
+        </button>
+      </p>
 
-      '<p style="text-align:center;margin-top:6px;font-size:0.9em;color:#aaa;">' +
-        'Having trouble or prefer text? ' +
-        '<a href="#" id="smsFallbackLink" style="color:#fff;text-decoration:underline;">' +
-          'Tap here to text RED instead.' +
-        '</a>' +
-      '</p>' +
+      <p style="text-align:center;margin-top:6px;font-size:0.9em;color:#aaa;">
+        Having trouble or prefer text?
+        <a href="#" id="smsFallbackLink" style="color:#fff;text-decoration:underline;">
+          Tap here to text RED instead.
+        </a>
+      </p>
 
-      '<p style="text-align:center;color:#888;margin-top:10px;">' +
-        'No surprises. Just solid local moves.' +
-      '</p>';
-
+      <p style="text-align:center;color:#888;margin-top:10px;">
+        No surprises. Just solid local moves.
+      </p>
+    `;
     resDiv.style.display="block";
-  }
-
-  // =====================================================
-  //  RIDER INFO HELPERS
-  // =====================================================
-
-  function ensureRiderName(){
-    if(riderName && riderName.trim()!=="") return riderName.trim();
-    var name = prompt("Enter your name for Big Red:");
-    if(!name){ return ""; }
-    riderName = name.trim();
-    return riderName;
-  }
-
-  function ensureRiderPhone(){
-    if(riderPhone && riderPhone.trim()!=="") return riderPhone.trim();
-    var phone = prompt("Optional: enter your mobile number so Big Red can confirm (or leave blank):");
-    if(phone===null) return ""; // user hit cancel
-    riderPhone = phone.trim();
-    return riderPhone;
   }
 
   // =====================================================
@@ -536,11 +485,8 @@
     // Use scheduled time (if present) to decide rate plan for reservations
     const whenForRate = scheduledFor ? new Date(scheduledFor) : new Date();
 
-    const name = ensureRiderName(); // may be blank, that’s ok
-    const phone = ensureRiderPhone(); // optional
-
     const booking = {
-      type: (q.mode === "reserve" || scheduledFor) ? "RESERVATION" : "INSTANT",
+      type: q.mode === "reserve" || scheduledFor ? "RESERVATION" : "INSTANT",
       pickup: {
         address: q.pickup,
         notes: ""
@@ -549,12 +495,12 @@
         address: q.dropoff,
         notes: ""
       },
-      stops: q.stops.map(function(addr){ return { address: addr }; }),
+      stops: q.stops.map(addr => ({ address: addr })),
 
       rider: {
-        name: name || "",
-        phone: phone || "",
-        partySize: 1
+        name: q.riderName || "",
+        phone: "",
+        partySize: q.riderPartySize || 1
       },
 
       pricing: {
@@ -572,7 +518,7 @@
       },
 
       source: "FARE_CALCULATOR",
-      scheduledFor: scheduledFor
+      scheduledFor
     };
 
     return booking;
@@ -601,48 +547,51 @@
       const created = await res.json();
       console.log("Booking created:", created);
 
-      alert(
+      const msg =
         booking.type === "RESERVATION"
-          ? "Reservation request sent to Big Red! You’ll get a confirmation by text."
-          : "Ride request sent to Big Red! If I’m available, I’ll confirm by text."
-      );
+          ? "Reservation request sent to Big Red! You’ll get a confirmation by text.\n\nWe’ll take you to your My Ride page now so you can track it."
+          : "Ride request sent to Big Red! If I’m available, I’ll confirm by text.\n\nWe’ll take you to your My Ride page now so you can track it.";
+
+      alert(msg);
+
+      // Redirect rider to their My Ride page (root-level myride.html)
+      const trackUrl = `myride.html?id=${encodeURIComponent(created.id)}`;
+      window.location.href = trackUrl;
     } catch (err) {
       console.error("Booking network error:", err);
       alert("Network error sending your request. Please text RED instead.");
     }
   }
 
-  function buildSmsBodyFromLastQuote() {
+  function buildSmsBodyFromLastQuote(nameOverride, partyOverride) {
     if (!window.lastQuote) {
       return encodeURIComponent("Hey Big Red — I had trouble submitting the form, can you help me plan a ride?");
     }
     const q = window.lastQuote;
+    const name = (nameOverride || q.riderName || "a rider").trim();
+    const party = partyOverride || q.riderPartySize || 1;
+
     const lines = [];
 
-    const name = ensureRiderName();
-
-    if (name && name !== "") {
-      lines.push("Hey Big Red — this is "+name+". I had trouble submitting the form, can you help me confirm this "+(q.mode === "reserve" ? "reservation" : "ride")+"?");
-    } else {
-      lines.push("Hey Big Red — I had trouble submitting the form, can you help me confirm this "+(q.mode === "reserve" ? "reservation" : "ride")+"?");
-    }
-
-    lines.push("Estimate: $"+q.total.toFixed(2));
-    lines.push("From: "+q.pickup);
+    lines.push(`Hey Big Red — this is ${name}.`);
+    lines.push(`I’d like to confirm this ${q.mode === "reserve" ? "reservation" : "ride"}:`);
+    lines.push(`Estimate: $${q.total.toFixed(2)}`);
+    lines.push(`From: ${q.pickup}`);
     if (q.stops && q.stops.length) {
-      lines.push("Stops: "+q.stops.join(" → "));
+      lines.push(`Stops: ${q.stops.join(" → ")}`);
     }
-    lines.push("To: "+q.dropoff);
-    lines.push("Distance: "+q.miles+" mi");
-    lines.push("Time: "+q.minutes+" min");
+    lines.push(`To: ${q.dropoff}`);
+    lines.push(`Party size: ${party}`);
+    lines.push(`Distance: ${q.miles} mi`);
+    lines.push(`Time: ${q.minutes} min`);
     if (q.fairnessFee > 0) {
-      lines.push("Includes travel fairness fee: $"+q.fairnessFee.toFixed(2)+".");
+      lines.push(`Includes travel fairness fee: $${q.fairnessFee.toFixed(2)}.`);
     }
     if (q.isAirport) {
       lines.push("(Airport base applied)");
     }
     if (q.mode === "reserve" && q.reserveDate && q.reserveTime) {
-      lines.push("Requested for: "+q.reserveDate+" at "+q.reserveTime+" ("+(q.planBy === "dropoff" ? "drop-off time" : "pickup time")+").");
+      lines.push(`Requested for: ${q.reserveDate} at ${q.reserveTime} (${q.planBy === "dropoff" ? "drop-off time" : "pickup time"}).`);
     }
     lines.push("No surprises. Just solid local moves.");
 
@@ -650,15 +599,72 @@
   }
 
   // Attach handlers for dynamic primary button + SMS fallback
-  document.addEventListener("click", function(e){
+  document.addEventListener("click", (e) => {
+    // Unified booking button
     if (e.target && e.target.id === "sendUnifiedBtn") {
       e.preventDefault();
+      if (!window.lastQuote) {
+        alert("Please calculate a fare first.");
+        return;
+      }
+
+      // Prompt for rider name
+      const currentName = window.lastQuote.riderName || "";
+      let name = prompt("Enter your name for Big Red:", currentName);
+      if (name === null) return; // user cancelled
+      name = name.trim();
+      if (!name) {
+        name = "Rider";
+      }
+      window.lastQuote.riderName = name;
+
+      // Prompt for party size
+      let party = window.lastQuote.riderPartySize || 1;
+      let partyInput = prompt("How many riders in your party? (1–6)", party);
+      if (partyInput === null) return; // cancelled
+      partyInput = partyInput.trim();
+      let parsed = parseInt(partyInput, 10);
+      if (isNaN(parsed) || parsed < 1 || parsed > 6) {
+        parsed = 1;
+      }
+      window.lastQuote.riderPartySize = parsed;
+
       submitBooking();
     }
+
+    // SMS fallback link
     if (e.target && e.target.id === "smsFallbackLink") {
       e.preventDefault();
-      const body = buildSmsBodyFromLastQuote();
-      window.location.href = "sms:+14053784024?&body="+body;
+
+      // Make sure we have at least a basic quote
+      if (!window.lastQuote) {
+        alert("Please calculate a fare first, then you can text the details.");
+        return;
+      }
+
+      // Prompt for name
+      const currentName = window.lastQuote.riderName || "";
+      let name = prompt("Enter your name for Big Red:", currentName);
+      if (name === null) return; // cancelled
+      name = name.trim();
+      if (!name) {
+        name = "Rider";
+      }
+      window.lastQuote.riderName = name;
+
+      // Prompt for party size
+      let party = window.lastQuote.riderPartySize || 1;
+      let partyInput = prompt("How many riders in your party? (1–6)", party);
+      if (partyInput === null) return; // cancelled
+      partyInput = partyInput.trim();
+      let parsed = parseInt(partyInput, 10);
+      if (isNaN(parsed) || parsed < 1 || parsed > 6) {
+        parsed = 1;
+      }
+      window.lastQuote.riderPartySize = parsed;
+
+      const body = buildSmsBodyFromLastQuote(name, parsed);
+      window.location.href = `sms:+14053784024?&body=${body}`;
     }
   });
   </script>
