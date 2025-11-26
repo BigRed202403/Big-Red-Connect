@@ -20,6 +20,9 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
 
+  <!-- OneSignal SDK -->
+  <script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async></script>
+
   <style>
     :root {
       --red: #b30000;
@@ -171,13 +174,13 @@
 
     .btn-notify {
       background: #111;
-      border: 1px solid #444;
-      color: #ddd;
+      color: #fff;
+      border: 1px solid #555;
     }
     .btn-notify.on {
-      border-color: #3a3;
-      color: #9f9;
-      background: #071707;
+      background: #224400;
+      border-color: #55aa33;
+      color: #dfffd2;
     }
 
     /* Main grid */
@@ -401,19 +404,14 @@
       text-align: right;
     }
 
-    /* Manual status dropdown */
     .status-select {
-      background: #111;
+      background: #151515;
+      color: #eee;
       border-radius: 999px;
       border: 1px solid #444;
-      color: #eee;
       font-size: 0.7rem;
-      padding: 3px 8px;
-      outline: none;
-    }
-
-    .status-select:focus {
-      border-color: var(--accent);
+      padding: 3px 7px;
+      margin-top: 4px;
     }
 
     /* Toast / inline status */
@@ -448,9 +446,6 @@
       color: #777;
     }
   </style>
-
-  <!-- OneSignal SDK -->
-  <script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async></script>
 </head>
 <body>
 
@@ -473,7 +468,7 @@
         📋 View: <span id="scopeLabel">Active</span>
       </button>
       <button class="btn btn-notify" id="btnNotify">
-        🔔 Alerts: On
+        🔔 Alerts: Off
       </button>
     </div>
     <div style="display:flex; gap:4px; margin-top:2px;">
@@ -551,15 +546,72 @@
 
 <script>
   // ===============================
-  //  CONFIG
+  //  OneSignal INIT + DRIVER TAG
+  // ===============================
+  const ONE_SIGNAL_APP_ID = "64641a89-3619-4491-a25b-c0ab000bdfe0";
+
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  OneSignalDeferred.push(function(OneSignal) {
+    OneSignal.init({
+      appId: ONE_SIGNAL_APP_ID,
+      notifyButton: { enable: false },
+      serviceWorkerPath: "/onesignalsdkworker.js",
+      serviceWorkerUpdaterPath: "/onesignalsdkupdaterworker.js",
+      serviceWorkerParam: { scope: "/" },
+      allowLocalhostAsSecureOrigin: true
+    });
+
+    // Ensure driver is tagged so booking worker can target "driver" pushes
+    OneSignal.sendTag("role", "driver").catch(() => {});
+
+    // If already subscribed, reflect it in UI
+    OneSignal.isPushNotificationsEnabled().then((enabled) => {
+      setNotifyUI(enabled);
+    }).catch(() => {
+      setNotifyUI(false);
+    });
+  });
+
+  function setNotifyUI(enabled) {
+    const btn = document.getElementById("btnNotify");
+    if (!btn) return;
+    if (enabled) {
+      btn.classList.add("on");
+      btn.textContent = "🔔 Alerts: On";
+    } else {
+      btn.classList.remove("on");
+      btn.textContent = "🔕 Alerts: Off";
+    }
+  }
+
+  function toggleNotifications() {
+    if (!window.OneSignalDeferred) return;
+    OneSignalDeferred.push(async function(OneSignal) {
+      try {
+        const enabled = await OneSignal.isPushNotificationsEnabled();
+        if (!enabled) {
+          await OneSignal.subscribe();
+          await OneSignal.sendTag("role", "driver");
+          setNotifyUI(true);
+          showToast("Driver alerts turned on.");
+        } else {
+          await OneSignal.unsubscribe();
+          setNotifyUI(false);
+          showToast("Driver alerts turned off.");
+        }
+      } catch (e) {
+        showToast("Could not update alerts right now.");
+      }
+    });
+  }
+
+  // ===============================
+  //  DRIVER APP LOGIC
   // ===============================
   const API_BASE = "https://bigred-bookings.bigredtransportation.workers.dev";
-  const ONESIGNAL_APP_ID = "64641a89-3619-4491-a25b-c0ab000bdfe0";
-
   let currentScope = "active"; // "active" | "upcoming" | "all"
   let pollingTimer = null;
   let lastDataSnapshot = [];
-  let driverPlayerId = null;
 
   const qs = (sel) => document.querySelector(sel);
   const qsa = (sel) => Array.from(document.querySelectorAll(sel));
@@ -707,12 +759,10 @@
         ? (isRes ? `Scheduled ${fmtTime(b.scheduledFor)}` : `Time: ${fmtTime(b.scheduledFor)}`)
         : `Requested ${fmtTime(b.requestedAt)}`;
 
-      // Estimate / pricing
       const estVal = typeof b.pricing?.estimate === "number"
         ? `$${b.pricing.estimate.toFixed(2)}`
         : "—";
 
-      // Card header
       const header = document.createElement("div");
       header.className = "card-header-row";
       header.innerHTML = `
@@ -732,7 +782,6 @@
       `;
       card.appendChild(header);
 
-      // Main body
       const main = document.createElement("div");
       main.className = "card-main";
 
@@ -761,14 +810,12 @@
       `;
       card.appendChild(main);
 
-      // Footer with actions + manual dropdown
       const footer = document.createElement("div");
       footer.className = "card-footer";
 
       const actions = document.createElement("div");
       actions.className = "card-actions";
 
-      // Quickflow buttons
       if (bucket === "new") {
         const acceptBtn = makeChip("✅ Accept", "primary", "ACCEPTED");
         const declineBtn = makeChip("✖ Cancel", "warn", "CANCELLED");
@@ -790,43 +837,33 @@
           actions.appendChild(makeChip("✅ Complete", "good", "COMPLETED"));
           actions.appendChild(makeChip("✖ Cancel", "warn", "CANCELLED"));
         }
+      } else {
+        // Done bucket: no chip actions for now
       }
 
       footer.appendChild(actions);
 
-      // Manual status dropdown (can jump anywhere)
-      const select = document.createElement("select");
-      select.className = "status-select";
-      const statuses = [
-        "REQUESTED",
-        "ACCEPTED",
-        "ENROUTE",
-        "ARRIVED",
-        "ONBOARD",
-        "COMPLETED",
-        "CANCELLED"
-      ];
-      statuses.forEach(st => {
+      // Status dropdown (manual override)
+      const statusSelect = document.createElement("select");
+      statusSelect.className = "status-select";
+      const allowedStatuses = ["REQUESTED","ACCEPTED","ENROUTE","ARRIVED"];
+      for (const code of allowedStatuses) {
         const opt = document.createElement("option");
-        opt.value = st;
-        opt.textContent = statusLabel(st);
-        select.appendChild(opt);
+        opt.value = code;
+        opt.textContent = statusLabel(code);
+        statusSelect.appendChild(opt);
+      }
+      const current = classifyStatus(b.status);
+      if (allowedStatuses.includes(current)) {
+        statusSelect.value = current;
+      } else {
+        statusSelect.value = "ACCEPTED";
+      }
+      statusSelect.addEventListener("change", () => {
+        const target = statusSelect.value;
+        updateBookingStatus(b.id, target, true);
       });
-      select.value = s;
-
-      select.addEventListener("change", () => {
-        const target = select.value;
-        if (target === "CANCELLED") {
-          const ok = confirm("Cancel this trip?");
-          if (!ok) {
-            select.value = s;
-            return;
-          }
-        }
-        updateBookingStatus(b.id, target);
-      });
-
-      footer.appendChild(select);
+      footer.appendChild(statusSelect);
 
       const meta = document.createElement("div");
       meta.className = "card-meta";
@@ -898,7 +935,6 @@
 
       if (!res.ok) {
         const txt = await res.text();
-        console.error("Update failed:", txt);
         showToast("Could not update booking.");
         setSyncState("err");
         return;
@@ -967,137 +1003,54 @@
   }
 
   // ===============================
-  //  NOTIFICATIONS (OneSignal)
-  // ===============================
-  function updateNotifyUI(enabled) {
-    if (!btnNotify) return;
-    if (enabled) {
-      btnNotify.classList.add("on");
-      btnNotify.textContent = "🔔 Alerts: On";
-    } else {
-      btnNotify.classList.remove("on");
-      btnNotify.textContent = "🔔 Alerts: Off";
-    }
-  }
-
-  async function registerDriverDevice(playerId) {
-    driverPlayerId = playerId;
-    // Optional: let the Worker know which device is the driver
-    try {
-      await fetch(`${API_BASE}/api/driver/device`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          playerId,
-          role: "driver",
-          driverId: "dan"
-        })
-      });
-    } catch {
-      // Non-fatal if this fails; Worker may still send broadcast notifications
-    }
-  }
-
-  function initNotifications() {
-    if (!window.OneSignal || !ONESIGNAL_APP_ID) return;
-
-    window.OneSignal = window.OneSignal || [];
-    const OneSignal = window.OneSignal;
-
-    OneSignal.push(function () {
-      OneSignal.init({
-        appId: ONESIGNAL_APP_ID,
-        notifyButton: { enable: false }
-      });
-
-      OneSignal.isPushNotificationsEnabled(function(isEnabled) {
-        updateNotifyUI(isEnabled);
-        if (isEnabled) {
-          OneSignal.getUserId().then(function(playerId) {
-            if (playerId) {
-              registerDriverDevice(playerId);
-            }
-          });
-        }
-      });
-
-      OneSignal.on('subscriptionChange', function(isSubscribed) {
-        updateNotifyUI(isSubscribed);
-        if (isSubscribed) {
-          OneSignal.getUserId().then(function(playerId) {
-            if (playerId) {
-              registerDriverDevice(playerId);
-            }
-          });
-        }
-      });
-    });
-
-    if (btnNotify) {
-      btnNotify.addEventListener("click", function () {
-        window.OneSignal.push(function () {
-          OneSignal.isPushNotificationsEnabled(function(isEnabled) {
-            if (!isEnabled) {
-              OneSignal.registerForPushNotifications();
-            } else {
-              showToast("Alerts already enabled for this device.");
-            }
-          });
-        });
-      });
-    }
-  }
-
-  // ===============================
   //  EVENT WIRING
   // ===============================
   document.addEventListener("DOMContentLoaded", () => {
-    // Initial sync
     fetchBookings();
     startPolling();
 
-    // Scope toggle
     btnScopeToggle.addEventListener("click", () => {
       toggleScope();
     });
 
-    // Manual refresh
     btnRefresh.addEventListener("click", () => {
       fetchBookings();
       showToast("Refreshing bookings…");
     });
 
-    // Action buttons via event delegation
+    if (btnNotify) {
+      btnNotify.addEventListener("click", () => {
+        toggleNotifications();
+      });
+    }
+
     document.body.addEventListener("click", (e) => {
-      const btn = e.target.closest(".chip-btn");
-      if (!btn) return;
+      const chip = e.target.closest(".chip-btn");
+      if (chip) {
+        const card = e.target.closest(".card");
+        if (!card) return;
+        const id = card.dataset.id;
+        const statusTarget = chip.dataset.statusTarget;
+        if (!id || !statusTarget) return;
 
-      const card = e.target.closest(".card");
-      if (!card) return;
+        if (statusTarget === "CANCELLED") {
+          const ok = confirm("Cancel this trip?");
+          if (!ok) return;
+        }
 
-      const id = card.dataset.id;
-      const statusTarget = btn.dataset.statusTarget;
-      if (!id || !statusTarget) return;
-
-      if (statusTarget === "CANCELLED") {
-        const ok = confirm("Cancel this trip?");
-        if (!ok) return;
+        updateBookingStatus(id, statusTarget);
+        return;
       }
-
-      updateBookingStatus(id, statusTarget);
     });
 
-    // Pause polling when tab is hidden (battery-friendly)
     document.addEventListener("visibilitychange", () => {
-      if (document.hidden) stopPolling();
-      else {
+      if (document.hidden) {
+        stopPolling();
+      } else {
         fetchBookings();
         startPolling();
       }
     });
-
-    // Init push notifications last
-    initNotifications();
   });
 </script>
 
