@@ -619,14 +619,14 @@ document.getElementById("updateStatusBtn").onclick = async () => {
   const payload = { status:newStatus, updated:new Date().toISOString() };
 
   try{
-    const res = await fetch(`${STATUS_WORKER}/`,{
-      method:"PUT",
-      headers:{
-        "Content-Type":"application/json",
-        "X-Auth-Token":AUTH_SECRET
-      },
-      body:JSON.stringify(payload)
-    });
+    const res = await fetch(`${STATUS_WORKER}/status`, {
+  method: "PUT",
+  headers: {
+    "Content-Type": "application/json",
+    "X-Auth-Token": AUTH_SECRET
+  },
+  body: JSON.stringify(payload)
+});
 
     if(!res.ok) throw new Error(await res.text());
 
