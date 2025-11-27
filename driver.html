@@ -16,8 +16,15 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
 
-  <!-- OneSignal SDK -->
-  <script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async></script>
+  <!-- OneSignal v16 SDK -->
+  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+  <script>
+    // Small helper so we can safely queue work until OneSignal is ready
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    function withOneSignal(fn) {
+      OneSignalDeferred.push(fn);
+    }
+  </script>
 
   <style>
     :root {
@@ -161,6 +168,10 @@
       margin-right:4px;
     }
 
+    .chip.primary { border-color:var(--red); color:#ffdada; }
+    .chip.good { border-color:#2ecc71; color:#caffd4; }
+    .chip.warn { border-color:#e67e22; color:#ffd6a3; }
+
     select.status-dropdown {
       background:#111;
       color:#fff;
@@ -228,30 +239,7 @@
 
 <script>
 /* ======================================================
-   ONE SIGNAL — DRIVER LOGIN
-====================================================== */
-
-window.OneSignal = window.OneSignal || [];
-OneSignal.push(function() {
-
-  OneSignal.init({
-    appId: "64641a89-3619-4491-a25b-c0ab000bdfe0",
-    allowLocalhostAsSecureOrigin: true,
-    notifyButton: { enable: false }
-  });
-
-  // Login this device as the DRIVER
-  OneSignal.login("driver");
-
-  // Sync notification state
-  OneSignal.getNotificationPermission().then(p => {
-    updateNotifyButton(p === "granted");
-  });
-
-});
-
-/* ======================================================
-   DRIVER NOTIFY TOGGLE
+   ONE SIGNAL — DRIVER LOGIN (v16)
 ====================================================== */
 
 const notifyBtn = document.querySelector("#btnNotify");
@@ -260,23 +248,53 @@ function updateNotifyButton(enabled) {
   notifyBtn.textContent = enabled ? "🔔 Alerts: On" : "🔔 Alerts: Off";
 }
 
-notifyBtn.addEventListener("click", async () => {
-  const permission = await OneSignal.getNotificationPermission();
+function showToast(msg) {
+  const toast = document.querySelector("#toast");
+  toast.textContent = msg;
+  toast.classList.add("show");
+  setTimeout(() => toast.classList.remove("show"), 1800);
+}
 
-  if (permission === "granted") {
-    showToast("Alerts already enabled.");
-    updateNotifyButton(true);
-    return;
-  }
+// Init + login as "driver"
+withOneSignal(async function(OneSignal) {
+  try {
+    await OneSignal.init({
+      appId: "64641a89-3619-4491-a25b-c0ab000bdfe0",
+      allowLocalhostAsSecureOrigin: true,
+      notifyButton: { enable: false }
+    });
 
-  const result = await OneSignal.Notifications.requestPermission();
-  if (result === "granted") {
-    updateNotifyButton(true);
-    showToast("Alerts Enabled!");
-  } else {
-    updateNotifyButton(false);
-    showToast("Permission blocked.");
+    // Login as the single driver identity
+    await OneSignal.login("driver");
+
+    const status = await OneSignal.Notifications.getPermissionStatus();
+    updateNotifyButton(status === "granted");
+  } catch (e) {
+    console.warn("OneSignal init/login error:", e);
   }
+});
+
+// Toggle alerts
+notifyBtn.addEventListener("click", () => {
+  withOneSignal(async function(OneSignal) {
+    try {
+      const current = await OneSignal.Notifications.getPermissionStatus();
+
+      if (current === "granted") {
+        showToast("Alerts already enabled.");
+        updateNotifyButton(true);
+        return;
+      }
+
+      const result = await OneSignal.Notifications.requestPermission();
+      const granted = result === "granted";
+      updateNotifyButton(granted);
+      showToast(granted ? "Alerts enabled!" : "Permission blocked.");
+    } catch (e) {
+      console.warn("Permission toggle error:", e);
+      showToast("Error updating alerts.");
+    }
+  });
 });
 
 /* ======================================================
@@ -286,36 +304,33 @@ notifyBtn.addEventListener("click", async () => {
 const API = "https://bigred-bookings.bigredtransportation.workers.dev";
 let scope = "active";
 
-const toast = document.querySelector("#toast");
-function showToast(msg) {
-  toast.textContent = msg;
-  toast.classList.add("show");
-  setTimeout(() => toast.classList.remove("show"), 1800);
-}
+const toastEl = document.querySelector("#toast");
 
 async function fetchBookings() {
   const url = `${API}/api/driver/bookings?scope=${scope}&t=${Date.now()}`;
   try {
     const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     renderAll(data);
   } catch(e) {
+    console.error("Sync failed:", e);
     showToast("Sync failed");
   }
 }
 
 function renderAll(list) {
-  const newArr = list.filter(b => b.status === "REQUESTED");
+  const newArr    = list.filter(b => b.status === "REQUESTED");
   const activeArr = list.filter(b => ["ACCEPTED","ENROUTE","ARRIVED"].includes(b.status));
-  const doneArr = list.filter(b => ["COMPLETED","CANCELLED"].includes(b.status));
+  const doneArr   = list.filter(b => ["COMPLETED","CANCELLED"].includes(b.status));
 
   renderColumn("listNew", newArr);
   renderColumn("listActive", activeArr);
   renderColumn("listDone", doneArr);
 
-  document.querySelector("#countNew").textContent = newArr.length;
+  document.querySelector("#countNew").textContent    = newArr.length;
   document.querySelector("#countActive").textContent = activeArr.length;
-  document.querySelector("#countDone").textContent = doneArr.length;
+  document.querySelector("#countDone").textContent   = doneArr.length;
 }
 
 function renderColumn(id, arr) {
@@ -340,7 +355,11 @@ function renderColumn(id, arr) {
       </div>
 
       <div class="loc-line">FROM: ${b.pickup.address}</div>
-      ${b.stops.length ? `<div class="loc-line">STOPS: ${b.stops.map(s=>s.address).join(" → ")}</div>` : ""}
+      ${
+        b.stops && b.stops.length
+          ? `<div class="loc-line">STOPS: ${b.stops.map(s=>s.address).join(" → ")}</div>`
+          : ""
+      }
       <div class="loc-line">TO: ${b.dropoff.address}</div>
 
       <div style="margin-top:6px;">Est: ${est}</div>
@@ -376,15 +395,22 @@ document.body.addEventListener("change", async (e) => {
     const id = e.target.dataset.id;
     const newState = e.target.value;
 
-    const res = await fetch(`${API}/api/driver/bookings/${id}`, {
-      method:"PUT",
-      headers:{ "Content-Type":"application/json" },
-      body:JSON.stringify({ status:newState })
-    });
+    try {
+      const res = await fetch(`${API}/api/driver/bookings/${id}`, {
+        method:"PUT",
+        headers:{ "Content-Type":"application/json" },
+        body:JSON.stringify({ status:newState })
+      });
 
-    if(res.ok){
-      showToast(`Status → ${newState}`);
-      fetchBookings();
+      if(res.ok){
+        showToast(`Status → ${newState}`);
+        fetchBookings();
+      } else {
+        showToast("Update failed");
+      }
+    } catch(err) {
+      console.error(err);
+      showToast("Update failed");
     }
   }
 });
