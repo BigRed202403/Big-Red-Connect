@@ -247,9 +247,47 @@
     });
     directionsRenderer.setMap(map);
 
-    const acPickup = new google.maps.places.Autocomplete(document.getElementById("pickup"));
-    const acDrop   = new google.maps.places.Autocomplete(document.getElementById("dropoff"));
+    /* ============================================================
+   OKC-Optimized Autocomplete Restore (Local Places Priority)
+============================================================ */
+function setupAutocompleteOKC(inputId, onSet = ()=>{}) {
+  const input = document.getElementById(inputId);
 
+  const okcBounds = new google.maps.LatLngBounds(
+    { lat: 34.90, lng: -98.20 },  // southwest metro
+    { lat: 36.00, lng: -96.00 }   // northeast metro
+  );
+
+  const ac = new google.maps.places.Autocomplete(input, {
+    bounds: okcBounds,
+    strictBounds: false,      // bias OKC heavily but allow others
+    types: ["establishment", "geocode"],
+    fields: ["formatted_address", "geometry", "name", "place_id"],
+    componentRestrictions: { country: "us" },
+  });
+
+  // Geo-boost based on user's real location (much stronger relevance)
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition((pos) => {
+      try {
+        const loc = new google.maps.LatLng(
+          pos.coords.latitude,
+          pos.coords.longitude
+        );
+        ac.setBounds(new google.maps.LatLngBounds(loc, loc));
+      } catch (e) {}
+    });
+  }
+
+  ac.addListener("place_changed", () => {
+    const p = ac.getPlace();
+    if (!p || !p.geometry) return;
+
+    onSet(p);
+  });
+
+  return ac;
+}
     acPickup.addListener("place_changed", async () => {
       const p = acPickup.getPlace();
       if (!p.geometry) return;
