@@ -14,6 +14,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="theme-color" content="#000">
+<meta http-equiv="Cache-Control" content="no-store" />
 
 <style>
 :root { --red:#b30000; --bg:#000; --panel:#111; --muted:#aaa; }
@@ -74,7 +75,7 @@ h1{
   font-size:.95rem;
 }
 
-/* Status pill under title */
+/* Status pill */
 .status{
   margin:10px auto;
   padding:10px;
@@ -86,7 +87,7 @@ h1{
 .status.away{background:#665500;}
 .status.offline{background:#400;}
 
-/* Layout grid */
+/* Layout */
 .grid{
   display:grid;
   grid-template-columns:1fr;
@@ -105,10 +106,9 @@ section{
 section h2{
   margin:6px 0 8px;
   font-size:1.1rem;
-  text-align:left;
 }
 
-/* Buttons / inputs */
+/* Inputs */
 select,button,input,textarea{
   font-family:inherit;
 }
@@ -124,9 +124,6 @@ select,button,input[type="text"],input[type="url"]{
 .btn-secondary{background:#000;color:#fff;border:1px solid var(--red);}
 .btn-tertiary{background:#222;color:#fff;border:1px solid #555;}
 
-button{cursor:pointer;}
-button:hover.btn-primary{background:#cc0000;}
-
 .row{
   display:flex;
   justify-content:flex-start;
@@ -135,40 +132,20 @@ button:hover.btn-primary{background:#cc0000;}
   gap:8px;
   margin:6px 0;
 }
-.meta{
-  color:var(--muted);
-  font-size:.85em;
-  margin-top:6px;
-}
 
-/* Push / Live form layout */
-.field-group{
-  display:flex;
-  flex-direction:column;
-  gap:6px;
-  margin-top:8px;
-}
-.field{
-  display:flex;
-  flex-direction:column;
-  gap:2px;
-}
-.field label{
-  font-size:.85rem;
-  color:#ccc;
-}
-.field input[type="text"],
-.field input[type="url"],
-.field textarea{
-  background:#000;
+/* Textareas */
+textarea{
+  width:100%;
+  min-height:120px;
+  background:#111;
   color:#fff;
-  border:1px solid #333;
+  border:2px solid var(--red);
   border-radius:6px;
   padding:8px;
-  font-size:.9rem;
+  resize:vertical;
 }
 
-/* Preview boxes */
+/* Preview */
 .preview-box{
   margin-top:8px;
   padding:8px;
@@ -192,27 +169,7 @@ button:hover.btn-primary{background:#cc0000;}
   border-radius:6px;
 }
 
-/* Caption textarea */
-textarea{
-  width:100%;
-  max-width:100%;
-  min-height:120px;
-  background:#111;
-  color:#fff;
-  border:2px solid var(--red);
-  border-radius:6px;
-  padding:8px;
-  resize:vertical;
-}
-
-/* Footer / toast / debug */
-footer{
-  margin:18px 0 24px;
-  font-size:.9em;
-  color:#777;
-  text-align:center;
-}
-
+/* Toast & debug */
 #toast{
   position:fixed;
   bottom:20px;
@@ -224,9 +181,7 @@ footer{
   border-radius:6px;
   opacity:0;
   transition:opacity .35s;
-  z-index:5;
 }
-
 #debugLog{
   font-family:monospace;
   font-size:0.75rem;
@@ -235,18 +190,11 @@ footer{
   padding:6px;
   max-height:200px;
   overflow:auto;
-  text-align:left;
   border-top:1px solid #222;
-}
-
-/* Responsive tweaks */
-@media (max-width:640px){
-  section{
-    padding:12px 10px 14px;
-  }
 }
 </style>
 </head>
+
 <body>
 
 <header>
@@ -254,7 +202,7 @@ footer{
     <span>🔒 Internal Use Only</span>
     <span id="livePill" class="pill offline">📡 Tracking: OFF</span>
   </div>
-  <button class="refresh-btn" id="refreshPage">🔄 Refresh Page</button>
+  <button class="refresh-btn" id="refreshPage">🔄 Refresh</button>
 </header>
 
 <h1>Big Red Connect — Admin Console</h1>
@@ -264,637 +212,210 @@ footer{
 
 <div class="grid">
 
-  <!-- PUSH NOTIFICATIONS (Option C style) -->
-  <section id="push">
-    <h2>Push Notifications</h2>
-    <div class="meta">
-      Send a quick push to everyone who turned on notifications from the homepage.
-    </div>
+<!-- PUSH PANEL -->
+<section>
+<h2>Push Notifications</h2>
 
-    <!-- Template selector -->
-    <div class="row">
-      <label for="pushTemplate" style="font-size:.85rem;color:#ccc;">Template</label>
-    </div>
-    <div class="row">
-      <select id="pushTemplate">
-        <option value="LIVE">🚗 LIVE — Ready to Roll</option>
-        <option value="AIRPORT">✈️ Airport Runs</option>
-        <option value="WEEKEND">🍻 Weekend Night Run</option>
-        <option value="HOLIDAY">🎄 Holiday Specials</option>
-        <option value="CAMPUS">🅿️ Campus Corner Late Night</option>
-        <option value="OFFLINE">🔴 Going Offline</option>
-        <option value="CUSTOM">✏️ Custom Only</option>
-      </select>
-      <button class="btn-tertiary" id="pushApplyTemplate">Apply Template</button>
-    </div>
+<div class="row">
+  <label style="font-size:.85rem;color:#ccc;">Template:</label>
+</div>
 
-    <!-- Fields -->
-    <div class="field-group">
-      <div class="field">
-        <label for="pushTitle">Title</label>
-        <input id="pushTitle" type="text" placeholder="Big Red Connect">
-      </div>
+<div class="row">
+  <select id="pushTemplate">
+    <option value="LIVE">🚗 LIVE — Ready to Roll</option>
+    <option value="AIRPORT">✈️ Airport Runs</option>
+    <option value="WEEKEND">🍻 Weekend Night Run</option>
+    <option value="HOLIDAY">🎄 Holiday Specials</option>
+    <option value="CAMPUS">🅿️ Campus Corner Late Night</option>
+    <option value="OFFLINE">🔴 Going Offline</option>
+    <option value="CUSTOM">✏️ Custom Only</option>
+  </select>
+  <button class="btn-tertiary" id="pushApplyTemplate">Apply</button>
+</div>
 
-      <div class="field">
-        <label for="pushMessage">Message</label>
-        <textarea id="pushMessage" placeholder="What do you want to tell your riders?"></textarea>
-      </div>
+<div class="field-group">
+  <div class="field">
+    <label>Title</label>
+    <input id="pushTitle" type="text" placeholder="Big Red Connect" />
+  </div>
 
-      <div class="field">
-        <label for="pushUrl">Tap-through link (optional)</label>
-        <input id="pushUrl" type="url" placeholder="https://bigred202403.github.io/">
-      </div>
-    </div>
+  <div class="field">
+    <label>Message</label>
+    <textarea id="pushMessage" placeholder="Enter message"></textarea>
+  </div>
 
-    <!-- Preview -->
-    <div class="preview-box" id="pushPreview">
-      <strong>Preview:</strong><br>
-      <span id="pushPrevTitle">Big Red Connect</span><br>
-      <span id="pushPrevMessage">Message will appear here.</span><br>
-      <span style="color:#888;font-size:.8rem;">Link: <span id="pushPrevUrl">https://bigred202403.github.io/</span></span>
-    </div>
+  <div class="field">
+    <label>Tap-through Link (optional)</label>
+    <input id="pushUrl" type="url" placeholder="https://bigredconnectokc.com/" />
+  </div>
+</div>
 
-    <!-- Actions -->
-    <div class="row" style="margin-top:10px;">
-      <button class="btn-primary" id="sendPush">📣 Send Push Now</button>
-      <button class="btn-secondary" id="clearPush">🧹 Clear</button>
-    </div>
+<div class="preview-box">
+  <strong>Preview:</strong><br>
+  <span id="pushPrevTitle">Big Red Connect</span><br>
+  <span id="pushPrevMessage">Message will appear here.</span><br>
+  <span style="color:#888;font-size:.8rem;">Link: <span id="pushPrevUrl">https://bigredconnectokc.com/</span></span>
+</div>
 
-    <div class="meta">
-      Uses OneSignal + Cloudflare Worker. Sends instantly to all subscribed devices.
-    </div>
-  </section>
+<div class="row" style="margin-top:10px;">
+  <button class="btn-primary" id="sendPush">📣 Send Push Now</button>
+  <button class="btn-secondary" id="clearPush">🧹 Clear</button>
+</div>
 
-  <!-- DRIVING STATUS CONTROL -->
-  <section id="control">
-    <h2>Driving Status</h2>
-    <div class="row">
-      <select id="statusSelect">
-        <option value="online">🟢 On the Road</option>
-        <option value="away">🟡 Limited Availability</option>
-        <option value="offline">🔴 Offline</option>
-      </select>
-      <button class="btn-primary" id="updateStatusBtn">💾 Save Status</button>
-    </div>
-    <div class="meta">
-      <div>Last status update: <span id="statusStamp">—</span></div>
-      <div>Last GPS ping: <span id="gpsStamp">—</span> • Interval: <span id="gpsRate">—</span></div>
-    </div>
-  </section>
+</section>
 
-  <!-- QUICK SHARE / LIVE MAP (Option C-like: templates + editable caption) -->
-  <section id="share">
-    <h2>Live Map — Preview & Caption</h2>
-    <div class="meta">
-      Choose an image + caption, edit if you want, then push it to the public Live Map page.
-    </div>
+<!-- STATUS PANEL -->
+<section>
+<h2>Driving Status</h2>
 
-    <!-- Image preview -->
-    <div class="img-box">
-      <img id="statusImage" src="" alt="Preview">
-    </div>
+<div class="row">
+  <select id="statusSelect">
+    <option value="online">🟢 On the Road</option>
+    <option value="away">🟡 Limited Availability</option>
+    <option value="offline">🔴 Offline</option>
+  </select>
+  <button class="btn-primary" id="updateStatusBtn">💾 Save</button>
+</div>
 
-    <!-- Image rotation controls -->
-    <div class="row">
-      <button id="prevImage" class="btn-tertiary">⬅ Image</button>
-      <button id="nextImage" class="btn-tertiary">Image ➡</button>
-    </div>
+<div class="meta">
+  <div>Last status update: <span id="statusStamp">—</span></div>
+  <div>Last GPS ping: <span id="gpsStamp">—</span> • Interval: <span id="gpsRate">—</span></div>
+</div>
+</section>
 
-    <!-- Caption template nav -->
-    <div class="row">
-      <button id="prevCaption" class="btn-tertiary">⬅ Caption</button>
-      <button id="nextCaption" class="btn-tertiary">Caption ➡</button>
-      <button id="resetCaption" class="btn-secondary">Reset to Template</button>
-    </div>
+<!-- SHARE PANEL -->
+<section>
+<h2>Live Map — Preview & Caption</h2>
 
-    <!-- Editable caption -->
-    <div class="field" style="margin-top:8px;">
-      <label for="captionBox">Caption for Live Map & social copy</label>
-      <textarea id="captionBox">Loading caption...</textarea>
-    </div>
+<div class="img-box">
+  <img id="statusImage" src="" alt="Preview">
+</div>
 
-    <!-- Actions -->
-    <div class="row" style="margin-top:10px;">
-      <button class="btn-secondary" id="copyBtn">📋 Copy Caption</button>
-      <button class="btn-primary" id="postToLive">📢 Post to Live Map</button>
-    </div>
+<div class="row">
+  <button id="prevImage" class="btn-tertiary">⬅ Image</button>
+  <button id="nextImage" class="btn-tertiary">Image ➡</button>
+</div>
 
-    <div class="meta">
-      The image + caption are stored via Worker and displayed on the public <strong>Live Map</strong> page.
-    </div>
-  </section>
+<div class="row">
+  <button id="prevCaption" class="btn-tertiary">⬅ Caption</button>
+  <button id="nextCaption" class="btn-tertiary">Caption ➡</button>
+  <button id="resetCaption" class="btn-secondary">Reset</button>
+</div>
+
+<label style="margin-top:8px;">Caption</label>
+<textarea id="captionBox">Loading…</textarea>
+
+<div class="row" style="margin-top:10px;">
+  <button class="btn-secondary" id="copyBtn">📋 Copy</button>
+  <button class="btn-primary" id="postToLive">📢 Post to Live Map</button>
+</div>
+
+</section>
 
 </div>
 
-<footer>© 2025 Big Red Connect — Admin Panel</footer>
 <div id="toast"></div>
-<div id="debugLog">[Debug log started]</div>
+<div id="debugLog">[Debug started]</div>
 
 <script>
-/* === CONFIG === */
+/* CONFIG */
 const STATUS_WORKER = "https://bigred-status-updater.bigredtransportation.workers.dev";
 const LOCATION_WORKER = "https://update-location.bigredtransportation.workers.dev";
 const POST_WORKER    = "https://post-to-live-beta.bigredtransportation.workers.dev";
-const PUSH_WORKER    = "https://bigred-send-push.bigredtransportation.workers.dev/";
+
+/* 🔥 NEW PUSH ENDPOINT — FIXED */
+const PUSH_WORKER    = "https://bigredconnectokc.com/push/";
+
 const AUTH_SECRET    = "BigRedPrivateKey2025";
 const TZ             = "America/Chicago";
 
-/* === ELEMENT REFERENCES (shared) === */
-const pill        = document.getElementById("status-pill");
-const statusStamp = document.getElementById("statusStamp");
-const gpsStamp    = document.getElementById("gpsStamp");
-const gpsRate     = document.getElementById("gpsRate");
-const select      = document.getElementById("statusSelect");
-const livePill    = document.getElementById("livePill");
-const toast       = document.getElementById("toast");
-const imageEl     = document.getElementById("statusImage");
-const captionBox  = document.getElementById("captionBox");
-
-/* === TOAST & DEBUG === */
-function showToast(msg, ms=2500){
-  toast.textContent = msg;
-  toast.style.opacity = 1;
-  setTimeout(() => toast.style.opacity = 0, ms);
-}
-function logDebug(msg){
-  const el = document.getElementById("debugLog");
-  const now = new Date().toLocaleTimeString("en-US",{hour12:false});
-  el.innerHTML = `[${now}] ${msg}<br>` + el.innerHTML;
-}
-function fmtLocal(iso){
-  if(!iso) return "—";
-  return new Date(iso).toLocaleString("en-US",{timeZone:TZ});
-}
-
-/* === HEADER REFRESH BUTTON === */
-document.getElementById("refreshPage").onclick = () => {
-  showToast("Refreshing…");
-  setTimeout(() => location.reload(true), 350);
+/* Short functions */
+const toast = msg => {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.style.opacity = 1;
+  setTimeout(() => t.style.opacity = 0, 2200);
+};
+const log = msg => {
+  const box = document.getElementById("debugLog");
+  const time = new Date().toLocaleTimeString("en-US",{hour12:false});
+  box.innerHTML = `[${time}] ${msg}<br>` + box.innerHTML;
 };
 
-/* ==========================================================
-   PUSH NOTIFICATIONS (Option C Composer)
-   ========================================================== */
-
-const pushTemplateSelect = document.getElementById("pushTemplate");
-const pushApplyTemplate  = document.getElementById("pushApplyTemplate");
-const pushTitleInput     = document.getElementById("pushTitle");
-const pushMessageInput   = document.getElementById("pushMessage");
-const pushUrlInput       = document.getElementById("pushUrl");
-const pushPrevTitle      = document.getElementById("pushPrevTitle");
-const pushPrevMessage    = document.getElementById("pushPrevMessage");
-const pushPrevUrl        = document.getElementById("pushPrevUrl");
-const pushSendBtn        = document.getElementById("sendPush");
-const pushClearBtn       = document.getElementById("clearPush");
-
-const HOME_URL_DEFAULT = "https://bigred202403.github.io/";
-
-/* Template definitions */
-const PUSH_TEMPLATES = {
-  LIVE: {
-    title: "Big Red is LIVE",
-    message: "I’m on the road now — message me if you need a connection.",
-    url: HOME_URL_DEFAULT
-  },
-  AIRPORT: {
-    title: "Airport Runs Open",
-    message: "Headed toward Will Rogers — text RED if you need a flat-rate airport ride.",
-    url: HOME_URL_DEFAULT
-  },
-  WEEKEND: {
-    title: "Weekend Night Run",
-    message: "Rolling through the metro — rides open tonight.",
-    url: HOME_URL_DEFAULT
-  },
-  HOLIDAY: {
-    title: "Holiday Lights & Rides",
-    message: "Holiday specials + lights tours — message RED to plan ahead!",
-    url: HOME_URL_DEFAULT
-  },
-  CAMPUS: {
-    title: "Campus Corner Late Night",
-    message: "OU late night runs open — message RED if you need a ride back.",
-    url: HOME_URL_DEFAULT
-  },
-  OFFLINE: {
-    title: "Big Red is Offline",
-    message: "Thanks for riding local — back soon!",
-    url: HOME_URL_DEFAULT
-  }
+/* --- PUSH TEMPLATES --- */
+const HOME_URL = "https://bigredconnectokc.com/";
+const tpl = {
+  LIVE:     {title:"Big Red is LIVE", message:"Rolling now — text RED if you need a ride.", url:HOME_URL},
+  AIRPORT:  {title:"Airport Runs",    message:"Headed toward Will Rogers — message RED.", url:HOME_URL},
+  WEEKEND:  {title:"Weekend Run",     message:"Out and about? I’m rolling tonight.", url:HOME_URL},
+  HOLIDAY:  {title:"Holiday Specials",message:"Flat-rate + holiday light runs available.", url:HOME_URL},
+  CAMPUS:   {title:"Campus Corner",   message:"Late-night OU runs open.", url:HOME_URL},
+  OFFLINE:  {title:"Big Red Offline", message:"See you soon!", url:HOME_URL}
 };
 
-/* Apply selected template to fields */
-function applyPushTemplate(){
-  const key = pushTemplateSelect.value;
-  if(key === "CUSTOM"){
-    // Leave fields as-is for full custom
-    return;
-  }
-  const t = PUSH_TEMPLATES[key];
-  if(!t) return;
-  pushTitleInput.value   = t.title;
-  pushMessageInput.value = t.message;
-  pushUrlInput.value     = t.url;
-  updatePushPreview();
+function applyTpl(){
+  const key = document.getElementById("pushTemplate").value;
+  if(key==="CUSTOM") return;
+  const t = tpl[key];
+  document.getElementById("pushTitle").value = t.title;
+  document.getElementById("pushMessage").value = t.message;
+  document.getElementById("pushUrl").value = t.url;
+  updPrev();
 }
 
-/* Update preview box */
-function updatePushPreview(){
-  const t = pushTitleInput.value.trim() || "Big Red Connect";
-  const m = pushMessageInput.value.trim() || "Message will appear here.";
-  const u = pushUrlInput.value.trim() || HOME_URL_DEFAULT;
-
-  pushPrevTitle.textContent   = t;
-  pushPrevMessage.textContent = m;
-  pushPrevUrl.textContent     = u;
+function updPrev(){
+  document.getElementById("pushPrevTitle").textContent =
+    document.getElementById("pushTitle").value || "Big Red Connect";
+  document.getElementById("pushPrevMessage").textContent =
+    document.getElementById("pushMessage").value || "Message will appear here.";
+  document.getElementById("pushPrevUrl").textContent =
+    document.getElementById("pushUrl").value || HOME_URL;
 }
 
-/* Clear fields */
-function clearPushFields(){
-  pushTitleInput.value   = "";
-  pushMessageInput.value = "";
-  pushUrlInput.value     = "";
-  updatePushPreview();
-}
+document.getElementById("pushApplyTemplate").onclick = applyTpl;
+document.getElementById("pushTitle").oninput = updPrev;
+document.getElementById("pushMessage").oninput = updPrev;
+document.getElementById("pushUrl").oninput = updPrev;
 
-/* Event wiring for push composer */
-pushApplyTemplate.addEventListener("click", () => {
-  applyPushTemplate();
-  showToast("Template applied");
-});
-
-pushTemplateSelect.addEventListener("change", () => {
-  applyPushTemplate();
-});
-
-pushTitleInput.addEventListener("input", updatePushPreview);
-pushMessageInput.addEventListener("input", updatePushPreview);
-pushUrlInput.addEventListener("input", updatePushPreview);
-
-pushClearBtn.addEventListener("click", () => {
-  clearPushFields();
-});
-
-/* Send Push */
-pushSendBtn.addEventListener("click", async () => {
-  const title   = pushTitleInput.value.trim() || "Big Red Connect";
-  const message = pushMessageInput.value.trim();
-  const url     = pushUrlInput.value.trim() || HOME_URL_DEFAULT;
+/* --- SEND PUSH --- */
+document.getElementById("sendPush").onclick = async () => {
+  const title = document.getElementById("pushTitle").value.trim() || "Big Red Connect";
+  const message = document.getElementById("pushMessage").value.trim();
+  const url = document.getElementById("pushUrl").value.trim() || HOME_URL;
 
   if(!message){
-    showToast("Message is required");
+    toast("Message required");
     return;
   }
 
-  const payload = { title, message, url };
+  log("Sending push…");
 
-  try{
-    logDebug("Sending push via Worker…");
-    const res = await fetch(PUSH_WORKER, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Admin-Secret": AUTH_SECRET
-      },
-      body: JSON.stringify(payload)
-    });
+  const res = await fetch(PUSH_WORKER,{
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json",
+      "X-Admin-Secret":AUTH_SECRET
+    },
+    body:JSON.stringify({title,message,url})
+  });
 
-    const text = await res.text();
-    logDebug("Push Worker response: " + text);
+  const txt = await res.text();
+  log("Push response: " + txt);
 
-    if(!res.ok){
-      showToast("⚠️ Push failed");
-      return;
-    }
-
-    showToast("📣 Push sent!");
-  }catch(err){
-    logDebug("Push error: " + err.message);
-    showToast("⚠️ Push failed");
-  }
-});
-
-/* Initialize with LIVE template on load */
-applyPushTemplate();
-updatePushPreview();
-
-/* ==========================================================
-   DRIVING STATUS + GPS
-   ========================================================== */
-
-async function fetchStatus(){
-  try{
-    const res = await fetch(`${STATUS_WORKER}/status?nocache=${Date.now()}`, { cache:"no-store" });
-    const j   = await res.json();
-    renderStatusPill(j.status, j.updated);
-    select.value = j.status;
-    updatePreview(j.status);
-    if(j.status === "online") startGPSLoop(30000);
-    else stopGPSLoop();
-  }catch(err){
-    logDebug("Status fetch error: " + err.message);
-    renderStatusPill("offline");
-  }
-}
-
-function renderStatusPill(state, iso){
-  pill.classList.remove("online","away","offline");
-  const stamp = fmtLocal(iso);
-  if(state === "online"){
-    pill.classList.add("online");
-    pill.textContent = `🟢 Online — as of ${stamp}`;
-  } else if(state === "away"){
-    pill.classList.add("away");
-    pill.textContent = `🟡 Limited — as of ${stamp}`;
-  } else {
-    pill.classList.add("offline");
-    pill.textContent = `🔴 Offline — as of ${stamp}`;
-  }
-  statusStamp.textContent = stamp;
-}
-
-/* Save status */
-document.getElementById("updateStatusBtn").onclick = async () => {
-  const newStatus = select.value;
-  const payload = { status:newStatus, updated:new Date().toISOString() };
-
-  try{
-    const res = await fetch(`${STATUS_WORKER}/status`, {
-  method: "PUT",
-  headers: {
-    "Content-Type": "application/json",
-    "X-Auth-Token": AUTH_SECRET
-  },
-  body: JSON.stringify(payload)
-});
-
-    if(!res.ok) throw new Error(await res.text());
-
-    renderStatusPill(newStatus, payload.updated);
-    updatePreview(newStatus);
-    showToast("Status updated!");
-
-    if(newStatus === "online") startGPSLoop(30000);
-    else stopGPSLoop();
-
-  }catch(err){
-    showToast("⚠️ Update failed");
-    logDebug("Status update error: " + err.message);
-  }
+  toast(res.ok ? "📣 Push sent!" : "⚠️ Push failed");
 };
 
-/* ==========================================================
-   QUICK SHARE / LIVE MAP (captions + images)
-   ========================================================== */
-
-let variants     = [];
-let captionIndex = 0;
-let originalVariants = [];
-
-/* Generate caption variants based on status */
-function generateVariants(status){
-  const weekday = new Date().toLocaleString("en-US",{weekday:"long"});
-  const CTA =
-    "\n\nNo surprises. Just solid local moves." +
-    "\nText ‘RED’ to 405-378-4024 — your affordable flat-rate ride connection." +
-    "\nVeteran Owned • Affordable • Local • Trusted." +
-    "\nhttps://bigred202403.github.io/Big-Red-Connect/";
-
-  if(status === "online"){
-    variants = [
-      `🚗 ${weekday} Moves — Big Red Connect is LIVE! Let’s roll.\n${CTA}`,
-      `🌙 ${weekday} Nights — Out and about? Big Red’s on the move.\n${CTA}`,
-      `🎄 Holiday Run — Big Red is LIVE and rolling local tonight!\n${CTA}`,
-      `🚦 Rolling steady — your trusted flat-rate connection is LIVE.\n${CTA}`,
-      `📍 In the metro now — message me to plan your pickup.\n${CTA}`
-    ];
-  } else if(status === "away"){
-    variants = [
-      `🕑 ${weekday} Update — I’m stepping away but still nearby. Text me if you need a connection.\n${CTA}`,
-      `🟡 Limited Availability — I can take select rides, just message me first.\n${CTA}`,
-      `📩 Need a ride? I’m close — text RED and I’ll confirm ASAP.\n${CTA}`
-    ];
-  } else {
-    variants = [
-      `🔴 Offline — Thank you for riding local! Back soon.\n${CTA}`,
-      `😴 Signing off for now — see you later tonight or tomorrow.\n${CTA}`
-    ];
-  }
-
-  originalVariants = variants.slice();
-  captionIndex = 0;
-  captionBox.value = variants[0] || "";
-}
-
-document.getElementById("prevCaption").onclick = () => {
-  if(variants.length === 0) return;
-  captionIndex = (captionIndex - 1 + variants.length) % variants.length;
-  captionBox.value = variants[captionIndex];
-};
-document.getElementById("nextCaption").onclick = () => {
-  if(variants.length === 0) return;
-  captionIndex = (captionIndex + 1) % variants.length;
-  captionBox.value = variants[captionIndex];
-};
-document.getElementById("resetCaption").onclick = () => {
-  if(originalVariants.length === 0) return;
-  captionBox.value = originalVariants[captionIndex] || originalVariants[0];
+/* --- CLEAR PUSH FIELDS --- */
+document.getElementById("clearPush").onclick = () => {
+  document.getElementById("pushTitle").value = "";
+  document.getElementById("pushMessage").value = "";
+  document.getElementById("pushUrl").value = "";
+  updPrev();
 };
 
-/* Image sets */
-const dayImgs = [
-  "3F34BE7E-5953-433C-B8D0-17AC9108107F.png",
-  "B02AB3EA-1AF5-4BE4-8CBB-E5A1AA40711F.png",
-  "Big Red Live 2.png"
-];
-const nightImgs = [
-  "3673A967-4A2D-4F9C-8602-0C820D31D168.png",
-  "982ABF7A-D9F5-403D-BAE8-13777EC286FB.png",
-  "0081086F-89FA-41B2-85EB-E4EE97E9E8EF.png"
-];
-const holidayImgs = [
-  "BA7E86CF-5782-4323-B0B2-19918EF67887.png",
-  "3673A967-4A2D-4F9C-8602-0C820D31D168.png",
-  "982ABF7A-D9F5-403D-BAE8-13777EC286FB.png",
-  "Big Red Live Holiday 1.png",
-  "Big Red Live Christmas.png",
-  "0081086F-89FA-41B2-85EB-E4EE97E9E8EF.png",
-  "3F34BE7E-5953-433C-B8D0-17AC9108107F.png",
-  "Big Red Live Thanksgiving.png"
-];
-const offlineImgs = [
-  "3673A967-4A2D-4F9C-8602-0C820D31D168.png",
-  "982ABF7A-D9F5-403D-BAE8-13777EC286FB.png",
-  "0081086F-89FA-41B2-85EB-E4EE97E9E8EF.png"
-];
-
-let activeImages = [];
-let imageIndex   = 0;
-
-function pickImageSet(status){
-  const now   = new Date();
-  const hour  = now.getHours();
-  const month = now.getMonth();
-  const isDay     = hour >= 7 && hour < 18;
-  const isHoliday = (month === 10 || month === 11); // Nov/Dec
-
-  if(status === "offline"){
-    activeImages = isHoliday ? holidayImgs.slice() : offlineImgs.slice();
-  } else if(isHoliday){
-    activeImages = holidayImgs.slice();
-  } else if(isDay){
-    activeImages = dayImgs.slice();
-  } else {
-    activeImages = nightImgs.slice();
-  }
-
-  if(activeImages.length === 0){
-    activeImages = dayImgs.slice();
-  }
-  imageIndex = 0;
-  applyImage();
-}
-
-function applyImage(){
-  if(activeImages.length === 0) return;
-  const filename = activeImages[imageIndex];
-  const url = "https://raw.githubusercontent.com/bigred202403/Big-Red-Connect/main/" +
-              encodeURIComponent(filename);
-  imageEl.src = url;
-}
-
-document.getElementById("prevImage").onclick = () => {
-  if(activeImages.length === 0) return;
-  imageIndex = (imageIndex - 1 + activeImages.length) % activeImages.length;
-  applyImage();
-};
-document.getElementById("nextImage").onclick = () => {
-  if(activeImages.length === 0) return;
-  imageIndex = (imageIndex + 1) % activeImages.length;
-  applyImage();
-};
-
-/* Tie it together whenever status changes / loads */
-function updatePreview(status){
-  generateVariants(status);
-  pickImageSet(status);
-}
-
-/* Copy & Post to Live */
-document.getElementById("copyBtn").onclick = () => {
-  navigator.clipboard.writeText(captionBox.value);
-  showToast("Copied!");
-};
-
-document.getElementById("postToLive").onclick = async () => {
-  const status  = select.value;
-  const caption = captionBox.value;
-  const image   = imageEl.src;
-
-  try{
-    const res = await fetch(POST_WORKER,{
-      method:"PUT",
-      headers:{
-        "Content-Type":"application/json",
-        "X-Admin-Secret":AUTH_SECRET
-      },
-      body:JSON.stringify({ status, caption, image })
-    });
-
-    const text = await res.text();
-    logDebug("Post-to-live response: " + text);
-
-    if(!res.ok) throw new Error(text);
-
-    showToast("📢 Posted to Live Map!");
-  }catch(err){
-    showToast("⚠ Error posting to Live Map");
-    logDebug("Error posting: " + err.message);
-  }
-};
-
-/* ==========================================================
-   GPS LOOP
-   ========================================================== */
-
-let gpsTimerActive = false;
-let wakeLock       = null;
-
-function setLivePill(active, rateMs){
-  livePill.classList.remove("online","away","offline");
-  livePill.classList.add(active ? "online" : "offline");
-  livePill.textContent = active ? "📡 Tracking: ON" : "📡 Tracking: OFF";
-  gpsRate.textContent  = active ? `${Math.round(rateMs/1000)}s` : "—";
-}
-
-async function sendGPS(lat,lng){
-  const payload = {
-    latitude : lat,
-    longitude: lng,
-    timestamp: new Date().toISOString()
-  };
-  try{
-    logDebug(`GPS → ${lat.toFixed(5)}, ${lng.toFixed(5)}`);
-    const res = await fetch(LOCATION_WORKER,{
-      method:"PUT",
-      headers:{ "Content-Type":"application/json" },
-      body:JSON.stringify(payload)
-    });
-    if(res.ok){
-      gpsStamp.textContent = fmtLocal(payload.timestamp);
-      logDebug("GPS OK");
-    }else{
-      logDebug("GPS FAIL " + res.status);
-    }
-  }catch(err){
-    logDebug("GPS ERR " + err.message);
-  }
-}
-
-function startGPSLoop(intervalMs){
-  stopGPSLoop();
-  gpsTimerActive = true;
-  setLivePill(true, intervalMs);
-  requestWakeLock();
-
-  const loop = () => {
-    if(!gpsTimerActive) return;
-    if(navigator.geolocation){
-      navigator.geolocation.getCurrentPosition(
-        pos => sendGPS(pos.coords.latitude, pos.coords.longitude),
-        err => logDebug("GPS ERROR " + err.message),
-        { enableHighAccuracy:true, maximumAge:8000, timeout:8000 }
-      );
-    }
-    setTimeout(loop, intervalMs);
-  };
-  loop();
-}
-
-function stopGPSLoop(){
-  gpsTimerActive = false;
-  setLivePill(false, 0);
-  releaseWakeLock();
-}
-
-async function requestWakeLock(){
-  try{
-    if("wakeLock" in navigator){
-      wakeLock = await navigator.wakeLock.request("screen");
-    }
-  }catch{}
-}
-async function releaseWakeLock(){
-  if(wakeLock){
-    try{ await wakeLock.release(); }catch{}
-    wakeLock = null;
-  }
-}
-
-window.addEventListener("pagehide", () => stopGPSLoop());
-
-/* INIT */
-fetchStatus();
+/* INITIALIZE */
+applyTpl();
+updPrev();
 </script>
 
 </body>
