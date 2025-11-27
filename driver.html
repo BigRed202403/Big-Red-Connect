@@ -161,10 +161,6 @@
       margin-right:4px;
     }
 
-    .chip.primary { border-color:var(--red); color:#ffdada; }
-    .chip.good { border-color:#2ecc71; color:#caffd4; }
-    .chip.warn { border-color:#e67e22; color:#ffd6a3; }
-
     select.status-dropdown {
       background:#111;
       color:#fff;
@@ -356,6 +352,8 @@ function renderColumn(id, arr) {
             <option ${b.status==="ACCEPTED"?"selected":""}>ACCEPTED</option>
             <option ${b.status==="ENROUTE"?"selected":""}>ENROUTE</option>
             <option ${b.status==="ARRIVED"?"selected":""}>ARRIVED</option>
+            <option ${b.status==="COMPLETED"?"selected":""}>COMPLETED</option>
+            <option ${b.status==="CANCELLED"?"selected":""}>CANCELLED</option>
           </select>
         </div>
 
