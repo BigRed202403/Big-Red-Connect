@@ -3,209 +3,185 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Big Red Admin</title>
 
-<title>Big Red Connect — Admin Console</title>
-
-<!-- Icons / PWA -->
+<!-- Icons & PWA -->
 <link rel="apple-touch-icon" href="icon.PNG">
 <link rel="icon" type="image/png" sizes="192x192" href="icon.png">
 <link rel="shortcut icon" href="icon.PNG">
 <link rel="manifest" href="manifest-admin.json">
-<meta name="apple-mobile-web-app-title" content="Big Red Admin">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="theme-color" content="#000">
 <meta http-equiv="Cache-Control" content="no-store" />
 
-<!-- 🔔 OneSignal v16 -->
+<!-- OneSignal v16 -->
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 
 <script>
-/* ============================================================
-   ONESIGNAL — ADMIN + DRIVER DEVICE TAGGING
-============================================================ */
 window.OneSignalDeferred = window.OneSignalDeferred || [];
 OneSignalDeferred.push(async function(OneSignal) {
-
   await OneSignal.init({
-    appId: "64641a89-3619-4491-a25b-c0ab000bdfe0",
+    appId: "9b8bcc89-87d3-46e2-b2d0-042d1a267718",
     safari_web_id: "web.onesignal.auto.0c90051e-4735-447d-b203-75e3767d91b9",
     notifyButton: { enable: false },
-    serviceWorkerPath: "/onesignalsdkworker.js?v=3",
-    path: "/"
+    serviceWorkerPath: "/OneSignalSDKWorker.js"
   });
 
-  // Mark this device as ADMIN + DRIVER
-  await OneSignal.sendTags({
-    role_admin: "true",
-    role_driver: "true"
-  });
-
+  // Admin tag
+  await OneSignal.User.addTag("role", "admin");
 });
 </script>
 
 <style>
-/* ============================================================
-   GENERAL STYLING
-============================================================ */
 :root {
   --red:#b30000;
-  --bg:#000;
-  --panel:#111;
+  --black:#000;
+  --panel:#0d0d0d;
   --border:#222;
-  --muted:#aaa;
 }
 
-body{
-  background:var(--bg);
+body {
+  background:var(--black);
   color:#fff;
-  font-family:Arial,Helvetica,sans-serif;
+  font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   margin:0;
-  text-align:center;
 }
 
 /* Header */
-header{
-  background:var(--panel);
+header {
+  background: var(--black);
+  border-bottom: 2px solid var(--red);
+  padding: 10px 16px;
   display:flex;
   justify-content:space-between;
   align-items:center;
-  padding:10px 16px;
-  border-bottom:2px solid var(--red);
-}
-.bar-left{
-  color:#bbb;
-  font-size:.92em;
-  display:flex;
-  gap:10px;
-  align-items:center;
 }
 
-.refresh-btn{
-  background:var(--red);
-  color:#fff;
-  border:none;
-  padding:8px 14px;
-  border-radius:6px;
-  cursor:pointer;
-  font-weight:700;
-}
-
-/* Titles */
-h1{
-  margin:18px 0 6px;
+h1 {
+  margin:16px 0 6px;
+  text-align:center;
   color:var(--red);
-  font-size:1.6rem;
-}
-.tagline{
-  color:#ddd;
-  font-size:.95rem;
+  font-size:1.7rem;
 }
 
-/* Status bar */
-.status{
-  margin:10px auto;
-  padding:10px;
-  border-radius:6px;
-  display:inline-block;
-  min-width:280px;
-  background:#333;
+.tagline {
+  text-align:center;
+  color:#aaa;
+  margin-bottom:14px;
 }
 
-/* Layout */
-.grid{
-  display:grid;
-  grid-template-columns:1fr;
-  gap:18px;
+/* Sticky status pill */
+#status-pill {
+  position: sticky;
+  top: 60px;
+  background:#111;
+  padding:10px 16px;
+  border-radius:8px;
+  margin:0 auto 12px;
+  max-width: 330px;
+  text-align:center;
+  border:1px solid #333;
+  z-index:20;
+}
+.status--loading { background:#333; }
+.status-online { background:#053; }
+.status-away { background:#665500; }
+.status-offline { background:#400; }
+
+/* Layout Sections */
+.grid {
   max-width:900px;
   margin:0 auto;
-  padding:10px 16px 24px;
+  padding:10px 14px 40px;
+  display:grid;
+  gap:20px;
 }
-section{
+
+section {
   background:var(--panel);
-  border:1px solid #222;
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:16px;
+}
+
+section h2 {
+  margin-top:0;
+  border-left:4px solid var(--red);
+  padding-left:8px;
+  font-size:1.2rem;
+}
+
+/* Buttons */
+.btn {
+  padding:10px 16px;
   border-radius:8px;
-  padding:14px 12px 16px;
-  text-align:left;
-}
-section h2{
-  margin:6px 0 8px;
-  font-size:1.1rem;
-}
-
-/* Inputs */
-select,button,input,textarea{
-  font-family:inherit;
-}
-select,input[type="text"],input[type="url"],button{
-  padding:8px 10px;
-  border-radius:6px;
   border:none;
-  margin:4px 0;
   font-weight:600;
-  font-size:.95rem;
+  cursor:pointer;
 }
 
-.btn-primary{ background:var(--red); color:#fff; }
-.btn-secondary{ background:#000; color:#fff; border:1px solid var(--red); }
-.btn-tertiary{ background:#222; color:#fff; border:1px solid #555; }
+.btn-primary {
+  background:var(--red);
+  color:white;
+  box-shadow:0 0 12px rgba(255,0,0,0.35);
+}
+.btn-primary:hover { background:#cc0000; }
 
-textarea{
-  width:100%;
-  min-height:120px;
+.btn-secondary {
+  background:#000;
+  border:1px solid var(--red);
+  color:white;
+}
+.btn-tertiary {
   background:#111;
-  color:#fff;
-  border:2px solid var(--red);
-  border-radius:6px;
-  padding:8px;
+  border:1px solid #555;
+  color:white;
 }
 
-.preview-box{
-  margin-top:8px;
-  padding:8px;
-  border-radius:6px;
-  border:1px dashed #444;
+/* Preview */
+.preview-box {
   background:#050505;
-  font-size:.85rem;
+  border:1px dashed #444;
+  padding:10px;
+  border-radius:8px;
   color:#ddd;
 }
 
-.img-box{
-  max-width:100%;
-  margin-top:10px;
-  border:3px solid var(--red);
-  border-radius:6px;
-  padding:8px;
-  text-align:center;
-}
-.img-box img{
+/* Textareas */
+textarea {
   width:100%;
-  border-radius:6px;
+  min-height:110px;
+  background:#111;
+  color:#fff;
+  border:1px solid #333;
+  border-radius:8px;
+  padding:10px;
+  font-size:.9rem;
+}
+
+/* Image preview */
+.img-box {
+  border:2px solid var(--red);
+  border-radius:10px;
+  margin:10px 0;
+  padding:6px;
+}
+.img-box img {
+  width:100%;
+  border-radius:8px;
 }
 
 /* Toast */
-#toast{
+#toast {
   position:fixed;
   bottom:20px;
   left:50%;
   transform:translateX(-50%);
   background:var(--red);
-  padding:8px 16px;
-  border-radius:6px;
+  color:white;
+  padding:10px 20px;
+  border-radius:8px;
   opacity:0;
-  transition:opacity .35s;
-  z-index:20;
-}
-
-#debugLog{
-  font-family:monospace;
-  font-size:0.75rem;
-  background:#000;
-  padding:6px;
-  border-top:1px solid #222;
-  max-height:200px;
-  overflow:auto;
-  color:#0f0;
+  transition:opacity .25s;
 }
 </style>
 </head>
@@ -213,226 +189,182 @@ textarea{
 <body>
 
 <header>
-  <div class="bar-left">
-    <span>🔒 Admin Console</span>
-  </div>
-  <button class="refresh-btn" onclick="location.reload()">🔄 Refresh</button>
+  <strong>🔒 Admin</strong>
+  <button id="refreshPage" class="btn btn-secondary">🔄 Refresh</button>
 </header>
 
-<h1>Big Red Connect — Admin Console</h1>
-<p class="tagline">Veteran Owned • Affordable • Local • Trusted</p>
+<h1>Big Red Connect — Admin</h1>
+<p class="tagline">Veteran Owned • Flat Rates • Trusted Local Connections</p>
 
-<div id="status-pill" class="status">Checking status…</div>
+<div id="status-pill" class="status--loading">Checking status…</div>
 
 <div class="grid">
 
-<!-- ============================================================
-     PUSH NOTIFICATION PANEL
-============================================================ -->
+<!-- PUSH PANEL -->
 <section>
-<h2>📣 Push Notifications</h2>
+  <h2>Push Notifications</h2>
 
-<div>
-  <label>Message Template:</label>
-</div>
-
-<div class="row">
-  <select id="pushTemplate">
-    <option value="LIVE">🚗 LIVE — Ready to Roll</option>
+  <label>Template:</label>
+  <select id="pushTemplate" class="btn-tertiary" style="width:100%;margin-bottom:8px;">
+    <option value="LIVE">🚗 LIVE</option>
     <option value="AIRPORT">✈️ Airport Runs</option>
-    <option value="WEEKEND">🍻 Weekend Night Run</option>
-    <option value="HOLIDAY">🎄 Holiday Specials</option>
-    <option value="CAMPUS">🅿️ Campus Corner Late Night</option>
-    <option value="OFFLINE">🔴 Going Offline</option>
+    <option value="WEEKEND">🍻 Weekend Night</option>
+    <option value="HOLIDAY">🎄 Holiday</option>
+    <option value="CAMPUS">🅿️ Campus Corner</option>
+    <option value="OFFLINE">🔴 Offline</option>
     <option value="CUSTOM">✏️ Custom Only</option>
   </select>
-  <button class="btn-tertiary" id="applyTemplate">Apply</button>
-</div>
 
-<label>Title</label>
-<input id="pushTitle" type="text" placeholder="Big Red Connect">
+  <button class="btn-tertiary" id="applyTpl">Apply Template</button>
 
-<label>Message</label>
-<textarea id="pushMessage" placeholder="Enter push message"></textarea>
+  <br><br>
 
-<label>Tap-through Link</label>
-<input id="pushUrl" type="url" value="https://bigredconnectokc.com/">
+  <label>Title</label>
+  <input id="pushTitle" class="btn-tertiary" style="width:100%" />
 
-<div class="preview-box">
-  <strong>Preview:</strong><br>
-  <span id="prevTitle">Big Red Connect</span><br>
-  <span id="prevMessage">Message preview…</span><br>
-  <span style="color:#888;">Link: <span id="prevUrl">https://bigredconnectokc.com/</span></span>
-</div>
+  <label>Message</label>
+  <textarea id="pushMessage"></textarea>
 
-<div style="margin-top:10px;">
-  <button class="btn-primary" id="sendPush">📣 Send Push</button>
-  <button class="btn-secondary" id="clearPush">🧹 Clear</button>
-</div>
+  <label>Tap Link (optional)</label>
+  <input id="pushUrl" class="btn-tertiary" style="width:100%" />
+
+  <div class="preview-box" id="pushPreview">
+    <strong>Preview:</strong><br>
+    <span id="prevTitle">Big Red Connect</span><br>
+    <span id="prevMessage">Message will appear here.</span><br>
+    <small>Link: <span id="prevUrl">https://bigredconnectokc.com/</span></small>
+  </div>
+
+  <div style="margin-top:12px;display:flex;gap:10px;">
+    <button class="btn btn-primary" id="sendPush">📣 Send Push</button>
+    <button class="btn btn-secondary" id="clearPush">🧹 Clear</button>
+  </div>
 </section>
 
-
-<!-- ============================================================
-     DRIVING STATUS PANEL
-============================================================ -->
+<!-- STATUS PANEL -->
 <section>
-<h2>🚦 Driving Status</h2>
+  <h2>Driving Status</h2>
 
-<select id="statusSelect">
-  <option value="online">🟢 On the Road</option>
-  <option value="away">🟡 Limited Availability</option>
-  <option value="offline">🔴 Offline</option>
-</select>
+  <select id="statusSelect" class="btn-tertiary" style="width:100%;margin-bottom:8px;">
+    <option value="online">🟢 Online</option>
+    <option value="away">🟡 Away</option>
+    <option value="offline">🔴 Offline</option>
+  </select>
 
-<button class="btn-primary" id="updateStatus">💾 Save Status</button>
+  <button class="btn-primary" id="saveStatus">Save Status</button>
 
-<p style="font-size:.85rem;color:#ccc;margin-top:6px;">
-  Last status update: <span id="statusStamp">—</span>
-</p>
-
+  <p style="font-size:.85rem;margin-top:10px;color:#aaa;">
+    Last update: <span id="statusStamp">—</span><br>
+    Last GPS ping: <span id="gpsStamp">—</span>
+  </p>
 </section>
 
-<!-- ============================================================
-     SHARE PANEL
-============================================================ -->
+<!-- LIVE MAP PANEL -->
 <section>
-<h2>🗺️ Live Map — Preview & Caption</h2>
+  <h2>Live Map Preview</h2>
 
-<div class="img-box">
-  <img id="statusImage" src="preview1.png" alt="Preview">
-</div>
+  <div class="img-box">
+    <img id="statusImage" src="Big Red Live 2.png" />
+  </div>
 
-<div style="display:flex;gap:10px;margin-top:10px;">
-  <button id="prevImage" class="btn-tertiary">⬅ Image</button>
-  <button id="nextImage" class="btn-tertiary">Image ➡</button>
-</div>
+  <div style="display:flex;gap:12px;margin-bottom:12px;">
+    <button id="prevImage" class="btn-tertiary">⬅ Image</button>
+    <button id="nextImage" class="btn-tertiary">Image ➡</button>
+  </div>
 
-<label style="margin-top:10px;">Caption</label>
-<textarea id="captionBox">Loading…</textarea>
+  <textarea id="captionBox"></textarea>
 
-<div style="display:flex;gap:10px;margin-top:10px;">
-  <button id="copyBtn" class="btn-secondary">📋 Copy</button>
-  <button id="postToLive" class="btn-primary">📢 Post to Live</button>
-</div>
-
+  <div style="display:flex;gap:12px;margin-top:12px;">
+    <button id="copyCaption" class="btn-secondary">📋 Copy</button>
+    <button id="postToLive" class="btn-primary">📢 Update Live</button>
+  </div>
 </section>
 
 </div>
 
 <div id="toast"></div>
-<div id="debugLog">[Debug Ready]</div>
 
 <script>
-/* ============================================================
-   CONSTANTS
-============================================================ */
-const PUSH_WORKER = "https://bigredconnectokc.com/push/";
+/* CONFIG */
+const PUSH_ENDPOINT = "https://bigredconnectokc.com/push/";
 const AUTH_SECRET = "BigRedPrivateKey2025";
+const HOME_URL = "https://bigredconnectokc.com/";
 
 /* Toast */
-function toast(msg){
-  const t = document.getElementById("toast");
-  t.textContent = msg;
-  t.style.opacity = 1;
+function showToast(msg){
+  const t=document.getElementById("toast");
+  t.textContent=msg;
+  t.style.opacity=1;
   setTimeout(()=>t.style.opacity=0,2000);
 }
 
-/* Debug */
-function log(msg){
-  const box = document.getElementById("debugLog");
-  const time = new Date().toLocaleTimeString("en-US",{hour12:false});
-  box.innerHTML = `[${time}] ${msg}<br>` + box.innerHTML;
-}
-
-/* ============================================================
-   PUSH TEMPLATE ENGINE
-============================================================ */
-const HOME = "https://bigredconnectokc.com/";
-
+/* Templates */
 const templates = {
-  LIVE:{title:"Big Red is LIVE", message:"Rolling now — text RED if you need a ride.", url:HOME},
-  AIRPORT:{title:"Airport Runs", message:"Headed toward Will Rogers — message RED.", url:HOME},
-  WEEKEND:{title:"Weekend Run", message:"Out and about? I’m rolling tonight.", url:HOME},
-  HOLIDAY:{title:"Holiday Specials", message:"Flat-rate holiday rides available.", url:HOME},
-  CAMPUS:{title:"Campus Corner", message:"Late-night OU runs open.", url:HOME},
-  OFFLINE:{title:"Going Offline", message:"See you soon!", url:HOME}
+  LIVE:{title:"Big Red is LIVE",message:"Rolling now — text RED if you need me.",url:HOME_URL},
+  AIRPORT:{title:"Airport Runs",message:"Headed toward Will Rogers — message RED.",url:HOME_URL},
+  WEEKEND:{title:"Weekend Ride",message:"Out in the metro — flat-rate links open.",url:HOME_URL},
+  HOLIDAY:{title:"Holiday Specials",message:"Lights, events, rides — plan ahead!",url:HOME_URL},
+  CAMPUS:{title:"Campus Corner",message:"Late-night OU runs open.",url:HOME_URL},
+  OFFLINE:{title:"Offline Now",message:"Thanks for riding local — back soon!",url:HOME_URL}
 };
 
 function applyTemplate(){
   const key=document.getElementById("pushTemplate").value;
   if(key==="CUSTOM") return;
-
   const t=templates[key];
   document.getElementById("pushTitle").value=t.title;
   document.getElementById("pushMessage").value=t.message;
   document.getElementById("pushUrl").value=t.url;
   updatePreview();
 }
+document.getElementById("applyTpl").onclick=applyTemplate;
 
+/* Preview */
 function updatePreview(){
-  document.getElementById("prevTitle").textContent =
+  document.getElementById("prevTitle").textContent=
     document.getElementById("pushTitle").value || "Big Red Connect";
-
-  document.getElementById("prevMessage").textContent =
-    document.getElementById("pushMessage").value || "Message preview…";
-
-  document.getElementById("prevUrl").textContent =
-    document.getElementById("pushUrl").value || HOME;
+  document.getElementById("prevMessage").textContent=
+    document.getElementById("pushMessage").value || "Message will appear here.";
+  document.getElementById("prevUrl").textContent=
+    document.getElementById("pushUrl").value || HOME_URL;
 }
+document.getElementById("pushTitle").oninput=updatePreview;
+document.getElementById("pushMessage").oninput=updatePreview;
+document.getElementById("pushUrl").oninput=updatePreview;
 
-document.getElementById("applyTemplate").onclick = applyTemplate;
-document.getElementById("pushTitle").oninput = updatePreview;
-document.getElementById("pushMessage").oninput = updatePreview;
-document.getElementById("pushUrl").oninput = updatePreview;
+/* SEND PUSH */
+document.getElementById("sendPush").onclick=async()=>{
+  const title=document.getElementById("pushTitle").value.trim()||"Big Red Connect";
+  const message=document.getElementById("pushMessage").value.trim();
+  const url=document.getElementById("pushUrl").value.trim()||HOME_URL;
 
-/* Clear fields */
-document.getElementById("clearPush").onclick = () => {
-  document.getElementById("pushTitle").value="";
-  document.getElementById("pushMessage").value="";
-  document.getElementById("pushUrl").value=HOME;
-  updatePreview();
-};
+  if(!message){ showToast("Message required"); return; }
 
-/* ============================================================
-   SEND PUSH NOTIFICATION
-============================================================ */
-document.getElementById("sendPush").onclick = async () => {
-  const title = document.getElementById("pushTitle").value.trim() || "Big Red Connect";
-  const msg = document.getElementById("pushMessage").value.trim();
-  const url = document.getElementById("pushUrl").value.trim() || HOME;
+  const payload={title,message,url};
 
-  if(!msg){
-    toast("Message required");
-    return;
-  }
-
-  log("Sending push…");
-
-  const res = await fetch(PUSH_WORKER,{
+  const res=await fetch(PUSH_ENDPOINT,{
     method:"POST",
     headers:{
       "Content-Type":"application/json",
       "X-Admin-Secret":AUTH_SECRET
     },
-    body:JSON.stringify({title,msg,url})
+    body:JSON.stringify(payload)
   });
 
-  const text = await res.text();
-  log("Push response: " + text);
-
-  toast(res.ok ? "📣 Push sent!" : "⚠️ Failed");
+  const txt=await res.text();
+  showToast(res.ok?"📣 Push Sent":"⚠️ Push Failed");
 };
 
-/* ============================================================
-   STATUS (placeholder)
-============================================================ */
-document.getElementById("updateStatus").onclick = () => {
-  toast("Status saved (placeholder)");
+/* CLEAR */
+document.getElementById("clearPush").onclick=()=>{
+  document.getElementById("pushTitle").value="";
+  document.getElementById("pushMessage").value="";
+  document.getElementById("pushUrl").value="";
+  updatePreview();
 };
 
-/* Initial preview */
-applyTemplate();
-updatePreview();
+/* Refresh */
+document.getElementById("refreshPage").onclick=()=>location.reload();
 </script>
 
 </body>
