@@ -15,7 +15,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="theme-color" content="#000">
 
-  <!-- 🚫 No cache -->
+  <!-- 🚫 No Cache -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
@@ -23,94 +23,85 @@
   <!-- 🎨 Styles -->
   <link rel="stylesheet" href="style.css" />
 
-  <!-- 🔔 OneSignal Web Push SDK v16 -->
+  <!-- 🔔 OneSignal Web Push SDK -->
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 
   <script>
-    // -------- Small helper: detect iPhone Safari in browser mode --------
+    /* Utility: Detect iPhone Safari */
     function isIPhoneSafari() {
-      const ua = navigator.userAgent || navigator.vendor || window.opera;
-      const isIPhone = /iPhone/i.test(ua);
-      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-      return isIPhone && !isStandalone;
+      return /iPhone/i.test(navigator.userAgent) &&
+             !window.matchMedia('(display-mode: standalone)').matches &&
+             !navigator.standalone;
     }
 
-    // -------- OneSignal init (v16) --------
+    /* -------------------------------
+       OneSignal Initialization (Rider)
+       ------------------------------- */
     window.OneSignalDeferred = window.OneSignalDeferred || [];
-    window.OneSignalDeferred.push(async function (OneSignal) {
+    OneSignalDeferred.push(async function (OneSignal) {
       await OneSignal.init({
-        appId: "9b8bcc89-87d3-46e2-b2d0-042d1a267718",
+        appId: "64641a89-3619-4491-a25b-c0ab000bdfe0",
         safari_web_id: "web.onesignal.auto.0c90051e-4735-447d-b203-75e3767d91b9",
-        notifyButton: {
-          enable: false
-        },
-        // Custom service worker files in repo root
-        serviceWorkerPath: "/OneSignalSDKWorker.js",
-        serviceWorkerUpdaterPath: "/OneSignalSDKUpdaterWorker.js",
-        serviceWorkerParam: { scope: "/" },
+        notifyButton: { enable: false },
+        serviceWorkerPath: "/onesignalsdkworker.js?v=3",
         path: "/"
       });
+
+      /* Tag this device as a rider */
+      OneSignal.sendTag("role_rider", "true");
     });
 
-    // -------- Manual "Enable Alerts" button --------
+    /* Enable alerts button logic */
     function handleEnableAlerts() {
       window.OneSignalDeferred.push(async function (OneSignal) {
-        try {
-          const supported = await OneSignal.Notifications.isPushSupported();
-          if (!supported) {
-            alert("This browser does not support notifications.");
-            return;
-          }
-
-          const permission = await OneSignal.Notifications.getPermissionStatus();
-
-          // Already granted
-          if (permission === "granted") {
-            alert("You're already set to receive Big Red Alerts on this device!");
-            return;
-          }
-
-          // iPhone Safari helper hint if nothing pops
-          if (isIPhoneSafari()) {
-            const tip = document.getElementById("iosAlertTip");
-            if (tip) tip.style.display = "block";
-          }
-
-          // Show OneSignal's slide-down prompt
-          await OneSignal.Slidedown.promptPush();
-        } catch (err) {
-          console.error("OneSignal error:", err);
-          alert("Something went wrong while trying to enable alerts. Try again in a moment.");
+        const supported = OneSignal.Notifications.isPushSupported();
+        if (!supported) {
+          alert("This browser does not support notifications.");
+          return;
         }
+
+        const permission = OneSignal.Notifications.permission;
+
+        if (permission === "granted" || permission === true) {
+          alert("You're already set to receive Big Red Alerts on this device!");
+          return;
+        }
+
+        if (isIPhoneSafari()) {
+          document.getElementById("iosAlertTip").style.display = "block";
+        }
+
+        await OneSignal.Slidedown.promptPush();
       });
     }
   </script>
+
 </head>
 
 <body>
 
-  <!-- 🌆 Hero -->
+  <!-- 🌆 Hero area -->
   <div class="hero"></div>
 
-  <!-- 🚗 Logo -->
+  <!-- 🚗 Main Logo -->
   <img src="official_logo_Nov.png" alt="Big Red Connect Logo" class="main-logo" />
 
-  <!-- 🏷️ Tagline -->
+  <!-- Tagline -->
   <p class="tagline">Veteran Owned · Affordable Flat Rates · Trusted Local Connections</p>
 
-  <!-- 🚦 Dynamic Status Pill -->
+  <!-- Dynamic Status Pill -->
   <div id="status-pill" class="status status--loading">Checking status…</div>
 
-  <!-- 🔄 Floating Refresh Button -->
+  <!-- Floating Refresh Button -->
   <button id="refreshButton" title="Refresh Page">🔄 Refresh</button>
 
-  <!-- 📲 Quick Actions -->
+  <!-- Quick Actions -->
   <div class="cta-group">
     <a href="sms:14053784024" class="btn primary">📲 Text “RED”</a>
     <a href="tel:14053784024" class="btn secondary">📞 Call Big Red</a>
   </div>
 
-  <!-- 🔔 Notifications -->
+  <!-- Notifications Section -->
   <div style="text-align:center; margin-top:18px;">
     <button onclick="handleEnableAlerts()" style="
       background:#b30000;
@@ -136,25 +127,24 @@
       margin-top:10px;
       display:none;
     ">
-      👉 <strong>iPhone users:</strong> If nothing pops up, tap the Share icon → <em>Add to Home Screen</em> → reopen the app and tap “Enable Alerts” again.
+      👉 <strong>iPhone users:</strong> Tap Share → “Add to Home Screen”, then reopen and tap Enable Alerts again.
     </p>
   </div>
 
-  <!-- 🧭 “Where To?” -->
+  <!-- Quick Destination Form -->
   <div class="info-section" style="text-align:center; margin-top:20px;">
-    <h2 style="margin-bottom:10px;">Plan Your Connection</h2>
+    <h2>Plan Your Connection</h2>
     <form id="quickDestination" onsubmit="goToFare(event)" style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
-      <input id="quickWhere" type="text" placeholder="Where to?" required 
-             style="flex:1;min-width:220px;max-width:420px;padding:12px;border-radius:10px;border:1px solid #333;background:#111;color:#fff;">
+      <input id="quickWhere" type="text" placeholder="Where to?" required
+        style="flex:1;min-width:220px;max-width:420px;padding:12px;border-radius:10px;border:1px solid #333;background:#111;color:#fff;">
       <button type="submit" class="btn primary">➡️ Next</button>
     </form>
-
     <p style="font-size:0.9em;color:#888;margin-top:6px;">
-      Tip: Start typing a place, business, or address — suggestions will appear.
+      Tip: Start typing a place, business, or address.
     </p>
   </div>
 
-  <!-- 🧱 Navigation Tiles -->
+  <!-- Navigation Tiles -->
   <div class="tile-grid">
     <a href="farecalculator.html" class="tile">💲<br>Fare Calculator</a>
     <a href="live.html" class="tile">🗺️<br>Live Map</a>
@@ -163,46 +153,43 @@
     <a href="https://www.facebook.com/share/1BWCx63CUt/?mibextid=wwXIfr" target="_blank" class="tile">👍<br>Follow on Facebook</a>
   </div>
 
-  <!-- What I Do -->
+  <!-- Content Sections -->
   <section class="info-section">
     <h2>What I Do</h2>
-    <p>I offer local ride connections across the Oklahoma City metro — from workdays and class runs to weekend nights, OU games, and airport trips.</p>
+    <p>I offer local ride connections across the Oklahoma City metro.</p>
     <ul>
-      <li>Daily work, school, and appointment connections</li>
-      <li>Airport and Tinker AFB flat-rate rides</li>
-      <li>Evening and nightlife link-ups</li>
-      <li>Event, casino, and concert trips — plan ahead and ride local</li>
+      <li>Daily work, school, and appointments</li>
+      <li>Airport & Tinker AFB rides</li>
+      <li>Nightlife link-ups</li>
+      <li>Events, concerts, casinos</li>
     </ul>
   </section>
 
-  <!-- Why Choose Red -->
   <section class="info-section">
     <h2>Why Choose Red</h2>
     <ul>
-      <li>Veteran-owned and operated — every connection is personal.</li>
-      <li>Flat-rate, fair pricing with zero surprises.</li>
-      <li>One trusted driver — no random apps or surge pricing.</li>
+      <li>Veteran-owned and operated.</li>
+      <li>Flat-rate, no-surprise pricing.</li>
+      <li>One trusted driver — always consistent.</li>
     </ul>
   </section>
 
-  <!-- Reviews -->
   <section class="info-section">
     <h2>What Riders Say</h2>
     <div class="review-card">
-      ⭐⭐⭐⭐⭐ “Always dependable and easy to reach. Flat rate, no surprises.”<br>
-      — <strong>Alex, Norman</strong>
+      ⭐⭐⭐⭐⭐ “Always dependable.”
+      <br><strong>— Alex, Norman</strong>
     </div>
     <div class="review-card">
-      ⭐⭐⭐⭐⭐ “Feels like riding with a friend, not an app. My go-to for nights out.”<br>
-      — <strong>Taylor, OKC</strong>
+      ⭐⭐⭐⭐⭐ “My go-to for nights out.”
+      <br><strong>— Taylor, OKC</strong>
     </div>
-    <p><a href="reviews.html">See more reviews →</a></p>
+    <p><a href="reviews.html">More reviews →</a></p>
   </section>
 
-  <!-- Footer -->
   <footer>
-    <p>Questions or ride connection requests?<br>Text <strong>“RED”</strong> to (405) 378-4024.</p>
-    <p><a href="faq.html">FAQ & Policies</a> | <a href="reviews.html">Leave a Review</a></p>
+    <p>Questions? Text <strong>“RED”</strong> to (405) 378-4024.</p>
+    <p><a href="faq.html">FAQ</a> | <a href="reviews.html">Leave a Review</a></p>
     <p>&copy; 2025 Big Red Connect</p>
   </footer>
 
@@ -227,15 +214,13 @@
   <!-- Status Pill -->
   <script src="status.js?v=20251026"></script>
 
-  <!-- Refresh Button Logic -->
+  <!-- Floating Refresh -->
   <script>
     const refreshBtn = document.getElementById("refreshButton");
     let refreshTimeout;
 
-    function showRefreshButton() {
-      refreshBtn.classList.add("visible");
-    }
-    function hideRefreshButton() {
+    function showRefreshButton(){ refreshBtn.classList.add("visible"); }
+    function hideRefreshButton(){
       refreshBtn.classList.remove("visible");
       clearTimeout(refreshTimeout);
       refreshTimeout = setTimeout(showRefreshButton, 30000);
@@ -251,7 +236,6 @@
     });
   </script>
 
-  <!-- Inline styles for refresh button (kept here so it stays in sync) -->
   <style>
     #refreshButton {
       position: fixed;
@@ -268,14 +252,13 @@
       box-shadow:0 2px 6px rgba(0,0,0,0.4);
       opacity:0;
       pointer-events:none;
-      transition:opacity .5s ease;
+      transition:opacity .5s;
       z-index:10;
     }
     #refreshButton.visible {
       opacity:1;
       pointer-events:auto;
     }
-    #refreshButton:hover { background:#cc0000; }
   </style>
 
 </body>
