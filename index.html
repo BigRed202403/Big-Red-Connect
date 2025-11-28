@@ -23,71 +23,70 @@
   <!-- 🎨 Styles -->
   <link rel="stylesheet" href="style.css" />
 
-  <!-- 🔔 OneSignal Web Push SDK -->
+  <!-- 🔔 OneSignal Web Push SDK v16 -->
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 
   <script>
-    // ----- Utilities -----
+    // -------- Small helper: detect iPhone Safari in browser mode --------
     function isIPhoneSafari() {
-      return /iPhone/i.test(navigator.userAgent) &&
-             !window.matchMedia('(display-mode: standalone)').matches &&
-             !navigator.standalone;
+      const ua = navigator.userAgent || navigator.vendor || window.opera;
+      const isIPhone = /iPhone/i.test(ua);
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+      return isIPhone && !isStandalone;
     }
 
-    // ----- Initialize OneSignal -----
+    // -------- OneSignal init (v16) --------
     window.OneSignalDeferred = window.OneSignalDeferred || [];
-    OneSignalDeferred.push(async function (OneSignal) {
+    window.OneSignalDeferred.push(async function (OneSignal) {
       await OneSignal.init({
-        appId: "64641a89-3619-4491-a25b-c0ab000bdfe0",
-        notifyButton: { enable: false },
-        serviceWorkerPath: "/onesignalsdkworker.js?v=3",
+        appId: "9b8bcc89-87d3-46e2-b2d0-042d1a267718",
+        safari_web_id: "web.onesignal.auto.0c90051e-4735-447d-b203-75e3767d91b9",
+        notifyButton: {
+          enable: false
+        },
+        // Custom service worker files in repo root
+        serviceWorkerPath: "/OneSignalSDKWorker.js",
+        serviceWorkerUpdaterPath: "/OneSignalSDKUpdaterWorker.js",
+        serviceWorkerParam: { scope: "/" },
         path: "/"
       });
     });
 
-    // ----- Handle Enable Button -----
+    // -------- Manual "Enable Alerts" button --------
     function handleEnableAlerts() {
       window.OneSignalDeferred.push(async function (OneSignal) {
+        try {
+          const supported = await OneSignal.Notifications.isPushSupported();
+          if (!supported) {
+            alert("This browser does not support notifications.");
+            return;
+          }
 
-        const supported = OneSignal.Notifications.isPushSupported();
-        if (!supported) {
-          alert("This browser does not support notifications.");
-          return;
+          const permission = await OneSignal.Notifications.getPermissionStatus();
+
+          // Already granted
+          if (permission === "granted") {
+            alert("You're already set to receive Big Red Alerts on this device!");
+            return;
+          }
+
+          // iPhone Safari helper hint if nothing pops
+          if (isIPhoneSafari()) {
+            const tip = document.getElementById("iosAlertTip");
+            if (tip) tip.style.display = "block";
+          }
+
+          // Show OneSignal's slide-down prompt
+          await OneSignal.Slidedown.promptPush();
+        } catch (err) {
+          console.error("OneSignal error:", err);
+          alert("Something went wrong while trying to enable alerts. Try again in a moment.");
         }
-
-        const permission = OneSignal.Notifications.permission;
-
-        // Already fully allowed — subscribed or not
-        if (permission === "granted" || permission === true) {
-          alert("You're already set to receive Big Red Alerts on this device!");
-          return;
-        }
-
-        // If we're on iPhone Safari and OneSignal won't show anything → helper tip
-        if (isIPhoneSafari()) {
-          document.getElementById("iosAlertTip").style.display = "block";
-        }
-
-        // Request the OneSignal slide prompt
-        await OneSignal.Slidedown.promptPush();
       });
     }
   </script>
-
 </head>
 
-  <script src="https://js.pusher.com/beams/2.1.0/push-notifications-cdn.js"></script>
-  <script>
-  const beamsClient = new PusherPushNotifications.Client({
-    instanceId: 'YOUR_INSTANCE_ID_HERE'
-  });
-  
-  beamsClient.start()
-    .then(() => beamsClient.addDeviceInterest('all'))
-    .then(() => console.log("Device subscribed"))
-    .catch(console.error);
-  </script>
-  
 <body>
 
   <!-- 🌆 Hero -->
@@ -113,7 +112,6 @@
 
   <!-- 🔔 Notifications -->
   <div style="text-align:center; margin-top:18px;">
-
     <button onclick="handleEnableAlerts()" style="
       background:#b30000;
       color:white;
@@ -132,16 +130,14 @@
       Get live updates when Big Red is on-duty and available.
     </p>
 
-    <!-- iPhone helper tip ONLY when needed -->
     <p id="iosAlertTip" style="
       font-size:0.8em;
       color:#ffcc66;
       margin-top:10px;
       display:none;
     ">
-      👉 <strong>iPhone users:</strong> If nothing pops up, tap the Share icon → <em>Add to Home Screen</em> → then reopen the app and tap “Enable Alerts” again.
+      👉 <strong>iPhone users:</strong> If nothing pops up, tap the Share icon → <em>Add to Home Screen</em> → reopen the app and tap “Enable Alerts” again.
     </p>
-
   </div>
 
   <!-- 🧭 “Where To?” -->
@@ -236,8 +232,10 @@
     const refreshBtn = document.getElementById("refreshButton");
     let refreshTimeout;
 
-    function showRefreshButton(){ refreshBtn.classList.add("visible"); }
-    function hideRefreshButton(){
+    function showRefreshButton() {
+      refreshBtn.classList.add("visible");
+    }
+    function hideRefreshButton() {
       refreshBtn.classList.remove("visible");
       clearTimeout(refreshTimeout);
       refreshTimeout = setTimeout(showRefreshButton, 30000);
@@ -253,6 +251,7 @@
     });
   </script>
 
+  <!-- Inline styles for refresh button (kept here so it stays in sync) -->
   <style>
     #refreshButton {
       position: fixed;
