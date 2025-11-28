@@ -3,9 +3,10 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Admin Big Red</title>
 
-<!-- Icons / PWA basics -->
+<title>Big Red Connect — Admin Console</title>
+
+<!-- Icons / PWA -->
 <link rel="apple-touch-icon" href="icon.PNG">
 <link rel="icon" type="image/png" sizes="192x192" href="icon.png">
 <link rel="shortcut icon" href="icon.PNG">
@@ -16,8 +17,44 @@
 <meta name="theme-color" content="#000">
 <meta http-equiv="Cache-Control" content="no-store" />
 
+<!-- 🔔 OneSignal v16 -->
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+
+<script>
+/* ============================================================
+   ONESIGNAL — ADMIN + DRIVER DEVICE TAGGING
+============================================================ */
+window.OneSignalDeferred = window.OneSignalDeferred || [];
+OneSignalDeferred.push(async function(OneSignal) {
+
+  await OneSignal.init({
+    appId: "64641a89-3619-4491-a25b-c0ab000bdfe0",
+    safari_web_id: "web.onesignal.auto.0c90051e-4735-447d-b203-75e3767d91b9",
+    notifyButton: { enable: false },
+    serviceWorkerPath: "/onesignalsdkworker.js?v=3",
+    path: "/"
+  });
+
+  // Mark this device as ADMIN + DRIVER
+  await OneSignal.sendTags({
+    role_admin: "true",
+    role_driver: "true"
+  });
+
+});
+</script>
+
 <style>
-:root { --red:#b30000; --bg:#000; --panel:#111; --muted:#aaa; }
+/* ============================================================
+   GENERAL STYLING
+============================================================ */
+:root {
+  --red:#b30000;
+  --bg:#000;
+  --panel:#111;
+  --border:#222;
+  --muted:#aaa;
+}
 
 body{
   background:var(--bg);
@@ -43,15 +80,6 @@ header{
   gap:10px;
   align-items:center;
 }
-.pill{
-  padding:4px 10px;
-  border-radius:999px;
-  font-weight:700;
-  font-size:.85em;
-}
-.pill.online{background:#064;}
-.pill.away{background:#665500;}
-.pill.offline{background:#400;}
 
 .refresh-btn{
   background:var(--red);
@@ -62,8 +90,8 @@ header{
   cursor:pointer;
   font-weight:700;
 }
-.refresh-btn:hover{background:#cc0000;}
 
+/* Titles */
 h1{
   margin:18px 0 6px;
   color:var(--red);
@@ -71,28 +99,25 @@ h1{
 }
 .tagline{
   color:#ddd;
-  margin:0 0 8px;
   font-size:.95rem;
 }
 
-/* Status pill */
+/* Status bar */
 .status{
   margin:10px auto;
   padding:10px;
   border-radius:6px;
   display:inline-block;
   min-width:280px;
+  background:#333;
 }
-.status.online{background:#064;}
-.status.away{background:#665500;}
-.status.offline{background:#400;}
 
 /* Layout */
 .grid{
   display:grid;
   grid-template-columns:1fr;
   gap:18px;
-  max-width:960px;
+  max-width:900px;
   margin:0 auto;
   padding:10px 16px 24px;
 }
@@ -112,7 +137,7 @@ section h2{
 select,button,input,textarea{
   font-family:inherit;
 }
-select,button,input[type="text"],input[type="url"]{
+select,input[type="text"],input[type="url"],button{
   padding:8px 10px;
   border-radius:6px;
   border:none;
@@ -120,28 +145,11 @@ select,button,input[type="text"],input[type="url"]{
   font-weight:600;
   font-size:.95rem;
 }
-.btn-primary{background:var(--red);color:#fff;}
-.btn-secondary{background:#000;color:#fff;border:1px solid var(--red);}
-.btn-tertiary{background:#222;color:#fff;border:1px solid #555;}
-button{cursor:pointer;}
-button:hover.btn-primary{background:#cc0000;}
 
-.row{
-  display:flex;
-  justify-content:flex-start;
-  align-items:center;
-  flex-wrap:wrap;
-  gap:8px;
-  margin:6px 0;
-}
+.btn-primary{ background:var(--red); color:#fff; }
+.btn-secondary{ background:#000; color:#fff; border:1px solid var(--red); }
+.btn-tertiary{ background:#222; color:#fff; border:1px solid #555; }
 
-.meta{
-  color:var(--muted);
-  font-size:.85em;
-  margin-top:4px;
-}
-
-/* Textareas */
 textarea{
   width:100%;
   min-height:120px;
@@ -150,10 +158,8 @@ textarea{
   border:2px solid var(--red);
   border-radius:6px;
   padding:8px;
-  resize:vertical;
 }
 
-/* Preview */
 .preview-box{
   margin-top:8px;
   padding:8px;
@@ -164,47 +170,42 @@ textarea{
   color:#ddd;
 }
 
-/* Image box */
 .img-box{
-  max-width:95%;
-  margin:10px auto 4px;
+  max-width:100%;
+  margin-top:10px;
   border:3px solid var(--red);
   border-radius:6px;
   padding:8px;
+  text-align:center;
 }
 .img-box img{
   width:100%;
   border-radius:6px;
 }
 
-/* Toast & debug */
+/* Toast */
 #toast{
   position:fixed;
   bottom:20px;
   left:50%;
   transform:translateX(-50%);
   background:var(--red);
-  color:#fff;
   padding:8px 16px;
   border-radius:6px;
   opacity:0;
   transition:opacity .35s;
-  z-index:10;
+  z-index:20;
 }
+
 #debugLog{
   font-family:monospace;
   font-size:0.75rem;
-  color:#0f0;
   background:#000;
   padding:6px;
+  border-top:1px solid #222;
   max-height:200px;
   overflow:auto;
-  border-top:1px solid #222;
-}
-
-/* Simple responsive tweak */
-@media (max-width:640px){
-  section{ padding:12px 10px 14px; }
+  color:#0f0;
 }
 </style>
 </head>
@@ -213,10 +214,9 @@ textarea{
 
 <header>
   <div class="bar-left">
-    <span>🔒 Internal Use Only</span>
-    <span id="livePill" class="pill offline">📡 Tracking: OFF</span>
+    <span>🔒 Admin Console</span>
   </div>
-  <button class="refresh-btn" id="refreshPage">🔄 Refresh</button>
+  <button class="refresh-btn" onclick="location.reload()">🔄 Refresh</button>
 </header>
 
 <h1>Big Red Connect — Admin Console</h1>
@@ -226,516 +226,213 @@ textarea{
 
 <div class="grid">
 
-  <!-- PUSH PANEL -->
-  <section>
-    <h2>Push Notifications</h2>
-    <p class="meta">
-      Send a quick push to everyone who chose Big Red Alerts on the homepage.
-    </p>
+<!-- ============================================================
+     PUSH NOTIFICATION PANEL
+============================================================ -->
+<section>
+<h2>📣 Push Notifications</h2>
 
-    <div class="row">
-      <label for="pushTemplate" style="font-size:.85rem;color:#ccc;">Template:</label>
-    </div>
+<div>
+  <label>Message Template:</label>
+</div>
 
-    <div class="row">
-      <select id="pushTemplate">
-        <option value="LIVE">🚗 LIVE — Ready to Roll</option>
-        <option value="AIRPORT">✈️ Airport Runs</option>
-        <option value="WEEKEND">🍻 Weekend Night Run</option>
-        <option value="HOLIDAY">🎄 Holiday Specials</option>
-        <option value="CAMPUS">🅿️ Campus Corner Late Night</option>
-        <option value="OFFLINE">🔴 Going Offline</option>
-        <option value="CUSTOM">✏️ Custom Only</option>
-      </select>
-      <button class="btn-tertiary" id="pushApplyTemplate">Apply</button>
-    </div>
+<div class="row">
+  <select id="pushTemplate">
+    <option value="LIVE">🚗 LIVE — Ready to Roll</option>
+    <option value="AIRPORT">✈️ Airport Runs</option>
+    <option value="WEEKEND">🍻 Weekend Night Run</option>
+    <option value="HOLIDAY">🎄 Holiday Specials</option>
+    <option value="CAMPUS">🅿️ Campus Corner Late Night</option>
+    <option value="OFFLINE">🔴 Going Offline</option>
+    <option value="CUSTOM">✏️ Custom Only</option>
+  </select>
+  <button class="btn-tertiary" id="applyTemplate">Apply</button>
+</div>
 
-    <div class="field-group">
-      <div class="field">
-        <label for="pushTitle" style="font-size:.85rem;color:#ccc;">Title</label>
-        <input id="pushTitle" type="text" placeholder="Big Red Connect" />
-      </div>
+<label>Title</label>
+<input id="pushTitle" type="text" placeholder="Big Red Connect">
 
-      <div class="field">
-        <label for="pushMessage" style="font-size:.85rem;color:#ccc;">Message</label>
-        <textarea id="pushMessage" placeholder="Enter message"></textarea>
-      </div>
+<label>Message</label>
+<textarea id="pushMessage" placeholder="Enter push message"></textarea>
 
-      <div class="field">
-        <label for="pushUrl" style="font-size:.85rem;color:#ccc;">Tap-through Link (optional)</label>
-        <input id="pushUrl" type="url" placeholder="https://bigredconnectokc.com/" />
-      </div>
-    </div>
+<label>Tap-through Link</label>
+<input id="pushUrl" type="url" value="https://bigredconnectokc.com/">
 
-    <div class="preview-box">
-      <strong>Preview:</strong><br>
-      <span id="pushPrevTitle">Big Red Connect</span><br>
-      <span id="pushPrevMessage">Message will appear here.</span><br>
-      <span style="color:#888;font-size:.8rem;">Link: <span id="pushPrevUrl">https://bigredconnectokc.com/</span></span>
-    </div>
+<div class="preview-box">
+  <strong>Preview:</strong><br>
+  <span id="prevTitle">Big Red Connect</span><br>
+  <span id="prevMessage">Message preview…</span><br>
+  <span style="color:#888;">Link: <span id="prevUrl">https://bigredconnectokc.com/</span></span>
+</div>
 
-    <div class="row" style="margin-top:10px;">
-      <button class="btn-primary" id="sendPush">📣 Send Push Now</button>
-      <button class="btn-secondary" id="clearPush">🧹 Clear</button>
-    </div>
+<div style="margin-top:10px;">
+  <button class="btn-primary" id="sendPush">📣 Send Push</button>
+  <button class="btn-secondary" id="clearPush">🧹 Clear</button>
+</div>
+</section>
 
-    <p class="meta">
-      Uses Cloudflare Worker → OneSignal REST API. Sends instantly to all subscribed devices.
-    </p>
-  </section>
 
-  <!-- STATUS PANEL (placeholder – still wired for future use) -->
-  <section>
-    <h2>Driving Status</h2>
+<!-- ============================================================
+     DRIVING STATUS PANEL
+============================================================ -->
+<section>
+<h2>🚦 Driving Status</h2>
 
-    <div class="row">
-      <select id="statusSelect">
-        <option value="online">🟢 On the Road</option>
-        <option value="away">🟡 Limited Availability</option>
-        <option value="offline">🔴 Offline</option>
-      </select>
-      <button class="btn-primary" id="updateStatusBtn">💾 Save</button>
-    </div>
+<select id="statusSelect">
+  <option value="online">🟢 On the Road</option>
+  <option value="away">🟡 Limited Availability</option>
+  <option value="offline">🔴 Offline</option>
+</select>
 
-    <div class="meta">
-      <div>Last status update: <span id="statusStamp">—</span></div>
-      <div>Last GPS ping: <span id="gpsStamp">—</span> • Interval: <span id="gpsRate">—</span></div>
-    </div>
-  </section>
+<button class="btn-primary" id="updateStatus">💾 Save Status</button>
 
-  <!-- SHARE PANEL (image + caption to Live Map) -->
-  <section>
-    <h2>Live Map — Preview & Caption</h2>
-    <p class="meta">
-      Choose an image + caption, then post to the public Live Map page.
-    </p>
+<p style="font-size:.85rem;color:#ccc;margin-top:6px;">
+  Last status update: <span id="statusStamp">—</span>
+</p>
 
-    <div class="img-box">
-      <img id="statusImage" src="" alt="Preview">
-    </div>
+</section>
 
-    <div class="row">
-      <button id="prevImage" class="btn-tertiary">⬅ Image</button>
-      <button id="nextImage" class="btn-tertiary">Image ➡</button>
-    </div>
+<!-- ============================================================
+     SHARE PANEL
+============================================================ -->
+<section>
+<h2>🗺️ Live Map — Preview & Caption</h2>
 
-    <div class="row">
-      <button id="prevCaption" class="btn-tertiary">⬅ Caption</button>
-      <button id="nextCaption" class="btn-tertiary">Caption ➡</button>
-      <button id="resetCaption" class="btn-secondary">Reset</button>
-    </div>
+<div class="img-box">
+  <img id="statusImage" src="preview1.png" alt="Preview">
+</div>
 
-    <label for="captionBox" style="margin-top:8px;display:block;font-size:.85rem;color:#ccc;">
-      Caption (shows on Live Map + copy for socials)
-    </label>
-    <textarea id="captionBox">Loading…</textarea>
+<div style="display:flex;gap:10px;margin-top:10px;">
+  <button id="prevImage" class="btn-tertiary">⬅ Image</button>
+  <button id="nextImage" class="btn-tertiary">Image ➡</button>
+</div>
 
-    <div class="row" style="margin-top:10px;">
-      <button class="btn-secondary" id="copyBtn">📋 Copy</button>
-      <button class="btn-primary" id="postToLive">📢 Post to Live Map</button>
-    </div>
+<label style="margin-top:10px;">Caption</label>
+<textarea id="captionBox">Loading…</textarea>
 
-    <p class="meta">
-      Image + caption are stored via Worker and displayed on <strong>live.html</strong>.
-    </p>
-  </section>
+<div style="display:flex;gap:10px;margin-top:10px;">
+  <button id="copyBtn" class="btn-secondary">📋 Copy</button>
+  <button id="postToLive" class="btn-primary">📢 Post to Live</button>
+</div>
+
+</section>
 
 </div>
 
 <div id="toast"></div>
-<div id="debugLog">[Debug started]</div>
+<div id="debugLog">[Debug Ready]</div>
 
 <script>
-/* ===================
-   CONFIG
-   =================== */
-const STATUS_WORKER   = "https://bigred-status-updater.bigredtransportation.workers.dev";
-const LOCATION_WORKER = "https://update-location.bigredtransportation.workers.dev";
-const POST_WORKER     = "https://post-to-live-beta.bigredtransportation.workers.dev";
+/* ============================================================
+   CONSTANTS
+============================================================ */
+const PUSH_WORKER = "https://bigredconnectokc.com/push/";
+const AUTH_SECRET = "BigRedPrivateKey2025";
 
-/* NEW: Push Worker routed through bigredconnectokc.com */
-const PUSH_WORKER     = "https://bigredconnectokc.com/push/";
-
-const AUTH_SECRET     = "BigRedPrivateKey2025";
-const TZ              = "America/Chicago";
-
-/* ===================
-   TOAST / DEBUG HELPERS
-   =================== */
-function showToast(msg, ms = 2200){
+/* Toast */
+function toast(msg){
   const t = document.getElementById("toast");
   t.textContent = msg;
   t.style.opacity = 1;
-  setTimeout(() => t.style.opacity = 0, ms);
+  setTimeout(()=>t.style.opacity=0,2000);
 }
+
+/* Debug */
 function log(msg){
   const box = document.getElementById("debugLog");
   const time = new Date().toLocaleTimeString("en-US",{hour12:false});
   box.innerHTML = `[${time}] ${msg}<br>` + box.innerHTML;
 }
-function fmtLocal(iso){
-  if(!iso) return "—";
-  return new Date(iso).toLocaleString("en-US",{timeZone:TZ});
-}
 
-/* Header refresh button */
-document.getElementById("refreshPage").onclick = () => {
-  showToast("Refreshing…");
-  setTimeout(() => location.reload(true), 300);
-};
+/* ============================================================
+   PUSH TEMPLATE ENGINE
+============================================================ */
+const HOME = "https://bigredconnectokc.com/";
 
-/* ===================
-   PUSH PANEL LOGIC
-   =================== */
-const HOME_URL = "https://bigredconnectokc.com/";
-
-const TEMPLATES = {
-  LIVE: {
-    title: "Big Red is LIVE",
-    message: "Rolling now — text RED if you need a flat-rate connection.",
-    url: HOME_URL
-  },
-  AIRPORT: {
-    title: "Airport Runs Open",
-    message: "Headed toward Will Rogers — message RED to line up your ride.",
-    url: HOME_URL
-  },
-  WEEKEND: {
-    title: "Weekend Night Run",
-    message: "Out in the metro tonight? I’m rolling — ride local, ride safe.",
-    url: HOME_URL
-  },
-  HOLIDAY: {
-    title: "Holiday Specials",
-    message: "Holiday light runs + flat-rate connections — plan ahead with Big Red.",
-    url: HOME_URL
-  },
-  CAMPUS: {
-    title: "Campus Corner Late Night",
-    message: "OU late-night runs open — text RED for a safe ride home.",
-    url: HOME_URL
-  },
-  OFFLINE: {
-    title: "Big Red is Offline",
-    message: "Thanks for riding local — I’ll be back soon.",
-    url: HOME_URL
-  }
+const templates = {
+  LIVE:{title:"Big Red is LIVE", message:"Rolling now — text RED if you need a ride.", url:HOME},
+  AIRPORT:{title:"Airport Runs", message:"Headed toward Will Rogers — message RED.", url:HOME},
+  WEEKEND:{title:"Weekend Run", message:"Out and about? I’m rolling tonight.", url:HOME},
+  HOLIDAY:{title:"Holiday Specials", message:"Flat-rate holiday rides available.", url:HOME},
+  CAMPUS:{title:"Campus Corner", message:"Late-night OU runs open.", url:HOME},
+  OFFLINE:{title:"Going Offline", message:"See you soon!", url:HOME}
 };
 
 function applyTemplate(){
-  const key = document.getElementById("pushTemplate").value;
-  if(key === "CUSTOM") return;
+  const key=document.getElementById("pushTemplate").value;
+  if(key==="CUSTOM") return;
 
-  const t = TEMPLATES[key];
-  if(!t) return;
-
-  document.getElementById("pushTitle").value   = t.title;
-  document.getElementById("pushMessage").value = t.message;
-  document.getElementById("pushUrl").value     = t.url;
-
+  const t=templates[key];
+  document.getElementById("pushTitle").value=t.title;
+  document.getElementById("pushMessage").value=t.message;
+  document.getElementById("pushUrl").value=t.url;
   updatePreview();
 }
 
 function updatePreview(){
-  const t = document.getElementById("pushTitle").value.trim()   || "Big Red Connect";
-  const m = document.getElementById("pushMessage").value.trim() || "Message will appear here.";
-  const u = document.getElementById("pushUrl").value.trim()     || HOME_URL;
+  document.getElementById("prevTitle").textContent =
+    document.getElementById("pushTitle").value || "Big Red Connect";
 
-  document.getElementById("pushPrevTitle").textContent   = t;
-  document.getElementById("pushPrevMessage").textContent = m;
-  document.getElementById("pushPrevUrl").textContent     = u;
+  document.getElementById("prevMessage").textContent =
+    document.getElementById("pushMessage").value || "Message preview…";
+
+  document.getElementById("prevUrl").textContent =
+    document.getElementById("pushUrl").value || HOME;
 }
 
-/* Wire events */
-document.getElementById("pushApplyTemplate").onclick = () => {
-  applyTemplate();
-  showToast("Template applied");
-};
-document.getElementById("pushTitle").oninput   = updatePreview;
+document.getElementById("applyTemplate").onclick = applyTemplate;
+document.getElementById("pushTitle").oninput = updatePreview;
 document.getElementById("pushMessage").oninput = updatePreview;
-document.getElementById("pushUrl").oninput     = updatePreview;
+document.getElementById("pushUrl").oninput = updatePreview;
 
+/* Clear fields */
 document.getElementById("clearPush").onclick = () => {
-  document.getElementById("pushTitle").value   = "";
-  document.getElementById("pushMessage").value = "";
-  document.getElementById("pushUrl").value     = "";
+  document.getElementById("pushTitle").value="";
+  document.getElementById("pushMessage").value="";
+  document.getElementById("pushUrl").value=HOME;
   updatePreview();
 };
 
+/* ============================================================
+   SEND PUSH NOTIFICATION
+============================================================ */
 document.getElementById("sendPush").onclick = async () => {
-  const title   = (document.getElementById("pushTitle").value || "").trim() || "Big Red Connect";
-  const message = (document.getElementById("pushMessage").value || "").trim();
-  const url     = (document.getElementById("pushUrl").value || "").trim() || HOME_URL;
+  const title = document.getElementById("pushTitle").value.trim() || "Big Red Connect";
+  const msg = document.getElementById("pushMessage").value.trim();
+  const url = document.getElementById("pushUrl").value.trim() || HOME;
 
-  if(!message){
-    showToast("Message is required");
+  if(!msg){
+    toast("Message required");
     return;
   }
 
-  try{
-    log("Sending push via Worker…");
-    const res = await fetch(PUSH_WORKER,{
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json",
-        "X-Admin-Secret": AUTH_SECRET
-      },
-      body: JSON.stringify({ title, message, url })
-    });
+  log("Sending push…");
 
-    const text = await res.text();
-    log("Push response: " + text);
+  const res = await fetch(PUSH_WORKER,{
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json",
+      "X-Admin-Secret":AUTH_SECRET
+    },
+    body:JSON.stringify({title,msg,url})
+  });
 
-    if(!res.ok){
-      showToast("⚠️ Push failed");
-      return;
-    }
+  const text = await res.text();
+  log("Push response: " + text);
 
-    showToast("📣 Push sent!");
-  }catch(err){
-    log("Push error: " + err.message);
-    showToast("⚠️ Push failed");
-  }
+  toast(res.ok ? "📣 Push sent!" : "⚠️ Failed");
 };
 
-/* Initialize push panel */
+/* ============================================================
+   STATUS (placeholder)
+============================================================ */
+document.getElementById("updateStatus").onclick = () => {
+  toast("Status saved (placeholder)");
+};
+
+/* Initial preview */
 applyTemplate();
 updatePreview();
-
-/* ===================
-   STATUS + LIVE MAP PREVIEW (lightweight)
-   =================== */
-
-const statusPill  = document.getElementById("status-pill");
-const statusStamp = document.getElementById("statusStamp");
-const gpsStamp    = document.getElementById("gpsStamp");
-const gpsRate     = document.getElementById("gpsRate");
-const statusSelect= document.getElementById("statusSelect");
-const livePill    = document.getElementById("livePill");
-const captionBox  = document.getElementById("captionBox");
-const imageEl     = document.getElementById("statusImage");
-
-function renderStatus(state, iso){
-  statusPill.classList.remove("online","away","offline");
-  const stamp = fmtLocal(iso);
-
-  if(state === "online"){
-    statusPill.classList.add("online");
-    statusPill.textContent = `🟢 Online — as of ${stamp}`;
-  } else if(state === "away"){
-    statusPill.classList.add("away");
-    statusPill.textContent = `🟡 Limited — as of ${stamp}`;
-  } else {
-    statusPill.classList.add("offline");
-    statusPill.textContent = `🔴 Offline — as of ${stamp}`;
-  }
-
-  statusStamp.textContent = stamp;
-}
-
-/* Fetch current status on load */
-async function fetchStatus(){
-  try{
-    const res = await fetch(`${STATUS_WORKER}/status?nocache=${Date.now()}`, { cache:"no-store" });
-    const j   = await res.json();
-    renderStatus(j.status, j.updated);
-    statusSelect.value = j.status;
-    updateCaptionVariants(j.status);
-    pickImageSet(j.status);
-  }catch(err){
-    log("Status fetch error: " + err.message);
-    renderStatus("offline");
-  }
-}
-
-/* Save status */
-document.getElementById("updateStatusBtn").onclick = async () => {
-  const newStatus = statusSelect.value;
-  const payload = { status:newStatus, updated:new Date().toISOString() };
-
-  try{
-    const res = await fetch(`${STATUS_WORKER}/status`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Auth-Token": AUTH_SECRET
-      },
-      body: JSON.stringify(payload)
-    });
-
-    if(!res.ok){
-      throw new Error(await res.text());
-    }
-
-    renderStatus(newStatus, payload.updated);
-    updateCaptionVariants(newStatus);
-    pickImageSet(newStatus);
-    showToast("Status updated");
-  }catch(err){
-    log("Status update error: " + err.message);
-    showToast("⚠️ Update failed");
-  }
-};
-
-/* Caption variants */
-let variants = [];
-let originalVariants = [];
-let captionIndex = 0;
-
-function updateCaptionVariants(status){
-  const weekday = new Date().toLocaleString("en-US",{weekday:"long"});
-  const CTA =
-    "\n\nNo surprises. Just solid local moves." +
-    "\nText ‘RED’ to 405-378-4024 — your affordable flat-rate ride connection." +
-    "\nVeteran Owned • Affordable • Local • Trusted." +
-    "\nhttps://bigredconnectokc.com/";
-
-  if(status === "online"){
-    variants = [
-      `🚗 ${weekday} Moves — Big Red Connect is LIVE! Let’s roll.\n${CTA}`,
-      `🌙 ${weekday} Nights — Out and about? Big Red’s on the move.\n${CTA}`,
-      `🎄 Holiday Run — Big Red is LIVE and rolling local tonight!\n${CTA}`
-    ];
-  } else if(status === "away"){
-    variants = [
-      `🕑 ${weekday} Update — I’m stepping away but nearby. Text me if you need a connection.\n${CTA}`,
-      `🟡 Limited Availability — I can take select rides, just message me first.\n${CTA}`
-    ];
-  } else {
-    variants = [
-      `🔴 Offline — Thank you for riding local! Back soon.\n${CTA}`,
-      `😴 Signing off for now — see you later tonight or tomorrow.\n${CTA}`
-    ];
-  }
-
-  originalVariants = variants.slice();
-  captionIndex = 0;
-  captionBox.value = variants[0] || "";
-}
-
-document.getElementById("prevCaption").onclick = () => {
-  if(!variants.length) return;
-  captionIndex = (captionIndex - 1 + variants.length) % variants.length;
-  captionBox.value = variants[captionIndex];
-};
-document.getElementById("nextCaption").onclick = () => {
-  if(!variants.length) return;
-  captionIndex = (captionIndex + 1) % variants.length;
-  captionBox.value = variants[captionIndex];
-};
-document.getElementById("resetCaption").onclick = () => {
-  if(!originalVariants.length) return;
-  captionBox.value = originalVariants[captionIndex] || originalVariants[0];
-};
-
-/* Image sets (using your GitHub images) */
-const dayImgs = [
-  "3F34BE7E-5953-433C-B8D0-17AC9108107F.png",
-  "B02AB3EA-1AF5-4BE4-8CBB-E5A1AA40711F.png",
-  "Big Red Live 2.png"
-];
-const nightImgs = [
-  "3673A967-4A2D-4F9C-8602-0C820D31D168.png",
-  "982ABF7A-D9F5-403D-BAE8-13777EC286FB.png",
-  "0081086F-89FA-41B2-85EB-E4EE97E9E8EF.png"
-];
-const holidayImgs = [
-  "BA7E86CF-5782-4323-B0B2-19918EF67887.png",
-  "3673A967-4A2D-4F9C-8602-0C820D31D168.png",
-  "982ABF7A-D9F5-403D-BAE8-13777EC286FB.png",
-  "Big Red Live Holiday 1.png",
-  "Big Red Live Christmas.png",
-  "0081086F-89FA-41B2-85EB-E4EE97E9E8EF.png",
-  "3F34BE7E-5953-433C-B8D0-17AC9108107F.png",
-  "Big Red Live Thanksgiving.png"
-];
-const offlineImgs = [
-  "3673A967-4A2D-4F9C-8602-0C820D31D168.png",
-  "982ABF7A-D9F5-403D-BAE8-13777EC286FB.png",
-  "0081086F-89FA-41B2-85EB-E4EE97E9E8EF.png"
-];
-
-let activeImages = [];
-let imageIndex = 0;
-
-function pickImageSet(status){
-  const now   = new Date();
-  const hour  = now.getHours();
-  const month = now.getMonth();
-  const isDay = hour >= 7 && hour < 18;
-  const isHoliday = (month === 10 || month === 11); // Nov/Dec
-
-  if(status === "offline"){
-    activeImages = isHoliday ? holidayImgs.slice() : offlineImgs.slice();
-  } else if(isHoliday){
-    activeImages = holidayImgs.slice();
-  } else if(isDay){
-    activeImages = dayImgs.slice();
-  } else {
-    activeImages = nightImgs.slice();
-  }
-
-  if(!activeImages.length){
-    activeImages = dayImgs.slice();
-  }
-  imageIndex = 0;
-  applyImage();
-}
-
-function applyImage(){
-  if(!activeImages.length) return;
-  const filename = activeImages[imageIndex];
-  const url = "https://raw.githubusercontent.com/bigred202403/Big-Red-Connect/main/" +
-              encodeURIComponent(filename);
-  imageEl.src = url;
-}
-
-document.getElementById("prevImage").onclick = () => {
-  if(!activeImages.length) return;
-  imageIndex = (imageIndex - 1 + activeImages.length) % activeImages.length;
-  applyImage();
-};
-document.getElementById("nextImage").onclick = () => {
-  if(!activeImages.length) return;
-  imageIndex = (imageIndex + 1) % activeImages.length;
-  applyImage();
-};
-
-/* Copy & Post to Live Map */
-document.getElementById("copyBtn").onclick = () => {
-  navigator.clipboard.writeText(captionBox.value || "");
-  showToast("Copied caption");
-};
-
-document.getElementById("postToLive").onclick = async () => {
-  const status  = statusSelect.value;
-  const caption = captionBox.value || "";
-  const image   = imageEl.src || "";
-
-  try{
-    const res = await fetch(POST_WORKER,{
-      method:"PUT",
-      headers:{
-        "Content-Type":"application/json",
-        "X-Admin-Secret":AUTH_SECRET
-      },
-      body:JSON.stringify({ status, caption, image })
-    });
-
-    const text = await res.text();
-    log("Post-to-live response: " + text);
-
-    if(!res.ok) throw new Error(text);
-
-    showToast("📢 Posted to Live Map!");
-  }catch(err){
-    showToast("⚠️ Error posting");
-    log("Post error: " + err.message);
-  }
-};
-
-/* Init */
-fetchStatus();
 </script>
 
 </body>
