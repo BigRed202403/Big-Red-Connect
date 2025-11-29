@@ -27,19 +27,19 @@
 
       const j = await res.json();
 
-      // 🔥 New Cloudflare KV Worker format
+      // ✅ Prefer explicit status from KV Worker
+      if (j && typeof j.status === "string") {
+        return {
+          status: j.status.toLowerCase(),
+          iso: j.lastUpdated || j.updated || new Date().toISOString()
+        };
+      }
+
+      // ↩️ Fallback: derive from boolean "online" if present
       if ("online" in j) {
         return {
           status: j.online ? "online" : "offline",
           iso: j.lastUpdated || new Date().toISOString()
-        };
-      }
-
-      // 🔥 Legacy fallback (kept for future safety)
-      if (j && j.status) {
-        return {
-          status: j.status.toLowerCase(),
-          iso: j.updated
         };
       }
 
