@@ -251,9 +251,9 @@ textarea{
 
 <div class="grid">
 
-  <!-- PUSH PANEL -->
+  <!-- PUSH PANEL (TEMPLATES ONLY – PUSH DISABLED) -->
   <section>
-    <h2>Push Notifications</h2>
+    <h2>Alert Templates (Push coming later)</h2>
 
     <div class="row">
       <label style="font-size:.85rem;color:#ccc;">Template:</label>
@@ -265,9 +265,14 @@ textarea{
         <option value="AIRPORT">✈️ Airport Runs</option>
         <option value="WEEKEND">🍻 Weekend Night Run</option>
         <option value="CAMPUS">🅿️ Campus Corner Late Night</option>
+
+        <!-- Christmas set -->
         <option value="XMAS1">🎄 Christmas – Lights & Events</option>
         <option value="XMAS2">🎄 Christmas – Nights Out</option>
         <option value="XMAS3">🎄 Christmas – Family & Errands</option>
+        <option value="XMAS4">🎄 Christmas – Zoo Lights & Dates</option>
+        <option value="XMAS5">🎄 Christmas – Late Night Pickups</option>
+
         <option value="OFFLINE">🔴 Going Offline</option>
         <option value="CUSTOM">✏️ Custom Only</option>
       </select>
@@ -301,9 +306,14 @@ textarea{
     </div>
 
     <div class="row" style="margin-top:10px;">
-      <button class="btn-primary" id="sendPush">📣 Send Push Now</button>
+      <!-- Push send button intentionally removed for stability -->
       <button class="btn-secondary" id="clearPush">🧹 Clear</button>
     </div>
+
+    <p style="font-size:.75rem;color:#bbb;margin-top:4px;">
+      ℹ️ Push notifications are temporarily disabled. Use these templates for
+      Live Map posts, social captions, or SMS replies.
+    </p>
   </section>
 
   <!-- STATUS PANEL -->
@@ -362,24 +372,19 @@ textarea{
 /* =============================
    CONFIG
    ============================= */
-const STATUS_WORKER  = "https://bigred-status-updater.bigredtransportation.workers.dev";
+const STATUS_WORKER   = "https://bigred-status-updater.bigredtransportation.workers.dev";
 const LOCATION_WORKER = "https://update-location.bigredtransportation.workers.dev";
-const POST_WORKER    = "https://post-to-live-beta.bigredtransportation.workers.dev";
-const PUSH_WORKER    = "https://bigredconnectokc.com/push/send";   <!-- ⭐ FIXED HERE -->
+const POST_WORKER     = "https://post-to-live-beta.bigredtransportation.workers.dev";
 
-const AUTH_SECRET    = "BigRedPrivateKey2025";
-const TZ             = "America/Chicago";
-const HOME_URL       = "https://bigredconnectokc.com/";
+const AUTH_SECRET = "BigRedPrivateKey2025";
+const TZ          = "America/Chicago";
+const HOME_URL    = "https://bigredconnectokc.com/";
 
-/* Images for live rotation (Thanksgiving removed) */
-const LIVE_IMAGES = [
-  "Big Red Live 2.png",
-  "Big Red Live Christmas.png",
-  "Big Red Live Holiday 1.png",
-  "Big Red Live Text Only.png"
-];
+/* Images (dynamic PNG from root) */
+let LIVE_IMAGES = [];
+let imgIndex    = 0;
 
-/* Caption / push templates (shared messaging) */
+/* Caption rotation */
 const TEMPLATES = {
   LIVE: {
     name: "🚗 LIVE — Ready to Roll",
@@ -401,7 +406,6 @@ const TEMPLATES = {
     title: "Campus Corner Nights",
     message: "🎓 Campus Corner nights and OU events — keep it simple and ride with Big Red. Text RED to 405-378-4024."
   },
-  /* Christmas set — all three variants */
   XMAS1: {
     name: "🎄 Christmas – Lights & Events",
     title: "Christmas Season Rides",
@@ -417,6 +421,16 @@ const TEMPLATES = {
     title: "Holiday Errands & Family Rides",
     message: "🎄 Christmas lights, family gatherings, and shopping runs — plan ahead and ride local with Big Red. Text RED to 405-378-4024."
   },
+  XMAS4: {
+    name: "🎄 Christmas – Zoo Lights & Dates",
+    title: "Zoo Lights & Date Nights",
+    message: "🎄 Zoo Lights, date nights, and downtown Christmas vibes — let Big Red handle the drive. Text RED to 405-378-4024."
+  },
+  XMAS5: {
+    name: "🎄 Christmas – Late Night Pickups",
+    title: "Holiday Late Night Pickups",
+    message: "🎄 Wrapping up late? I’ve got your ride home. Holiday late-night pickups across the metro — text RED to 405-378-4024."
+  },
   OFFLINE: {
     name: "🔴 Going Offline",
     title: "Big Red is Offline",
@@ -424,8 +438,7 @@ const TEMPLATES = {
   }
 };
 
-/* Order for caption prev/next cycling */
-const CAPTION_ORDER = [
+const CAPTION_KEYS = [
   "LIVE",
   "AIRPORT",
   "WEEKEND",
@@ -433,8 +446,16 @@ const CAPTION_ORDER = [
   "XMAS1",
   "XMAS2",
   "XMAS3",
+  "XMAS4",
+  "XMAS5",
   "OFFLINE"
 ];
+
+let captionIndex = 0;
+
+/* GPS ping */
+let gpsTimer   = null;
+let gpsLastTs  = null;
 
 /* =============================
    Helpers
@@ -460,9 +481,47 @@ function formatDateTime(iso){
     });
   }catch(e){ return iso; }
 }
+function captionBox(){ return document.getElementById("captionBox"); }
 
 /* =============================
-   Status handling
+   Image loading (all PNG in root)
+   ============================= */
+async function loadImages(){
+  try{
+    log("Scanning root for PNG images…");
+    const res  = await fetch(".");
+    const html = await res.text();
+
+    const regex  = /href="([^"]+\.png)"/gi;
+    const found  = [];
+    let match;
+    while((match = regex.exec(html)) !== null){
+      const fname = match[1];
+      if(!found.includes(fname)) found.push(fname);
+    }
+
+    LIVE_IMAGES = found;
+    if(LIVE_IMAGES.length === 0){
+      log("No PNG images found in root; image rotation idle.");
+      return;
+    }
+    log("Loaded " + LIVE_IMAGES.length + " PNG images.");
+    setImage(0);
+  }catch(e){
+    log("Image scan error: " + e.message);
+  }
+}
+
+function setImage(idx){
+  if(!LIVE_IMAGES || LIVE_IMAGES.length === 0) return;
+  imgIndex = (idx + LIVE_IMAGES.length) % LIVE_IMAGES.length;
+  const img = document.getElementById("statusImage");
+  img.src = LIVE_IMAGES[imgIndex];
+  log("Image set to: " + LIVE_IMAGES[imgIndex]);
+}
+
+/* =============================
+   Status handling + GPS control
    ============================= */
 async function loadStatus(){
   try{
@@ -484,9 +543,9 @@ async function loadStatus(){
       statusVal = data.status;
     }
 
-    const pill = document.getElementById("status-pill");
+    const pill      = document.getElementById("status-pill");
     const headerPill = document.getElementById("livePill");
-    const stamp = document.getElementById("statusStamp");
+    const stamp     = document.getElementById("statusStamp");
 
     pill.classList.remove("online","away","offline");
     headerPill.classList.remove("online","away","offline");
@@ -505,13 +564,15 @@ async function loadStatus(){
     } else {
       label = "OFFLINE";
       pill.classList.add("offline");
-      headerPill.classclassList.add("offline");
+      headerPill.classList.add("offline");
       headerPill.textContent = "📡 Tracking: OFF";
     }
 
     const when = formatDateTime(last);
     pill.textContent = `Status: ${label} • as of ${when}`;
     stamp.textContent = when;
+
+    handleGpsForStatus(statusVal);
   }catch(e){
     log("Status error: " + e.message);
   }
@@ -520,7 +581,7 @@ async function loadStatus(){
 async function updateStatus(){
   const val = document.getElementById("statusSelect").value;
   let online = false;
-  let msg = "Offline";
+  let msg    = "Offline";
   if(val === "online"){ online = true; msg = "On the Road"; }
   else if(val === "away"){ msg = "Limited Availability"; }
 
@@ -543,10 +604,12 @@ async function updateStatus(){
     });
     const txt = await res.text();
     log("Status PUT response: " + txt);
+
     if(!res.ok){
       toast("⚠️ Status update failed");
     }else{
       toast("✅ Status updated");
+      handleGpsForStatus(val);
       loadStatus();
     }
   }catch(e){
@@ -556,34 +619,104 @@ async function updateStatus(){
 }
 
 /* =============================
-   Image rotation
+   GPS pings (online only)
    ============================= */
-let imgIndex = 0;
-function setImage(idx){
-  if(LIVE_IMAGES.length === 0) return;
-  imgIndex = (idx + LIVE_IMAGES.length) % LIVE_IMAGES.length;
-  const img = document.getElementById("statusImage");
-  img.src = LIVE_IMAGES[imgIndex];
-  log("Image set to: " + LIVE_IMAGES[imgIndex]);
+function handleGpsForStatus(statusVal){
+  if(statusVal === "online"){
+    startGpsPings();
+  } else {
+    stopGpsPings();
+  }
+}
+
+function startGpsPings(){
+  if(gpsTimer){
+    clearInterval(gpsTimer);
+    gpsTimer = null;
+  }
+  if(!("geolocation" in navigator)){
+    log("Geolocation not available in browser.");
+    return;
+  }
+
+  log("Starting GPS pings (15s)…");
+  gpsLastTs = null;
+
+  gpsTimer = setInterval(() => {
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        const now = Date.now();
+        const stampEl = document.getElementById("gpsStamp");
+        const rateEl  = document.getElementById("gpsRate");
+
+        const displayTime = new Date().toLocaleString("en-US",{
+          timeZone:TZ,
+          month:"2-digit", day:"2-digit", year:"2-digit",
+          hour:"2-digit", minute:"2-digit"
+        });
+        stampEl.textContent = displayTime;
+
+        if(gpsLastTs){
+          const diffSec = Math.round((now - gpsLastTs)/1000);
+          rateEl.textContent = diffSec + "s";
+        } else {
+          rateEl.textContent = "~15s";
+        }
+        gpsLastTs = now;
+
+        const payload = {
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+          accuracy: pos.coords.accuracy,
+          source: "admin",
+          updated: new Date().toISOString()
+        };
+
+        fetch(LOCATION_WORKER,{
+          method:"PUT",
+          headers:{
+            "Content-Type":"application/json",
+            "X-Auth-Token":AUTH_SECRET
+          },
+          body: JSON.stringify(payload)
+        }).then(r => r.text())
+        .then(txt => {
+          log("GPS PUT response: " + txt);
+        }).catch(e => {
+          log("GPS PUT error: " + e.message);
+        });
+      },
+      err => {
+        log("GPS error: " + err.message);
+      },
+      { enableHighAccuracy:true, maximumAge:5000, timeout:10000 }
+    );
+  }, 15000);
+}
+
+function stopGpsPings(){
+  if(gpsTimer){
+    clearInterval(gpsTimer);
+    gpsTimer = null;
+    log("GPS pings stopped.");
+  }
+  document.getElementById("gpsRate").textContent  = "—";
 }
 
 /* =============================
    Caption rotation + persistence
    ============================= */
-let captionIndex = 0;
-const captionBox = () => document.getElementById("captionBox");
-
 function applyTemplateToCaption(key){
   const tpl = TEMPLATES[key];
   if(!tpl) return;
   captionBox().value = tpl.message;
-  captionIndex = CAPTION_ORDER.indexOf(key);
+  captionIndex = CAPTION_KEYS.indexOf(key);
   if(captionIndex < 0) captionIndex = 0;
 }
 
 function stepCaption(delta){
-  captionIndex = (captionIndex + delta + CAPTION_ORDER.length) % CAPTION_ORDER.length;
-  const key = CAPTION_ORDER[captionIndex];
+  captionIndex = (captionIndex + delta + CAPTION_KEYS.length) % CAPTION_KEYS.length;
+  const key = CAPTION_KEYS[captionIndex];
   applyTemplateToCaption(key);
   log("Caption set " + key);
 }
@@ -639,7 +772,7 @@ async function postToLive(){
 }
 
 /* =============================
-   Push templates + sending
+   Push templates (preview only)
    ============================= */
 function updPrev(){
   document.getElementById("pushPrevTitle").textContent =
@@ -666,39 +799,9 @@ function applyPushTemplate(){
   captionBox().value = t.message;
 
   updPrev();
-  captionIndex = CAPTION_ORDER.indexOf(key);
+  captionIndex = CAPTION_KEYS.indexOf(key);
   if(captionIndex < 0) captionIndex = 0;
   log("Template applied: " + key);
-}
-
-/* Send push via Cloudflare Worker → OneSignal */
-async function sendPush(){
-  const title = document.getElementById("pushTitle").value.trim() || "Big Red Connect";
-  const message = document.getElementById("pushMessage").value.trim();
-  const url = document.getElementById("pushUrl").value.trim() || HOME_URL;
-
-  if(!message){
-    toast("Message required");
-    return;
-  }
-
-  log("Sending push via Worker…");
-  try{
-    const res = await fetch(PUSH_WORKER,{
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json",
-        "X-Admin-Secret":AUTH_SECRET
-      },
-      body:JSON.stringify({ title, message, url })
-    });
-    const txt = await res.text();
-    log("Push Worker response (" + res.status + "): " + txt);
-    toast(res.ok ? "📣 Push sent!" : "⚠️ Push failed (see debug)");
-  }catch(e){
-    log("Push error: " + e.message);
-    toast("⚠️ Push error");
-  }
 }
 
 /* Clear push fields only (not caption) */
@@ -730,7 +833,6 @@ document.getElementById("pushTitle").oninput   =
 document.getElementById("pushMessage").oninput =
 document.getElementById("pushUrl").oninput     = updPrev;
 
-document.getElementById("sendPush").onclick = sendPush;
 document.getElementById("clearPush").onclick = clearPush;
 
 document.getElementById("updateStatusBtn").onclick = updateStatus;
@@ -752,9 +854,9 @@ document.getElementById("refreshPage").onclick = () => location.reload(true);
 
 /* On load */
 window.addEventListener("load", () => {
-  setImage(0);
   updPrev();
   applyTemplateToCaption("LIVE");
+  loadImages();     // dynamic PNG scan
   loadStatus();
   loadLastCaption();
 });
