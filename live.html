@@ -106,7 +106,6 @@
       100% { transform: scale(0.8); opacity: 0.6; }
     }
 
-    /* 🔔 Driver announcement card */
     .announcement-card {
       background:#111;
       border:1px solid #b30000;
@@ -212,7 +211,6 @@
 
     const log = (...args) => console.log(new Date().toLocaleTimeString(), "[LIVE]", ...args);
 
-    /* Announcement Loader */
     async function loadAnnouncement() {
       try {
         const res = await fetch(POST_WORKER_URL + "?t=" + Date.now(), { cache:"no-store" });
@@ -251,14 +249,12 @@
     document.addEventListener("DOMContentLoaded", loadAnnouncement);
     setInterval(loadAnnouncement, 60000);
 
-    /* Listen for status updates from status.js */
     document.addEventListener("statusUpdated", (e) => {
       currentStatus = (e.detail || "offline").toLowerCase();
       log("statusUpdated →", currentStatus);
       updateVisibility();
     });
 
-    /* Map Init */
     window.initLiveMap = async function() {
       geocoder = new google.maps.Geocoder();
       directionsService = new google.maps.DirectionsService();
@@ -275,15 +271,29 @@
         document.getElementById("manualRow").classList.remove("hidden");
       document.getElementById("btnUseManual").onclick = handleManualUse;
 
+      /* ----------------------------------------------- */
+      /* 📍 Autocomplete — OKC Metro Bias                 */
+      /* ----------------------------------------------- */
+      const OKC_METRO_BOUNDS = new google.maps.LatLngBounds(
+        new google.maps.LatLng(34.9000, -98.1000),
+        new google.maps.LatLng(35.9000, -96.9000)
+      );
+
       autocompleteManual = new google.maps.places.Autocomplete(
         document.getElementById("manualAddr"),
-        { fields: ["geometry", "formatted_address", "name"], types: ["geocode","establishment"] }
+        {
+          fields: ["geometry", "formatted_address", "name"],
+          types: ["geocode","establishment"],
+          bounds: OKC_METRO_BOUNDS,
+          strictBounds: false,
+          componentRestrictions: { country: "us" }
+        }
       );
+
       autocompleteManual.addListener("place_changed", async () => {
         const place = autocompleteManual.getPlace();
         if (place.geometry?.location) {
           riderPos = place.geometry.location;
-          log("manual place selected →", place.formatted_address || place.name);
           await drawRoute(place.formatted_address || place.name);
         }
       });
@@ -304,7 +314,6 @@
 
         if (!isNaN(lat) && !isNaN(lng) && ageMin <= STALE_MIN) {
           driverPos = { lat, lng };
-          log("driver live →", driverPos);
         } else {
           driverPos = HQ;
         }
@@ -348,8 +357,7 @@
       window.driverMarker = new google.maps.Marker({
         position: driverPos,
         map,
-        label: "🚗",
-        title: "Big Red (Live)"
+        label: "🚗"
       });
 
       const pulseDiv = document.createElement("div");
@@ -395,19 +403,14 @@
 
             driverPos = newPos;
 
-            /* 🔥 FIXED LINE BELOW */
             if (window.driverMarker) window.driverMarker.setPosition(driverPos);
 
             map.panTo(driverPos);
-            log("driver refreshed →", driverPos);
           }
-        } catch (e) {
-          log("refresh failed", e?.message);
-        }
+        } catch {}
       }, 31000);
     }
 
-    /* User Location */
     async function handleUseMyLocation(){
       if (currentStatus !== "online") return;
       await getDriverLocation();
@@ -483,7 +486,6 @@
       map.fitBounds(bounds);
     }
 
-    /* Text RED helper */
     document.addEventListener("DOMContentLoaded", () => {
       const textBtn = document.getElementById("textRed");
       if (!textBtn) return;
