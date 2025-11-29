@@ -351,7 +351,7 @@ textarea{
     <div class="row">
       <button id="prevCaption" class="btn-tertiary">⬅ Caption</button>
       <button id="nextCaption" class="btn-tertiary">Caption ➡</button>
-      <button id="resetCaption" class="btn-secondary">Reset</button>
+      <button class="btn-secondary" id="resetCaption">Reset</button>
     </div>
 
     <label style="margin-top:8px;">Caption</label>
@@ -380,8 +380,30 @@ const AUTH_SECRET = "BigRedPrivateKey2025";
 const TZ          = "America/Chicago";
 const HOME_URL    = "https://bigredconnectokc.com/";
 
-/* Images (dynamic PNG from root) */
-let LIVE_IMAGES = [];
+/* Manual image list (root PNG assets) */
+const LIVE_IMAGES = [
+  "icon.png",
+  "icon.PNG",
+  "0081086F-89FA-41B2-85EB-E4EE97E9E8EF.png",
+  "059AAE7C-E31D-4780-B0FD-00535D28F120.png",
+  "148D1A08-D537-4A0C-B141-2336DBF68A15.png",
+  "1A5072F2-8604-4CAB-BC84-E15D86D8CE73.png",
+  "3673A967-4A2D-4F9C-8602-0C820D31D168.png",
+  "37263759-BD32-4E50-883A-0A5BE2F71928.png",
+  "3F34BE7E-5953-433C-B8D0-17AC9108107F.png",
+  "7106A362-DEC7-4EA7-A0B2-B83DC93EFFAD.png",
+  "8F06509B-317B-45C2-89CE-B2AD1E16D054.png",
+  "982ABF7A-D9F5-403D-BAE8-13777EC286FB.png",
+  "B02AB3EA-1AF5-4BE4-8CBB-E5A1AA40711F.png",
+  "BA7E86CF-5782-4323-B0B2-19918EF67887.png",
+  "Big Red Live 2.png",
+  "Big Red Live Christmas.png",
+  "Big Red Live Holiday 1.png",
+  "Big Red Live Text Only.png",
+  "Big Red Live Thanksgiving.png",
+  "Official Logo.png"
+];
+
 let imgIndex    = 0;
 
 /* Caption rotation */
@@ -484,32 +506,15 @@ function formatDateTime(iso){
 function captionBox(){ return document.getElementById("captionBox"); }
 
 /* =============================
-   Image loading (all PNG in root)
+   Image loading (manual list)
    ============================= */
 async function loadImages(){
-  try{
-    log("Scanning root for PNG images…");
-    const res  = await fetch(".");
-    const html = await res.text();
-
-    const regex  = /href="([^"]+\.png)"/gi;
-    const found  = [];
-    let match;
-    while((match = regex.exec(html)) !== null){
-      const fname = match[1];
-      if(!found.includes(fname)) found.push(fname);
-    }
-
-    LIVE_IMAGES = found;
-    if(LIVE_IMAGES.length === 0){
-      log("No PNG images found in root; image rotation idle.");
-      return;
-    }
-    log("Loaded " + LIVE_IMAGES.length + " PNG images.");
-    setImage(0);
-  }catch(e){
-    log("Image scan error: " + e.message);
+  if(!LIVE_IMAGES.length){
+    log("No LIVE_IMAGES configured.");
+    return;
   }
+  log("Using manual LIVE_IMAGES list (" + LIVE_IMAGES.length + ").");
+  setImage(0);
 }
 
 function setImage(idx){
@@ -523,56 +528,45 @@ function setImage(idx){
 /* =============================
    Status handling + GPS control
    ============================= */
-
-/* Read status from KV Worker */
 async function loadStatus(){
-  try {
+  try{
     log("Loading status from KV…");
     const res = await fetch(STATUS_WORKER + "/status");
-    if (!res.ok) {
+    if(!res.ok){
       log("Status GET failed: " + res.status);
       return;
     }
-
     const data = await res.json();
     log("Status GET OK: " + JSON.stringify(data));
 
-    /* ---- NEW LOGIC: Reliable status normalization ---- */
     let statusVal = "offline";
+    let last = data.lastUpdated || data.updated || null;
 
-    if (data.status) {
-      // Worker explicitly provides "online", "away", "offline"
-      statusVal = data.status.toLowerCase();
+    if ("status" in data && data.status) {
+      statusVal = data.status;
     } else if ("online" in data) {
-      // Older schema fallback
       statusVal = data.online ? "online" : "offline";
     }
-
-    const last = data.lastUpdated || data.updated || null;
 
     const pill       = document.getElementById("status-pill");
     const headerPill = document.getElementById("livePill");
     const stamp      = document.getElementById("statusStamp");
+    const selector   = document.getElementById("statusSelect");
 
-    // Reset classes
     pill.classList.remove("online","away","offline");
     headerPill.classList.remove("online","away","offline");
 
-    /* ---- NEW: Correct labels and colors ---- */
     let label = "";
-
-    if (statusVal === "online") {
+    if(statusVal === "online"){
       label = "ONLINE";
       pill.classList.add("online");
       headerPill.classList.add("online");
       headerPill.textContent = "📡 Tracking: ON";
-
-    } else if (statusVal === "away") {
+    } else if(statusVal === "away"){
       label = "LIMITED";
       pill.classList.add("away");
       headerPill.classList.add("away");
       headerPill.textContent = "📡 Tracking: LIMITED";
-
     } else {
       label = "OFFLINE";
       pill.classList.add("offline");
@@ -584,62 +578,57 @@ async function loadStatus(){
     pill.textContent = `Status: ${label} • as of ${when}`;
     stamp.textContent = when;
 
-    /* ---- Apply GPS logic (online = GPS on) ---- */
-    handleGpsForStatus(statusVal);
+    if (selector) selector.value = statusVal;
 
-  } catch (e) {
+    handleGpsForStatus(statusVal);
+  }catch(e){
     log("Status error: " + e.message);
   }
 }
 
-/* Send status to Worker */
 async function updateStatus(){
   const val = document.getElementById("statusSelect").value;
 
-  /* ---- NEW: unified status field ---- */
-  let statusField = "offline";
-  let msg = "Offline";
+  let normalizedStatus = "offline";
+  let message = "Offline";
 
   if (val === "online") {
-    statusField = "online";
-    msg = "On the Road";
+    normalizedStatus = "online";
+    message = "On the Road";
   } else if (val === "away") {
-    statusField = "away";
-    msg = "Limited Availability";
+    normalizedStatus = "away";
+    message = "Limited Availability";
   }
 
   const body = {
-    status: statusField,
-    online: statusField === "online",  // GPS active only for online
-    message: msg,
+    status: normalizedStatus,
+    online: normalizedStatus === "online",   // GPS only for ONLINE
+    message,
     activeRideId: null,
     location: null
   };
 
-  try {
+  try{
     log("Sending status PUT…");
-
     const res = await fetch(STATUS_WORKER + "/status",{
       method:"PUT",
       headers:{
         "Content-Type":"application/json",
         "X-Auth-Token":AUTH_SECRET
       },
-      body: JSON.stringify(body)
+      body:JSON.stringify(body)
     });
-
     const txt = await res.text();
     log("Status PUT response: " + txt);
 
-    if (!res.ok) {
+    if(!res.ok){
       toast("⚠️ Status update failed");
-    } else {
+    }else{
       toast("✅ Status updated");
-      handleGpsForStatus(statusField);   // Turn GPS on/off immediately
-      loadStatus();                      // Refresh pill
+      handleGpsForStatus(normalizedStatus);
+      loadStatus();
     }
-
-  } catch (e) {
+  }catch(e){
     log("Status PUT error: " + e.message);
     toast("⚠️ Status error");
   }
@@ -778,7 +767,9 @@ async function postToLive(){
     toast("Caption is required");
     return;
   }
-  const image = LIVE_IMAGES[imgIndex] || "";
+  const image  = LIVE_IMAGES[imgIndex] || "";
+  const statusSel = document.getElementById("statusSelect")?.value || "offline";
+
   try{
     log("Posting to live worker…");
     const res = await fetch(POST_WORKER,{
@@ -787,7 +778,11 @@ async function postToLive(){
         "Content-Type":"application/json",
         "X-Admin-Secret":AUTH_SECRET
       },
-      body:JSON.stringify({ caption, image })
+      body:JSON.stringify({
+        caption,
+        image,
+        status: statusSel
+      })
     });
     const txt = await res.text();
     log("Post-to-live response: " + txt);
@@ -883,7 +878,7 @@ document.getElementById("refreshPage").onclick = () => location.reload(true);
 window.addEventListener("load", () => {
   updPrev();
   applyTemplateToCaption("LIVE");
-  loadImages();     // dynamic PNG scan
+  loadImages();     // manual PNG list
   loadStatus();
   loadLastCaption();
 });
