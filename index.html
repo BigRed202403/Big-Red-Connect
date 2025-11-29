@@ -23,7 +23,7 @@
   <!-- 🎨 Styles -->
   <link rel="stylesheet" href="style.css" />
 
-  <!-- 🔔 OneSignal Web Push SDK -->
+  <!-- 🔔 OneSignal Web Push SDK v16 -->
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 
   <script>
@@ -40,14 +40,14 @@
     window.OneSignalDeferred = window.OneSignalDeferred || [];
     OneSignalDeferred.push(async function (OneSignal) {
       await OneSignal.init({
-        appId: "64641a89-3619-4491-a25b-c0ab000bdfe0",
+        appId: "9b8bcc89-87d3-46e2-b2d0-042d1a267718",
         safari_web_id: "web.onesignal.auto.0c90051e-4735-447d-b203-75e3767d91b9",
         notifyButton: { enable: false },
         serviceWorkerPath: "/onesignalsdkworker.js?v=3",
         path: "/"
       });
 
-      /* Tag this device as a rider */
+      /* Tag this device as a rider for broadcasts / segments */
       OneSignal.sendTag("role_rider", "true");
     });
 
@@ -61,7 +61,6 @@
         }
 
         const permission = OneSignal.Notifications.permission;
-
         if (permission === "granted" || permission === true) {
           alert("You're already set to receive Big Red Alerts on this device!");
           return;
@@ -97,7 +96,7 @@
 
   <!-- Quick Actions -->
   <div class="cta-group">
-    <a href="sms:14053784024" class="btn primary">📲 Text “RED”</a>
+    <a href="sms:14053784024" class="btn primary">📲 Text "RED"</a>
     <a href="tel:14053784024" class="btn secondary">📞 Call Big Red</a>
   </div>
 
@@ -127,7 +126,7 @@
       margin-top:10px;
       display:none;
     ">
-      👉 <strong>iPhone users:</strong> Tap Share → “Add to Home Screen”, then reopen and tap Enable Alerts again.
+      👉 <strong>iPhone users:</strong> Tap Share → "Add to Home Screen", then reopen and tap Enable Alerts again.
     </p>
   </div>
 
@@ -177,18 +176,18 @@
   <section class="info-section">
     <h2>What Riders Say</h2>
     <div class="review-card">
-      ⭐⭐⭐⭐⭐ “Always dependable.”
+      ⭐⭐⭐⭐⭐ "Always dependable."
       <br><strong>— Alex, Norman</strong>
     </div>
     <div class="review-card">
-      ⭐⭐⭐⭐⭐ “My go-to for nights out.”
+      ⭐⭐⭐⭐⭐ "My go-to for nights out."
       <br><strong>— Taylor, OKC</strong>
     </div>
     <p><a href="reviews.html">More reviews →</a></p>
   </section>
 
   <footer>
-    <p>Questions? Text <strong>“RED”</strong> to (405) 378-4024.</p>
+    <p>Questions? Text <strong>"RED"</strong> to (405) 378-4024.</p>
     <p><a href="faq.html">FAQ</a> | <a href="reviews.html">Leave a Review</a></p>
     <p>&copy; 2025 Big Red Connect</p>
   </footer>
