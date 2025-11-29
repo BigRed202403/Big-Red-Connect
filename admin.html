@@ -523,44 +523,56 @@ function setImage(idx){
 /* =============================
    Status handling + GPS control
    ============================= */
+
+/* Read status from KV Worker */
 async function loadStatus(){
-  try{
+  try {
     log("Loading status from KV…");
     const res = await fetch(STATUS_WORKER + "/status");
-    if(!res.ok){
+    if (!res.ok) {
       log("Status GET failed: " + res.status);
       return;
     }
+
     const data = await res.json();
     log("Status GET OK: " + JSON.stringify(data));
 
+    /* ---- NEW LOGIC: Reliable status normalization ---- */
     let statusVal = "offline";
-    let last = data.lastUpdated || data.updated || null;
 
-    if("online" in data){
+    if (data.status) {
+      // Worker explicitly provides "online", "away", "offline"
+      statusVal = data.status.toLowerCase();
+    } else if ("online" in data) {
+      // Older schema fallback
       statusVal = data.online ? "online" : "offline";
-    } else if("status" in data){
-      statusVal = data.status;
     }
 
-    const pill      = document.getElementById("status-pill");
-    const headerPill = document.getElementById("livePill");
-    const stamp     = document.getElementById("statusStamp");
+    const last = data.lastUpdated || data.updated || null;
 
+    const pill       = document.getElementById("status-pill");
+    const headerPill = document.getElementById("livePill");
+    const stamp      = document.getElementById("statusStamp");
+
+    // Reset classes
     pill.classList.remove("online","away","offline");
     headerPill.classList.remove("online","away","offline");
 
+    /* ---- NEW: Correct labels and colors ---- */
     let label = "";
-    if(statusVal === "online"){
+
+    if (statusVal === "online") {
       label = "ONLINE";
       pill.classList.add("online");
       headerPill.classList.add("online");
       headerPill.textContent = "📡 Tracking: ON";
-    } else if(statusVal === "away"){
+
+    } else if (statusVal === "away") {
       label = "LIMITED";
       pill.classList.add("away");
       headerPill.classList.add("away");
       headerPill.textContent = "📡 Tracking: LIMITED";
+
     } else {
       label = "OFFLINE";
       pill.classList.add("offline");
@@ -572,47 +584,62 @@ async function loadStatus(){
     pill.textContent = `Status: ${label} • as of ${when}`;
     stamp.textContent = when;
 
+    /* ---- Apply GPS logic (online = GPS on) ---- */
     handleGpsForStatus(statusVal);
-  }catch(e){
+
+  } catch (e) {
     log("Status error: " + e.message);
   }
 }
 
+/* Send status to Worker */
 async function updateStatus(){
   const val = document.getElementById("statusSelect").value;
-  let online = false;
-  let msg    = "Offline";
-  if(val === "online"){ online = true; msg = "On the Road"; }
-  else if(val === "away"){ msg = "Limited Availability"; }
+
+  /* ---- NEW: unified status field ---- */
+  let statusField = "offline";
+  let msg = "Offline";
+
+  if (val === "online") {
+    statusField = "online";
+    msg = "On the Road";
+  } else if (val === "away") {
+    statusField = "away";
+    msg = "Limited Availability";
+  }
 
   const body = {
-    online,
+    status: statusField,
+    online: statusField === "online",  // GPS active only for online
     message: msg,
     activeRideId: null,
     location: null
   };
 
-  try{
+  try {
     log("Sending status PUT…");
+
     const res = await fetch(STATUS_WORKER + "/status",{
       method:"PUT",
       headers:{
         "Content-Type":"application/json",
         "X-Auth-Token":AUTH_SECRET
       },
-      body:JSON.stringify(body)
+      body: JSON.stringify(body)
     });
+
     const txt = await res.text();
     log("Status PUT response: " + txt);
 
-    if(!res.ok){
+    if (!res.ok) {
       toast("⚠️ Status update failed");
-    }else{
+    } else {
       toast("✅ Status updated");
-      handleGpsForStatus(val);
-      loadStatus();
+      handleGpsForStatus(statusField);   // Turn GPS on/off immediately
+      loadStatus();                      // Refresh pill
     }
-  }catch(e){
+
+  } catch (e) {
     log("Status PUT error: " + e.message);
     toast("⚠️ Status error");
   }
