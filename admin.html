@@ -251,9 +251,9 @@ textarea{
 
 <div class="grid">
 
-  <!-- PUSH PANEL (TEMPLATES ONLY – PUSH DISABLED) -->
+  <!-- PUSH PANEL -->
   <section>
-    <h2>Alert Templates (Push coming later)</h2>
+    <h2>Alert Templates & Broadcast Push</h2>
 
     <div class="row">
       <label style="font-size:.85rem;color:#ccc;">Template:</label>
@@ -306,13 +306,13 @@ textarea{
     </div>
 
     <div class="row" style="margin-top:10px;">
-      <!-- Push send button intentionally removed for stability -->
+      <button class="btn-primary" id="sendBroadcastPush">📢 Send Broadcast Push</button>
       <button class="btn-secondary" id="clearPush">🧹 Clear</button>
     </div>
 
     <p style="font-size:.75rem;color:#bbb;margin-top:4px;">
-      ℹ️ Push notifications are temporarily disabled. Use these templates for
-      Live Map posts, social captions, or SMS replies.
+      Subscribers with notifications enabled will receive the broadcast push.
+      Templates also stay in sync with your Live Map caption.
     </p>
   </section>
 
@@ -375,6 +375,7 @@ textarea{
 const STATUS_WORKER   = "https://bigred-status-updater.bigredtransportation.workers.dev";
 const LOCATION_WORKER = "https://update-location.bigredtransportation.workers.dev";
 const POST_WORKER     = "https://post-to-live-beta.bigredtransportation.workers.dev";
+const PUSH_WORKER     = "https://bigredconnectokc.com/push";
 
 const AUTH_SECRET = "BigRedPrivateKey2025";
 const TZ          = "America/Chicago";
@@ -406,7 +407,7 @@ const LIVE_IMAGES = [
 
 let imgIndex    = 0;
 
-/* Caption rotation */
+/* Caption + push templates */
 const TEMPLATES = {
   LIVE: {
     name: "🚗 LIVE — Ready to Roll",
@@ -794,7 +795,7 @@ async function postToLive(){
 }
 
 /* =============================
-   Push templates (preview only)
+   Push sending
    ============================= */
 function updPrev(){
   document.getElementById("pushPrevTitle").textContent =
@@ -834,6 +835,47 @@ function clearPush(){
   updPrev();
 }
 
+/* Core push send helper (broadcast for now) */
+async function sendPush(payload){
+  try{
+    log("Sending push via PUSH_WORKER…");
+    const res = await fetch(PUSH_WORKER, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Admin-Secret": AUTH_SECRET
+      },
+      body: JSON.stringify(payload)
+    });
+    const txt = await res.text();
+    log("Push response: " + res.status + " " + txt);
+    toast(res.ok ? "📢 Push sent" : "⚠️ Push failed");
+  }catch(e){
+    log("Push error: " + e.message);
+    toast("⚠️ Push error");
+  }
+}
+
+/* Handler for broadcast push from admin */
+function handlePushBroadcast(){
+  const title   = document.getElementById("pushTitle").value.trim() || "Big Red Connect";
+  const message = document.getElementById("pushMessage").value.trim();
+  const url     = document.getElementById("pushUrl").value.trim() || HOME_URL;
+
+  if(!message){
+    toast("Message is required to send push");
+    return;
+  }
+
+  const payload = {
+    title,
+    message,
+    url,
+    type: "broadcast"
+  };
+  sendPush(payload);
+}
+
 /* =============================
    Clipboard & refresh
    ============================= */
@@ -856,6 +898,7 @@ document.getElementById("pushMessage").oninput =
 document.getElementById("pushUrl").oninput     = updPrev;
 
 document.getElementById("clearPush").onclick = clearPush;
+document.getElementById("sendBroadcastPush").onclick = handlePushBroadcast;
 
 document.getElementById("updateStatusBtn").onclick = updateStatus;
 
