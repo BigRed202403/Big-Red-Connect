@@ -1,17 +1,20 @@
 // ===============================
-// Big Red Connect — status.js (Fast Sync Version, Nov 2025)
+// Big Red Connect — status.js
+// Fast Sync Version (Patched for KV Worker Dec 2025)
 // ===============================
 (function () {
   const TZ = "America/Chicago";
+
+  // NEW: Your KV-powered Cloudflare Worker
   const CLOUD_URL = "https://bigred-status-updater.bigredtransportation.workers.dev/status";
 
   // ----------------------------------
-  // Local cache setup
+  // Local cache setup (for quick load)
   // ----------------------------------
   let lastKnownStatus = localStorage.getItem("bigred_status") || "offline";
 
   // ----------------------------------
-  // Fetch Worker status
+  // Read live driver status from Worker
   // ----------------------------------
   async function readStatus() {
     try {
@@ -19,13 +22,29 @@
         cache: "no-store",
         headers: { "Accept": "application/json" },
       });
-      if (res.ok) {
-        const j = await res.json();
-        if (j && j.status) {
-          return { status: j.status.toLowerCase(), iso: j.updated };
-        }
+
+      if (!res.ok) throw new Error("Network error");
+
+      const j = await res.json();
+
+      // 🔥 New Cloudflare KV Worker format
+      if ("online" in j) {
+        return {
+          status: j.online ? "online" : "offline",
+          iso: j.lastUpdated || new Date().toISOString()
+        };
       }
-      throw new Error("Bad JSON or no status key");
+
+      // 🔥 Legacy fallback (kept for future safety)
+      if (j && j.status) {
+        return {
+          status: j.status.toLowerCase(),
+          iso: j.updated
+        };
+      }
+
+      throw new Error("Unrecognized payload format");
+
     } catch (e) {
       console.warn("⚠️ Worker fetch failed, defaulting offline:", e);
       return { status: "offline", iso: new Date().toISOString() };
@@ -38,16 +57,22 @@
   function fmtCT(iso) {
     const d = new Date(iso);
     const date = new Intl.DateTimeFormat("en-US", {
-      timeZone: TZ, month: "short", day: "numeric", year: "numeric",
+      timeZone: TZ,
+      month: "short",
+      day: "numeric",
+      year: "numeric",
     }).format(d);
     const time = new Intl.DateTimeFormat("en-US", {
-      timeZone: TZ, hour: "numeric", minute: "2-digit", timeZoneName: "short",
+      timeZone: TZ,
+      hour: "numeric",
+      minute: "2-digit",
+      timeZoneName: "short",
     }).format(d);
     return `${date} · ${time}`;
   }
 
   // ----------------------------------
-  // Pill rendering
+  // Pill rendering logic
   // ----------------------------------
   function renderPillContent(status, iso) {
     const stamp = fmtCT(iso);
@@ -55,6 +80,7 @@
       case "online":
         return { text: `🟢 Online — as of ${stamp}`, cls: "online" };
       case "away":
+        // This case still supported if Worker ever includes "status":"away"
         return { text: `🟡 Limited Availability — as of ${stamp}`, cls: "away" };
       default:
         return { text: `🔴 Offline — as of ${stamp}`, cls: "offline" };
@@ -66,6 +92,7 @@
   // ----------------------------------
   async function renderPill() {
     const { status, iso } = await readStatus();
+
     const pill = document.getElementById("status-pill");
     if (pill) {
       pill.classList.remove("online", "away", "offline", "status--loading");
@@ -74,12 +101,14 @@
       pill.classList.add(cls);
     }
 
-    // Broadcast to other scripts
+    // Save to cache
     localStorage.setItem("bigred_status", status);
+
+    // Notify all other scripts (live.html listens for this)
     const event = new CustomEvent("statusUpdated", { detail: status });
     document.dispatchEvent(event);
 
-    // Log if changed
+    // Log transitions
     if (status !== lastKnownStatus) {
       console.log(`🔄 Status changed: ${lastKnownStatus} → ${status}`);
       lastKnownStatus = status;
@@ -87,14 +116,14 @@
   }
 
   // ----------------------------------
-  // Auto-refresh faster (5s)
+  // Auto-refresh (fast)
   // ----------------------------------
   function scheduleAutoRefresh() {
     setInterval(renderPill, 5000); // every 5 seconds
   }
 
   // ----------------------------------
-  // Midnight image/caption refresh (still supported)
+  // Midnight refresh
   // ----------------------------------
   function scheduleMidnightRefresh() {
     const now = new Date();
