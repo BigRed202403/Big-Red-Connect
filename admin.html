@@ -362,6 +362,31 @@ textarea{
       <button class="btn-primary" id="postToLive">📢 Post to Live Map</button>
     </div>
   </section>
+<!-- SMS TEST PANEL -->
+<section>
+  <h2>Send Test SMS (via Quo)</h2>
+
+  <div class="row">
+    <input id="smsNumber" type="text"
+           placeholder="Enter phone number (e.g. +1405xxxxxxx)"
+           style="flex:1; min-width:260px;">
+  </div>
+
+  <div class="row">
+    <textarea id="smsMessage"
+              placeholder="Enter message"
+              style="width:100%; min-height:70px;"></textarea>
+  </div>
+
+  <div class="row">
+    <button class="btn-primary" id="sendSmsBtn">📨 Send SMS</button>
+  </div>
+
+  <div class="meta" id="smsStatus"
+       style="margin-top:6px; color:#aaa; font-size:0.8rem;">
+    Ready.
+  </div>
+</section>
 
 </div>
 
