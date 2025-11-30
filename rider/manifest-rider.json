@@ -1,0 +1,23 @@
+{
+  "name": "Big Red Connect — Rider",
+  "short_name": "Big Red Rider",
+  "description": "Request flat-rate rides, track your driver, and manage your rider profile with Big Red Connect.",
+  "start_url": "/rider/index.html",
+  "scope": "/rider/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon.PNG",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon.PNG",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
