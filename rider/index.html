@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Big Red Connect — Rider</title>
+
+  <!-- PWA / Icons -->
+  <link rel="apple-touch-icon" href="/icon.PNG">
+  <link rel="icon" type="image/png" sizes="192x192" href="/icon.png">
+  <link rel="shortcut icon" href="/icon.PNG">
+  <link rel="manifest" href="manifest-rider.json">
+  <meta name="apple-mobile-web-app-title" content="Big Red Rider">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="theme-color" content="#000000">
+
+  <style>
+    :root {
+      --red:#b30000;
+      --bg:#000;
+      --panel:#111;
+      --muted:#aaa;
+    }
+    * { box-sizing:border-box; }
+    body{
+      background:var(--bg);
+      color:#fff;
+      font-family:Arial,Helvetica,sans-serif;
+      margin:0;
+      min-height:100vh;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+    }
+    header{
+      width:100%;
+      padding:10px 16px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      background:#050505;
+      border-bottom:2px solid var(--red);
+    }
+    .logo{
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .logo img{
+      height:40px;
+      border-radius:4px;
+    }
+    .logo span{
+      font-weight:700;
+      font-size:1rem;
+    }
+    .home-link a{
+      color:#fff;
+      text-decoration:none;
+      font-size:.9rem;
+      border:1px solid var(--red);
+      padding:6px 10px;
+      border-radius:6px;
+    }
+    main{
+      flex:1;
+      width:100%;
+      max-width:480px;
+      padding:16px;
+    }
+    h1{
+      margin:16px 0 4px;
+      font-size:1.5rem;
+      color:var(--red);
+      text-align:center;
+    }
+    .tagline{
+      text-align:center;
+      color:#ddd;
+      font-size:.95rem;
+      margin-bottom:12px;
+    }
+    .card{
+      background:var(--panel);
+      border-radius:10px;
+      border:1px solid #222;
+      padding:14px 12px 16px;
+      margin-bottom:14px;
+    }
+    .card h2{
+      margin:0 0 8px;
+      font-size:1.1rem;
+    }
+    label{
+      display:block;
+      font-size:.85rem;
+      margin:6px 0 2px;
+      color:#ccc;
+    }
+    input{
+      width:100%;
+      padding:8px 10px;
+      border-radius:6px;
+      border:1px solid #333;
+      background:#000;
+      color:#fff;
+      font-size:.95rem;
+    }
+    .btn-row{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-top:12px;
+    }
+    button, a.btn{
+      padding:9px 12px;
+      border-radius:6px;
+      border:none;
+      cursor:pointer;
+      font-weight:600;
+      font-size:.95rem;
+      text-decoration:none;
+      text-align:center;
+    }
+    .btn-primary{
+      background:var(--red);
+      color:#fff;
+    }
+    .btn-secondary{
+      background:#000;
+      color:#fff;
+      border:1px solid var(--red);
+    }
+    .btn-ghost{
+      background:#111;
+      color:#fff;
+      border:1px solid #444;
+      font-size:.85rem;
+    }
+    .hint{
+      font-size:.8rem;
+      color:var(--muted);
+      margin-top:4px;
+    }
+    .meta{
+      font-size:.8rem;
+      color:var(--muted);
+      margin-top:8px;
+    }
+    footer{
+      width:100%;
+      text-align:center;
+      padding:12px 8px 16px;
+      font-size:.85rem;
+      color:#777;
+    }
+    #toast{
+      position:fixed;
+      bottom:20px;
+      left:50%;
+      transform:translateX(-50%);
+      background:var(--red);
+      color:#fff;
+      padding:8px 14px;
+      border-radius:6px;
+      opacity:0;
+      transition:opacity .3s;
+      z-index:10;
+      font-size:.9rem;
+    }
+  </style>
+
+  <!-- TODO: OneSignal script will be wired here in a later step
+  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+  <script>
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    OneSignalDeferred.push(async function(OneSignal) {
+      await OneSignal.init({
+        appId: "YOUR-ONESIGNAL-APP-ID",
+        safari_web_id: "YOUR-SAFARI-WEB-ID",
+        notifyButton: { enable: true }
+      });
+    });
+  </script>
+  -->
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <img src="/official_logo_Nov.png" alt="Big Red Connect Logo">
+    <span>Big Red Rider</span>
+  </div>
+  <div class="home-link">
+    <a href="/index.html">🏠 Main Site</a>
+  </div>
+</header>
+
+<main>
+  <h1>Your Rider Hub</h1>
+  <p class="tagline">
+    Save your details once, request flat-rate rides, and track your connection with Big Red.
+  </p>
+
+  <!-- Profile card -->
+  <section class="card" id="profile-card">
+    <h2>Rider Profile</h2>
+    <form id="profileForm">
+      <label for="riderName">Your Name</label>
+      <input id="riderName" type="text" autocomplete="name" placeholder="First name or nickname" />
+
+      <label for="riderPhone">Mobile Number</label>
+      <input id="riderPhone" type="tel" autocomplete="tel" placeholder="+1 (405) 555-1234" />
+
+      <label for="riderHome">Home / Usual Pickup (optional)</label>
+      <input id="riderHome" type="text" placeholder="Neighborhood or full address" />
+
+      <div class="btn-row">
+        <button type="submit" class="btn-primary">💾 Save Rider Profile</button>
+        <button type="button" id="clearProfile" class="btn-ghost">🧹 Clear</button>
+      </div>
+
+      <div class="hint">
+        Your **mobile number** becomes your rider ID so Big Red can match you to your ride.
+      </div>
+    </form>
+  </section>
+
+  <!-- Actions card -->
+  <section class="card">
+    <h2>Ride Actions</h2>
+    <div class="btn-row">
+      <a href="ride-request.html" class="btn-primary">📝 Request a Ride</a>
+      <a href="myride.html" class="btn-secondary">📍 View My Ride</a>
+    </div>
+    <div class="meta" id="profileStatus">
+      Profile not saved yet.
+    </div>
+  </section>
+
+  <!-- Notifications placeholder (we’ll wire OneSignal later) -->
+  <section class="card">
+    <h2>Notifications (Coming Soon)</h2>
+    <p class="hint">
+      In a later step, this section will let you turn ride status notifications on or off and manage which device gets alerts.
+    </p>
+  </section>
+</main>
+
+<footer>
+  © 2025 Big Red Connect — Local. Affordable Flat Rates. Trusted.
+</footer>
+
+<div id="toast"></div>
+
+<script>
+  const STORAGE_KEY = "bigred_rider_profile_v1";
+
+  const riderNameInput  = document.getElementById("riderName");
+  const riderPhoneInput = document.getElementById("riderPhone");
+  const riderHomeInput  = document.getElementById("riderHome");
+  const profileForm     = document.getElementById("profileForm");
+  const clearBtn        = document.getElementById("clearProfile");
+  const profileStatus   = document.getElementById("profileStatus");
+  const toast           = document.getElementById("toast");
+
+  function showToast(msg, ms = 2200) {
+    toast.textContent = msg;
+    toast.style.opacity = 1;
+    setTimeout(() => toast.style.opacity = 0, ms);
+  }
+
+  function loadProfile() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) {
+        profileStatus.textContent = "Profile not saved yet.";
+        return;
+      }
+      const p = JSON.parse(raw);
+      if (p.name)  riderNameInput.value  = p.name;
+      if (p.phone) riderPhoneInput.value = p.phone;
+      if (p.home)  riderHomeInput.value  = p.home;
+      profileStatus.textContent = `Profile loaded for ${p.name || "rider"} (${p.phone || "no phone on file"}).`;
+    } catch (e) {
+      console.warn("Profile load error", e);
+      profileStatus.textContent = "Profile not saved yet.";
+    }
+  }
+
+  function saveProfile(e) {
+    e.preventDefault();
+    const name  = riderNameInput.value.trim();
+    const phone = riderPhoneInput.value.trim();
+    const home  = riderHomeInput.value.trim();
+
+    if (!phone) {
+      showToast("Please add your mobile number — it’s your rider ID.");
+      riderPhoneInput.focus();
+      return;
+    }
+
+    const profile = { name, phone, home };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
+
+    // Also store a simple riderId key for other pages
+    localStorage.setItem("bigred_rider_id", phone);
+
+    profileStatus.textContent = `Profile saved for ${name || "rider"} (${phone}).`;
+    showToast("Rider profile saved");
+
+    // TODO: In a later step, we’ll also POST this to a Cloudflare Worker
+    // so the driver app can see your name/phone automatically.
+  }
+
+  function clearProfileData() {
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem("bigred_rider_id");
+    riderNameInput.value  = "";
+    riderPhoneInput.value = "";
+    riderHomeInput.value  = "";
+    profileStatus.textContent = "Profile cleared.";
+    showToast("Profile cleared");
+  }
+
+  document.addEventListener("DOMContentLoaded", loadProfile);
+  profileForm.addEventListener("submit", saveProfile);
+  clearBtn.addEventListener("click", clearProfileData);
+</script>
+
+</body>
+</html>
