@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Big Red Connect — Rider (BETA)</title>
+
+  <!-- 📱 PWA / Icons -->
+  <link rel="apple-touch-icon" href="icon.PNG">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon.PNG">
+  <link rel="shortcut icon" href="icon.PNG">
+  <link rel="manifest" href="manifest.json">
+  <meta name="apple-mobile-web-app-title" content="Big Red Connect BETA">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="theme-color" content="#000">
+
+  <!-- Disable Cache -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- OneSignal SDK -->
+  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+
+  <script>
+    function isIPhoneSafari() {
+      return /iPhone/i.test(navigator.userAgent) &&
+             !window.matchMedia('(display-mode: standalone)').matches &&
+             !navigator.standalone;
+    }
+
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+
+    OneSignalDeferred.push(async function (OneSignal) {
+      await OneSignal.init({
+        appId: "9b8bcc89-87d3-46e2-b2d0-042d1a267718",
+        safari_web_id: "web.onesignalsdkworker.js",
+        notifyButton: { enable: true },
+        serviceWorkerPath: "/onesignalsdkworker.js",
+        path: "/"
+      });
+
+      await OneSignal.sendTag("env", "beta");
+      await OneSignal.sendTag("role_rider_beta", "true");
+    });
+
+    function handleEnableAlerts() {
+      window.OneSignalDeferred.push(async function (OneSignal) {
+        const supported = await OneSignal.Notifications.isPushSupported();
+        if (!supported) {
+          alert("This browser does not support notifications.");
+          return;
+        }
+        const permission = await OneSignal.Notifications.getPermissionStatus();
+        if (permission === "granted") {
+          alert("Already enabled.");
+          return;
+        }
+        if (isIPhoneSafari()) {
+          document.getElementById("iosAlertTip").style.display = "block";
+        }
+        await OneSignal.Slidedown.promptPush();
+      });
+    }
+  </script>
+
+</head>
+
+<body>
+
+  <div class="hero"></div>
+
+  <div style="
+    position:fixed; top:8px; left:50%; transform:translateX(-50%);
+    background:#b30000; color:white; padding:4px 10px; border-radius:999px;
+    font-size:0.75rem; z-index:20;
+  ">
+    BETA — Rider Test Environment
+  </div>
+
+  <img src="icon.PNG" alt="Big Red Connect Logo" class="main-logo" />
+
+  <p class="tagline">Veteran Owned · Affordable Flat Rates · Trusted Local Connections (BETA)</p>
+
+  <div id="status-pill" class="status status--loading">Checking status…</div>
+
+  <button id="refreshButton" title="Refresh Page">🔄 Refresh</button>
+
+  <div class="cta-group">
+    <a href="sms:14053784024" class="btn primary">📲 Text "RED"</a>
+    <a href="tel:14053784024" class="btn secondary">📞 Call Big Red</a>
+  </div>
+
+  <div style="text-align:center; margin-top:18px;">
+    <button onclick="handleEnableAlerts()" style="
+      background:#b30000; color:white; padding:12px 22px; border:none;
+      border-radius:8px; cursor:pointer; font-weight:700;
+    ">
+      🔔 Enable Big Red Alerts (BETA)
+    </button>
+    <p style="font-size:0.8em; color:#aaa;">Test push alerts safely here.</p>
+    <p id="iosAlertTip" style="display:none; font-size:0.8em; color:#ffcc66;">
+      👉 iPhone: Add to Home Screen first, then enable.
+    </p>
+  </div>
+
+  <div class="info-section" style="text-align:center;">
+    <h2>Plan Your Connection (BETA)</h2>
+    <form id="quickDestination" onsubmit="goToFare(event)" style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+      <input id="quickWhere" type="text" placeholder="Where to?" required
+        style="flex:1;min-width:220px;max-width:400px;padding:12px;border-radius:10px;background:#111;color:white;">
+      <button type="submit" class="btn primary">➡️ Next</button>
+    </form>
+    <p style="font-size:0.9em;color:#888;">Start typing a place or address.</p>
+  </div>
+
+  <div class="tile-grid">
+    <a href="farecalculator.html" class="tile">💲<br>Fare Calculator</a>
+    <a href="live.html" class="tile">🗺️<br>Live Map</a>
+    <a href="reviews.html" class="tile">⭐<br>Reviews</a>
+    <a href="faq.html" class="tile">ℹ️<br>FAQ</a>
+    <a href="https://www.facebook.com" target="_blank" class="tile">👍<br>Facebook</a>
+  </div>
+
+  <section class="info-section">
+    <h2>What I Do (BETA)</h2>
+    <p>I offer local rides across the OKC metro.</p>
+    <ul>
+      <li>Daily routines</li>
+      <li>Airport & Tinker AFB</li>
+      <li>Nightlife</li>
+      <li>Events</li>
+    </ul>
+  </section>
+
+  <section class="info-section">
+    <h2>Why Choose Red</h2>
+    <ul>
+      <li>Veteran-owned</li>
+      <li>Flat-rate pricing</li>
+      <li>Consistent, local driver</li>
+    </ul>
+  </section>
+
+  <footer>
+    <p>Questions? Text "RED" to (405) 378-4024.</p>
+    <p>© 2025 Big Red Connect — <strong>BETA</strong></p>
+  </footer>
+
+  <!-- Google Places -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places"></script>
+  <script>
+    function initQuickSearch() {
+      new google.maps.places.Autocomplete(
+        document.getElementById("quickWhere"),
+        { fields: ["formatted_address", "name"] }
+      );
+    }
+    window.onload = initQuickSearch;
+
+    function goToFare(e) {
+      e.preventDefault();
+      const dest = document.getElementById("quickWhere").value;
+      if (dest) window.location.href = "farecalculator.html?dropoff=" + encodeURIComponent(dest);
+    }
+  </script>
+
+  <script src="status.js?v=beta1"></script>
+
+  <script>
+    const refreshBtn = document.getElementById("refreshButton");
+    let refreshTimeout;
+
+    function showRefreshButton(){ refreshBtn.classList.add("visible"); }
+    function hideRefreshButton(){
+      refreshBtn.classList.remove("visible");
+      clearTimeout(refreshTimeout);
+      refreshTimeout = setTimeout(showRefreshButton, 30000);
+    }
+
+    refreshBtn.addEventListener("click", () => {
+      hideRefreshButton();
+      location.reload(true);
+    });
+
+    window.addEventListener("load", () => {
+      refreshTimeout = setTimeout(showRefreshButton, 30000);
+    });
+  </script>
+
+  <style>
+    #refreshButton {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background:#b30000; color:white;
+      padding:10px 16px; border-radius:6px;
+      font-weight:700; cursor:pointer;
+      opacity:0; pointer-events:none;
+      transition:opacity .5s;
+    }
+    #refreshButton.visible {
+      opacity:1; pointer-events:auto;
+    }
+  </style>
+
+</body>
+</html>
