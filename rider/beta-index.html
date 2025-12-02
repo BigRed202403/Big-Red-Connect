@@ -9,24 +9,26 @@
   <link rel="apple-touch-icon" href="icon.PNG">
   <link rel="icon" type="image/png" sizes="192x192" href="icon.PNG">
   <link rel="shortcut icon" href="icon.PNG">
-  <link rel="manifest" href="manifest.json">
+  <!-- BETA manifest (separate from production) -->
+  <link rel="manifest" href="manifest-beta.json">
   <meta name="apple-mobile-web-app-title" content="Big Red Connect BETA">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="theme-color" content="#000">
 
-  <!-- Disable Cache -->
+  <!-- 🚫 Disable Cache (beta only) -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
 
-  <!-- Styles -->
+  <!-- 🎨 Styles -->
   <link rel="stylesheet" href="style.css" />
 
-  <!-- OneSignal SDK -->
+  <!-- 🔔 OneSignal Web Push SDK v16 -->
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 
   <script>
+    // Detect iPhone Safari in browser mode (not installed PWA)
     function isIPhoneSafari() {
       return /iPhone/i.test(navigator.userAgent) &&
              !window.matchMedia('(display-mode: standalone)').matches &&
@@ -35,89 +37,148 @@
 
     window.OneSignalDeferred = window.OneSignalDeferred || [];
 
+    // OneSignal init for Rider BETA
     OneSignalDeferred.push(async function (OneSignal) {
-      await OneSignal.init({
-        appId: "9b8bcc89-87d3-46e2-b2d0-042d1a267718",
-        safari_web_id: "web.onesignalsdkworker.js",
-        notifyButton: { enable: true },
-        serviceWorkerPath: "/onesignalsdkworker.js",
-        path: "/"
-      });
+      try {
+        await OneSignal.init({
+          appId: "9b8bcc89-87d3-46e2-b2d0-042d1a267718",
+          safari_web_id: "web.onesignal.auto.0c90051e-4735-447d-b203-75e3767d91b9",
+          notifyButton: { enable: true },   // visible on beta rider page
+          serviceWorkerPath: "/onesignalsdkworker.js",
+          path: "/"
+        });
 
-      await OneSignal.sendTag("env", "beta");
-      await OneSignal.sendTag("role_rider_beta", "true");
+        // Tag this device as Rider BETA
+        await OneSignal.sendTag("env", "beta");
+        await OneSignal.sendTag("role_rider_beta", "true");
+
+        console.log("[BETA Rider] OneSignal initialized and tagged.");
+      } catch (e) {
+        console.warn("[BETA Rider] OneSignal init error:", e);
+      }
     });
 
+    // Button click → permission prompt
     function handleEnableAlerts() {
       window.OneSignalDeferred.push(async function (OneSignal) {
-        const supported = await OneSignal.Notifications.isPushSupported();
-        if (!supported) {
-          alert("This browser does not support notifications.");
-          return;
+        try {
+          const supported = await OneSignal.Notifications.isPushSupported();
+          if (!supported) {
+            alert("This browser does not support notifications.");
+            return;
+          }
+
+          const permission = await OneSignal.Notifications.getPermissionStatus();
+          if (permission === "granted") {
+            alert("You're already set to receive Big Red Alerts (BETA) on this device.");
+            return;
+          }
+
+          if (isIPhoneSafari()) {
+            // hint for iPhone users
+            document.getElementById("iosAlertTip").style.display = "block";
+          }
+
+          await OneSignal.Slidedown.promptPush();
+        } catch (e) {
+          console.warn("[BETA Rider] Error requesting permission:", e);
+          alert("There was an issue enabling alerts. Please try again.");
         }
-        const permission = await OneSignal.Notifications.getPermissionStatus();
-        if (permission === "granted") {
-          alert("Already enabled.");
-          return;
-        }
-        if (isIPhoneSafari()) {
-          document.getElementById("iosAlertTip").style.display = "block";
-        }
-        await OneSignal.Slidedown.promptPush();
       });
     }
   </script>
-
 </head>
 
 <body>
 
+  <!-- Hero background (reuse your existing .hero CSS) -->
   <div class="hero"></div>
 
+  <!-- BETA Banner -->
   <div style="
-    position:fixed; top:8px; left:50%; transform:translateX(-50%);
-    background:#b30000; color:white; padding:4px 10px; border-radius:999px;
-    font-size:0.75rem; z-index:20;
+    position:fixed;
+    top:8px;
+    left:50%;
+    transform:translateX(-50%);
+    background:#b30000;
+    color:white;
+    padding:4px 10px;
+    border-radius:999px;
+    font-size:0.75rem;
+    z-index:20;
   ">
     BETA — Rider Test Environment
   </div>
 
+  <!-- Main Logo -->
   <img src="icon.PNG" alt="Big Red Connect Logo" class="main-logo" />
 
-  <p class="tagline">Veteran Owned · Affordable Flat Rates · Trusted Local Connections (BETA)</p>
+  <!-- Tagline -->
+  <p class="tagline">
+    Veteran Owned · Affordable Flat Rates · Trusted Local Connections (BETA)
+  </p>
 
+  <!-- Status Pill (uses status.js) -->
   <div id="status-pill" class="status status--loading">Checking status…</div>
 
+  <!-- Floating Refresh Button -->
   <button id="refreshButton" title="Refresh Page">🔄 Refresh</button>
 
+  <!-- Quick Contact CTAs -->
   <div class="cta-group">
     <a href="sms:14053784024" class="btn primary">📲 Text "RED"</a>
     <a href="tel:14053784024" class="btn secondary">📞 Call Big Red</a>
   </div>
 
+  <!-- Notifications Section -->
   <div style="text-align:center; margin-top:18px;">
     <button onclick="handleEnableAlerts()" style="
-      background:#b30000; color:white; padding:12px 22px; border:none;
-      border-radius:8px; cursor:pointer; font-weight:700;
+      background:#b30000;
+      color:white;
+      border:none;
+      padding:12px 22px;
+      font-size:1em;
+      font-weight:700;
+      border-radius:8px;
+      cursor:pointer;
+      box-shadow:0 3px 6px rgba(0,0,0,0.4);
     ">
       🔔 Enable Big Red Alerts (BETA)
     </button>
-    <p style="font-size:0.8em; color:#aaa;">Test push alerts safely here.</p>
-    <p id="iosAlertTip" style="display:none; font-size:0.8em; color:#ffcc66;">
-      👉 iPhone: Add to Home Screen first, then enable.
+
+    <p style="font-size:0.8em; color:#aaa; margin-top:6px;">
+      This is the <strong>test</strong> environment. Use this to trial push alerts and flows.
+    </p>
+
+    <p id="iosAlertTip" style="
+      font-size:0.8em;
+      color:#ffcc66;
+      margin-top:10px;
+      display:none;
+    ">
+      👉 <strong>iPhone users:</strong> Add this page to your Home Screen first, then reopen and tap Enable Alerts again.
     </p>
   </div>
 
-  <div class="info-section" style="text-align:center;">
+  <!-- Quick Destination Form -->
+  <div class="info-section" style="text-align:center; margin-top:20px;">
     <h2>Plan Your Connection (BETA)</h2>
     <form id="quickDestination" onsubmit="goToFare(event)" style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
-      <input id="quickWhere" type="text" placeholder="Where to?" required
-        style="flex:1;min-width:220px;max-width:400px;padding:12px;border-radius:10px;background:#111;color:white;">
+      <input
+        id="quickWhere"
+        type="text"
+        placeholder="Where to?"
+        required
+        style="flex:1;min-width:220px;max-width:400px;padding:12px;border-radius:10px;border:1px solid #333;background:#111;color:white;"
+      >
       <button type="submit" class="btn primary">➡️ Next</button>
     </form>
-    <p style="font-size:0.9em;color:#888;">Start typing a place or address.</p>
+    <p style="font-size:0.9em;color:#888;margin-top:6px;">
+      Start typing a place, business, or address.
+    </p>
   </div>
 
+  <!-- Navigation Tiles -->
   <div class="tile-grid">
     <a href="farecalculator.html" class="tile">💲<br>Fare Calculator</a>
     <a href="live.html" class="tile">🗺️<br>Live Map</a>
@@ -126,32 +187,33 @@
     <a href="https://www.facebook.com" target="_blank" class="tile">👍<br>Facebook</a>
   </div>
 
+  <!-- Info Sections -->
   <section class="info-section">
     <h2>What I Do (BETA)</h2>
-    <p>I offer local rides across the OKC metro.</p>
+    <p>I offer local ride connections across the Oklahoma City metro.</p>
     <ul>
-      <li>Daily routines</li>
-      <li>Airport & Tinker AFB</li>
-      <li>Nightlife</li>
-      <li>Events</li>
+      <li>Daily work, school, and appointments</li>
+      <li>Airport &amp; Tinker AFB rides</li>
+      <li>Nightlife link-ups</li>
+      <li>Events, concerts, casinos</li>
     </ul>
   </section>
 
   <section class="info-section">
     <h2>Why Choose Red</h2>
     <ul>
-      <li>Veteran-owned</li>
-      <li>Flat-rate pricing</li>
-      <li>Consistent, local driver</li>
+      <li>Veteran-owned and operated.</li>
+      <li>Flat-rate, no-surprise pricing.</li>
+      <li>One trusted driver — always consistent.</li>
     </ul>
   </section>
 
   <footer>
-    <p>Questions? Text "RED" to (405) 378-4024.</p>
+    <p>Questions? Text <strong>"RED"</strong> to (405) 378-4024.</p>
     <p>© 2025 Big Red Connect — <strong>BETA</strong></p>
   </footer>
 
-  <!-- Google Places -->
+  <!-- Google Places Autocomplete -->
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places"></script>
   <script>
     function initQuickSearch() {
@@ -164,19 +226,26 @@
 
     function goToFare(e) {
       e.preventDefault();
-      const dest = document.getElementById("quickWhere").value;
-      if (dest) window.location.href = "farecalculator.html?dropoff=" + encodeURIComponent(dest);
+      const dest = document.getElementById("quickWhere").value.trim();
+      if (dest) {
+        window.location.href = "farecalculator.html?dropoff=" + encodeURIComponent(dest);
+      }
     }
   </script>
 
+  <!-- Status Pill (reuse your existing production script) -->
   <script src="status.js?v=beta1"></script>
 
+  <!-- Floating Refresh Logic -->
   <script>
     const refreshBtn = document.getElementById("refreshButton");
     let refreshTimeout;
 
-    function showRefreshButton(){ refreshBtn.classList.add("visible"); }
-    function hideRefreshButton(){
+    function showRefreshButton() {
+      refreshBtn.classList.add("visible");
+    }
+
+    function hideRefreshButton() {
       refreshBtn.classList.remove("visible");
       clearTimeout(refreshTimeout);
       refreshTimeout = setTimeout(showRefreshButton, 30000);
@@ -192,19 +261,28 @@
     });
   </script>
 
+  <!-- Inline styles for refresh button (beta only) -->
   <style>
     #refreshButton {
       position: fixed;
       bottom: 20px;
       right: 20px;
-      background:#b30000; color:white;
-      padding:10px 16px; border-radius:6px;
-      font-weight:700; cursor:pointer;
-      opacity:0; pointer-events:none;
+      background:#b30000;
+      color:white;
+      padding:10px 16px;
+      border-radius:6px;
+      font-weight:700;
+      cursor:pointer;
+      border:none;
+      box-shadow:0 2px 6px rgba(0,0,0,0.4);
+      opacity:0;
+      pointer-events:none;
       transition:opacity .5s;
+      z-index:10;
     }
     #refreshButton.visible {
-      opacity:1; pointer-events:auto;
+      opacity:1;
+      pointer-events:auto;
     }
   </style>
 
