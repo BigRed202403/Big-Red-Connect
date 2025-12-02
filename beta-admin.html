@@ -21,10 +21,56 @@
 <meta http-equiv="Pragma" content="no-cache" />
 <meta http-equiv="Expires" content="0" />
 
-<!-- 🔔 OneSignal v16 -->
-<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+<!-- Diagnostic OneSignal Loader -->
 <script>
+  // Let us see if the SDK even loads
+  window.OneSignalLoaded = false;
   window.OneSignalDeferred = window.OneSignalDeferred || [];
+
+  // Inject the SDK manually to catch failure
+  (function() {
+    const sdk = document.createElement("script");
+    sdk.src = "https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js";
+    sdk.async = false;
+    sdk.onload = function() {
+      window.OneSignalLoaded = true;
+      document.getElementById("statusLine").textContent = "SDK loaded — initializing…";
+    };
+    sdk.onerror = function() {
+      document.getElementById("statusLine").textContent =
+        "ERROR: OneSignal SDK failed to load";
+    };
+    document.head.appendChild(sdk);
+  })();
+</script>
+
+<script>
+  // Initialization block (unchanged)
+  OneSignalDeferred.push(async function(OneSignal){
+    try {
+      console.log("[Admin BETA] Initializing OneSignal…");
+
+      await OneSignal.init({
+        appId: "9b8bcc89-87d3-46e2-b2d0-042d1a267718",
+        safari_web_id: "web.onesignal.auto.0c90051e-4735-447d-b203-75e3767d91b9",
+        notifyButton: { enable: false },
+        serviceWorkerPath: "/OneSignalSDKWorker.js",
+        path: "/"
+      });
+
+      await OneSignal.sendTag("env","beta");
+      await OneSignal.sendTag("role_admin_beta","true");
+
+      const perm = await OneSignal.Notifications.getPermissionStatus();
+      document.getElementById("statusLine").textContent =
+        "Status: initialized • permission = " + perm;
+
+    } catch(e) {
+      console.warn("INIT ERROR:", e);
+      document.getElementById("statusLine").textContent = "Status: error initializing OneSignal";
+      document.getElementById("errorDetails").textContent = String(e);
+    }
+  });
 </script>
 
 <style>
