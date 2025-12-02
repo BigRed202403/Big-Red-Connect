@@ -1,175 +1,162 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Big Red Rider — Login</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Rider Login – Big Red Connect</title>
 
-  <!-- PWA / Icons -->
-  <link rel="apple-touch-icon" href="/icon.PNG">
-  <link rel="icon" type="image/png" sizes="192x192" href="/icon.png">
-  <link rel="shortcut icon" href="/icon.PNG">
-  <link rel="manifest" href="manifest-rider.json">
-  <meta name="apple-mobile-web-app-title" content="Big Red Rider">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="theme-color" content="#000000">
+<link rel="apple-touch-icon" href="/icon.PNG">
+<link rel="icon" type="image/png" sizes="192x192" href="/icon.png">
+<link rel="shortcut icon" href="/icon.PNG">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#000">
 
-  <link rel="stylesheet" href="/style.css" />
-  <style>
-    .login-wrap {
-      max-width: 420px;
-      margin: 40px auto 30px;
-      padding: 20px 18px 24px;
-      background:#111;
-      border-radius:12px;
-      box-shadow:0 2px 12px rgba(255,0,0,0.18);
-      text-align:left;
-    }
-    .login-wrap h2 {
-      margin:0 0 10px;
-      font-size:1.3rem;
-      color:#ff1a1a;
-      text-align:center;
-    }
-    .login-wrap label {
-      display:block;
-      font-weight:600;
-      margin:10px 0 4px;
-      font-size:0.9rem;
-    }
-    .login-wrap input {
-      width:100%;
-      padding:10px 12px;
-      border-radius:8px;
-      border:1px solid #333;
-      background:#000;
-      color:#fff;
-      font-size:1rem;
-    }
-    .login-wrap .hint {
-      font-size:0.85rem;
-      color:#aaa;
-      margin-top:6px;
-    }
-    .login-btn-row {
-      margin-top:16px;
-      text-align:center;
-    }
-    #loginToast {
-      position:fixed;
-      bottom:20px;
-      left:50%;
-      transform:translateX(-50%);
-      background:#c40000;
-      color:#fff;
-      padding:8px 14px;
-      border-radius:6px;
-      opacity:0;
-      transition:opacity .25s;
-      z-index:1000;
-      font-size:0.9rem;
-    }
-  </style>
+<link rel="stylesheet" href="/style.css?v=1" />
+
+<style>
+  body {
+    background:#000;
+    color:#fff;
+    padding:0;
+    margin:0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  .login-wrap {
+    max-width:420px;
+    margin:40px auto;
+    background:#111;
+    border:1px solid #222;
+    border-radius:12px;
+    padding:24px;
+    box-shadow:0 2px 12px rgba(0,0,0,0.4);
+  }
+  h1 {
+    font-size:1.6rem;
+    margin-bottom:6px;
+    text-align:center;
+    color:#ff1a1a;
+  }
+  p.tag {
+    text-align:center;
+    color:#bbb;
+    font-size:.95rem;
+    margin-bottom:20px;
+  }
+  label {
+    display:block;
+    color:#ccc;
+    margin:10px 0 4px;
+    font-size:.9rem;
+  }
+  input {
+    width:100%;
+    padding:12px;
+    border-radius:8px;
+    background:#000;
+    color:#fff;
+    border:1px solid #333;
+    font-size:1rem;
+  }
+  button {
+    width:100%;
+    margin-top:22px;
+    padding:14px;
+    border:none;
+    border-radius:8px;
+    background:#b30000;
+    color:#fff;
+    font-weight:700;
+    font-size:1.05rem;
+    cursor:pointer;
+  }
+  button:active {
+    transform:scale(.97);
+  }
+  .hint {
+    text-align:center;
+    font-size:.85rem;
+    color:#777;
+    margin-top:12px;
+  }
+  .logo-top {
+    display:block;
+    margin:40px auto 10px;
+    width:110px;
+  }
+</style>
+
 </head>
 <body>
 
-  <div class="logo-header" style="margin-top:18px;">
-    <a href="/index.html" title="Return to Home">
-      <img src="/icon.PNG" alt="Big Red Connect Logo" />
-    </a>
-  </div>
+<img src="/icon.PNG" class="logo-top" alt="Big Red Logo">
 
-  <h1>Big Red Rider Login</h1>
-  <p class="tagline">
-    Use your mobile number to access your Rider Hub, request flat-rate rides, and view your history.
-  </p>
+<div class="login-wrap">
+  <h1>Rider Login</h1>
+  <p class="tag">Enter your mobile number to continue</p>
 
-  <section class="login-wrap">
-    <h2>Sign In</h2>
-    <form id="loginForm" autocomplete="tel">
-      <label for="loginPhone">Mobile Number</label>
-      <input id="loginPhone" type="tel" placeholder="e.g. 405-555-1234" inputmode="tel" />
-      <div class="hint">
-        No password needed. We use your mobile number as your rider ID.
-      </div>
-      <div class="login-btn-row">
-        <button type="submit" class="btn primary">Continue to Rider Hub</button>
-      </div>
-    </form>
-  </section>
+  <form id="loginForm">
+    <label for="riderPhone">Mobile Number</label>
+    <input id="riderPhone" type="tel" inputmode="numeric" placeholder="405-555-1234" />
 
-  <footer>
-    © 2025 Big Red Connect — Local. Affordable Flat Rates. Trusted.
-  </footer>
+    <button type="submit">Continue</button>
+  </form>
 
-  <div id="loginToast"></div>
+  <p class="hint">Your number becomes your Rider ID for all ride requests.</p>
+</div>
 
-  <script>
-    const RIDER_ID_KEY = "bigred_rider_id";
-    const PROFILE_KEY  = "bigred_rider_profile_v2";
+<script>
+  const loginForm = document.getElementById("loginForm");
+  const phoneInput = document.getElementById("riderPhone");
 
-    function showLoginToast(msg, ms = 2200) {
-      const toast = document.getElementById("loginToast");
-      toast.textContent = msg;
-      toast.style.opacity = 1;
-      setTimeout(() => toast.style.opacity = 0, ms);
+  /* Get redirect target */
+  const params = new URL(location.href).searchParams;
+  const next = params.get("next") || "hub";
+  const prefillAddress = params.get("address") || "";
+
+  function normalizePhone(p) {
+    p = p.replace(/\D+/g, ""); // digits only
+    if (p.length === 10) return "+1" + p;
+    if (p.length === 11 && p.startsWith("1")) return "+" + p;
+    return "+1" + p; // fallback
+  }
+
+  function saveProfile(phone) {
+    const profile = {
+      name: "",
+      home: "",
+      phone
+    };
+    localStorage.setItem("bigred_rider_profile_v1", JSON.stringify(profile));
+    localStorage.setItem("bigred_rider_id", phone);
+  }
+
+  loginForm.addEventListener("submit", e => {
+    e.preventDefault();
+    let rawPhone = phoneInput.value.trim();
+    if (!rawPhone) {
+      alert("Please enter your mobile number.");
+      return;
     }
 
-    function normalizePhone(raw) {
-      if (!raw) return "";
-      const digits = raw.replace(/\D/g, "");
-      if (digits.length === 10) {
-        return "+1" + digits;
-      }
-      if (digits.length === 11 && digits.startsWith("1")) {
-        return "+" + digits;
-      }
-      if (digits.startsWith("+") && digits.length > 1) {
-        return digits;
-      }
-      return "";
+    const phone = normalizePhone(rawPhone);
+    saveProfile(phone);
+
+    /* Routing Logic */
+    if (next === "request") {
+      window.location.href = "/rider/rider.html";
+      return;
     }
 
-    function upgradeProfilePhone(phone) {
-      try {
-        const raw = localStorage.getItem(PROFILE_KEY);
-        if (!raw) {
-          const profile = { name:"", phone, home:"", passengers:1, luggage:0 };
-          localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
-          return;
-        }
-        const p = JSON.parse(raw);
-        p.phone = phone;
-        if (typeof p.passengers !== "number" || p.passengers < 1) p.passengers = 1;
-        if (typeof p.luggage !== "number" || p.luggage < 0) p.luggage = 0;
-        localStorage.setItem(PROFILE_KEY, JSON.stringify(p));
-      } catch (e) {}
+    if (next === "ride-from-search" && prefillAddress) {
+      window.location.href =
+        "/rider/ride-request.html?dropoff=" + encodeURIComponent(prefillAddress);
+      return;
     }
 
-    document.addEventListener("DOMContentLoaded", () => {
-      const existing = localStorage.getItem(RIDER_ID_KEY);
-      if (existing) {
-        // Already logged in → straight to Rider Hub
-        window.location.href = "/rider/rider.html";
-        return;
-      }
+    /* default: go to rider hub */
+    window.location.href = "/rider/rider.html";
+  });
+</script>
 
-      const form = document.getElementById("loginForm");
-      form.addEventListener("submit", (e) => {
-        e.preventDefault();
-        const raw = document.getElementById("loginPhone").value.trim();
-        const norm = normalizePhone(raw);
-        if (!norm) {
-          showLoginToast("Please enter a valid US mobile number.");
-          return;
-        }
-
-        localStorage.setItem(RIDER_ID_KEY, norm);
-        upgradeProfilePhone(norm);
-        window.location.href = "/rider/rider.html";
-      });
-    });
-  </script>
 </body>
 </html>
