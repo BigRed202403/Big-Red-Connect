@@ -1,272 +1,578 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>My Ride – Big Red Connect</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Ride – Big Red Connect</title>
 
-<!-- PWA Icons -->
-<link rel="apple-touch-icon" href="icon.PNG">
-<link rel="icon" type="image/png" sizes="192x192" href="icon.PNG">
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#000000">
+  <!-- Icons / PWA -->
+  <link rel="apple-touch-icon" href="/icon.PNG">
+  <link rel="icon" type="image/png" sizes="192x192" href="/icon.png">
+  <link rel="shortcut icon" href="/icon.PNG">
+  <link rel="manifest" href="manifest-rider.json">
+  <meta name="theme-color" content="#000000">
 
-<!-- Disable cache -->
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-<meta http-equiv="Pragma" content="no-cache" />
-<meta http-equiv="Expires" content="0" />
+  <!-- Global Styles -->
+  <link rel="stylesheet" href="/style.css"/>
 
-<!-- OneSignal -->
-<script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async></script>
+  <!-- Google Maps (for live tracking) -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=geometry&callback=initMap" async defer></script>
 
-<style>
-  body {
-    margin:0;
-    background:#000;
-    color:#fff;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    padding-bottom:40px;
-  }
+  <!-- OneSignal (rider notifications, per-ride channel) -->
+  <script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async></script>
 
-  header {
-    padding:10px;
-    border-bottom:2px solid #b30000;
-    display:flex;
-    align-items:center;
-    gap:10px;
-    background:#000;
-    position:sticky;
-    top:0;
-  }
-
-  header img {
-    height:45px;
-  }
-
-  h1 {
-    font-size:1.4rem;
-    margin:12px;
-    text-align:center;
-  }
-
-  .ride-box {
-    background:#111;
-    border:1px solid #222;
-    border-radius:10px;
-    margin:12px;
-    padding:14px;
-    font-size:.9rem;
-  }
-
-  .label {
-    font-size:.75rem;
-    color:#aaa;
-    margin-top:10px;
-  }
-
-  .value {
-    font-size:.9rem;
-    margin-top:2px;
-  }
-
-  .status-pill {
-    display:inline-block;
-    padding:6px 10px;
-    border-radius:999px;
-    background:#222;
-    font-size:.8rem;
-    border:1px solid #444;
-    margin-top:6px;
-  }
-
-  #btnCancel, #btnRefresh, #btnNotify {
-    margin:10px 12px;
-    padding:10px 14px;
-    border-radius:8px;
-    border:none;
-    font-weight:600;
-    width:calc(100% - 24px);
-    cursor:pointer;
-  }
-
-  #btnCancel { background:#660000; color:#fff; }
-  #btnRefresh { background:#111; color:#fff; border:1px solid #333; }
-  #btnNotify { background:#111; color:#fff; border:1px solid #444; }
-
-  #toast {
-    position:fixed;
-    bottom:20px;
-    left:50%;
-    transform:translateX(-50%);
-    background:#111;
-    border:1px solid #b30000;
-    padding:10px 16px;
-    border-radius:999px;
-    opacity:0;
-    transition:.25s;
-    z-index:50;
-  }
-  #toast.show { opacity:1; }
-
-</style>
+  <style>
+    body {
+      margin:0;
+      background:#000;
+      color:#fff;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    }
+    .top-home-btn {
+      text-align:center;
+      margin-top:10px;
+      margin-bottom:10px;
+    }
+    .section-label {
+      max-width:650px;
+      margin:10px auto 5px;
+      text-align:left;
+      padding:0 18px;
+      font-size:0.9rem;
+      color:#ccc;
+      font-weight:600;
+    }
+    #activeRideBox .status-pill {
+      display:inline-block;
+      padding:4px 10px;
+      border-radius:999px;
+      font-size:0.8rem;
+      border:1px solid #444;
+      background:#111;
+      margin-top:6px;
+    }
+    #liveMap {
+      height:240px;
+      border-radius:10px;
+      border:2px solid #c40000;
+      margin-top:15px;
+    }
+    #etaInfo {
+      font-size:0.9rem;
+      margin-top:8px;
+      color:#ddd;
+    }
+    .btn-full {
+      display:block;
+      width:100%;
+      max-width:650px;
+      margin:10px auto 0;
+    }
+    .history-list {
+      margin-top:10px;
+    }
+    .history-card {
+      background:#111;
+      border-radius:10px;
+      border:1px solid #222;
+      padding:12px 12px 14px;
+      margin:8px 0;
+      font-size:0.9rem;
+    }
+    .history-card-title {
+      font-weight:600;
+      margin-bottom:4px;
+    }
+    .history-meta {
+      font-size:0.8rem;
+      color:#aaa;
+      margin-top:4px;
+    }
+    .history-actions {
+      margin-top:8px;
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+    .history-actions .btn {
+      flex:1;
+      min-width:130px;
+      padding:8px 10px;
+      font-size:0.85rem;
+    }
+    #toast {
+      position:fixed;
+      bottom:20px;
+      left:50%;
+      transform:translateX(-50%);
+      background:#111;
+      color:#fff;
+      padding:8px 14px;
+      border-radius:999px;
+      border:1px solid #c40000;
+      opacity:0;
+      transition:opacity .25s;
+      z-index:1000;
+      font-size:0.9rem;
+    }
+    #toast.show { opacity:1; }
+  </style>
 </head>
-
 <body>
 
-<header>
-  <img src="icon.PNG">
-  <div style="font-size:.9rem;">
-    <div style="font-weight:700;">My Ride</div>
-    <div style="color:#888;">Live Status</div>
+  <!-- Header / Logo -->
+  <div class="logo-header">
+    <a href="/rider/rider.html" title="Back to Rider Hub">
+      <img src="/icon.PNG" alt="Big Red Connect Logo" />
+    </a>
   </div>
-</header>
 
-<h1>Your Ride Details</h1>
+  <!-- Back Button -->
+  <div class="top-home-btn">
+    <a href="/rider/rider.html" class="btn secondary">⬅ Back to Rider Hub</a>
+  </div>
 
-<div id="rideBox" class="ride-box">Loading…</div>
+  <h1>My Ride</h1>
+  <p class="tagline">Check your current ride and reuse your favorite connections.</p>
 
-<button id="btnRefresh">🔄 Refresh</button>
-<button id="btnNotify">🔔 Alerts: Off</button>
-<button id="btnCancel">❌ Cancel Ride</button>
+  <!-- ACTIVE RIDE -->
+  <div class="section-label">Active Ride</div>
+  <section class="info-section" id="activeRideSection">
+    <div id="activeRideBox">
+      <p>Looking up your latest ride…</p>
+    </div>
 
-<div id="toast"></div>
+    <div id="liveMap" style="display:none;"></div>
+    <div id="etaInfo" style="display:none;"></div>
+
+    <button id="btnRefresh" class="btn secondary btn-full">🔄 Refresh Status</button>
+    <button id="btnCancel" class="btn primary btn-full">❌ Cancel This Ride</button>
+  </section>
+
+  <!-- RIDE HISTORY -->
+  <div class="section-label">Recent Rides</div>
+  <section class="info-section" id="historySection">
+    <p id="historyEmpty" class="hint">
+      Once you’ve taken a few rides, they’ll appear here so you can quickly request them again.
+    </p>
+    <div id="historyList" class="history-list"></div>
+  </section>
+
+  <footer>
+    <p>&copy; 2025 Big Red Connect — Local. Affordable Flat Rates. Trusted.</p>
+  </footer>
+
+  <div id="toast"></div>
 
 <script>
 /* ======================================================
-    CONFIG
+   CONFIG
 ====================================================== */
-const API = "https://bigred-bookings.bigredtransportation.workers.dev";
-const rideId = new URL(location.href).searchParams.get("id");
-const rideBox = document.getElementById("rideBox");
+const API_BASE = "https://bigred-bookings.bigredtransportation.workers.dev";
+const LOCATION_WORKER = "https://location-reader.bigredtransportation.workers.dev";
+
+const STORAGE_HISTORY_KEY = "bigred_rides_history_v1";
+const STORAGE_LAST_RIDE_KEY = "bigred_last_ride_id";
+const PROFILE_KEY = "bigred_rider_profile_v2";
 
 /* ======================================================
-    ONE SIGNAL — RIDER LOGIN
+   RUNTIME STATE
+====================================================== */
+let map, driverMarker, pickupMarker, dropoffMarker;
+let pickupLatLng = null;
+let activeBooking = null;
+let activeRideId = new URL(location.href).searchParams.get("id") ||
+                   localStorage.getItem(STORAGE_LAST_RIDE_KEY) || null;
+
+let oneSignalReady = false;
+
+/* ======================================================
+   TOAST
+====================================================== */
+function showToast(msg, ms=2000){
+  const t=document.getElementById("toast");
+  t.textContent=msg;
+  t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"),ms);
+}
+
+/* ======================================================
+   ONE SIGNAL INIT (PER-RIDE CHANNEL)
 ====================================================== */
 window.OneSignal = window.OneSignal || [];
 OneSignal.push(function() {
   OneSignal.init({
-    appId:"64641a89-3619-4491-a25b-c0ab000bdfe0",
-    allowLocalhostAsSecureOrigin:true,
-    notifyButton:{ enable:false }
+    appId: "64641a89-3619-4491-a25b-c0ab000bdfe0",
+    allowLocalhostAsSecureOrigin: true,
+    notifyButton: { enable:false }
   });
-
-  if (rideId) {
-    OneSignal.login("ride-" + rideId);
-  }
-
-  OneSignal.getNotificationPermission().then(p => {
-    updateNotifyBtn(p === "granted");
-  });
-});
-
-function updateNotifyBtn(enabled){
-  document.getElementById("btnNotify").textContent =
-    enabled ? "🔔 Alerts: On" : "🔔 Alerts: Off";
-}
-
-document.getElementById("btnNotify").addEventListener("click", async()=>{
-  const perm = await OneSignal.getNotificationPermission();
-  if (perm === "granted") {
-    showToast("Alerts already enabled.");
-    updateNotifyBtn(true);
-    return;
-  }
-
-  const result = await OneSignal.Notifications.requestPermission();
-  if (result === "granted") {
-    updateNotifyBtn(true);
-    showToast("Alerts enabled!");
-  } else {
-    updateNotifyBtn(false);
-    showToast("Permission blocked.");
+  oneSignalReady = true;
+  if (activeRideId) {
+    OneSignal.login("ride-" + activeRideId);
   }
 });
 
 /* ======================================================
-    TOAST
+   GOOGLE MAP INIT
 ====================================================== */
-function showToast(msg){
-  const t=document.getElementById("toast");
-  t.textContent=msg;
-  t.classList.add("show");
-  setTimeout(()=>t.classList.remove("show"),1800);
+function initMap(){
+  map = new google.maps.Map(document.getElementById("liveMap"),{
+    center:{lat:35.4676,lng:-97.5164},
+    zoom:11,
+    disableDefaultUI:true,
+    gestureHandling:"greedy"
+  });
 }
 
 /* ======================================================
-    FETCH BOOKING
+   LOAD ACTIVE RIDE
 ====================================================== */
-async function loadRide(){
-  if(!rideId){
-    rideBox.innerHTML = "<div style='text-align:center;'>Invalid link.</div>";
+async function loadActiveRide(){
+  const box = document.getElementById("activeRideBox");
+  const mapDiv = document.getElementById("liveMap");
+  const etaDiv = document.getElementById("etaInfo");
+
+  if (!activeRideId) {
+    box.innerHTML = "<p>No active ride found. Once you request a ride, it will appear here.</p>";
+    mapDiv.style.display = "none";
+    etaDiv.style.display = "none";
     return;
   }
 
-  try{
-    const res = await fetch(`${API}/api/driver/bookings/${rideId}`);
-    if(!res.ok){
-      rideBox.innerHTML = "<div style='text-align:center;'>Ride not found.</div>";
+  try {
+    const res = await fetch(`${API_BASE}/api/driver/bookings/${encodeURIComponent(activeRideId)}`, {
+      cache:"no-store"
+    });
+    if (!res.ok) {
+      box.innerHTML = "<p>Ride not found. It may have expired or been removed.</p>";
+      mapDiv.style.display = "none";
+      etaDiv.style.display = "none";
       return;
     }
-
     const b = await res.json();
-    renderRide(b);
+    activeBooking = b;
 
-  } catch(e){
-    rideBox.innerHTML = "<div style='text-align:center;'>Error loading ride.</div>";
+    if (oneSignalReady) {
+      OneSignal.login("ride-" + activeRideId);
+    }
+
+    renderActiveRide(b);
+
+    if (b.status === "ENROUTE" || b.status === "ARRIVED") {
+      mapDiv.style.display = "block";
+      etaDiv.style.display = "block";
+      startLiveTracking();
+    } else {
+      mapDiv.style.display = "none";
+      etaDiv.style.display = "none";
+    }
+  } catch (e) {
+    box.innerHTML = "<p>Error loading ride. Check your connection and try again.</p>";
+    document.getElementById("liveMap").style.display = "none";
+    document.getElementById("etaInfo").style.display = "none";
   }
 }
 
-function renderRide(b){
-  rideBox.innerHTML = `
-    <div class="label">FROM</div>
-    <div class="value">${b.pickup.address}</div>
+function renderActiveRide(b){
+  const box = document.getElementById("activeRideBox");
+  const created = b.createdAt || b.created_at || null;
+  const createdStr = created ? new Date(created).toLocaleString() : "—";
 
-    ${b.stops.length ? `
-      <div class="label">STOPS</div>
-      <div class="value">${b.stops.map(s=>s.address).join(" → ")}</div>
+  const stopsLine = (b.stops && b.stops.length)
+    ? b.stops.map(s => s.address).join(" → ")
+    : "";
+
+  const estimate = (b.pricing && typeof b.pricing.estimate === "number")
+    ? `$${b.pricing.estimate.toFixed(2)}`
+    : "--";
+
+  const riderName = b.rider?.name || "Rider";
+  const passengers = b.rider?.passengers || b.rider?.partySize || 1;
+  const luggage = (typeof b.rider?.luggage === "number") ? b.rider.luggage : null;
+
+  box.innerHTML = `
+    <p><strong>${riderName}</strong></p>
+    <p class="smallnote">Ride ID: ${b.id || activeRideId}</p>
+
+    <div class="label">From</div>
+    <div class="value">${b.pickup?.address || "—"}</div>
+
+    ${stopsLine ? `
+      <div class="label">Stops</div>
+      <div class="value">${stopsLine}</div>
     ` : ""}
 
-    <div class="label">TO</div>
-    <div class="value">${b.dropoff.address}</div>
+    <div class="label">To</div>
+    <div class="value">${b.dropoff?.address || "—"}</div>
 
     <div class="label">Estimate</div>
-    <div class="value">$${b.pricing.estimate?.toFixed(2) || "--"}</div>
+    <div class="value">${estimate}</div>
 
-    <div class="label">Driver Status</div>
-    <div class="status-pill">${b.status}</div>
+    <div class="label">When</div>
+    <div class="value">${createdStr}</div>
+
+    <div class="label">Rider Details</div>
+    <div class="value">
+      Passengers: ${passengers}
+      ${luggage !== null ? ` • Luggage: ${luggage}` : ""}
+    </div>
+
+    <div class="label">Status</div>
+    <div class="status-pill">${b.status || "UNKNOWN"}</div>
   `;
 }
 
 /* ======================================================
-    CANCEL RIDE
+   LIVE DRIVER TRACKING (ENROUTE / ARRIVED)
 ====================================================== */
-document.getElementById("btnCancel").addEventListener("click", async()=>{
-  if(!confirm("Cancel this ride?")) return;
+let trackingInterval = null;
 
-  const res = await fetch(`${API}/api/driver/bookings/${rideId}`, {
-    method:"PUT",
-    headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({ status:"CANCELLED" })
-  });
+async function startLiveTracking(){
+  if (!map || !activeBooking) return;
 
-  if(res.ok){
-    showToast("Ride Cancelled");
-    loadRide();
-  } else {
-    showToast("Cancel failed.");
+  // Geocode pickup once for distance/eta
+  if (!pickupLatLng && activeBooking.pickup?.address) {
+    try {
+      pickupLatLng = await geocodeAddress(activeBooking.pickup.address);
+      if (!pickupMarker && pickupLatLng) {
+        pickupMarker = new google.maps.Marker({
+          map,
+          position: pickupLatLng,
+          label: "P"
+        });
+      }
+      if (!dropoffMarker && activeBooking.dropoff?.address) {
+        const dropLL = await geocodeAddress(activeBooking.dropoff.address);
+        if (dropLL) {
+          dropoffMarker = new google.maps.Marker({
+            map,
+            position: dropLL,
+            label: "D"
+          });
+        }
+      }
+      if (pickupLatLng) {
+        map.setCenter(pickupLatLng);
+        map.setZoom(12);
+      }
+    } catch (e) {}
   }
+
+  if (trackingInterval) clearInterval(trackingInterval);
+  trackingInterval = setInterval(updateDriverPosition, 10000);
+  updateDriverPosition();
+}
+
+async function geocodeAddress(addr){
+  return new Promise((resolve,reject)=>{
+    if (!window.google || !google.maps || !google.maps.Geocoder) return resolve(null);
+    const geocoder = new google.maps.Geocoder();
+    geocoder.geocode({ address: addr }, (res,status)=>{
+      if (status === "OK" && res[0]) {
+        resolve(res[0].geometry.location);
+      } else {
+        resolve(null);
+      }
+    });
+  });
+}
+
+async function updateDriverPosition(){
+  if (!activeBooking) return;
+
+  try {
+    const res = await fetch(LOCATION_WORKER + "?n=" + Date.now(), { cache:"no-store" });
+    if (!res.ok) return;
+
+    const j = await res.json();
+    const lat = parseFloat(j.latitude);
+    const lng = parseFloat(j.longitude);
+    const locRideId = j.rideId || null;
+
+    // Only show if the location is tied to this ride (per your 3.A decision)
+    if (locRideId && activeBooking.id && String(locRideId) !== String(activeBooking.id)) {
+      return;
+    }
+    if (isNaN(lat) || isNaN(lng)) return;
+
+    const driverLatLng = new google.maps.LatLng(lat,lng);
+
+    if (!driverMarker) {
+      driverMarker = new google.maps.Marker({
+        map,
+        position: driverLatLng,
+        label: "🚗"
+      });
+    } else {
+      driverMarker.setPosition(driverLatLng);
+    }
+
+    if (pickupLatLng) {
+      const distMi = google.maps.geometry.spherical
+        .computeDistanceBetween(driverLatLng, pickupLatLng) / 1609.34;
+      const miles = Math.max(0.1, distMi);
+      const etaMin = Math.round((miles / 25) * 60); // ~25 mph average
+      const etaText = `${miles.toFixed(1)} mi away • ~${etaMin} min`;
+
+      const etaDiv = document.getElementById("etaInfo");
+      etaDiv.style.display = "block";
+      etaDiv.textContent = `Driver is on the way: ${etaText}`;
+    }
+
+  } catch (e) {
+    // Silent failure; map just won't update this cycle
+  }
+}
+
+/* ======================================================
+   CANCEL RIDE
+====================================================== */
+async function cancelRide(){
+  if (!activeRideId || !activeBooking) return;
+
+  const status = activeBooking.status || "";
+  let msg = "Cancel this ride request?";
+  if (status === "ENROUTE" || status === "ARRIVED") {
+    msg = "Driver may already be on the way. Are you sure you want to cancel this ride?";
+  }
+
+  if (!confirm(msg)) return;
+
+  try {
+    const res = await fetch(`${API_BASE}/api/driver/bookings/${encodeURIComponent(activeRideId)}`, {
+      method:"PUT",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({ status:"CANCELLED" })
+    });
+    if (res.ok) {
+      showToast("Ride cancelled.");
+      await loadActiveRide();
+    } else {
+      showToast("Unable to cancel. Please text or call Big Red.");
+    }
+  } catch (e) {
+    showToast("Error cancelling. Please text or call Big Red.");
+  }
+}
+
+/* ======================================================
+   LOCAL HISTORY (DEVICE-ONLY)
+====================================================== */
+/* Structure of each entry (stored by ride-request page):
+   {
+     id,
+     pickup,
+     dropoff,
+     stops: [string],
+     estimate,
+     createdAt,
+     passengers,
+     luggage
+   }
+*/
+function loadHistory(){
+  const listEl = document.getElementById("historyList");
+  const emptyEl = document.getElementById("historyEmpty");
+  listEl.innerHTML = "";
+
+  let history = [];
+  try {
+    const raw = localStorage.getItem(STORAGE_HISTORY_KEY);
+    if (raw) history = JSON.parse(raw);
+  } catch (e) {
+    history = [];
+  }
+
+  if (!history.length) {
+    emptyEl.style.display = "block";
+    return;
+  }
+
+  emptyEl.style.display = "none";
+
+  // Newest first
+  history.sort((a,b)=>(b.createdAt||0) - (a.createdAt||0));
+
+  history.forEach(entry => {
+    const card = document.createElement("div");
+    card.className = "history-card";
+
+    const createdStr = entry.createdAt
+      ? new Date(entry.createdAt).toLocaleString()
+      : "—";
+
+    const stopsLine = (entry.stops && entry.stops.length)
+      ? entry.stops.join(" → ")
+      : "";
+
+    card.innerHTML = `
+      <div class="history-card-title">
+        ${entry.pickup || "Pickup"} → ${entry.dropoff || "Dropoff"}
+      </div>
+      <div class="history-meta">
+        Estimate: ${entry.estimate ? "$" + entry.estimate.toFixed(2) : "--"}
+        • When: ${createdStr}
+      </div>
+      ${stopsLine ? `<div class="history-meta">Stops: ${stopsLine}</div>` : ""}
+      <div class="history-meta">
+        Passengers: ${entry.passengers || 1}
+        ${typeof entry.luggage === "number" ? ` • Luggage: ${entry.luggage}` : ""}
+      </div>
+      <div class="history-actions">
+        <button class="btn secondary" type="button">View Details</button>
+        <button class="btn primary" type="button">🔁 Request This Ride Again</button>
+      </div>
+    `;
+
+    const [viewBtn, reuseBtn] = card.querySelectorAll("button");
+
+    viewBtn.addEventListener("click", () => {
+      if (entry.id) {
+        activeRideId = entry.id;
+        localStorage.setItem(STORAGE_LAST_RIDE_KEY, entry.id);
+        loadActiveRide();
+        showToast("Loaded ride details.");
+      } else {
+        showToast("No ride ID stored for this entry.");
+      }
+    });
+
+    reuseBtn.addEventListener("click", () => {
+      const template = {
+        pickup: entry.pickup || "",
+        dropoff: entry.dropoff || "",
+        stops: entry.stops || [],
+        passengers: entry.passengers || 1,
+        luggage: entry.luggage || 0
+      };
+      localStorage.setItem("bigred_riderequest_template", JSON.stringify(template));
+      showToast("Reusing this route…");
+      window.location.href = "/rider/ride-request.html?reuse=1";
+    });
+
+    listEl.appendChild(card);
+  });
+}
+
+/* ======================================================
+   EVENT BINDINGS
+====================================================== */
+document.getElementById("btnRefresh").addEventListener("click", () => {
+  loadActiveRide();
+  showToast("Refreshing ride status…", 1200);
 });
 
-/* ======================================================
-    REFRESH BUTTON
-====================================================== */
-document.getElementById("btnRefresh").addEventListener("click", loadRide);
+document.getElementById("btnCancel").addEventListener("click", cancelRide);
 
 /* ======================================================
-    AUTO LOAD
+   STARTUP
 ====================================================== */
-loadRide();
-setInterval(loadRide, 15000); // Background auto refresh
+document.addEventListener("DOMContentLoaded", () => {
+  loadActiveRide();
+  loadHistory();
+  // Soft auto-refresh active ride every 30s
+  setInterval(loadActiveRide, 30000);
+});
 </script>
 
 </body>
