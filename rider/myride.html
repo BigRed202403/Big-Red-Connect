@@ -18,7 +18,7 @@
   <!-- Google Maps (for live tracking) -->
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=geometry&callback=initMap" async defer></script>
 
-  <!-- OneSignal (rider notifications, per-ride channel) -->
+  <!-- OneSignal -->
   <script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async></script>
 
   <style>
@@ -42,6 +42,15 @@
       color:#ccc;
       font-weight:600;
     }
+    #activeRideBox .label {
+      font-size:.75rem;
+      color:#aaa;
+      margin-top:10px;
+    }
+    #activeRideBox .value {
+      font-size:.9rem;
+      margin-top:2px;
+    }
     #activeRideBox .status-pill {
       display:inline-block;
       padding:4px 10px;
@@ -50,6 +59,7 @@
       border:1px solid #444;
       background:#111;
       margin-top:6px;
+      text-transform:capitalize;
     }
     #liveMap {
       height:240px;
@@ -173,7 +183,6 @@ const LOCATION_WORKER = "https://location-reader.bigredtransportation.workers.de
 
 const STORAGE_HISTORY_KEY = "bigred_rides_history_v1";
 const STORAGE_LAST_RIDE_KEY = "bigred_last_ride_id";
-const PROFILE_KEY = "bigred_rider_profile_v2";
 
 /* ======================================================
    RUNTIME STATE
@@ -185,6 +194,7 @@ let activeRideId = new URL(location.href).searchParams.get("id") ||
                    localStorage.getItem(STORAGE_LAST_RIDE_KEY) || null;
 
 let oneSignalReady = false;
+let trackingInterval = null;
 
 /* ======================================================
    TOAST
@@ -265,11 +275,15 @@ async function loadActiveRide(){
     } else {
       mapDiv.style.display = "none";
       etaDiv.style.display = "none";
+      if (trackingInterval) {
+        clearInterval(trackingInterval);
+        trackingInterval = null;
+      }
     }
   } catch (e) {
     box.innerHTML = "<p>Error loading ride. Check your connection and try again.</p>";
-    document.getElementById("liveMap").style.display = "none";
-    document.getElementById("etaInfo").style.display = "none";
+    mapDiv.style.display = "none";
+    etaDiv.style.display = "none";
   }
 }
 
@@ -287,7 +301,7 @@ function renderActiveRide(b){
     : "--";
 
   const riderName = b.rider?.name || "Rider";
-  const passengers = b.rider?.passengers || b.rider?.partySize || 1;
+  const passengers = b.rider?.partySize || b.rider?.passengers || 1;
   const luggage = (typeof b.rider?.luggage === "number") ? b.rider.luggage : null;
 
   box.innerHTML = `
@@ -318,15 +332,17 @@ function renderActiveRide(b){
     </div>
 
     <div class="label">Status</div>
-    <div class="status-pill">${b.status || "UNKNOWN"}</div>
+    <div class="status-pill">${(b.status || "UNKNOWN").toLowerCase()}</div>
+
+    <button type="button" class="btn secondary btn-full" style="margin-top:12px;" onclick="reuseFromActive()">
+      🔁 Request This Ride Again
+    </button>
   `;
 }
 
 /* ======================================================
    LIVE DRIVER TRACKING (ENROUTE / ARRIVED)
 ====================================================== */
-let trackingInterval = null;
-
 async function startLiveTracking(){
   if (!map || !activeBooking) return;
 
@@ -364,7 +380,7 @@ async function startLiveTracking(){
 }
 
 async function geocodeAddress(addr){
-  return new Promise((resolve,reject)=>{
+  return new Promise((resolve)=>{
     if (!window.google || !google.maps || !google.maps.Geocoder) return resolve(null);
     const geocoder = new google.maps.Geocoder();
     geocoder.geocode({ address: addr }, (res,status)=>{
@@ -389,7 +405,7 @@ async function updateDriverPosition(){
     const lng = parseFloat(j.longitude);
     const locRideId = j.rideId || null;
 
-    // Only show if the location is tied to this ride (per your 3.A decision)
+    // Only show if location is tied to this ride (per your 3.A decision)
     if (locRideId && activeBooking.id && String(locRideId) !== String(activeBooking.id)) {
       return;
     }
@@ -407,11 +423,11 @@ async function updateDriverPosition(){
       driverMarker.setPosition(driverLatLng);
     }
 
-    if (pickupLatLng) {
+    if (pickupLatLng && google.maps.geometry && google.maps.geometry.spherical) {
       const distMi = google.maps.geometry.spherical
         .computeDistanceBetween(driverLatLng, pickupLatLng) / 1609.34;
       const miles = Math.max(0.1, distMi);
-      const etaMin = Math.round((miles / 25) * 60); // ~25 mph average
+      const etaMin = Math.round((miles / 25) * 60); // ~25 mph avg
       const etaText = `${miles.toFixed(1)} mi away • ~${etaMin} min`;
 
       const etaDiv = document.getElementById("etaInfo");
@@ -420,20 +436,20 @@ async function updateDriverPosition(){
     }
 
   } catch (e) {
-    // Silent failure; map just won't update this cycle
+    // silent fail
   }
 }
 
 /* ======================================================
-   CANCEL RIDE
+   CANCEL RIDE (WITH WARNING WHEN ENROUTE/ARRIVED)
 ====================================================== */
 async function cancelRide(){
   if (!activeRideId || !activeBooking) return;
 
   const status = activeBooking.status || "";
-  let msg = "Cancel this ride request?";
+  let msg = "Cancel this ride?";
   if (status === "ENROUTE" || status === "ARRIVED") {
-    msg = "Driver may already be on the way. Are you sure you want to cancel this ride?";
+    msg = "Driver may already be on the way or nearby. Are you sure you want to cancel this ride?";
   }
 
   if (!confirm(msg)) return;
@@ -458,18 +474,6 @@ async function cancelRide(){
 /* ======================================================
    LOCAL HISTORY (DEVICE-ONLY)
 ====================================================== */
-/* Structure of each entry (stored by ride-request page):
-   {
-     id,
-     pickup,
-     dropoff,
-     stops: [string],
-     estimate,
-     createdAt,
-     passengers,
-     luggage
-   }
-*/
 function loadHistory(){
   const listEl = document.getElementById("historyList");
   const emptyEl = document.getElementById("historyEmpty");
@@ -490,7 +494,6 @@ function loadHistory(){
 
   emptyEl.style.display = "none";
 
-  // Newest first
   history.sort((a,b)=>(b.createdAt||0) - (a.createdAt||0));
 
   history.forEach(entry => {
@@ -543,7 +546,9 @@ function loadHistory(){
         dropoff: entry.dropoff || "",
         stops: entry.stops || [],
         passengers: entry.passengers || 1,
-        luggage: entry.luggage || 0
+        luggage: entry.luggage || 0,
+        scheduledDate: null,
+        scheduledTime: null
       };
       localStorage.setItem("bigred_riderequest_template", JSON.stringify(template));
       showToast("Reusing this route…");
@@ -552,6 +557,28 @@ function loadHistory(){
 
     listEl.appendChild(card);
   });
+}
+
+/* ======================================================
+   RE-REQUEST FROM ACTIVE BOOKING
+====================================================== */
+function reuseFromActive(){
+  if (!activeBooking) {
+    showToast("No active ride loaded.");
+    return;
+  }
+  const t = {
+    pickup: activeBooking.pickup?.address || "",
+    dropoff: activeBooking.dropoff?.address || "",
+    stops: activeBooking.stops ? activeBooking.stops.map(s=>s.address) : [],
+    passengers: activeBooking.rider?.partySize || activeBooking.rider?.passengers || 1,
+    luggage: (typeof activeBooking.rider?.luggage === "number") ? activeBooking.rider.luggage : 0,
+    scheduledDate: activeBooking.scheduledFor ? activeBooking.scheduledFor.split("T")[0] : null,
+    scheduledTime: activeBooking.scheduledFor ? activeBooking.scheduledFor.split("T")[1].slice(0,5) : null
+  };
+  localStorage.setItem("bigred_riderequest_template", JSON.stringify(t));
+  showToast("Reusing this route…");
+  window.location.href = "/rider/ride-request.html?reuse=1";
 }
 
 /* ======================================================
@@ -570,7 +597,6 @@ document.getElementById("btnCancel").addEventListener("click", cancelRide);
 document.addEventListener("DOMContentLoaded", () => {
   loadActiveRide();
   loadHistory();
-  // Soft auto-refresh active ride every 30s
   setInterval(loadActiveRide, 30000);
 });
 </script>
