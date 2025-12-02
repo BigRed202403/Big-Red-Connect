@@ -1,0 +1,17 @@
+{
+  "name": "Big Red Admin (BETA)",
+  "short_name": "Admin BETA",
+  "start_url": "/beta-admin.html",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#b30000",
+  "description": "Big Red Connect — Admin Push Tag Console (BETA)",
+  "icons": [
+    {
+      "src": "icon.PNG",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
