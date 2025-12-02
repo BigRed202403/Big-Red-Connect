@@ -9,8 +9,6 @@
 <link rel="apple-touch-icon" href="icon.PNG">
 <link rel="icon" type="image/png" sizes="192x192" href="icon.PNG">
 <link rel="shortcut icon" href="icon.PNG">
-
-<!-- BETA admin manifest -->
 <link rel="manifest" href="manifest-admin-beta.json">
 <meta name="apple-mobile-web-app-title" content="Big Red Admin BETA">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -22,26 +20,11 @@
 <meta http-equiv="Pragma" content="no-cache" />
 <meta http-equiv="Expires" content="0" />
 
-<!-- Diagnostic OneSignal Loader -->
+<!-- OneSignal v16 SDK -->
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <script>
-  // Global queue for v16 SDK
+  // v16 queue
   window.OneSignalDeferred = window.OneSignalDeferred || [];
-
-  (function() {
-    const sdk = document.createElement("script");
-    sdk.src = "https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js";
-    sdk.async = false;
-    sdk.onload = function() {
-      // We only update this once the SDK is definitely present
-      const statusEl = document.getElementById("statusLine");
-      if (statusEl) statusEl.textContent = "Status: SDK loaded — initializing…";
-    };
-    sdk.onerror = function() {
-      const statusEl = document.getElementById("statusLine");
-      if (statusEl) statusEl.textContent = "ERROR: OneSignal SDK failed to load";
-    };
-    document.head.appendChild(sdk);
-  })();
 </script>
 
 <style>
@@ -100,7 +83,6 @@
     font-weight:700;
   }
   .btn-primary{background:var(--red);color:#fff;}
-  .btn-ghost{background:#000;color:#fff;border:1px solid #444;}
   #statusLine{
     font-size:.85rem;
     color:var(--muted);
@@ -108,9 +90,9 @@
   }
   #errorDetails{
     font-size:.8rem;
-    color:var(--muted);
+    color:#ff8080;
     margin-top:4px;
-    word-break:break-word;
+    white-space:pre-wrap;
   }
   #toast{
     position:fixed;
@@ -147,15 +129,14 @@
   <section class="card">
     <h1>Admin Push Tag (BETA)</h1>
     <p>
-      This tags your device as an <strong>Admin (BETA)</strong>
-      device for safe push testing using the
-      <code>env = "beta"</code> and
-      <code>role_admin_beta = "true"</code> tags.
+      This tags your device as an <strong>Admin (BETA)</strong> device
+      for safe push testing using the <code>env = "beta"</code>
+      and <code>role_admin_beta = "true"</code> tags.
     </p>
 
     <button id="btnEnable" class="btn-primary">🔔 Enable Admin BETA Alerts</button>
 
-    <div id="statusLine">Status: not initialized</div>
+    <div id="statusLine">Status: waiting for OneSignal SDK…</div>
     <div id="errorDetails"></div>
   </section>
 
@@ -179,19 +160,23 @@
   const toastEl      = document.getElementById("toast");
   const btnEnable    = document.getElementById("btnEnable");
 
+  function setStatus(msg){
+    if(statusLine) statusLine.textContent = msg;
+  }
+  function setError(msg){
+    if(errorDetails) errorDetails.textContent = msg || "";
+  }
   function showToast(msg){
     toastEl.textContent = msg;
     toastEl.classList.add("show");
-    setTimeout(()=>toastEl.classList.remove("show"), 2000);
+    setTimeout(() => toastEl.classList.remove("show"), 2000);
   }
 
-  // Use existing deferred queue from the loader
-  const OneSignalDeferred = window.OneSignalDeferred || (window.OneSignalDeferred = []);
-
-  // Initialize OneSignal and apply BETA admin tags
+  // 🔹 Initialize OneSignal (v16 pattern)
   OneSignalDeferred.push(async function(OneSignal){
     try{
-      statusLine.textContent = "Status: initializing OneSignal…";
+      setStatus("Status: SDK loaded — initializing…");
+      setError("");
 
       await OneSignal.init({
         appId: "9b8bcc89-87d3-46e2-b2d0-042d1a267718",
@@ -201,42 +186,39 @@
         path: "/"
       });
 
-      // ✅ v16 tags API
-      await OneSignal.User.addTag("env", "beta");
-      await OneSignal.User.addTag("role_admin_beta", "true");
+      // v16 tag API
+      await OneSignal.User.addTags({
+        env: "beta",
+        role_admin_beta: "true"
+      });
 
-      const perm = await OneSignal.Notifications.getPermissionStatus();
-      statusLine.textContent = "Status: initialized • permission = " + perm;
-
-      console.log("[BETA Admin] OneSignal initialized and tagged.");
-    }catch(e){
+      setStatus("Status: initialized (permission not requested yet)");
+      console.log("[BETA Admin] OneSignal initialized & tags set.");
+    } catch(e){
       console.warn("[BETA Admin] init error:", e);
-      statusLine.textContent = "Status: error initializing OneSignal";
-      if (errorDetails) {
-        errorDetails.textContent = "Details: " + String(e);
-      }
+      setStatus("Status: error initializing OneSignal");
+      setError(String(e));
     }
   });
 
-  // Click → request permission if needed
+  // 🔔 Button → request push permission
   btnEnable.addEventListener("click", () => {
     OneSignalDeferred.push(async function(OneSignal){
       try{
-        const current = await OneSignal.Notifications.getPermissionStatus();
-        if(current === "granted"){
-          showToast("Already enabled.");
-          statusLine.textContent = "Status: permission already granted";
-          return;
-        }
+        setError("");
+        setStatus("Status: requesting notification permission…");
 
         const result = await OneSignal.Notifications.requestPermission();
-        const granted = result === "granted";
-        showToast(granted ? "Alerts enabled!" : "Permission denied.");
-        statusLine.textContent = "Status: permission = " + result;
-
+        // result should be "granted", "denied", or "default"
+        setStatus("Status: permission = " + result);
+        showToast(result === "granted"
+          ? "Alerts enabled!"
+          : "Permission: " + result);
       }catch(e){
-        console.warn("[BETA Admin] Permission request error:", e);
-        showToast("Error requesting permission.");
+        console.warn("[BETA Admin] permission error:", e);
+        setStatus("Status: error requesting permission");
+        setError(String(e));
+        showToast("Error requesting permission");
       }
     });
   });
