@@ -43,7 +43,7 @@
     <a href="index.html" class="btn secondary">🏠 Home</a>
   </div>
 
-  <h1>Ride Request & Estimate</h1>
+  <h1>Ride Request &amp; Estimate</h1>
   <p class="tagline">Request your next ride connection — quick, simple, and local.</p>
 
   <div id="status-pill" class="status">Checking status…</div>
@@ -291,7 +291,6 @@
     document.getElementById("modeNow").onclick = () => setMode("now");
     document.getElementById("modeReserve").onclick = () => setMode("reserve");
     document.getElementById("calcBtn").onclick = calculateFare;
-    document.getElementById("addStopBtn").onclick = addStopField();
     document.getElementById("addStopBtn").onclick = addStopField;
     document.getElementById("useLocPickup").onclick = () => useMyLocation("pickup");
     document.getElementById("useLocDrop").onclick = () => useMyLocation("dropoff");
@@ -428,7 +427,8 @@
   }
 
   function removeStop(id) {
-    document.getElementById("row_" + id)?.remove();
+    const row = document.getElementById("row_" + id);
+    if (row) row.remove();
     stopInputs = stopInputs.filter(x => x !== id);
   }
   window.removeStop = removeStop;
@@ -596,6 +596,24 @@
   }
 
   // ======================================================
+  //  ROUTE URL BUILDER (GOOGLE MAPS)
+  // ======================================================
+  function buildRouteUrl(pickup, dropoff, stops) {
+    const base = "https://www.google.com/maps/dir/?api=1";
+    let url = base +
+      "&origin=" + encodeURIComponent(pickup) +
+      "&destination=" + encodeURIComponent(dropoff);
+
+    if (stops && stops.length > 0) {
+      // Google Maps expects waypoints separated by pipe |
+      const waypointsRaw = stops.join("|");
+      url += "&waypoints=" + encodeURIComponent(waypointsRaw);
+    }
+
+    return url;
+  }
+
+  // ======================================================
   //  CALCULATE FARE
   // ======================================================
   async function calculateFare() {
@@ -736,11 +754,14 @@
 
     q.luggage = luggage;
 
+    // Build Google Maps route URL for driver + SMS
+    const routeUrl = buildRouteUrl(q.pickup, q.dropoff, q.stops || []);
+
     const payload = {
       type: scheduledISO ? "RESERVATION" : "INSTANT",
       pickup: { address: q.pickup },
       dropoff: { address: q.dropoff },
-      stops: q.stops.map(a => ({ address: a })),
+      stops: (q.stops || []).map(a => ({ address: a })),
       rider: {
         name: riderName,
         phone: "",
@@ -759,7 +780,8 @@
       scheduledFor: scheduledISO,
       source: "RIDE_REQUEST",
       metadata: {
-        notifyDriver: true
+        notifyDriver: true,
+        routeUrl: routeUrl
       }
     };
 
@@ -818,7 +840,8 @@
       `When: ${whenText}\n` +
       `Passengers: ${party}\n` +
       `Luggage: ${luggage}\n` +
-      `Ride ID: ${booking.id}`;
+      `Ride ID: ${booking.id}\n` +
+      `Google Maps Route: ${routeUrl}`;
 
     const smsUrl = "sms:+14053784024?&body=" + encodeURIComponent(smsBody);
 
@@ -826,4 +849,4 @@
   }
   </script>
 </body>
-</html>h
+</html>
