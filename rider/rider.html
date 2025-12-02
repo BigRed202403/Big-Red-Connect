@@ -1,405 +1,183 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Big Red Rider — Hub</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Rider Hub – Big Red Connect</title>
 
-  <!-- PWA / Icons -->
-  <link rel="apple-touch-icon" href="/icon.PNG">
-  <link rel="icon" type="image/png" sizes="192x192" href="/icon.png">
-  <link rel="shortcut icon" href="/icon.PNG">
-  <link rel="manifest" href="manifest-rider.json">
-  <meta name="apple-mobile-web-app-title" content="Big Red Rider">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="theme-color" content="#000000">
+<link rel="apple-touch-icon" href="/icon.PNG">
+<link rel="icon" type="image/png" sizes="192x192" href="/icon.png">
+<link rel="shortcut icon" href="/icon.PNG">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#000">
 
-  <link rel="stylesheet" href="/style.css" />
+<link rel="stylesheet" href="/style.css?v=1">
 
-  <style>
-    :root {
-      --red:#b30000;
-      --bg:#000;
-      --panel:#111;
-      --muted:#aaa;
-    }
-    * { box-sizing:border-box; }
-    body{
-      background:var(--bg);
-      color:#fff;
-      font-family:Arial,Helvetica,sans-serif;
-      margin:0;
-      min-height:100vh;
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-    }
-    header{
-      width:100%;
-      padding:10px 16px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      background:#050505;
-      border-bottom:2px solid var(--red);
-    }
-    .logo{
-      display:flex;
-      align-items:center;
-      gap:10px;
-    }
-    .logo img{
-      height:40px;
-      border-radius:4px;
-    }
-    .logo span{
-      font-weight:700;
-      font-size:1rem;
-    }
-    .home-link a{
-      color:#fff;
-      text-decoration:none;
-      font-size:.9rem;
-      border:1px solid var(--red);
-      padding:6px 10px;
-      border-radius:6px;
-    }
-    main{
-      flex:1;
-      width:100%;
-      max-width:480px;
-      padding:16px;
-    }
-    h1{
-      margin:16px 0 4px;
-      font-size:1.6rem;
-      color:var(--red);
-      text-align:center;
-    }
-    .tagline{
-      text-align:center;
-      color:#ddd;
-      font-size:.95rem;
-      margin-bottom:12px;
-    }
-    .card{
-      background:var(--panel);
-      border-radius:10px;
-      border:1px solid #222;
-      padding:14px 12px 16px;
-      margin-bottom:14px;
-    }
-    .card h2{
-      margin:0 0 8px;
-      font-size:1.1rem;
-    }
-    label{
-      display:block;
-      font-size:.85rem;
-      margin:6px 0 2px;
-      color:#ccc;
-    }
-    input, select{
-      width:100%;
-      padding:8px 10px;
-      border-radius:6px;
-      border:1px solid #333;
-      background:#000;
-      color:#fff;
-      font-size:.95rem;
-    }
-    .btn-row{
-      display:flex;
-      flex-wrap:wrap;
-      gap:8px;
-      margin-top:12px;
-    }
-    button, a.btn{
-      padding:9px 12px;
-      border-radius:6px;
-      border:none;
-      cursor:pointer;
-      font-weight:600;
-      font-size:.95rem;
-      text-decoration:none;
-      text-align:center;
-    }
-    .btn-primary{
-      background:var(--red);
-      color:#fff;
-    }
-    .btn-secondary{
-      background:#000;
-      color:#fff;
-      border:1px solid var(--red);
-    }
-    .btn-ghost{
-      background:#111;
-      color:#fff;
-      border:1px solid #444;
-      font-size:.85rem;
-    }
-    .hint{
-      font-size:.8rem;
-      color:var(--muted);
-      margin-top:4px;
-    }
-    .meta{
-      font-size:.8rem;
-      color:var(--muted);
-      margin-top:8px;
-    }
-    footer{
-      width:100%;
-      text-align:center;
-      padding:12px 8px 16px;
-      font-size:.85rem;
-      color:#777;
-    }
-    #toast{
-      position:fixed;
-      bottom:20px;
-      left:50%;
-      transform:translateX(-50%);
-      background:var(--red);
-      color:#fff;
-      padding:8px 14px;
-      border-radius:6px;
-      opacity:0;
-      transition:opacity .3s;
-      z-index:10;
-      font-size:.9rem;
-    }
-  </style>
+<style>
+  body {
+    background:#000;
+    color:#fff;
+    margin:0;
+    padding:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  }
+  header {
+    padding:12px 16px;
+    border-bottom:2px solid #b30000;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    background:#050505;
+    position:sticky;
+    top:0;
+  }
+  header img {
+    height:42px;
+    border-radius:6px;
+  }
+  header span {
+    font-size:1.1rem;
+    font-weight:700;
+  }
+
+  .wrap {
+    max-width:520px;
+    margin:0 auto;
+    padding:20px;
+  }
+
+  h1 {
+    text-align:center;
+    font-size:1.8rem;
+    margin-bottom:6px;
+    color:#ff1a1a;
+  }
+  .tagline {
+    text-align:center;
+    color:#ccc;
+    font-size:.95rem;
+    margin-bottom:25px;
+  }
+
+  .profile-box {
+    background:#111;
+    border:1px solid #222;
+    border-radius:10px;
+    padding:18px;
+    margin-bottom:25px;
+  }
+  .profile-row {
+    margin-bottom:12px;
+    font-size:.95rem;
+  }
+  .profile-label {
+    font-size:.8rem;
+    color:#888;
+  }
+  .profile-value {
+    margin-top:2px;
+  }
+
+  .btn-stack {
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+  }
+  .btn-big {
+    padding:14px 0;
+    text-align:center;
+    font-weight:700;
+    font-size:1.1rem;
+    border-radius:10px;
+    cursor:pointer;
+    text-decoration:none;
+    display:block;
+  }
+  .btn-primary {
+    background:linear-gradient(180deg,#b30000,#7a0000);
+    border:1px solid #ff1a1a;
+    color:#fff;
+  }
+  .btn-secondary {
+    background:#111;
+    border:1px solid #444;
+    color:#fff;
+  }
+  .btn-logout {
+    background:#222;
+    border:1px solid #333;
+    color:#bbb;
+    margin-top:10px;
+  }
+</style>
+
 </head>
 <body>
 
 <header>
-  <div class="logo">
-    <img src="/icon.PNG" alt="Big Red Connect Logo">
-    <span>Big Red Rider</span>
-  </div>
-  <div class="home-link">
-    <a href="/index.html">🏠 Main Site</a>
-  </div>
+  <img src="/icon.PNG" alt="Big Red Logo">
+  <span>Rider Hub</span>
 </header>
 
-<main>
+<div class="wrap">
+
   <h1>Your Rider Hub</h1>
-  <p class="tagline">
-    Save your details once, request flat-rate rides, and track your connection with Big Red.
-  </p>
+  <p class="tagline">Manage your profile, request flat-rate rides, and track your active connection.</p>
 
-  <!-- Profile card -->
-  <section class="card" id="profile-card">
-    <h2>Rider Profile</h2>
-    <form id="profileForm">
-      <label for="riderName">Your Name</label>
-      <input id="riderName" type="text" autocomplete="name" placeholder="First name or nickname" />
+  <div id="profileBox" class="profile-box">
+    Loading profile…
+  </div>
 
-      <label for="riderPhone">Mobile Number</label>
-      <input id="riderPhone" type="tel" autocomplete="tel" placeholder="e.g. 405-555-1234" />
+  <div class="btn-stack">
+    <a href="/rider/ride-request.html" class="btn-big btn-primary">📝 Request a Ride</a>
+    <a href="/rider/myride.html" class="btn-big btn-secondary">📍 View My Ride</a>
+    <button id="logoutBtn" class="btn-big btn-logout">🚪 Log Out</button>
+  </div>
 
-      <label for="riderHome">Home / Usual Pickup (optional)</label>
-      <input id="riderHome" type="text" placeholder="Neighborhood or full address" />
-
-      <label for="riderPassengers">Usually how many passengers?</label>
-      <select id="riderPassengers">
-        <option value="1">1 passenger</option>
-        <option value="2">2 passengers</option>
-        <option value="3">3 passengers</option>
-        <option value="4">4 passengers</option>
-        <option value="5">5 passengers</option>
-        <option value="6">6 passengers</option>
-      </select>
-
-      <label for="riderLuggage">Usually how many bags? (airport runs)</label>
-      <select id="riderLuggage">
-        <option value="0">0 bags</option>
-        <option value="1">1 bag</option>
-        <option value="2">2 bags</option>
-        <option value="3">3 bags</option>
-        <option value="4">4 bags</option>
-        <option value="5">5+ bags</option>
-      </select>
-
-      <div class="btn-row">
-        <button type="submit" class="btn-primary">💾 Save Rider Profile</button>
-        <button type="button" id="clearProfile" class="btn-ghost">🧹 Clear Profile</button>
-      </div>
-
-      <div class="hint">
-        Your mobile number becomes your rider ID so Big Red can match you to your rides.
-      </div>
-    </form>
-  </section>
-
-  <!-- Actions card -->
-  <section class="card">
-    <h2>Ride Actions</h2>
-    <div class="btn-row">
-      <a href="ride-request.html?fromProfile=1" class="btn-primary">📝 Request a Ride</a>
-      <a href="myride.html" class="btn-secondary">📍 View My Ride</a>
-      <button type="button" id="logoutBtn" class="btn-ghost">🚪 Log Out</button>
-    </div>
-    <div class="meta" id="profileStatus">
-      Profile not saved yet.
-    </div>
-  </section>
-
-  <!-- Notifications placeholder -->
-  <section class="card">
-    <h2>Notifications (Coming Soon)</h2>
-    <p class="hint">
-      In a later step, this section will let you turn ride status notifications on or off and manage which device gets alerts.
-    </p>
-  </section>
-</main>
-
-<footer>
-  © 2025 Big Red Connect — Local. Affordable Flat Rates. Trusted.
-</footer>
-
-<div id="toast"></div>
+</div>
 
 <script>
-  const STORAGE_KEY = "bigred_rider_profile_v2";
-  const OLD_KEY     = "bigred_rider_profile_v1";
-  const RIDER_ID_KEY = "bigred_rider_id";
-
-  const riderNameInput   = document.getElementById("riderName");
-  const riderPhoneInput  = document.getElementById("riderPhone");
-  const riderHomeInput   = document.getElementById("riderHome");
-  const riderPassInput   = document.getElementById("riderPassengers");
-  const riderLugInput    = document.getElementById("riderLuggage");
-  const profileForm      = document.getElementById("profileForm");
-  const clearBtn         = document.getElementById("clearProfile");
-  const logoutBtn        = document.getElementById("logoutBtn");
-  const profileStatus    = document.getElementById("profileStatus");
-  const toast            = document.getElementById("toast");
-
-  function showToast(msg, ms = 2200) {
-    toast.textContent = msg;
-    toast.style.opacity = 1;
-    setTimeout(() => toast.style.opacity = 0, ms);
+  /* Protect Page */
+  const raw = localStorage.getItem("bigred_rider_profile_v1");
+  if (!raw) {
+    window.location.href = "/rider-login.html?next=hub";
   }
 
-  function normalizePhone(raw) {
-    if (!raw) return "";
-    const digits = raw.replace(/\D/g, "");
-    if (digits.length === 10) {
-      return "+1" + digits;
-    }
-    if (digits.length === 11 && digits.startsWith("1")) {
-      return "+" + digits;
-    }
-    if (digits.startsWith("+") && digits.length > 1) {
-      return digits;
-    }
-    return "";
-  }
+  const profile = raw ? JSON.parse(raw) : null;
+  const profileBox = document.getElementById("profileBox");
 
-  function loadProfile() {
-    try {
-      let raw = localStorage.getItem(STORAGE_KEY);
-
-      // Upgrade v1 if needed
-      if (!raw) {
-        const old = localStorage.getItem(OLD_KEY);
-        if (old) {
-          const p1 = JSON.parse(old);
-          const upgraded = {
-            name:       p1.name || "",
-            phone:      p1.phone || "",
-            home:       p1.home || "",
-            passengers: 1,
-            luggage:    0
-          };
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(upgraded));
-          raw = JSON.stringify(upgraded);
-        }
-      }
-
-      if (!raw) {
-        profileStatus.textContent = "Profile not saved yet.";
-        return;
-      }
-
-      const p = JSON.parse(raw);
-      if (p.name)  riderNameInput.value  = p.name;
-      if (p.phone) riderPhoneInput.value = p.phone;
-      if (p.home)  riderHomeInput.value  = p.home;
-      if (typeof p.passengers === "number" && p.passengers >= 1 && p.passengers <= 6) {
-        riderPassInput.value = String(p.passengers);
-      }
-      if (typeof p.luggage === "number" && p.luggage >= 0 && p.luggage <= 5) {
-        riderLugInput.value = String(p.luggage);
-      }
-
-      const riderId = localStorage.getItem(RIDER_ID_KEY) || p.phone || "(no rider ID)";
-      profileStatus.textContent = `Profile loaded for ${p.name || "rider"} (${riderId}).`;
-    } catch (e) {
-      profileStatus.textContent = "Profile not saved yet.";
-    }
-  }
-
-  function saveProfile(e) {
-    e.preventDefault();
-    const name  = riderNameInput.value.trim();
-    const phoneRaw = riderPhoneInput.value.trim();
-    const home  = riderHomeInput.value.trim();
-    const passengers = parseInt(riderPassInput.value, 10) || 1;
-    const luggage    = parseInt(riderLugInput.value, 10) || 0;
-
-    const normPhone = normalizePhone(phoneRaw);
-    if (!normPhone) {
-      showToast("Please enter a valid US mobile number.");
-      riderPhoneInput.focus();
+  function renderProfile() {
+    if (!profile) {
+      profileBox.innerHTML = "<p style='color:#aaa;text-align:center;'>No profile found.</p>";
       return;
     }
 
-    const profile = { name, phone: normPhone, home, passengers, luggage };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
-    localStorage.setItem(RIDER_ID_KEY, normPhone);
+    profileBox.innerHTML = `
+      <div class="profile-row">
+        <div class="profile-label">Name</div>
+        <div class="profile-value">${profile.name || "<i style='color:#555'>Not set</i>"}</div>
+      </div>
 
-    profileStatus.textContent = `Profile saved for ${name || "rider"} (${normPhone}).`;
-    showToast("Rider profile saved");
+      <div class="profile-row">
+        <div class="profile-label">Mobile</div>
+        <div class="profile-value">${profile.phone}</div>
+      </div>
+
+      <div class="profile-row">
+        <div class="profile-label">Home / Usual Pickup</div>
+        <div class="profile-value">${profile.home || "<i style='color:#555'>Not set</i>"}</div>
+      </div>
+    `;
   }
 
-  function clearProfileData() {
-    localStorage.removeItem(STORAGE_KEY);
-    riderNameInput.value  = "";
-    riderPhoneInput.value = "";
-    riderHomeInput.value  = "";
-    riderPassInput.value  = "1";
-    riderLugInput.value   = "0";
-    profileStatus.textContent = "Profile cleared (rider ID kept).";
-    showToast("Profile cleared");
-  }
+  renderProfile();
 
-  function logoutRider() {
-    localStorage.removeItem(RIDER_ID_KEY);
-    profileStatus.textContent = "Logged out. You can log back in any time.";
-    showToast("Logged out");
-    setTimeout(() => {
-      window.location.href = "/rider-login.html";
-    }, 800);
-  }
-
-  document.addEventListener("DOMContentLoaded", () => {
-    // If no rider ID at all, send them back to login
-    const riderId = localStorage.getItem(RIDER_ID_KEY);
-    if (!riderId) {
-      window.location.href = "/rider-login.html";
-      return;
-    }
-    loadProfile();
+  /* Logout */
+  document.getElementById("logoutBtn").addEventListener("click", () => {
+    localStorage.removeItem("bigred_rider_profile_v1");
+    localStorage.removeItem("bigred_rider_id");
+    window.location.href = "/rider-login.html";
   });
-
-  profileForm.addEventListener("submit", saveProfile);
-  clearBtn.addEventListener("click", clearProfileData);
-  logoutBtn.addEventListener("click", logoutRider);
 </script>
 
 </body>
