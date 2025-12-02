@@ -22,5 +22,9 @@
   "gcm_sender_id": "482941778795",
   "gcm_sender_id_comment": "Required for OneSignal Web Push",
 
+  "permissions": {
+    "push": ["*"]
+  },
+
   "prefer_related_applications": false
 }
