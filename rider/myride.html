@@ -9,7 +9,7 @@
   <link rel="apple-touch-icon" href="/icon.PNG">
   <link rel="icon" type="image/png" sizes="192x192" href="/icon.png">
   <link rel="shortcut icon" href="/icon.PNG">
-  <link rel="manifest" href="manifest-rider.json">
+  <link rel="manifest" href="/manifest-rider.json">
   <meta name="apple-mobile-web-app-title" content="Big Red Rider">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
@@ -98,11 +98,13 @@
       border-radius:10px;
       border:2px solid #b30000;
       margin-top:12px;
+      display:none;
     }
     #etaLine {
       font-size:0.9rem;
       color:#ffcc66;
       margin-top:6px;
+      display:none;
     }
     #toast {
       position:fixed;
@@ -138,21 +140,23 @@
   </div>
 
   <h1 class="page-title">My Rides</h1>
-  <p class="tagline">View your active ride and recent connections with Big Red.</p>
+  <p class="tagline">See your active ride and recent connections with Big Red.</p>
 
+  <!-- Active Ride -->
   <section class="info-section" id="activeRideSection">
     <h2>Active Ride</h2>
     <div id="activeRideBox" class="ride-card">
       Loading your rides…
     </div>
-    <div id="etaLine" style="display:none;"></div>
-    <div id="liveMap" style="display:none;"></div>
+    <div id="etaLine"></div>
+    <div id="liveMap"></div>
     <div class="ride-actions" id="activeActions" style="margin-top:12px; display:none;">
       <button id="btnRefresh" class="btn secondary" type="button">🔄 Refresh Status</button>
       <button id="btnCancel" class="btn primary" type="button">❌ Cancel Ride</button>
     </div>
   </section>
 
+  <!-- Recent Rides -->
   <section class="info-section" id="recentRideSection">
     <h2>Recent Rides</h2>
     <div id="recentRidesBox">
@@ -216,7 +220,6 @@
     const phoneRaw = (riderProfile.phone || "").trim();
     const normalized = normalizePhoneToE164(phoneRaw);
     if (!normalized) {
-      // Missing/invalid phone = cannot match rides; send them back to fix profile
       window.location.href = "/rider-login.html?next=myride&fix=phone";
       return;
     }
@@ -230,7 +233,6 @@
     if (!phone) return null;
     phone = phone.trim();
 
-    // If starts with + and numeric, accept
     if (phone[0] === "+") {
       const digits = phone.slice(1).replace(/\D/g,"");
       if (!digits) return null;
@@ -240,7 +242,6 @@
     const digits = phone.replace(/\D/g,"");
     if (!digits) return null;
 
-    // US assumptions
     if (digits.length === 10) {
       return "+1" + digits;
     }
@@ -311,7 +312,7 @@
     currentRide = selected || null;
 
     renderActiveRide(currentRide);
-    renderRecentRides(recentList, currentRide ? currentRide.id : null);
+    renderRecentRides(recentList);
     updateActiveControls();
 
     if (currentRide) {
@@ -322,7 +323,10 @@
   }
 
   function getRideTimestamp(b) {
-    const cand = b.updatedAt || b.updated_at || b.scheduledFor || b.scheduled_for || b.createdAt || b.created_at;
+    const cand =
+      b.updatedAt || b.updated_at ||
+      b.scheduledFor || b.scheduled_for ||
+      b.createdAt || b.created_at;
     const t = cand ? new Date(cand).getTime() : 0;
     return isNaN(t) ? 0 : t;
   }
@@ -381,7 +385,6 @@
       </div>
     `;
 
-    // ETA line controlled in live map updates
     statusLine.style.display = "none";
   }
 
@@ -401,7 +404,7 @@
   // ======================================================
   //  RENDER RECENT RIDES (TEXT ONLY)
   // ======================================================
-  function renderRecentRides(list, activeId) {
+  function renderRecentRides(list) {
     const box = document.getElementById("recentRidesBox");
     if (!list.length) {
       box.innerHTML = `<p style="font-size:0.9rem;color:#888;">No past rides yet.</p>`;
@@ -416,6 +419,8 @@
       const stops = Array.isArray(b.stops) ? b.stops.map(s => s.address).filter(Boolean) : [];
       const when = formatRideTime(b);
       const statusClass = "status-" + status;
+
+      const canReReq = (status === "COMPLETED" || status === "CANCELLED");
 
       html += `
         <div class="ride-card">
@@ -440,7 +445,7 @@
           <div class="ride-actions">
             <button type="button" class="btn secondary"
               onclick="viewRideDetails('${b.id}')">📍 View Details</button>
-            ${canReRequest(status) ? `
+            ${canReReq ? `
               <button type="button" class="btn primary"
                 onclick="reRequestRide('${encodeURIComponent(from)}','${encodeURIComponent(to)}','${encodeURIComponent(stops.join('|'))}')">
                 🔁 Request This Again
@@ -452,11 +457,6 @@
     });
 
     box.innerHTML = html;
-  }
-
-  function canReRequest(status) {
-    status = (status || "").toUpperCase();
-    return status === "COMPLETED" || status === "CANCELLED";
   }
 
   function viewRideDetails(id) {
@@ -534,7 +534,7 @@
   });
 
   // ======================================================
-  //  LIVE MAP + ETA (ENROUTE ONLY)
+  //  LIVE MAP + ETA (ENROUTE ONLY; ARRIVED SHOWS ARRIVAL LINE)
   // ======================================================
   async function updateLiveMapForRide(b) {
     if (!b) {
@@ -551,7 +551,6 @@
       return;
     }
 
-    // Ensure services
     if (!geocodeSvc && window.google && google.maps) {
       geocodeSvc = new google.maps.Geocoder();
     }
@@ -598,12 +597,10 @@
     const etaLine = document.getElementById("etaLine");
     mapDiv.style.display = "block";
 
-    // Clear old markers
     if (driverMarker) driverMarker.setMap(null);
     if (pickupMarker) pickupMarker.setMap(null);
     if (dropoffMarker) dropoffMarker.setMap(null);
 
-    // Place pickup & dropoff markers
     pickupMarker = new google.maps.Marker({
       position: pickupLatLng,
       map: liveMap,
@@ -621,7 +618,6 @@
 
     let showEta = false;
 
-    // If we have driver + status, incorporate
     if (driverLatLng) {
       driverMarker = new google.maps.Marker({
         position: driverLatLng,
@@ -642,7 +638,6 @@
 
     liveMap.fitBounds(bounds);
 
-    // Only ENROUTE gets ETA line; ARRIVED just shows map
     if (status === "ARRIVED") {
       etaLine.style.display = "block";
       etaLine.textContent = "✅ Big Red has arrived at your pickup location.";
