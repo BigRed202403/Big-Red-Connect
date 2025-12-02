@@ -5,18 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Big Red Connect — Driver Dispatch (BETA)</title>
 
-  <!-- PWA Icons -->
+  <!-- 📱 PWA Icons (BETA) -->
   <link rel="apple-touch-icon" href="icon.PNG">
   <link rel="icon" type="image/png" sizes="192x192" href="icon.PNG">
-  <link rel="manifest" href="manifest-driver.json">
+  <!-- BETA driver manifest -->
+  <link rel="manifest" href="manifest-driver-beta.json">
   <meta name="theme-color" content="#000000">
 
-  <!-- Disable cache -->
+  <!-- 🚫 Disable cache (BETA) -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
 
-  <!-- OneSignal v16 SDK -->
+  <!-- 🔔 OneSignal v16 SDK -->
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
   <script>
     window.OneSignalDeferred = window.OneSignalDeferred || [];
@@ -37,7 +38,7 @@
 
     body {
       margin: 0;
-      background: #000;
+      background: var(--bg);
       color: #fff;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
@@ -85,7 +86,9 @@
     }
 
     @media(min-width:900px){
-      .grid{ grid-template-columns:repeat(3,1fr); }
+      .grid{
+        grid-template-columns:repeat(3,1fr);
+      }
     }
 
     .column {
@@ -146,7 +149,10 @@
     .badge-status { border-color:#aaa; }
     .badge-type { border-color:var(--accent); color:var(--accent); }
 
-    .loc-line { margin:4px 0; font-size:.78rem; }
+    .loc-line {
+      margin:4px 0;
+      font-size:.78rem;
+    }
 
     .card-footer {
       border-top:1px solid #222;
@@ -185,7 +191,7 @@
 
 <header>
   <div style="display:flex;align-items:center;gap:10px;">
-    <a href="beta-index.html"><img src="icon.PNG" class="logo" /></a>
+    <a href="beta-index.html"><img src="icon.PNG" class="logo" alt="Big Red Logo" /></a>
     <div>
       <div style="font-weight:700;font-size:.9rem;">Big Red Driver</div>
       <div style="color:#888;font-size:.75rem;">Live Dispatch (BETA)</div>
@@ -237,11 +243,12 @@ function showToast(msg) {
   setTimeout(() => toast.classList.remove("show"), 1800);
 }
 
+// Init + tag this device as driver_beta
 withOneSignal(async function(OneSignal) {
   try {
     await OneSignal.init({
       appId: "9b8bcc89-87d3-46e2-b2d0-042d1a267718",
-      safari_web_id: "web.onesignalsdkworker.js",
+      safari_web_id: "web.onesignal.auto.0c90051e-4735-447d-b203-75e3767d91b9",
       notifyButton: { enable: false },
       serviceWorkerPath: "/onesignalsdkworker.js",
       path: "/"
@@ -253,8 +260,10 @@ withOneSignal(async function(OneSignal) {
 
     const status = await OneSignal.Notifications.getPermissionStatus();
     updateNotifyButton(status === "granted");
+
+    console.log("[BETA Driver] OneSignal initialized and tagged.");
   } catch (e) {
-    console.warn("OneSignal error:", e);
+    console.warn("[BETA Driver] OneSignal init/login error:", e);
   }
 });
 
@@ -266,6 +275,7 @@ notifyBtn.addEventListener("click", () => {
 
       if (current === "granted") {
         showToast("Alerts already enabled.");
+        updateNotifyButton(true);
         return;
       }
 
@@ -274,7 +284,7 @@ notifyBtn.addEventListener("click", () => {
       updateNotifyButton(granted);
       showToast(granted ? "Alerts enabled!" : "Permission blocked.");
     } catch (e) {
-      console.warn("Permission toggle error:", e);
+      console.warn("[BETA Driver] Permission toggle error:", e);
       showToast("Error updating alerts.");
     }
   });
@@ -282,6 +292,7 @@ notifyBtn.addEventListener("click", () => {
 
 /* ======================================================
    API + RENDERING — BETA Version
+   (Still points at your existing bookings worker)
 ====================================================== */
 
 const API = "https://bigred-bookings.bigredtransportation.workers.dev";
@@ -295,7 +306,7 @@ async function fetchBookings() {
     const data = await res.json();
     renderAll(data);
   } catch(e) {
-    console.error("Sync failed:", e);
+    console.error("[BETA Driver] Sync failed:", e);
     showToast("Sync failed");
   }
 }
@@ -309,9 +320,9 @@ function renderAll(list) {
   renderColumn("listActive", activeArr);
   renderColumn("listDone", doneArr);
 
-  document.querySelector("#countNew").textContent = newArr.length;
+  document.querySelector("#countNew").textContent    = newArr.length;
   document.querySelector("#countActive").textContent = activeArr.length;
-  document.querySelector("#countDone").textContent = doneArr.length;
+  document.querySelector("#countDone").textContent   = doneArr.length;
 }
 
 function renderColumn(id, arr) {
@@ -366,6 +377,7 @@ function renderColumn(id, arr) {
   });
 }
 
+// Handle status changes
 document.body.addEventListener("change", async (e) => {
   if (e.target.classList.contains("status-dropdown")) {
     const id = e.target.dataset.id;
@@ -385,28 +397,31 @@ document.body.addEventListener("change", async (e) => {
         showToast("Update failed");
       }
     } catch(err) {
-      console.error(err);
+      console.error("[BETA Driver] Update error:", err);
       showToast("Update failed");
     }
   }
 });
 
+// Scope toggler
 document.querySelector("#btnScope").addEventListener("click", ()=>{
   if(scope==="active"){ scope="upcoming"; showToast("Showing upcoming"); }
   else if(scope==="upcoming"){ scope="all"; showToast("Showing all"); }
   else { scope="active"; showToast("Active only"); }
+
   document.querySelector("#btnScope").textContent = `📋 ${scope}`;
   fetchBookings();
 });
 
+// Manual refresh
 document.querySelector("#btnRefresh").addEventListener("click", ()=>{
   fetchBookings();
   showToast("Refreshing…");
 });
 
+// Auto poll every 20s
 setInterval(fetchBookings, 20000);
 fetchBookings();
-
 </script>
 
 </body>
