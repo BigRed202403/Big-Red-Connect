@@ -1,114 +1,108 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>My Ride – Big Red Connect</title>
+  <title>My Rides – Big Red Connect</title>
 
-  <!-- Icons / PWA -->
+  <!-- 📱 PWA / Icons -->
   <link rel="apple-touch-icon" href="/icon.PNG">
   <link rel="icon" type="image/png" sizes="192x192" href="/icon.png">
   <link rel="shortcut icon" href="/icon.PNG">
   <link rel="manifest" href="manifest-rider.json">
+  <meta name="apple-mobile-web-app-title" content="Big Red Rider">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="theme-color" content="#000000">
 
+  <!-- No cache -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+
   <!-- Global Styles -->
-  <link rel="stylesheet" href="/style.css"/>
+  <link rel="stylesheet" href="/style.css?v=1" />
 
-  <!-- Google Maps (for live tracking) -->
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=geometry&callback=initMap" async defer></script>
-
-  <!-- OneSignal -->
-  <script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async></script>
+  <!-- Google Maps (for live map + ETA) -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places,geometry"></script>
 
   <style>
-    body {
-      margin:0;
-      background:#000;
-      color:#fff;
-      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    /* Scoped extras for My Rides */
+    .page-title {
+      margin-top: 8px;
     }
-    .top-home-btn {
-      text-align:center;
-      margin-top:10px;
+    .info-section h2 {
+      margin-bottom: 10px;
+    }
+    .ride-card {
+      background:#111;
+      border:1px solid #222;
+      border-radius:10px;
+      padding:12px 10px;
       margin-bottom:10px;
-    }
-    .section-label {
-      max-width:650px;
-      margin:10px auto 5px;
-      text-align:left;
-      padding:0 18px;
       font-size:0.9rem;
-      color:#ccc;
-      font-weight:600;
     }
-    #activeRideBox .label {
-      font-size:.75rem;
-      color:#aaa;
-      margin-top:10px;
+    .ride-top-row {
+      display:flex;
+      justify-content:space-between;
+      gap:8px;
+      align-items:center;
+      margin-bottom:4px;
     }
-    #activeRideBox .value {
-      font-size:.9rem;
-      margin-top:2px;
-    }
-    #activeRideBox .status-pill {
+    .ride-status-pill {
       display:inline-block;
       padding:4px 10px;
       border-radius:999px;
-      font-size:0.8rem;
+      font-size:0.75rem;
       border:1px solid #444;
       background:#111;
+      text-transform:uppercase;
+      letter-spacing:0.03em;
+    }
+    .status-REQUESTED { border-color:#ffaa33; color:#ffaa33; }
+    .status-ACCEPTED { border-color:#66ccff; color:#66ccff; }
+    .status-ENROUTE  { border-color:#00cc66; color:#00cc66; }
+    .status-ARRIVED  { border-color:#00ff99; color:#00ff99; }
+    .status-COMPLETED{ border-color:#999; color:#999; }
+    .status-CANCELLED{ border-color:#ff5555; color:#ff5555; }
+
+    .ride-label {
+      font-size:0.75rem;
+      color:#aaa;
       margin-top:6px;
-      text-transform:capitalize;
+    }
+    .ride-value {
+      font-size:0.9rem;
+      margin-top:2px;
+    }
+    .ride-meta {
+      font-size:0.8rem;
+      color:#888;
+      margin-top:6px;
+    }
+    .ride-actions {
+      margin-top:10px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+    }
+    .ride-actions .btn {
+      flex:1;
+      min-width:140px;
+      padding:8px 10px;
+      font-size:0.9rem;
     }
     #liveMap {
-      height:240px;
-      border-radius:10px;
-      border:2px solid #c40000;
-      margin-top:15px;
-    }
-    #etaInfo {
-      font-size:0.9rem;
-      margin-top:8px;
-      color:#ddd;
-    }
-    .btn-full {
-      display:block;
       width:100%;
-      max-width:650px;
-      margin:10px auto 0;
-    }
-    .history-list {
-      margin-top:10px;
-    }
-    .history-card {
-      background:#111;
+      height:260px;
       border-radius:10px;
-      border:1px solid #222;
-      padding:12px 12px 14px;
-      margin:8px 0;
+      border:2px solid #b30000;
+      margin-top:12px;
+    }
+    #etaLine {
       font-size:0.9rem;
-    }
-    .history-card-title {
-      font-weight:600;
-      margin-bottom:4px;
-    }
-    .history-meta {
-      font-size:0.8rem;
-      color:#aaa;
-      margin-top:4px;
-    }
-    .history-actions {
-      margin-top:8px;
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-    }
-    .history-actions .btn {
-      flex:1;
-      min-width:130px;
-      padding:8px 10px;
-      font-size:0.85rem;
+      color:#ffcc66;
+      margin-top:6px;
     }
     #toast {
       position:fixed;
@@ -116,490 +110,611 @@
       left:50%;
       transform:translateX(-50%);
       background:#111;
-      color:#fff;
+      border:1px solid #b30000;
       padding:8px 14px;
       border-radius:999px;
-      border:1px solid #c40000;
       opacity:0;
       transition:opacity .25s;
-      z-index:1000;
+      z-index:50;
       font-size:0.9rem;
     }
-    #toast.show { opacity:1; }
+    #toast.show {
+      opacity:1;
+    }
   </style>
 </head>
 <body>
 
-  <!-- Header / Logo -->
+  <!-- Header -->
   <div class="logo-header">
-    <a href="/rider/rider.html" title="Back to Rider Hub">
-      <img src="/icon.PNG" alt="Big Red Connect Logo" />
+    <a href="/index.html" title="Return to Home">
+      <img src="/icon.PNG" alt="Big Red Connect Logo" style="cursor:pointer;" />
     </a>
   </div>
 
-  <!-- Back Button -->
-  <div class="top-home-btn">
-    <a href="/rider/rider.html" class="btn secondary">⬅ Back to Rider Hub</a>
+  <!-- Back to Rider Hub -->
+  <div class="top-home-btn" style="text-align:center; margin-top:10px; margin-bottom:10px;">
+    <a href="/rider/rider.html" class="btn secondary">⬅ Rider Hub</a>
   </div>
 
-  <h1>My Ride</h1>
-  <p class="tagline">Check your current ride and reuse your favorite connections.</p>
+  <h1 class="page-title">My Rides</h1>
+  <p class="tagline">View your active ride and recent connections with Big Red.</p>
 
-  <!-- ACTIVE RIDE -->
-  <div class="section-label">Active Ride</div>
   <section class="info-section" id="activeRideSection">
-    <div id="activeRideBox">
-      <p>Looking up your latest ride…</p>
+    <h2>Active Ride</h2>
+    <div id="activeRideBox" class="ride-card">
+      Loading your rides…
     </div>
-
+    <div id="etaLine" style="display:none;"></div>
     <div id="liveMap" style="display:none;"></div>
-    <div id="etaInfo" style="display:none;"></div>
-
-    <button id="btnRefresh" class="btn secondary btn-full">🔄 Refresh Status</button>
-    <button id="btnCancel" class="btn primary btn-full">❌ Cancel This Ride</button>
+    <div class="ride-actions" id="activeActions" style="margin-top:12px; display:none;">
+      <button id="btnRefresh" class="btn secondary" type="button">🔄 Refresh Status</button>
+      <button id="btnCancel" class="btn primary" type="button">❌ Cancel Ride</button>
+    </div>
   </section>
 
-  <!-- RIDE HISTORY -->
-  <div class="section-label">Recent Rides</div>
-  <section class="info-section" id="historySection">
-    <p id="historyEmpty" class="hint">
-      Once you’ve taken a few rides, they’ll appear here so you can quickly request them again.
-    </p>
-    <div id="historyList" class="history-list"></div>
+  <section class="info-section" id="recentRideSection">
+    <h2>Recent Rides</h2>
+    <div id="recentRidesBox">
+      <p style="font-size:0.9rem;color:#888;">No past rides yet.</p>
+    </div>
   </section>
 
   <footer>
-    <p>&copy; 2025 Big Red Connect — Local. Affordable Flat Rates. Trusted.</p>
+    <p>&copy; 2025 Big Red Connect — <a href="/index.html">Return to Home</a></p>
   </footer>
 
   <div id="toast"></div>
 
-<script>
-/* ======================================================
-   CONFIG
-====================================================== */
-const API_BASE = "https://bigred-bookings.bigredtransportation.workers.dev";
-const LOCATION_WORKER = "https://location-reader.bigredtransportation.workers.dev";
+  <script>
+  // ======================================================
+  //  CONFIG + CONSTANTS
+  // ======================================================
+  const API_BOOK = "https://bigred-bookings.bigredtransportation.workers.dev";
+  const LOCATION_API = "https://location-reader.bigredtransportation.workers.dev";
+  const ACTIVE_STATUSES = ["REQUESTED", "ACCEPTED", "ENROUTE", "ARRIVED"];
+  const CANCELLABLE_STATUSES = ["REQUESTED", "ACCEPTED"];
+  const MAX_RECENT = 10;
 
-const STORAGE_HISTORY_KEY = "bigred_rides_history_v1";
-const STORAGE_LAST_RIDE_KEY = "bigred_last_ride_id";
+  let riderProfile = null;
+  let riderPhoneE164 = null;
+  let riderName = "Rider";
 
-/* ======================================================
-   RUNTIME STATE
-====================================================== */
-let map, driverMarker, pickupMarker, dropoffMarker;
-let pickupLatLng = null;
-let activeBooking = null;
-let activeRideId = new URL(location.href).searchParams.get("id") ||
-                   localStorage.getItem(STORAGE_LAST_RIDE_KEY) || null;
+  let bookings = [];
+  let currentRide = null;
+  let refreshTimer = null;
 
-let oneSignalReady = false;
-let trackingInterval = null;
+  // Live map globals
+  let liveMap = null;
+  let liveDirections = null;
+  let geocodeSvc = null;
+  let geocodeCache = {};
+  let driverMarker = null;
+  let pickupMarker = null;
+  let dropoffMarker = null;
 
-/* ======================================================
-   TOAST
-====================================================== */
-function showToast(msg, ms=2000){
-  const t=document.getElementById("toast");
-  t.textContent=msg;
-  t.classList.add("show");
-  setTimeout(()=>t.classList.remove("show"),ms);
-}
-
-/* ======================================================
-   ONE SIGNAL INIT (PER-RIDE CHANNEL)
-====================================================== */
-window.OneSignal = window.OneSignal || [];
-OneSignal.push(function() {
-  OneSignal.init({
-    appId: "64641a89-3619-4491-a25b-c0ab000bdfe0",
-    allowLocalhostAsSecureOrigin: true,
-    notifyButton: { enable:false }
-  });
-  oneSignalReady = true;
-  if (activeRideId) {
-    OneSignal.login("ride-" + activeRideId);
-  }
-});
-
-/* ======================================================
-   GOOGLE MAP INIT
-====================================================== */
-function initMap(){
-  map = new google.maps.Map(document.getElementById("liveMap"),{
-    center:{lat:35.4676,lng:-97.5164},
-    zoom:11,
-    disableDefaultUI:true,
-    gestureHandling:"greedy"
-  });
-}
-
-/* ======================================================
-   LOAD ACTIVE RIDE
-====================================================== */
-async function loadActiveRide(){
-  const box = document.getElementById("activeRideBox");
-  const mapDiv = document.getElementById("liveMap");
-  const etaDiv = document.getElementById("etaInfo");
-
-  if (!activeRideId) {
-    box.innerHTML = "<p>No active ride found. Once you request a ride, it will appear here.</p>";
-    mapDiv.style.display = "none";
-    etaDiv.style.display = "none";
-    return;
-  }
-
-  try {
-    const res = await fetch(`${API_BASE}/api/driver/bookings/${encodeURIComponent(activeRideId)}`, {
-      cache:"no-store"
-    });
-    if (!res.ok) {
-      box.innerHTML = "<p>Ride not found. It may have expired or been removed.</p>";
-      mapDiv.style.display = "none";
-      etaDiv.style.display = "none";
+  // ======================================================
+  //  GUARD: REQUIRE RIDER PROFILE & NORMALIZE PHONE
+  // ======================================================
+  (function guardProfile(){
+    const raw = localStorage.getItem("bigred_rider_profile_v1");
+    if (!raw) {
+      window.location.href = "/rider-login.html?next=myride";
       return;
     }
-    const b = await res.json();
-    activeBooking = b;
-
-    if (oneSignalReady) {
-      OneSignal.login("ride-" + activeRideId);
-    }
-
-    renderActiveRide(b);
-
-    if (b.status === "ENROUTE" || b.status === "ARRIVED") {
-      mapDiv.style.display = "block";
-      etaDiv.style.display = "block";
-      startLiveTracking();
-    } else {
-      mapDiv.style.display = "none";
-      etaDiv.style.display = "none";
-      if (trackingInterval) {
-        clearInterval(trackingInterval);
-        trackingInterval = null;
-      }
-    }
-  } catch (e) {
-    box.innerHTML = "<p>Error loading ride. Check your connection and try again.</p>";
-    mapDiv.style.display = "none";
-    etaDiv.style.display = "none";
-  }
-}
-
-function renderActiveRide(b){
-  const box = document.getElementById("activeRideBox");
-  const created = b.createdAt || b.created_at || null;
-  const createdStr = created ? new Date(created).toLocaleString() : "—";
-
-  const stopsLine = (b.stops && b.stops.length)
-    ? b.stops.map(s => s.address).join(" → ")
-    : "";
-
-  const estimate = (b.pricing && typeof b.pricing.estimate === "number")
-    ? `$${b.pricing.estimate.toFixed(2)}`
-    : "--";
-
-  const riderName = b.rider?.name || "Rider";
-  const passengers = b.rider?.partySize || b.rider?.passengers || 1;
-  const luggage = (typeof b.rider?.luggage === "number") ? b.rider.luggage : null;
-
-  box.innerHTML = `
-    <p><strong>${riderName}</strong></p>
-    <p class="smallnote">Ride ID: ${b.id || activeRideId}</p>
-
-    <div class="label">From</div>
-    <div class="value">${b.pickup?.address || "—"}</div>
-
-    ${stopsLine ? `
-      <div class="label">Stops</div>
-      <div class="value">${stopsLine}</div>
-    ` : ""}
-
-    <div class="label">To</div>
-    <div class="value">${b.dropoff?.address || "—"}</div>
-
-    <div class="label">Estimate</div>
-    <div class="value">${estimate}</div>
-
-    <div class="label">When</div>
-    <div class="value">${createdStr}</div>
-
-    <div class="label">Rider Details</div>
-    <div class="value">
-      Passengers: ${passengers}
-      ${luggage !== null ? ` • Luggage: ${luggage}` : ""}
-    </div>
-
-    <div class="label">Status</div>
-    <div class="status-pill">${(b.status || "UNKNOWN").toLowerCase()}</div>
-
-    <button type="button" class="btn secondary btn-full" style="margin-top:12px;" onclick="reuseFromActive()">
-      🔁 Request This Ride Again
-    </button>
-  `;
-}
-
-/* ======================================================
-   LIVE DRIVER TRACKING (ENROUTE / ARRIVED)
-====================================================== */
-async function startLiveTracking(){
-  if (!map || !activeBooking) return;
-
-  // Geocode pickup once for distance/eta
-  if (!pickupLatLng && activeBooking.pickup?.address) {
     try {
-      pickupLatLng = await geocodeAddress(activeBooking.pickup.address);
-      if (!pickupMarker && pickupLatLng) {
-        pickupMarker = new google.maps.Marker({
-          map,
-          position: pickupLatLng,
-          label: "P"
-        });
-      }
-      if (!dropoffMarker && activeBooking.dropoff?.address) {
-        const dropLL = await geocodeAddress(activeBooking.dropoff.address);
-        if (dropLL) {
-          dropoffMarker = new google.maps.Marker({
-            map,
-            position: dropLL,
-            label: "D"
-          });
-        }
-      }
-      if (pickupLatLng) {
-        map.setCenter(pickupLatLng);
-        map.setZoom(12);
-      }
-    } catch (e) {}
-  }
-
-  if (trackingInterval) clearInterval(trackingInterval);
-  trackingInterval = setInterval(updateDriverPosition, 10000);
-  updateDriverPosition();
-}
-
-async function geocodeAddress(addr){
-  return new Promise((resolve)=>{
-    if (!window.google || !google.maps || !google.maps.Geocoder) return resolve(null);
-    const geocoder = new google.maps.Geocoder();
-    geocoder.geocode({ address: addr }, (res,status)=>{
-      if (status === "OK" && res[0]) {
-        resolve(res[0].geometry.location);
-      } else {
-        resolve(null);
-      }
-    });
-  });
-}
-
-async function updateDriverPosition(){
-  if (!activeBooking) return;
-
-  try {
-    const res = await fetch(LOCATION_WORKER + "?n=" + Date.now(), { cache:"no-store" });
-    if (!res.ok) return;
-
-    const j = await res.json();
-    const lat = parseFloat(j.latitude);
-    const lng = parseFloat(j.longitude);
-    const locRideId = j.rideId || null;
-
-    // Only show if location is tied to this ride (per your 3.A decision)
-    if (locRideId && activeBooking.id && String(locRideId) !== String(activeBooking.id)) {
+      riderProfile = JSON.parse(raw);
+    } catch {
+      window.location.href = "/rider-login.html?next=myride";
       return;
     }
-    if (isNaN(lat) || isNaN(lng)) return;
 
-    const driverLatLng = new google.maps.LatLng(lat,lng);
-
-    if (!driverMarker) {
-      driverMarker = new google.maps.Marker({
-        map,
-        position: driverLatLng,
-        label: "🚗"
-      });
-    } else {
-      driverMarker.setPosition(driverLatLng);
+    if (riderProfile.name && riderProfile.name.trim()) {
+      riderName = riderProfile.name.trim();
     }
 
-    if (pickupLatLng && google.maps.geometry && google.maps.geometry.spherical) {
-      const distMi = google.maps.geometry.spherical
-        .computeDistanceBetween(driverLatLng, pickupLatLng) / 1609.34;
-      const miles = Math.max(0.1, distMi);
-      const etaMin = Math.round((miles / 25) * 60); // ~25 mph avg
-      const etaText = `${miles.toFixed(1)} mi away • ~${etaMin} min`;
+    const phoneRaw = (riderProfile.phone || "").trim();
+    const normalized = normalizePhoneToE164(phoneRaw);
+    if (!normalized) {
+      // Missing/invalid phone = cannot match rides; send them back to fix profile
+      window.location.href = "/rider-login.html?next=myride&fix=phone";
+      return;
+    }
+    riderPhoneE164 = normalized;
 
-      const etaDiv = document.getElementById("etaInfo");
-      etaDiv.style.display = "block";
-      etaDiv.textContent = `Driver is on the way: ${etaText}`;
+    // Cache normalized for other pages
+    localStorage.setItem("bigred_rider_id_e164", riderPhoneE164);
+  })();
+
+  function normalizePhoneToE164(phone) {
+    if (!phone) return null;
+    phone = phone.trim();
+
+    // If starts with + and numeric, accept
+    if (phone[0] === "+") {
+      const digits = phone.slice(1).replace(/\D/g,"");
+      if (!digits) return null;
+      return "+" + digits;
     }
 
-  } catch (e) {
-    // silent fail
-  }
-}
+    const digits = phone.replace(/\D/g,"");
+    if (!digits) return null;
 
-/* ======================================================
-   CANCEL RIDE (WITH WARNING WHEN ENROUTE/ARRIVED)
-====================================================== */
-async function cancelRide(){
-  if (!activeRideId || !activeBooking) return;
-
-  const status = activeBooking.status || "";
-  let msg = "Cancel this ride?";
-  if (status === "ENROUTE" || status === "ARRIVED") {
-    msg = "Driver may already be on the way or nearby. Are you sure you want to cancel this ride?";
+    // US assumptions
+    if (digits.length === 10) {
+      return "+1" + digits;
+    }
+    if (digits.length === 11 && digits[0] === "1") {
+      return "+" + digits;
+    }
+    return "+" + digits;
   }
 
-  if (!confirm(msg)) return;
+  // ======================================================
+  //  TOAST
+  // ======================================================
+  function showToast(msg, ms = 2000) {
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    setTimeout(() => t.classList.remove("show"), ms);
+  }
 
-  try {
-    const res = await fetch(`${API_BASE}/api/driver/bookings/${encodeURIComponent(activeRideId)}`, {
-      method:"PUT",
-      headers:{ "Content-Type":"application/json" },
-      body: JSON.stringify({ status:"CANCELLED" })
+  // ======================================================
+  //  LOAD RIDES FOR THIS RIDER
+  // ======================================================
+  async function loadRides() {
+    const activeBox = document.getElementById("activeRideBox");
+    const recentBox = document.getElementById("recentRidesBox");
+    activeBox.textContent = "Loading your rides…";
+
+    const url = API_BOOK + "/api/bookings?riderPhone=" + encodeURIComponent(riderPhoneE164);
+    let data;
+    try {
+      const res = await fetch(url, { cache:"no-store" });
+      if (!res.ok) {
+        activeBox.innerHTML = "<p style='font-size:0.9rem;color:#ccc;'>Unable to load rides right now.</p>";
+        return;
+      }
+      data = await res.json();
+      if (!Array.isArray(data)) data = [];
+    } catch {
+      activeBox.innerHTML = "<p style='font-size:0.9rem;color:#ccc;'>Network error loading rides.</p>";
+      return;
+    }
+
+    bookings = data;
+
+    // Newest first
+    bookings.sort((a,b) => {
+      const ta = getRideTimestamp(a);
+      const tb = getRideTimestamp(b);
+      return tb - ta;
     });
-    if (res.ok) {
-      showToast("Ride cancelled.");
-      await loadActiveRide();
-    } else {
-      showToast("Unable to cancel. Please text or call Big Red.");
+
+    // Active + recent buckets
+    const activeList = bookings.filter(b => ACTIVE_STATUSES.includes((b.status || "").toUpperCase()));
+    const recentList = bookings
+      .filter(b => !ACTIVE_STATUSES.includes((b.status || "").toUpperCase()))
+      .slice(0, MAX_RECENT);
+
+    const urlId = new URL(window.location.href).searchParams.get("id");
+    let selected = null;
+
+    if (urlId) {
+      selected = bookings.find(b => String(b.id) === String(urlId));
     }
-  } catch (e) {
-    showToast("Error cancelling. Please text or call Big Red.");
-  }
-}
+    if (!selected && activeList.length > 0) {
+      selected = activeList[0];
+    }
 
-/* ======================================================
-   LOCAL HISTORY (DEVICE-ONLY)
-====================================================== */
-function loadHistory(){
-  const listEl = document.getElementById("historyList");
-  const emptyEl = document.getElementById("historyEmpty");
-  listEl.innerHTML = "";
+    currentRide = selected || null;
 
-  let history = [];
-  try {
-    const raw = localStorage.getItem(STORAGE_HISTORY_KEY);
-    if (raw) history = JSON.parse(raw);
-  } catch (e) {
-    history = [];
+    renderActiveRide(currentRide);
+    renderRecentRides(recentList, currentRide ? currentRide.id : null);
+    updateActiveControls();
+
+    if (currentRide) {
+      await updateLiveMapForRide(currentRide);
+    } else {
+      hideLiveMap();
+    }
   }
 
-  if (!history.length) {
-    emptyEl.style.display = "block";
-    return;
+  function getRideTimestamp(b) {
+    const cand = b.updatedAt || b.updated_at || b.scheduledFor || b.scheduled_for || b.createdAt || b.created_at;
+    const t = cand ? new Date(cand).getTime() : 0;
+    return isNaN(t) ? 0 : t;
   }
 
-  emptyEl.style.display = "none";
+  // ======================================================
+  //  RENDER ACTIVE RIDE
+  // ======================================================
+  function renderActiveRide(b) {
+    const box = document.getElementById("activeRideBox");
+    const statusLine = document.getElementById("etaLine");
 
-  history.sort((a,b)=>(b.createdAt||0) - (a.createdAt||0));
+    if (!b) {
+      box.innerHTML = `
+        <p style="font-size:0.9rem;color:#ccc;">
+          You don't have an active ride right now.
+        </p>
+        <p style="font-size:0.85rem;color:#888;margin-top:6px;">
+          When you request a ride, your live status will show here.
+        </p>
+      `;
+      statusLine.style.display = "none";
+      return;
+    }
 
-  history.forEach(entry => {
-    const card = document.createElement("div");
-    card.className = "history-card";
+    const status = (b.status || "").toUpperCase();
+    const from = b.pickup && b.pickup.address ? b.pickup.address : "—";
+    const to   = b.dropoff && b.dropoff.address ? b.dropoff.address : "—";
+    const stops = Array.isArray(b.stops) ? b.stops.map(s => s.address).filter(Boolean) : [];
+    const when = formatRideTime(b);
+    const type = b.type || b.rideType || "";
 
-    const createdStr = entry.createdAt
-      ? new Date(entry.createdAt).toLocaleString()
-      : "—";
+    const statusClass = "status-" + status;
+    const metaBits = [];
+    if (when) metaBits.push(when);
+    if (type) metaBits.push(type.toString());
 
-    const stopsLine = (entry.stops && entry.stops.length)
-      ? entry.stops.join(" → ")
-      : "";
-
-    card.innerHTML = `
-      <div class="history-card-title">
-        ${entry.pickup || "Pickup"} → ${entry.dropoff || "Dropoff"}
+    box.innerHTML = `
+      <div class="ride-top-row">
+        <div style="font-weight:600;">Ride ID: ${b.id}</div>
+        <div class="ride-status-pill ${statusClass}">${status}</div>
       </div>
-      <div class="history-meta">
-        Estimate: ${entry.estimate ? "$" + entry.estimate.toFixed(2) : "--"}
-        • When: ${createdStr}
-      </div>
-      ${stopsLine ? `<div class="history-meta">Stops: ${stopsLine}</div>` : ""}
-      <div class="history-meta">
-        Passengers: ${entry.passengers || 1}
-        ${typeof entry.luggage === "number" ? ` • Luggage: ${entry.luggage}` : ""}
-      </div>
-      <div class="history-actions">
-        <button class="btn secondary" type="button">View Details</button>
-        <button class="btn primary" type="button">🔁 Request This Ride Again</button>
+
+      <div class="ride-label">FROM</div>
+      <div class="ride-value">${from}</div>
+
+      ${stops.length ? `
+        <div class="ride-label">STOPS</div>
+        <div class="ride-value">${stops.join(" → ")}</div>
+      ` : ""}
+
+      <div class="ride-label">TO</div>
+      <div class="ride-value">${to}</div>
+
+      <div class="ride-meta">
+        ${metaBits.join(" · ")}
       </div>
     `;
 
-    const [viewBtn, reuseBtn] = card.querySelectorAll("button");
-
-    viewBtn.addEventListener("click", () => {
-      if (entry.id) {
-        activeRideId = entry.id;
-        localStorage.setItem(STORAGE_LAST_RIDE_KEY, entry.id);
-        loadActiveRide();
-        showToast("Loaded ride details.");
-      } else {
-        showToast("No ride ID stored for this entry.");
-      }
-    });
-
-    reuseBtn.addEventListener("click", () => {
-      const template = {
-        pickup: entry.pickup || "",
-        dropoff: entry.dropoff || "",
-        stops: entry.stops || [],
-        passengers: entry.passengers || 1,
-        luggage: entry.luggage || 0,
-        scheduledDate: null,
-        scheduledTime: null
-      };
-      localStorage.setItem("bigred_riderequest_template", JSON.stringify(template));
-      showToast("Reusing this route…");
-      window.location.href = "/rider/ride-request.html?reuse=1";
-    });
-
-    listEl.appendChild(card);
-  });
-}
-
-/* ======================================================
-   RE-REQUEST FROM ACTIVE BOOKING
-====================================================== */
-function reuseFromActive(){
-  if (!activeBooking) {
-    showToast("No active ride loaded.");
-    return;
+    // ETA line controlled in live map updates
+    statusLine.style.display = "none";
   }
-  const t = {
-    pickup: activeBooking.pickup?.address || "",
-    dropoff: activeBooking.dropoff?.address || "",
-    stops: activeBooking.stops ? activeBooking.stops.map(s=>s.address) : [],
-    passengers: activeBooking.rider?.partySize || activeBooking.rider?.passengers || 1,
-    luggage: (typeof activeBooking.rider?.luggage === "number") ? activeBooking.rider.luggage : 0,
-    scheduledDate: activeBooking.scheduledFor ? activeBooking.scheduledFor.split("T")[0] : null,
-    scheduledTime: activeBooking.scheduledFor ? activeBooking.scheduledFor.split("T")[1].slice(0,5) : null
-  };
-  localStorage.setItem("bigred_riderequest_template", JSON.stringify(t));
-  showToast("Reusing this route…");
-  window.location.href = "/rider/ride-request.html?reuse=1";
-}
 
-/* ======================================================
-   EVENT BINDINGS
-====================================================== */
-document.getElementById("btnRefresh").addEventListener("click", () => {
-  loadActiveRide();
-  showToast("Refreshing ride status…", 1200);
-});
+  function formatRideTime(b) {
+    const cand = b.scheduledFor || b.scheduled_for || b.createdAt || b.created_at;
+    if (!cand) return "";
+    const d = new Date(cand);
+    if (isNaN(d)) return "";
+    return d.toLocaleString(undefined, {
+      month:"short",
+      day:"numeric",
+      hour:"numeric",
+      minute:"2-digit"
+    });
+  }
 
-document.getElementById("btnCancel").addEventListener("click", cancelRide);
+  // ======================================================
+  //  RENDER RECENT RIDES (TEXT ONLY)
+  // ======================================================
+  function renderRecentRides(list, activeId) {
+    const box = document.getElementById("recentRidesBox");
+    if (!list.length) {
+      box.innerHTML = `<p style="font-size:0.9rem;color:#888;">No past rides yet.</p>`;
+      return;
+    }
 
-/* ======================================================
-   STARTUP
-====================================================== */
-document.addEventListener("DOMContentLoaded", () => {
-  loadActiveRide();
-  loadHistory();
-  setInterval(loadActiveRide, 30000);
-});
-</script>
+    let html = "";
+    list.forEach(b => {
+      const status = (b.status || "").toUpperCase();
+      const from = b.pickup && b.pickup.address ? b.pickup.address : "—";
+      const to   = b.dropoff && b.dropoff.address ? b.dropoff.address : "—";
+      const stops = Array.isArray(b.stops) ? b.stops.map(s => s.address).filter(Boolean) : [];
+      const when = formatRideTime(b);
+      const statusClass = "status-" + status;
 
+      html += `
+        <div class="ride-card">
+          <div class="ride-top-row">
+            <div style="font-weight:600;">Ride ID: ${b.id}</div>
+            <div class="ride-status-pill ${statusClass}">${status}</div>
+          </div>
+
+          <div class="ride-label">FROM</div>
+          <div class="ride-value">${from}</div>
+
+          ${stops.length ? `
+            <div class="ride-label">STOPS</div>
+            <div class="ride-value">${stops.join(" → ")}</div>
+          ` : ""}
+
+          <div class="ride-label">TO</div>
+          <div class="ride-value">${to}</div>
+
+          <div class="ride-meta">${when || ""}</div>
+
+          <div class="ride-actions">
+            <button type="button" class="btn secondary"
+              onclick="viewRideDetails('${b.id}')">📍 View Details</button>
+            ${canReRequest(status) ? `
+              <button type="button" class="btn primary"
+                onclick="reRequestRide('${encodeURIComponent(from)}','${encodeURIComponent(to)}','${encodeURIComponent(stops.join('|'))}')">
+                🔁 Request This Again
+              </button>
+            ` : ""}
+          </div>
+        </div>
+      `;
+    });
+
+    box.innerHTML = html;
+  }
+
+  function canReRequest(status) {
+    status = (status || "").toUpperCase();
+    return status === "COMPLETED" || status === "CANCELLED";
+  }
+
+  function viewRideDetails(id) {
+    const url = new URL(window.location.href);
+    url.searchParams.set("id", id);
+    window.location.href = url.toString();
+  }
+
+  function reRequestRide(fromEnc, toEnc, stopsEnc) {
+    const from = decodeURIComponent(fromEnc);
+    const to = decodeURIComponent(toEnc);
+    const stopsStr = decodeURIComponent(stopsEnc || "");
+    const params = new URLSearchParams();
+    if (from) params.set("pickup", from);
+    if (to) params.set("dropoff", to);
+    if (stopsStr) params.set("stops", stopsStr);
+    params.set("reFrom", "history");
+
+    window.location.href = "/rider/ride-request.html?" + params.toString();
+  }
+
+  // ======================================================
+  //  ACTIVE CONTROLS (REFRESH + CANCEL)
+  // ======================================================
+  function updateActiveControls() {
+    const actions = document.getElementById("activeActions");
+    const btnCancel = document.getElementById("btnCancel");
+
+    if (!currentRide) {
+      actions.style.display = "none";
+      return;
+    }
+
+    actions.style.display = "flex";
+
+    const status = (currentRide.status || "").toUpperCase();
+    if (CANCELLABLE_STATUSES.includes(status)) {
+      btnCancel.disabled = false;
+      btnCancel.textContent = "❌ Cancel Ride";
+    } else {
+      btnCancel.disabled = true;
+      btnCancel.textContent = "❌ Cancel (Not Available)";
+    }
+  }
+
+  document.getElementById("btnRefresh").addEventListener("click", async () => {
+    await loadRides();
+    showToast("Status refreshed");
+  });
+
+  document.getElementById("btnCancel").addEventListener("click", async () => {
+    if (!currentRide) return;
+    const status = (currentRide.status || "").toUpperCase();
+    if (!CANCELLABLE_STATUSES.includes(status)) {
+      showToast("This ride can no longer be cancelled.");
+      return;
+    }
+    if (!confirm("Cancel this ride?")) return;
+
+    try {
+      const res = await fetch(API_BOOK + "/api/bookings/" + encodeURIComponent(currentRide.id), {
+        method: "PUT",
+        headers: { "Content-Type":"application/json" },
+        body: JSON.stringify({ status:"CANCELLED" })
+      });
+      if (!res.ok) {
+        showToast("Cancel failed.");
+        return;
+      }
+      showToast("Ride cancelled.");
+      await loadRides();
+    } catch {
+      showToast("Cancel failed.");
+    }
+  });
+
+  // ======================================================
+  //  LIVE MAP + ETA (ENROUTE ONLY)
+  // ======================================================
+  async function updateLiveMapForRide(b) {
+    if (!b) {
+      hideLiveMap();
+      return;
+    }
+
+    const status = (b.status || "").toUpperCase();
+    const fromAddr = b.pickup && b.pickup.address ? b.pickup.address : "";
+    const toAddr   = b.dropoff && b.dropoff.address ? b.dropoff.address : "";
+
+    if (!fromAddr || !toAddr) {
+      hideLiveMap();
+      return;
+    }
+
+    // Ensure services
+    if (!geocodeSvc && window.google && google.maps) {
+      geocodeSvc = new google.maps.Geocoder();
+    }
+    if (!liveMap && window.google && google.maps) {
+      liveMap = new google.maps.Map(document.getElementById("liveMap"), {
+        center: { lat:35.4676, lng:-97.5164 },
+        zoom: 11,
+        disableDefaultUI:true,
+        gestureHandling:"greedy"
+      });
+      liveDirections = new google.maps.DirectionsService();
+    }
+
+    if (!geocodeSvc || !liveMap) {
+      hideLiveMap();
+      return;
+    }
+
+    const pickupLatLng = await geocodeAddressCached(fromAddr);
+    const dropLatLng = await geocodeAddressCached(toAddr);
+
+    if (!pickupLatLng || !dropLatLng) {
+      hideLiveMap();
+      return;
+    }
+
+    // Fetch driver location
+    let driverLatLng = null;
+    try {
+      const res = await fetch(LOCATION_API + "?n=" + Date.now(), { cache:"no-store" });
+      if (res.ok) {
+        const j = await res.json();
+        const lat = parseFloat(j.latitude);
+        const lng = parseFloat(j.longitude);
+        if (!isNaN(lat) && !isNaN(lng)) {
+          driverLatLng = { lat, lng };
+        }
+      }
+    } catch {
+      // ignore
+    }
+
+    const mapDiv = document.getElementById("liveMap");
+    const etaLine = document.getElementById("etaLine");
+    mapDiv.style.display = "block";
+
+    // Clear old markers
+    if (driverMarker) driverMarker.setMap(null);
+    if (pickupMarker) pickupMarker.setMap(null);
+    if (dropoffMarker) dropoffMarker.setMap(null);
+
+    // Place pickup & dropoff markers
+    pickupMarker = new google.maps.Marker({
+      position: pickupLatLng,
+      map: liveMap,
+      label: "P"
+    });
+    dropoffMarker = new google.maps.Marker({
+      position: dropLatLng,
+      map: liveMap,
+      label: "D"
+    });
+
+    const bounds = new google.maps.LatLngBounds();
+    bounds.extend(pickupLatLng);
+    bounds.extend(dropLatLng);
+
+    let showEta = false;
+
+    // If we have driver + status, incorporate
+    if (driverLatLng) {
+      driverMarker = new google.maps.Marker({
+        position: driverLatLng,
+        map: liveMap,
+        label: "R"
+      });
+      bounds.extend(driverLatLng);
+
+      if (status === "ENROUTE") {
+        showEta = true;
+        await updateEta(driverLatLng, pickupLatLng);
+      } else {
+        etaLine.style.display = "none";
+      }
+    } else {
+      etaLine.style.display = "none";
+    }
+
+    liveMap.fitBounds(bounds);
+
+    // Only ENROUTE gets ETA line; ARRIVED just shows map
+    if (status === "ARRIVED") {
+      etaLine.style.display = "block";
+      etaLine.textContent = "✅ Big Red has arrived at your pickup location.";
+    } else if (!showEta) {
+      etaLine.style.display = "none";
+    }
+  }
+
+  async function updateEta(driverLatLng, pickupLatLng) {
+    const etaLine = document.getElementById("etaLine");
+    etaLine.style.display = "none";
+
+    if (!liveDirections) return;
+
+    try {
+      const route = await new Promise((resolve, reject) => {
+        liveDirections.route(
+          {
+            origin: driverLatLng,
+            destination: pickupLatLng,
+            travelMode: "DRIVING"
+          },
+          (r, status) => status === "OK" ? resolve(r) : reject(status)
+        );
+      });
+
+      const leg = route.routes[0].legs[0];
+      const minutes = Math.round((leg.duration.value || 0) / 60);
+      const safeMin = minutes < 1 ? 1 : minutes;
+
+      etaLine.style.display = "block";
+      etaLine.textContent = `🚗 Big Red is on the way — about ${safeMin} minute${safeMin === 1 ? "" : "s"} out.`;
+    } catch {
+      etaLine.style.display = "none";
+    }
+  }
+
+  function hideLiveMap() {
+    const mapDiv = document.getElementById("liveMap");
+    const etaLine = document.getElementById("etaLine");
+    mapDiv.style.display = "none";
+    etaLine.style.display = "none";
+  }
+
+  function geocodeAddressCached(addr) {
+    return new Promise(resolve => {
+      if (!addr) return resolve(null);
+      if (geocodeCache[addr]) return resolve(geocodeCache[addr]);
+
+      geocodeSvc.geocode({ address: addr }, (res, status) => {
+        if (status === "OK" && res[0] && res[0].geometry && res[0].geometry.location) {
+          const loc = res[0].geometry.location;
+          const obj = { lat: loc.lat(), lng: loc.lng() };
+          geocodeCache[addr] = obj;
+          resolve(obj);
+        } else {
+          resolve(null);
+        }
+      });
+    });
+  }
+
+  // ======================================================
+  //  AUTO REFRESH (30 seconds)
+  // ======================================================
+  async function initMyRides() {
+    await loadRides();
+    if (refreshTimer) clearInterval(refreshTimer);
+    refreshTimer = setInterval(loadRides, 30000);
+  }
+
+  document.addEventListener("DOMContentLoaded", initMyRides);
+  </script>
 </body>
 </html>
