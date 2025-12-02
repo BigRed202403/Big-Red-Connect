@@ -47,7 +47,6 @@
         path: "/"
       });
 
-      /* Tag this device as a rider for broadcasts / segments */
       OneSignal.sendTag("role_rider", "true");
     });
 
@@ -72,6 +71,46 @@
 
         await OneSignal.Slidedown.promptPush();
       });
+    }
+
+    /* ------------------------------------------------------
+       LOGIN CHECK (Used for Request-a-Ride / Quick Search)
+       ------------------------------------------------------ */
+    function isRiderLoggedIn() {
+      try {
+        const raw = localStorage.getItem("bigred_rider_profile_v1");
+        if (!raw) return false;
+        const p = JSON.parse(raw);
+        return !!p.phone;
+      } catch {
+        return false;
+      }
+    }
+
+    /* Intercept the Request-a-Ride tile click */
+    function goRequestRide() {
+      if (!isRiderLoggedIn()) {
+        window.location.href = "/rider-login.html?next=request";
+      } else {
+        window.location.href = "/rider/rider.html";
+      }
+    }
+
+    /* Intercept Quick Destination Search */
+    function goToFare(e) {
+      e.preventDefault();
+      const dest = document.getElementById("quickWhere").value.trim();
+      if (!dest) return;
+
+      if (!isRiderLoggedIn()) {
+        window.location.href =
+          "/rider-login.html?next=ride-from-search&address=" +
+          encodeURIComponent(dest);
+      } else {
+        window.location.href =
+          "/rider/ride-request.html?dropoff=" +
+          encodeURIComponent(dest);
+      }
     }
   </script>
 
@@ -145,7 +184,7 @@
 
   <!-- Navigation Tiles -->
   <div class="tile-grid">
-    <a href="farecalculator.html" class="tile">💲<br>🛷Request A Ride</a>
+    <a onclick="goRequestRide()" class="tile" style="cursor:pointer;">💲<br>🛷Request A Ride</a>
     <a href="live.html" class="tile">🗺️<br>Live Map</a>
     <a href="reviews.html" class="tile">⭐<br>Rider Reviews</a>
     <a href="faq.html" class="tile">ℹ️<br>FAQ & Info</a>
@@ -202,12 +241,6 @@
       );
     }
     window.onload = initQuickSearch;
-
-    function goToFare(e) {
-      e.preventDefault();
-      const dest = document.getElementById("quickWhere").value.trim();
-      if (dest) window.location.href = "farecalculator.html?dropoff=" + encodeURIComponent(dest);
-    }
   </script>
 
   <!-- Status Pill -->
