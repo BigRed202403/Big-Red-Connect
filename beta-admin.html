@@ -5,21 +5,23 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Big Red Admin (BETA)</title>
 
+<!-- 📱 PWA / Icons -->
 <link rel="apple-touch-icon" href="icon.PNG">
 <link rel="icon" type="image/png" sizes="192x192" href="icon.PNG">
 <link rel="shortcut icon" href="icon.PNG">
-<link rel="manifest" href="manifest-admin.json">
+<!-- BETA admin manifest -->
+<link rel="manifest" href="manifest-admin-beta.json">
 <meta name="apple-mobile-web-app-title" content="Big Red Admin BETA">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="theme-color" content="#000">
 
-<!-- Disable cache -->
+<!-- 🚫 Disable cache (BETA) -->
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
 <meta http-equiv="Pragma" content="no-cache" />
 <meta http-equiv="Expires" content="0" />
 
-<!-- OneSignal v16 -->
+<!-- 🔔 OneSignal v16 -->
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <script>
   window.OneSignalDeferred = window.OneSignalDeferred || [];
@@ -123,7 +125,8 @@
     <h1>Admin Push Tag (BETA)</h1>
     <p>
       This page tags this device as an <strong>Admin (BETA)</strong> device
-      for safe testing inside OneSignal without affecting riders or drivers.
+      so you can safely test OneSignal pushes using the <code>env = "beta"</code>
+      and <code>role_admin_beta = "true"</code> tags, without touching live riders or drivers.
     </p>
 
     <button id="btnEnable" class="btn-primary">🔔 Enable Admin BETA Alerts</button>
@@ -136,9 +139,9 @@
     <ol style="font-size:.85rem;margin-left:18px;">
       <li>Tap <strong>Enable Admin BETA Alerts</strong> and allow notifications.</li>
       <li>In OneSignal dashboard, create a segment with tags:<br>
-        <code>env = "beta"</code> AND <code>role_admin_beta = "true"</code>
+        <code>env = "beta"</code> AND <code>role_admin_beta = "true"</code>.
       </li>
-      <li>Send a test push to that segment.</li>
+      <li>Send a test push to that segment, or use your beta-push worker.</li>
     </ol>
   </section>
 </main>
@@ -156,7 +159,7 @@
     setTimeout(()=>toastEl.classList.remove("show"), 2000);
   }
 
-  // Initialize OneSignal without prompting yet
+  // Initialize OneSignal and tag as Admin BETA
   OneSignalDeferred.push(async function(OneSignal){
     try{
       await OneSignal.init({
@@ -174,12 +177,14 @@
       const perm = await OneSignal.Notifications.getPermissionStatus();
       statusLine.textContent = "Status: initialized • permission = " + perm;
 
+      console.log("[BETA Admin] OneSignal initialized and tagged.");
     }catch(e){
-      console.warn("Admin beta init error:", e);
+      console.warn("[BETA Admin] init error:", e);
       statusLine.textContent = "Status: error initializing OneSignal";
     }
   });
 
+  // Click → request permission if needed
   btnEnable.addEventListener("click", () => {
     OneSignalDeferred.push(async function(OneSignal){
       try{
@@ -196,7 +201,7 @@
         statusLine.textContent = "Status: permission = " + result;
 
       }catch(e){
-        console.warn("Permission request error:", e);
+        console.warn("[BETA Admin] Permission request error:", e);
         showToast("Error requesting permission.");
       }
     });
