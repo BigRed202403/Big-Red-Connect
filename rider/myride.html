@@ -1,396 +1,588 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>My Ride – Big Red Connect</title>
 
-  <!-- PWA Icons -->
-  <link rel="apple-touch-icon" href="../icon.PNG">
-  <link rel="icon" type="image/png" sizes="192x192" href="../icon.PNG">
-  <link rel="manifest" href="../manifest.json">
-  <meta name="theme-color" content="#000000">
-
-  <!-- Disable cache -->
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <meta http-equiv="Pragma" content="no-cache" />
-  <meta http-equiv="Expires" content="0" />
+  <!-- Icons -->
+  <link rel="apple-touch-icon" href="/icon.PNG">
+  <link rel="icon" type="image/png" sizes="192x192" href="/icon.PNG">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#000000"/>
 
   <style>
-    :root{
+    :root {
       --red:#b30000;
       --bg:#000;
       --panel:#111;
       --border:#222;
       --muted:#888;
+      --pill-active:#12b886;
+      --pill-warn:#f59f00;
+      --pill-info:#228be6;
+      --pill-off:#555;
     }
 
-    body{
+    * { box-sizing:border-box; }
+
+    body {
       margin:0;
-      background:var(--bg);
+      background:#000;
       color:#fff;
-      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-      padding-bottom:32px;
+      font-family:-apple-system, BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+      padding-bottom:70px; /* for bottom nav */
     }
 
-    header{
+    header {
+      padding:12px;
       display:flex;
       align-items:center;
       gap:10px;
-      padding:10px;
       border-bottom:2px solid var(--red);
+      background:#000;
       position:sticky;
       top:0;
-      background:#000;
-      z-index:5;
+      z-index:20;
     }
-
-    header img{
-      height:42px;
+    header img {
+      height:44px;
       border-radius:6px;
     }
-
-    header-title{
-      display:block;
+    .header-title {
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+    }
+    .header-title-main {
+      font-weight:700;
+      font-size:.95rem;
+    }
+    .header-title-sub {
+      font-size:.8rem;
+      color:#aaa;
+    }
+    .header-actions {
+      margin-left:auto;
+      display:flex;
+      gap:8px;
+    }
+    .icon-btn {
+      background:#111;
+      border:1px solid #333;
+      color:#fff;
+      border-radius:999px;
+      padding:6px 10px;
+      font-size:.8rem;
+      display:flex;
+      align-items:center;
+      gap:4px;
     }
 
-    h1{
-      font-size:1.2rem;
-      text-align:center;
-      margin:14px 12px 6px;
+    h1 {
+      font-size:1.4rem;
+      margin:16px 14px 6px;
     }
-
-    .subtitle{
+    .subtitle {
+      margin:0 14px 10px;
       font-size:.85rem;
       color:var(--muted);
-      text-align:center;
-      margin-bottom:10px;
     }
 
-    .card{
+    .card {
       background:var(--panel);
       border:1px solid var(--border);
       border-radius:12px;
       margin:10px 12px;
       padding:12px;
-      font-size:.9rem;
     }
 
-    .card h2{
-      font-size:.95rem;
-      margin:0 0 6px;
+    .status-row {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:8px;
     }
-
-    .row{
-      margin:6px 0;
-    }
-
-    .label{
-      font-size:.75rem;
-      color:#aaa;
-      margin-bottom:2px;
-    }
-
-    .value{
-      font-size:.9rem;
-    }
-
-    .status-pill{
-      display:inline-block;
-      padding:5px 11px;
-      border-radius:999px;
-      border:1px solid #444;
-      font-size:.8rem;
-      margin-top:4px;
-      text-transform:uppercase;
-    }
-
-    .status-pill.active{
-      border-color:var(--red);
-      color:#ffdada;
-    }
-
-    .status-pill.done{
-      border-color:#3c8c3c;
-      color:#d6ffd6;
-    }
-
-    .btn{
-      width:100%;
-      border:none;
-      border-radius:9px;
-      padding:11px 10px;
-      font-size:.95rem;
-      font-weight:600;
-      margin-top:8px;
-      cursor:pointer;
-    }
-
-    .btn-primary{
-      background:var(--red);
-      color:#fff;
-    }
-
-    .btn-ghost{
-      background:#111;
-      color:#fff;
-      border:1px solid #333;
-    }
-
-    .btn-outline{
-      background:#000;
-      color:#fff;
-      border:1px solid #444;
-    }
-
-    #mapWrapper{
-      margin-top:10px;
-    }
-
-    #map{
-      width:100%;
-      height:230px;
-      border-radius:10px;
-      border:1px solid #333;
-      overflow:hidden;
-    }
-
-    #etaText{
+    .status-label {
       font-size:.85rem;
       color:#ccc;
+      text-transform:uppercase;
+      letter-spacing:.04em;
+    }
+    .status-pill {
+      padding:6px 12px;
+      border-radius:999px;
+      font-size:.8rem;
+      border:1px solid #444;
+      text-transform:uppercase;
+      letter-spacing:.03em;
+    }
+    .pill-requested  { background:#111; border-color:#666; color:#eee; }
+    .pill-accepted   { background:#111827; border-color:var(--pill-info); color:#e7f5ff; }
+    .pill-enroute    { background:#2b1600; border-color:var(--pill-warn); color:#ffe8a1; }
+    .pill-arrived    { background:#102a1c; border-color:var(--pill-active); color:#c3fae8; }
+    .pill-completed  { background:#000; border-color:var(--pill-active); color:#c3fae8; }
+    .pill-cancelled  { background:#000; border-color:#fa5252; color:#ffc9c9; }
+
+    .field-label {
+      font-size:.8rem;
+      color:#aaa;
+      margin-top:8px;
+      margin-bottom:2px;
+    }
+    .field-value {
+      font-size:.92rem;
+    }
+
+    .map-card {
+      margin:12px;
+      border-radius:12px;
+      overflow:hidden;
+      border:1px solid #222;
+      background:#050505;
+    }
+    #map {
+      width:100%;
+      height:260px;
+    }
+    .eta-line {
+      padding:8px 10px 10px;
+      font-size:.85rem;
+      color:#ddd;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:8px;
+    }
+    .eta-chip {
+      padding:4px 8px;
+      border-radius:999px;
+      border:1px solid #444;
+      font-size:.75rem;
+      color:#eee;
+      background:#111;
+    }
+
+    .vehicle-row {
+      display:flex;
+      align-items:center;
+      gap:10px;
+      margin-top:10px;
+      padding-top:8px;
+      border-top:1px dashed #222;
+    }
+    .veh-thumb {
+      width:60px;
+      height:auto;
+      border-radius:8px;
+      border:1px solid #333;
+      background:#000;
+    }
+    .veh-text {
+      font-size:.85rem;
+      color:#ddd;
+    }
+
+    .btn-primary {
+      display:block;
+      width:100%;
+      padding:12px;
+      margin-top:10px;
+      border-radius:10px;
+      border:none;
+      background:var(--red);
+      color:#fff;
+      font-weight:700;
+      font-size:1rem;
+      text-align:center;
+    }
+    .btn-secondary {
+      display:block;
+      width:100%;
+      padding:11px;
+      margin-top:8px;
+      border-radius:10px;
+      border:1px solid #333;
+      background:#111;
+      color:#fff;
+      font-weight:600;
+      font-size:.95rem;
+      text-align:center;
+    }
+
+    .small-note {
+      font-size:.78rem;
+      color:#aaa;
       margin-top:6px;
     }
 
-    #toast{
+    /* Bottom nav */
+    .bottom-nav {
       position:fixed;
-      bottom:18px;
+      bottom:0;
+      left:0;
+      right:0;
+      background:#000;
+      border-top:1px solid #222;
+      display:flex;
+      justify-content:space-around;
+      padding:6px 0 8px;
+      z-index:30;
+    }
+    .nav-item {
+      flex:1;
+      text-align:center;
+      font-size:.75rem;
+      color:#aaa;
+    }
+    .nav-item button {
+      background:none;
+      border:none;
+      color:inherit;
+      font:inherit;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:2px;
+      width:100%;
+    }
+    .nav-item span.icon {
+      font-size:1.1rem;
+    }
+    .nav-item.active {
+      color:#fff;
+    }
+
+    #toast {
+      position:fixed;
+      bottom:80px;
       left:50%;
       transform:translateX(-50%);
       background:#111;
       border:1px solid var(--red);
-      padding:9px 16px;
+      padding:8px 16px;
       border-radius:999px;
-      font-size:.85rem;
+      font-size:.8rem;
       opacity:0;
       pointer-events:none;
       transition:opacity .25s;
-      z-index:20;
+      z-index:40;
     }
-    #toast.show{ opacity:1; }
+    #toast.show { opacity:1; }
   </style>
 </head>
-
 <body>
 
 <header>
-  <a href="../index.html">
-    <img src="../icon.PNG" alt="Big Red Connect">
-  </a>
-  <div>
-    <div style="font-weight:700;font-size:.95rem;">My Ride</div>
-    <div style="font-size:.8rem;color:var(--muted);">Live status & map</div>
+  <button class="icon-btn" onclick="goBackHub()" aria-label="Back">
+    ⬅︎
+  </button>
+  <img src="/icon.PNG" alt="Big Red Connect">
+  <div class="header-title">
+    <div class="header-title-main">My Ride</div>
+    <div class="header-title-sub" id="headerStatus">Loading status…</div>
+  </div>
+  <div class="header-actions">
+    <button class="icon-btn" onclick="reloadRide()">🔄</button>
   </div>
 </header>
 
-<h1>Your Ride Details</h1>
-<div class="subtitle" id="subtitleText">Loading your ride…</div>
+<h1 id="rideTitle">Your Ride</h1>
+<p class="subtitle" id="rideSubtitle">Tracking your connection details.</p>
 
-<!-- RIDE OVERVIEW -->
-<div class="card" id="overviewCard">
-  <h2>Ride Overview</h2>
-  <div id="rideDetails">Loading…</div>
+<!-- ACTIVE / RECENT RIDE CARD -->
+<div class="card" id="rideCard">
+  <div class="field-value">Loading ride…</div>
 </div>
 
-<!-- LIVE MAP & ETA -->
-<div class="card" id="mapCard">
-  <h2>Live Map & ETA</h2>
-  <div id="mapWrapper">
-    <div id="map"></div>
-    <div id="etaText">Map appears once your driver is on the way.</div>
+<!-- MAP + ETA -->
+<div class="map-card" id="mapWrapper" style="display:none;">
+  <div id="map"></div>
+  <div class="eta-line">
+    <div id="etaText">Calculating route…</div>
+    <div class="eta-chip" id="distanceChip">–</div>
   </div>
 </div>
 
 <!-- ACTIONS -->
-<div class="card">
-  <h2>Actions</h2>
-  <button class="btn btn-primary" id="btnRefresh">🔄 Refresh Status</button>
-  <button class="btn btn-ghost" id="btnReRequest">📋 Re-request This Route</button>
+<div class="card" id="actionsCard" style="display:none;">
+  <button class="btn-primary" id="btnReRequest" style="display:none;">Re-request This Route</button>
+  <button class="btn-secondary" onclick="reloadRide()">Reload Ride</button>
+  <div class="small-note">
+    Tip: Keep this screen open during your ride for live updates.
+  </div>
 </div>
 
 <div id="toast"></div>
 
+<!-- Bottom Navigation -->
+<nav class="bottom-nav">
+  <div class="nav-item">
+    <button onclick="window.location.href='/'">
+      <span class="icon">🏠</span>
+      <span>Home</span>
+    </button>
+  </div>
+  <div class="nav-item">
+    <button onclick="window.location.href='/rider/ride-request.html'">
+      <span class="icon">🚗</span>
+      <span>Request</span>
+    </button>
+  </div>
+  <div class="nav-item active">
+    <button onclick="window.location.href='/rider/myride.html'">
+      <span class="icon">📍</span>
+      <span>My Ride</span>
+    </button>
+  </div>
+  <div class="nav-item">
+    <button onclick="window.location.href='/rider/profile.html'">
+      <span class="icon">👤</span>
+      <span>Profile</span>
+    </button>
+  </div>
+</nav>
+
+<!-- Google Maps JS (no callback; we use it after load) -->
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I"></script>
+
 <script>
-/* =====================================================
-   CONFIG
-===================================================== */
-const BOOKINGS_API = "https://bigred-bookings.bigredtransportation.workers.dev";
-const LOCATION_API = "https://update-location.bigredtransportation.workers.dev/"; // your GPS worker
-const rideId = new URL(location.href).searchParams.get("id");
+const API = "https://bigred-bookings.bigredtransportation.workers.dev";
+const params = new URLSearchParams(location.search);
+const rideId = params.get("id");
 
-const overviewCard = document.getElementById("overviewCard");
-const rideDetailsEl = document.getElementById("rideDetails");
-const subtitleEl = document.getElementById("subtitleText");
-const mapCard = document.getElementById("mapCard");
-const etaTextEl = document.getElementById("etaText");
-const toast = document.getElementById("toast");
-
-let currentBooking = null;
-let mapsReady = false;
+let booking = null;
 let map, directionsService, directionsRenderer;
+let mapReady = false;
 
-/* =====================================================
+/* ===========================
    TOAST
-===================================================== */
+=========================== */
 function showToast(msg){
-  toast.textContent = msg;
-  toast.classList.add("show");
-  setTimeout(()=>toast.classList.remove("show"),1800);
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(()=> t.classList.remove("show"), 1900);
 }
 
-/* =====================================================
-   LOAD RIDE
-===================================================== */
-async function loadRide(){
+/* ===========================
+   NAV HELPERS
+=========================== */
+function goBackHub(){
+  window.location.href = "/rider/rider.html";
+}
+
+function reloadRide(){
   if(!rideId){
-    rideDetailsEl.innerHTML = "<div>Missing ride id.</div>";
-    subtitleEl.textContent = "Invalid ride link.";
-    mapCard.style.display = "none";
+    showToast("No ride id found.");
+    return;
+  }
+  loadRide();
+}
+
+/* ===========================
+   LOAD RIDE
+=========================== */
+async function loadRide(){
+  const card = document.getElementById("rideCard");
+  if(!rideId){
+    card.innerHTML = "<div class='field-value'>Invalid ride link.</div>";
+    document.getElementById("headerStatus").textContent = "No ride loaded";
     return;
   }
 
-  try{
-    const res = await fetch(`${BOOKINGS_API}/api/bookings?id=${encodeURIComponent(rideId)}&t=${Date.now()}`);
+  try {
+    const res = await fetch(`${API}/api/bookings?id=${encodeURIComponent(rideId)}&t=${Date.now()}`);
     if(!res.ok){
-      rideDetailsEl.innerHTML = "<div>We couldn’t find this ride.</div>";
-      subtitleEl.textContent = "Ride not found.";
-      mapCard.style.display = "none";
+      card.innerHTML = "<div class='field-value'>Ride not found.</div>";
+      document.getElementById("headerStatus").textContent = "Not found";
       return;
     }
-    const b = await res.json();
-    currentBooking = b;
-    renderRide(b);
-    maybeRenderMap();
-  }catch(err){
-    console.error(err);
-    rideDetailsEl.innerHTML = "<div>Error loading ride.</div>";
-    subtitleEl.textContent = "Error loading ride.";
+    booking = await res.json();
+    renderRide(booking);
+    if (window.google && google.maps) {
+      initMapForBooking();
+    }
+  } catch (e) {
+    console.error(e);
+    card.innerHTML = "<div class='field-value'>Error loading ride.</div>";
+    document.getElementById("headerStatus").textContent = "Error";
   }
 }
 
-function formatStatus(status){
-  return (status || "").toUpperCase();
-}
-
+/* ===========================
+   RENDER RIDE
+=========================== */
 function renderRide(b){
-  const status = formatStatus(b.status);
-  const isDone = (status === "COMPLETED" || status === "CANCELLED");
-  const isOnTheWay = ["ACCEPTED","ENROUTE","ARRIVED"].includes(status);
+  const card = document.getElementById("rideCard");
+  const actionsCard = document.getElementById("actionsCard");
+  actionsCard.style.display = "block";
 
-  subtitleEl.textContent = isOnTheWay
-    ? "Your driver is getting you taken care of."
-    : (isDone ? "This ride is finished." : "Ride requested — waiting on driver.");
+  const status = (b.status || "REQUESTED").toUpperCase();
+  const isActive = ["REQUESTED","ACCEPTED","ENROUTE","ARRIVED"].includes(status);
+  const isDone = ["COMPLETED","CANCELLED"].includes(status);
 
-  const estimate = b.pricing?.estimate ? `$${b.pricing.estimate.toFixed(2)}` : "--";
-  const vehicleLabel = b.vehicle?.label || "Pending assignment";
+  const statusLabel = isActive ? "Active Ride" : "Recent Ride";
 
-  rideDetailsEl.innerHTML = `
-    <div class="row">
-      <div class="label">FROM</div>
-      <div class="value">${b.pickup?.address || "—"}</div>
+  // Status pill class
+  let pillClass = "pill-requested";
+  if (status === "ACCEPTED") pillClass = "pill-accepted";
+  else if (status === "ENROUTE") pillClass = "pill-enroute";
+  else if (status === "ARRIVED") pillClass = "pill-arrived";
+  else if (status === "COMPLETED") pillClass = "pill-completed";
+  else if (status === "CANCELLED") pillClass = "pill-cancelled";
+
+  document.getElementById("rideTitle").textContent = "My Ride";
+  document.getElementById("rideSubtitle").textContent =
+    isActive ? "Follow your current ride in real time." :
+               "This is a recent connection you completed with Big Red.";
+  document.getElementById("headerStatus").textContent = statusLabel + " – " + status;
+
+  const pickupAddr  = b.pickup?.address || "—";
+  const dropAddr    = b.dropoff?.address || "—";
+  const gate        = b.pickup?.gate || "";
+  const estimate    = b.pricing?.estimate ? `$${b.pricing.estimate.toFixed(2)}` : "--";
+  const riderName   = b.rider?.name || "";
+  const riderPhone  = b.rider?.phone || "";
+
+  // Vehicle
+  const veh = b.vehicle || null;
+  const vehLabel = veh?.label || "Vehicle not yet assigned";
+  const vehImg   = veh?.image || "/Black Acadia Thumbnail.PNG";
+
+  // Build STOPS display
+  let stopsHtml = "";
+  if (b.stops && b.stops.length) {
+    const list = b.stops.map(s=>s.address).join(" → ");
+    stopsHtml = `
+      <div class="field-label">Stops</div>
+      <div class="field-value">${list}</div>
+    `;
+  }
+
+  // Gate note
+  let gateHtml = "";
+  if (gate) {
+    gateHtml = `
+      <div class="field-label">Gate / Access</div>
+      <div class="field-value">${gate}</div>
+    `;
+  }
+
+  card.innerHTML = `
+    <div class="status-row">
+      <div class="status-label">${statusLabel}</div>
+      <div class="status-pill ${pillClass}">${status}</div>
     </div>
 
-    ${b.stops && b.stops.length ? `
-      <div class="row">
-        <div class="label">STOPS</div>
-        <div class="value">${b.stops.map(s=>s.address).join(" → ")}</div>
+    <div class="field-label">Pickup</div>
+    <div class="field-value">${pickupAddr}</div>
+
+    ${gateHtml}
+
+    ${stopsHtml}
+
+    <div class="field-label">Dropoff</div>
+    <div class="field-value">${dropAddr}</div>
+
+    <div class="field-label">Estimated Fare</div>
+    <div class="field-value">${estimate}</div>
+
+    <div class="field-label">Rider</div>
+    <div class="field-value">
+      ${riderName || "—"}${riderPhone ? ` · ${riderPhone}` : ""}
+    </div>
+
+    <div class="vehicle-row">
+      <img src="${vehImg}" alt="Assigned vehicle" class="veh-thumb">
+      <div class="veh-text">
+        <div style="font-weight:600;">${vehLabel}</div>
+        <div style="font-size:.78rem;color:#aaa;">Vehicle for this connection</div>
       </div>
-    ` : ""}
-
-    <div class="row">
-      <div class="label">TO</div>
-      <div class="value">${b.dropoff?.address || "—"}</div>
-    </div>
-
-    <div class="row">
-      <div class="label">Estimated Flat Rate</div>
-      <div class="value">${estimate}</div>
-    </div>
-
-    <div class="row">
-      <div class="label">Assigned Vehicle</div>
-      <div class="value">${vehicleLabel}</div>
-    </div>
-
-    <div class="row">
-      <div class="label">Status</div>
-      <span class="status-pill ${isDone ? "done":"active"}">${status}</span>
     </div>
   `;
 
-  // If ride is finished, map is still allowed but ETA becomes "completed"
-  if(isDone){
-    etaTextEl.textContent = "This ride is completed — map view is for reference only.";
+  // Re-request button (only for completed / cancelled)
+  const reBtn = document.getElementById("btnReRequest");
+  if (isDone) {
+    reBtn.style.display = "block";
+    reBtn.onclick = () => reRequestRide(b);
+  } else {
+    reBtn.style.display = "none";
   }
+
+  // Show map wrapper
+  document.getElementById("mapWrapper").style.display = "block";
 }
 
-/* =====================================================
-   MAP + ETA
-===================================================== */
-async function fetchDriverLocation(){
-  try{
-    const res = await fetch(LOCATION_API + "?t=" + Date.now());
-    if(!res.ok) return null;
-    const data = await res.json();
-    if(typeof data.latitude !== "number" || typeof data.longitude !== "number") return null;
-    return { lat: data.latitude, lng: data.longitude };
-  }catch(e){
-    console.warn("Location fetch failed", e);
-    return null;
+/* ===========================
+   RE-REQUEST RIDE (simple version)
+=========================== */
+function reRequestRide(b){
+  if(!b) return;
+
+  // Stash last route in localStorage for future prefill enhancement
+  try {
+    localStorage.setItem("lastRoutePickup", b.pickup?.address || "");
+    localStorage.setItem("lastRouteDropoff", b.dropoff?.address || "");
+    localStorage.setItem("lastRouteStops", (b.stops || []).map(s=>s.address).join(", "));
+  } catch(e) {
+    console.warn("Unable to store last route", e);
   }
+
+  window.location.href = "/rider/ride-request.html";
 }
 
-function shouldShowMapForStatus(status){
-  const s = formatStatus(status);
-  return ["ACCEPTED","ENROUTE","ARRIVED"].includes(s);
+/* ===========================
+   MAP + ROUTE + ETA
+=========================== */
+function getMapStyleForTime(){
+  const hour = new Date().getHours();
+  const night = (hour >= 18 || hour < 6);
+
+  if (!night) return null; // default Google day style
+
+  // Simple dark/night style
+  return [
+    { elementType: "geometry", stylers: [{ color: "#1c1c1c" }] },
+    { elementType: "labels.text.stroke", stylers: [{ color: "#1c1c1c" }] },
+    { elementType: "labels.text.fill", stylers: [{ color: "#f0f0f0" }] },
+    {
+      featureType:"road",
+      elementType:"geometry",
+      stylers:[{ color:"#2c2c2c" }]
+    },
+    {
+      featureType:"road",
+      elementType:"labels.text.fill",
+      stylers:[{ color:"#e0e0e0" }]
+    },
+    {
+      featureType:"poi",
+      stylers:[{ visibility:"off" }]
+    },
+    {
+      featureType:"transit",
+      stylers:[{ visibility:"off" }]
+    }
+  ];
 }
 
-async function maybeRenderMap(){
-  if(!currentBooking) return;
-  if(!mapsReady){
-    // wait for Google Maps to load, callback will call this again
-    return;
-  }
+function initMapForBooking(){
+  if (!booking) return;
 
-  const status = formatStatus(currentBooking.status);
-
-  if(!shouldShowMapForStatus(status)){
-    // Show friendly note, hide map if not on the way yet
-    etaTextEl.textContent = "Map & ETA will appear once your driver accepts and starts heading your way.";
-    document.getElementById("map").style.display = "none";
-    return;
-  }
-
-  document.getElementById("map").style.display = "block";
-
-  const driverLoc = await fetchDriverLocation();
-  if(!driverLoc){
-    etaTextEl.textContent = "We couldn't pull live GPS yet. Try refreshing in a moment.";
-    return;
-  }
-
-  // lazy init map + services
-  if(!map){
-    map = new google.maps.Map(document.getElementById("map"), {
-      center: driverLoc,
-      zoom: 12,
-      disableDefaultUI: true,
-      styles: [
-        { elementType:"geometry", stylers:[{color:"#1d1d1d"}]},
-        { elementType:"labels.text.fill", stylers:[{color:"#f5f5f5"}]},
-        { elementType:"labels.text.stroke", stylers:[{color:"#1d1d1d"}]},
-      ]
-    });
+  if (!directionsService) {
     directionsService = new google.maps.DirectionsService();
+  }
+  if (!map) {
+    const style = getMapStyleForTime();
+    map = new google.maps.Map(document.getElementById("map"), {
+      zoom: 12,
+      center: { lat:35.4676, lng:-97.5164 }, // OKC fallback
+      styles: style || null,
+      disableDefaultUI: true,
+      gestureHandling: "greedy"
+    });
     directionsRenderer = new google.maps.DirectionsRenderer({
       map,
       suppressMarkers:false,
@@ -398,68 +590,74 @@ async function maybeRenderMap(){
     });
   }
 
-  const pickupAddress = currentBooking.pickup?.address;
-  if(!pickupAddress){
-    etaTextEl.textContent = "Pickup address missing — route unavailable.";
+  const pickupAddr = booking.pickup?.address;
+  const dropAddr   = booking.dropoff?.address;
+  if(!pickupAddr || !dropAddr){
+    document.getElementById("etaText").textContent = "Route unavailable.";
+    document.getElementById("distanceChip").textContent = "—";
     return;
   }
 
-  directionsService.route(
-    {
-      origin: driverLoc,
-      destination: pickupAddress,
-      travelMode: google.maps.TravelMode.DRIVING
-    },
-    (result, statusCode) => {
-      if(statusCode === "OK" && result.routes.length){
-        directionsRenderer.setDirections(result);
-        const leg = result.routes[0].legs[0];
-        const durationText = leg.duration ? leg.duration.text : null;
-        etaTextEl.textContent = durationText
-          ? `Approx. ${durationText} to pickup (traffic-aware).`
-          : "Route loaded — ETA unavailable.";
-      } else {
-        console.warn("Directions error:", statusCode, result);
-        etaTextEl.textContent = "We couldn't draw the route, but your driver is on the move.";
-      }
+  const waypoints = (booking.stops || [])
+    .filter(s => s.address)
+    .map(s => ({ location: s.address, stopover:true }));
+
+  const req = {
+    origin: pickupAddr,
+    destination: dropAddr,
+    waypoints,
+    travelMode: google.maps.TravelMode.DRIVING,
+    drivingOptions: {
+      departureTime: new Date()
     }
-  );
+  };
+
+  directionsService.route(req, (result, status) => {
+    if (status === "OK" && result.routes && result.routes.length) {
+      directionsRenderer.setDirections(result);
+
+      const leg = result.routes[0].legs.reduce((sum, l) => {
+        return {
+          duration: { value:(sum.duration?.value || 0) + l.duration.value },
+          distance: { value:(sum.distance?.value || 0) + l.distance.value }
+        };
+      }, { duration:{value:0}, distance:{value:0} });
+
+      const mins = Math.round(leg.duration.value / 60);
+      const miles = (leg.distance.value / 1609.34);
+      const milesRounded = miles.toFixed(1);
+
+      const status = (booking.status || "REQUESTED").toUpperCase();
+      const etaPrefix = ["ENROUTE","ARRIVED"].includes(status)
+        ? "Estimated time to destination:"
+        : "Estimated trip time once ride begins:";
+
+      document.getElementById("etaText").textContent =
+        `${etaPrefix} ~${mins} min`;
+      document.getElementById("distanceChip").textContent =
+        `${milesRounded} mi`;
+    } else {
+      console.warn("Directions failed:", status);
+      document.getElementById("etaText").textContent = "Route unavailable.";
+      document.getElementById("distanceChip").textContent = "—";
+    }
+  });
 }
 
-/* Callback from Google Maps script */
-function onMapsReady(){
-  mapsReady = true;
-  maybeRenderMap();
-}
-window.onMapsReady = onMapsReady; // expose global for callback
+/* ===========================
+   AUTO REFRESH
+=========================== */
+setInterval(() => {
+  if (rideId) loadRide();
+}, 12000);
 
-/* =====================================================
-   ACTIONS
-===================================================== */
-document.getElementById("btnRefresh").addEventListener("click", () => {
+/* ===========================
+   INIT
+=========================== */
+window.addEventListener("load", () => {
   loadRide();
-  showToast("Refreshing ride status…");
 });
-
-document.getElementById("btnReRequest").addEventListener("click", () => {
-  if(!currentBooking){
-    showToast("Ride info not loaded yet.");
-    return;
-  }
-  const from = encodeURIComponent(currentBooking.pickup?.address || "");
-  const to   = encodeURIComponent(currentBooking.dropoff?.address || "");
-  // Send them back into the rider request flow, pre-filled
-  window.location.href = `ride-request.html?from=${from}&to=${to}`;
-});
-
-/* =====================================================
-   INITIAL LOAD
-===================================================== */
-loadRide();
 </script>
-
-<!-- Google Maps JS (same key you already use) -->
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&callback=onMapsReady" async defer></script>
 
 </body>
 </html>
