@@ -2,86 +2,80 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Big Red Connect — Rider Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Big Red Connect – Request a Ride</title>
 
-  <!-- ICONS -->
+  <!-- PWA Icons -->
   <link rel="apple-touch-icon" href="/icon.PNG">
-  <link rel="icon" type="image/png" href="/icon.PNG">
-
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <meta http-equiv="Pragma" content="no-cache" />
-  <meta http-equiv="Expires" content="0" />
+  <link rel="icon" type="image/png" sizes="192x192" href="/icon.PNG">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#000000">
 
   <style>
-    :root {
-      --red:#b30000;
-      --bg:#000;
-      --panel:#111;
-      --border:#222;
-      --muted:#999;
-    }
-
     body {
+      margin:0;
       background:#000;
       color:#fff;
       font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      margin:0;
-      padding:0;
+      padding-bottom:40px;
     }
 
     header {
-      padding:14px;
-      border-bottom:2px solid var(--red);
+      padding:15px 12px;
       display:flex;
       align-items:center;
       gap:12px;
+      border-bottom:2px solid #b30000;
+      position:sticky;
+      top:0;
+      background:#000;
     }
 
-    header img {
-      height:42px;
-      width:42px;
-      border-radius:6px;
+    header img { height:46px; }
+
+    h1 {
+      text-align:center;
+      margin:20px 10px;
+      font-size:1.4rem;
+      font-weight:700;
     }
 
-    .container {
-      padding:20px;
-    }
-
-    .panel {
-      background:var(--panel);
-      border:1px solid var(--border);
-      padding:20px;
-      border-radius:12px;
-      margin-top:20px;
+    .box {
+      background:#111;
+      border:1px solid #222;
+      border-radius:10px;
+      margin:12px;
+      padding:16px;
     }
 
     label {
       display:block;
+      margin-top:14px;
       font-size:.85rem;
-      margin-bottom:6px;
-      color:#ccc;
+      color:#bbb;
     }
 
     input {
       width:100%;
-      background:#000;
-      border:1px solid #333;
-      border-radius:10px;
-      padding:12px;
-      color:#fff;
+      padding:10px;
       font-size:1rem;
-      margin-bottom:18px;
+      margin-top:6px;
+      border-radius:8px;
+      border:1px solid #333;
+      background:#000;
+      color:#fff;
     }
 
-    .btn-primary {
-      width:100%;
-      padding:14px;
-      background:var(--red);
+    button {
+      width:calc(100% - 24px);
+      margin:18px 12px 0 12px;
+      padding:12px;
+      font-size:1rem;
+      text-align:center;
+      background:#b30000;
       color:#fff;
       border:none;
       border-radius:10px;
-      font-size:1rem;
       font-weight:700;
       cursor:pointer;
     }
@@ -92,13 +86,13 @@
       left:50%;
       transform:translateX(-50%);
       background:#111;
-      border:1px solid var(--red);
+      border:1px solid #b30000;
       padding:12px 18px;
       border-radius:999px;
       opacity:0;
-      pointer-events:none;
       transition:.25s;
-      z-index:1000;
+      pointer-events:none;
+      z-index:50;
     }
     #toast.show { opacity:1; }
   </style>
@@ -109,85 +103,88 @@
 <header>
   <img src="/icon.PNG">
   <div>
-    <div style="font-size:.9rem;font-weight:700;">Rider Login</div>
-    <div style="font-size:.75rem;color:#999;">Access your Big Red rider hub</div>
+    <div style="font-weight:700;">Big Red Connect</div>
+    <div style="color:#888;font-size:.8rem;">Request a Ride</div>
   </div>
 </header>
 
-<div class="container">
+<h1>Rider Login</h1>
 
-  <div class="panel">
-    <label for="phone">Your Mobile Number</label>
-    <input id="phone" placeholder="405-555-1234" inputmode="tel" />
+<div class="box">
+  <label>Your Name</label>
+  <input id="name" placeholder="John Doe">
 
-    <button class="btn-primary" id="loginBtn">Continue</button>
-  </div>
-
+  <label>Mobile Number</label>
+  <input id="phone" placeholder="405-555-1234" inputmode="tel">
 </div>
+
+<button id="btnLogin">Continue</button>
 
 <div id="toast"></div>
 
 <script>
-  const API = "https://bigred-rider-profiles.bigredtransportation.workers.dev";
+/* -------------------------------------------------------
+   CONFIG
+------------------------------------------------------- */
+const PROFILE_API = "https://bigred-profile.bigredtransportation.workers.dev";
 
-  function toast(msg) {
-    const t = document.getElementById("toast");
-    t.textContent = msg;
-    t.classList.add("show");
-    setTimeout(() => t.classList.remove("show"), 1800);
+/* -------------------------------------------------------
+   TOAST
+------------------------------------------------------- */
+function showToast(msg){
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 1800);
+}
+
+/* -------------------------------------------------------
+   LOGIN HANDLER
+------------------------------------------------------- */
+document.getElementById("btnLogin").addEventListener("click", async () => {
+  const name = document.getElementById("name").value.trim();
+  const phone = document.getElementById("phone").value.trim();
+
+  if (!name || !phone) {
+    showToast("Name & phone required");
+    return;
   }
 
-  async function handleLogin() {
-    const raw = document.getElementById("phone").value.trim();
-    if (!raw) return toast("Enter phone number");
+  // normalize phone
+  const cleanedPhone = phone.replace(/\D/g, "");
+  if (cleanedPhone.length < 10) {
+    showToast("Invalid phone number");
+    return;
+  }
 
-    // Normalize numeric digits only
-    const phone = raw.replace(/\D/g, "");
-    if (phone.length < 10) return toast("Enter valid 10-digit number");
+  // Persist to localStorage
+  localStorage.setItem("riderName", name);
+  localStorage.setItem("riderPhone", cleanedPhone);
 
-    localStorage.setItem("rider_phone", phone);
+  // If riderId is missing, create one
+  let riderId = localStorage.getItem("riderId");
+  if (!riderId) {
+    riderId = "r_" + crypto.randomUUID();
+    localStorage.setItem("riderId", riderId);
+  }
 
-    // 1️ Try fetching existing profile
-    let res = await fetch(`${API}/api/profile/by-phone/${phone}`);
-    let data = await res.json();
-
-    if (data && data.id) {
-      localStorage.setItem("rider_id", data.id);
-      window.location = "/rider/rider.html";
-      return;
-    }
-
-    // 2️ Create new profile
-    const newProfile = {
-      phone,
-      name: "",
-      partySize: 1,
-      homeAddress: "",
-      gateCode: ""
-    };
-
-    res = await fetch(`${API}/api/profile`, {
-      method:"POST",
-      headers: { "Content-Type":"application/json" },
-      body: JSON.stringify(newProfile)
+  // Save/update profile in KV
+  try {
+    await fetch(`${PROFILE_API}/api/profile/${riderId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name,
+        phone: cleanedPhone
+      })
     });
-
-    if (!res.ok) {
-      toast("Login failed");
-      return;
-    }
-
-    const created = await res.json();
-    if (!created.id) {
-      toast("Profile error");
-      return;
-    }
-
-    localStorage.setItem("rider_id", created.id);
-    window.location = "/rider/rider.html";
+  } catch (err) {
+    console.warn("Profile save failed", err);
   }
 
-  document.getElementById("loginBtn").addEventListener("click", handleLogin);
+  // Redirect to Rider Hub
+  location.href = "/rider/rider.html";
+});
 </script>
 
 </body>
