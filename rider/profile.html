@@ -51,10 +51,6 @@
       border-radius:4px;
     }
 
-    header-title-main {
-      display:block;
-    }
-
     h1 {
       text-align:center;
       font-size:1.4rem;
@@ -116,12 +112,6 @@
       resize:vertical;
     }
 
-    .hint {
-      font-size:0.75rem;
-      color:var(--muted);
-      margin-top:2px;
-    }
-
     .btn-row {
       display:flex;
       flex-direction:column;
@@ -153,17 +143,6 @@
       border:1px solid #444;
     }
 
-    .btn-small {
-      padding:8px 10px;
-      font-size:0.85rem;
-    }
-
-    .top-actions {
-      margin-left:auto;
-      display:flex;
-      gap:6px;
-    }
-
     #toast {
       position:fixed;
       bottom:20px;
@@ -192,9 +171,10 @@
       <div style="font-size:0.78rem;color:#888;">Rider Profile</div>
     </div>
   </div>
-  <div class="top-actions">
-    <button class="btn btn-ghost btn-small" id="btnToHub">Rider Hub</button>
-  </div>
+
+  <button class="btn btn-ghost" id="btnToHub" style="margin-left:auto;margin-right:6px;padding:8px 12px;">
+    Rider Hub
+  </button>
 </header>
 
 <h1>Rider Profile</h1>
@@ -202,45 +182,45 @@
 
 <div class="page">
 
+  <!-- CONTACT -->
   <div class="card">
     <div class="section-title">Contact</div>
 
     <div class="input-group">
-      <label for="name">Your Name</label>
+      <label>Your Name</label>
       <input id="name" placeholder="First name or what you go by">
     </div>
 
     <div class="input-group">
-      <label for="phone">Mobile Number</label>
+      <label>Mobile Number</label>
       <input id="phone" inputmode="tel" placeholder="555-555-5555">
-      <div class="hint">This should match the number you text from.</div>
+      <div class="hint">This must match the number you text from.</div>
     </div>
   </div>
 
+  <!-- HOME / ACCESS -->
   <div class="card">
     <div class="section-title">Home & Access</div>
 
     <div class="input-group">
-      <label for="homeAddress">Home / Usual Pickup</label>
+      <label>Home / Usual Pickup</label>
       <input id="homeAddress" placeholder="Home, apartment, dorm, hotel…">
-      <div class="hint">Used as your default pickup on ride requests.</div>
     </div>
 
     <div class="input-group">
-      <label for="gateCode">Gate Code / Access Notes</label>
+      <label>Gate Code / Access Notes</label>
       <input id="gateCode" placeholder="Gate code, building #, apartment, etc.">
     </div>
 
     <div class="input-group">
-      <label for="notes">Driver Notes (private)</label>
-      <textarea id="notes" placeholder="Anything helpful for your driver (landmarks, usual airport, etc.)"></textarea>
-      <div class="hint">Only I see this. It never appears in texts or receipts.</div>
+      <label>Driver Notes (Private)</label>
+      <textarea id="notes" placeholder="Anything useful for pickup (landmarks, usual airport, etc.)"></textarea>
     </div>
   </div>
 
   <div class="btn-row">
     <button class="btn btn-primary" id="btnSave">Save Profile</button>
-    <button class="btn btn-ghost" id="btnBack">Back to Rider Hub</button>
+    <button class="btn btn-ghost" id="btnBack">Back to Hub</button>
   </div>
 
 </div>
@@ -248,128 +228,102 @@
 <div id="toast"></div>
 
 <script>
-  const PROFILE_API = "https://bigred-rider-profile.bigredtransportation.workers.dev";
+const PROFILE_API = "https://bigred-profile.bigredtransportation.workers.dev";
 
-  function showToast(msg) {
-    const t = document.getElementById("toast");
-    t.textContent = msg;
-    t.classList.add("show");
-    setTimeout(() => t.classList.remove("show"), 1800);
+function showToast(msg){
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(()=> t.classList.remove("show"), 1800);
+}
+
+document.getElementById("logoHome").onclick = () => {
+  window.location.href = "/index.html";
+};
+document.getElementById("btnToHub").onclick = () => {
+  window.location.href = "/rider/rider.html";
+};
+document.getElementById("btnBack").onclick = () => {
+  window.location.href = "/rider/rider.html";
+};
+
+/* ============================================================
+   LOAD PROFILE
+============================================================ */
+async function loadProfile(){
+  const riderId = localStorage.getItem("riderId");
+  if (!riderId){
+    window.location.href = "/rider-login.html";
+    return;
   }
 
-  // Tap logo → Home
-  document.getElementById("logoHome").addEventListener("click", () => {
-    window.location.href = "/index.html";
-  });
-
-  // Buttons
-  document.getElementById("btnToHub").addEventListener("click", () => {
-    window.location.href = "/rider/rider.html";
-  });
-
-  document.getElementById("btnBack").addEventListener("click", () => {
-    window.location.href = "/rider/rider.html";
-  });
-
-  // Load profile on start
-  async function loadProfile() {
-    const riderId = localStorage.getItem("riderId");
-    if (!riderId) {
-      // No riderId → send back to login
-      window.location.href = "/rider-login.html";
-      return;
-    }
-
-    try {
-      const res = await fetch(`${PROFILE_API}/api/rider/profile?riderId=${encodeURIComponent(riderId)}`);
-      if (!res.ok) {
-        if (res.status === 404) {
-          // Profile not in KV yet → just show empty form
-          console.warn("Profile not found in KV yet.");
-          return;
-        }
-        showToast("Error loading profile");
-        return;
-      }
-
-      const prof = await res.json();
-
-      document.getElementById("name").value        = prof.name || "";
-      document.getElementById("phone").value       = prof.phone || "";
-      document.getElementById("homeAddress").value = prof.homeAddress || "";
-      document.getElementById("gateCode").value    = prof.gateCode || "";
-      document.getElementById("notes").value       = prof.notes || "";
-
-    } catch (err) {
-      console.error(err);
+  try {
+    const res = await fetch(`${PROFILE_API}/api/rider/profile?riderId=${encodeURIComponent(riderId)}`);
+    if (!res.ok){
+      if (res.status === 404) return;
       showToast("Error loading profile");
-    }
-  }
-
-  // Save profile
-  async function saveProfile() {
-    const riderId = localStorage.getItem("riderId");
-    if (!riderId) {
-      showToast("Session expired, please log in again.");
-      window.location.href = "/rider-login.html";
       return;
     }
 
-    const name        = document.getElementById("name").value.trim();
-    const phone       = document.getElementById("phone").value.trim();
-    const homeAddress = document.getElementById("homeAddress").value.trim();
-    const gateCode    = document.getElementById("gateCode").value.trim();
-    const notes       = document.getElementById("notes").value.trim();
+    const p = await res.json();
 
-    // Basic sanity check – but don't be too strict
-    if (!phone) {
-      showToast("Mobile number is required.");
+    document.getElementById("name").value        = p.name || "";
+    document.getElementById("phone").value       = p.phone || "";
+    document.getElementById("homeAddress").value = p.homeAddress || "";
+    document.getElementById("gateCode").value    = p.gateCode || "";
+    document.getElementById("notes").value       = p.notes || "";
+
+  } catch (err){
+    console.error(err);
+    showToast("Error loading profile");
+  }
+}
+
+/* ============================================================
+   SAVE PROFILE
+============================================================ */
+async function saveProfile(){
+  const riderId     = localStorage.getItem("riderId");
+  const name        = document.getElementById("name").value.trim();
+  const phone       = document.getElementById("phone").value.trim().replace(/\D/g, "");
+  const homeAddress = document.getElementById("homeAddress").value.trim();
+  const gateCode    = document.getElementById("gateCode").value.trim();
+  const notes       = document.getElementById("notes").value.trim();
+
+  if (!riderId){ showToast("Session expired"); return; }
+  if (!phone){ showToast("Phone required"); return; }
+
+  const body = { riderId, name, phone, homeAddress, gateCode, notes };
+
+  try {
+    const res = await fetch(`${PROFILE_API}/api/rider/profile`, {
+      method:"PUT",
+      headers:{ "Content-Type":"application/json" },
+      body:JSON.stringify(body)
+    });
+
+    if (!res.ok){
+      showToast("Save failed");
       return;
     }
 
-    const body = {
-      riderId,
-      name,
-      phone,
-      homeAddress,
-      gateCode,
-      notes
-    };
+    // Sync LS
+    localStorage.setItem("riderName", name);
+    localStorage.setItem("riderPhone", phone);
+    localStorage.setItem("riderHome", homeAddress);
+    localStorage.setItem("riderGate", gateCode);
 
-    try {
-      const res = await fetch(`${PROFILE_API}/api/rider/profile`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body)
-      });
+    showToast("Profile saved");
 
-      if (!res.ok) {
-        console.error("Save error:", res.status);
-        showToast("Error saving profile");
-        return;
-      }
-
-      const data = await res.json();
-      const prof = data.profile || body;
-
-      // Keep localStorage in sync for ride-request prefill
-      localStorage.setItem("riderName", prof.name || name || "");
-      localStorage.setItem("riderPhone", prof.phone || phone || "");
-      localStorage.setItem("riderHome", prof.homeAddress || homeAddress || "");
-      localStorage.setItem("riderGate", prof.gateCode || gateCode || "");
-
-      showToast("Profile saved");
-
-    } catch (err) {
-      console.error(err);
-      showToast("Error saving profile");
-    }
+  } catch (err){
+    console.error(err);
+    showToast("Save failed");
   }
+}
 
-  document.getElementById("btnSave").addEventListener("click", saveProfile);
+document.getElementById("btnSave").onclick = saveProfile;
 
-  // Kick off
-  loadProfile();
+loadProfile();
 </script>
 
 </body>
