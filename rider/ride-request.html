@@ -11,7 +11,6 @@
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#000"/>
 
-  <!-- Core Styles -->
   <style>
     body {
       margin:0;
@@ -21,7 +20,7 @@
       padding-bottom:40px;
     }
     header {
-      padding:12px;
+      padding:15px 12px;
       display:flex;
       align-items:center;
       gap:12px;
@@ -31,54 +30,18 @@
       top:0;
       z-index:12;
     }
-    header a.logo-link {
-      display:flex;
-      align-items:center;
-      gap:10px;
-      text-decoration:none;
-      color:#fff;
-    }
-    header img {
-      height:42px;
-      border-radius:6px;
-    }
-    header-title-main {
-      font-weight:700;
-    }
-    header-title-sub {
-      font-size:.8rem;
-      color:#888;
-      display:block;
-    }
-
-    .back-bar {
-      width:calc(100% - 24px);
-      margin:10px auto 0;
-    }
-    .back-btn {
-      width:100%;
-      padding:10px 12px;
-      border-radius:8px;
-      border:1px solid #333;
-      background:#111;
-      color:#fff;
-      font-size:.9rem;
-      font-weight:600;
-      text-align:center;
-      text-decoration:none;
-      display:inline-block;
-    }
+    header img { height:46px; }
 
     h1 {
       text-align:center;
-      margin:14px 0 8px;
-      font-size:1.35rem;
+      margin:20px 0 10px;
+      font-size:1.4rem;
       font-weight:700;
     }
 
     .form {
       width:calc(100% - 24px);
-      margin:4px auto 20px;
+      margin:10px auto;
     }
     .input-group {
       margin-bottom:14px;
@@ -91,22 +54,18 @@
     }
     input, select, textarea {
       width:100%;
-      padding:11px;
+      padding:12px;
       background:#111;
       border:1px solid #333;
       border-radius:8px;
       color:#fff;
       font-size:.95rem;
-      box-sizing:border-box;
-    }
-    input::placeholder, textarea::placeholder {
-      color:#666;
     }
 
-    .btn-primary {
+    .btn {
       display:block;
       width:100%;
-      margin-top:16px;
+      margin-top:14px;
       padding:14px;
       background:#b30000;
       color:#fff;
@@ -143,80 +102,20 @@
       z-index:99;
     }
     #toast.show { opacity:1; }
-
-    /* Stops block */
-    .stops-header-row {
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-    }
-    .add-stop-btn {
-      border:none;
-      background:#111;
-      border-radius:999px;
-      padding:6px 10px;
-      font-size:.8rem;
-      color:#ffcc66;
-      display:flex;
-      align-items:center;
-      gap:4px;
-      cursor:pointer;
-      border:1px solid #444;
-    }
-    .stop-row {
-      display:flex;
-      align-items:center;
-      gap:8px;
-      margin-top:6px;
-    }
-    .stop-row input {
-      flex:1;
-    }
-    .remove-stop-btn {
-      border:none;
-      background:#221111;
-      color:#ffaaaa;
-      border-radius:999px;
-      padding:6px 9px;
-      font-size:.8rem;
-      cursor:pointer;
-    }
-
-    .hint {
-      font-size:.78rem;
-      color:#888;
-      margin-top:3px;
-    }
-
-    .inline-row {
-      display:flex;
-      gap:10px;
-    }
-    .inline-row > div {
-      flex:1;
-    }
-
-    @media (min-width: 768px) {
-      .form { max-width:520px; }
-    }
   </style>
+
+  <!-- Google Places API (for autocomplete) -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places"></script>
 </head>
 
 <body>
 <header>
-  <a href="/rider/rider.html" class="logo-link">
-    <img src="/icon.PNG" alt="Big Red Connect Logo"/>
-    <div>
-      <span class="header-title-main">Big Red Connect</span>
-      <header-title-sub>Request a Ride</header-title-sub>
-    </div>
-  </a>
+  <img src="/icon.PNG"/>
+  <div>
+    <div style="font-weight:700;">Big Red Connect</div>
+    <div style="font-size:.8rem;color:#888;">Ride Request</div>
+  </div>
 </header>
-
-<div class="back-bar">
-  <a href="/rider/rider.html" class="back-btn">⬅️ Back to Rider Hub</a>
-</div>
 
 <h1>Request a Ride</h1>
 
@@ -224,7 +123,7 @@
 
   <!-- Holiday Banner -->
   <div id="holidayBanner">
-    🎄 Holiday Rate Applied — thanks for riding local during peak holiday dates.
+    🎄 Holiday Rate Applied — Thank you for riding local during peak holiday dates.
   </div>
 
   <!-- NAME -->
@@ -243,7 +142,6 @@
   <div class="input-group">
     <label>Pickup Address</label>
     <input id="pickup" placeholder="Where should we pick you up?"/>
-    <div class="hint">Tip: start typing a place, business, or address.</div>
   </div>
 
   <!-- GATE CODE -->
@@ -254,14 +152,8 @@
 
   <!-- STOPS -->
   <div class="input-group">
-    <div class="stops-header-row">
-      <label>Stops (optional)</label>
-      <button type="button" id="btnAddStop" class="add-stop-btn">
-        ➕ Add stop
-      </button>
-    </div>
-    <div id="stopsContainer"></div>
-    <div class="hint">You can add one or more quick stops along the way.</div>
+    <label>Stops (optional)</label>
+    <input id="stops" placeholder="Add a stop (or leave blank)"/>
   </div>
 
   <!-- DROPOFF -->
@@ -270,24 +162,27 @@
     <input id="dropoff" placeholder="Where are you going?"/>
   </div>
 
-  <!-- PASSENGERS + LUGGAGE -->
-  <div class="inline-row">
-    <div class="input-group">
-      <label>Passengers</label>
-      <select id="partySize"></select>
-      <div class="hint" id="partyHint"></div>
-    </div>
+  <!-- PASSENGERS -->
+  <div class="input-group">
+    <label>Passengers</label>
+    <select id="partySize">
+      <option value="1">1</option>
+      <option value="2">2</option>
+      <option value="3">3</option>
+      <option value="4">4</option>
+      <option value="5">5+</option>
+    </select>
+  </div>
 
-    <div class="input-group" id="luggageGroup" style="display:none;">
-      <label>Luggage</label>
-      <select id="luggage">
-        <option value="0">0</option>
-        <option value="1">1</option>
-        <option value="2">2</option>
-        <option value="3">3+</option>
-      </select>
-      <div class="hint">Shown automatically for airport rides.</div>
-    </div>
+  <!-- LUGGAGE (auto-shown for airport rides) -->
+  <div class="input-group" id="luggageGroup" style="display:none;">
+    <label>Luggage Pieces</label>
+    <select id="luggage">
+      <option value="0">0</option>
+      <option value="1">1</option>
+      <option value="2">2</option>
+      <option value="3">3+</option>
+    </select>
   </div>
 
   <!-- TIME -->
@@ -304,14 +199,13 @@
     <input type="datetime-local" id="scheduledFor"/>
   </div>
 
-  <!-- ESTIMATE (placeholder for now) -->
+  <!-- ESTIMATE -->
   <div class="input-group">
     <label>Estimated Fare</label>
     <input id="estimate" disabled placeholder="$0.00"/>
-    <div class="hint">Final price is confirmed by Big Red based on distance and timing.</div>
   </div>
 
-  <a class="btn-primary" id="btnSubmit">Submit Ride Request</a>
+  <a class="btn" id="btnSubmit">Submit Ride Request</a>
 
 </div>
 
@@ -329,7 +223,23 @@ function showToast(msg){
 }
 
 /* =======================================================
-   PREFILL FROM LOCAL PROFILE
+   ENFORCE LOGIN (riderId must exist)
+======================================================= */
+function requireRiderIdOrRedirect() {
+  const riderId = localStorage.getItem("riderId");
+  if (!riderId) {
+    // Session looks "logged out" → send back to rider login
+    showToast("Session expired. Please log in again.");
+    setTimeout(() => {
+      window.location.href = "/rider-login.html";
+    }, 900);
+    return null;
+  }
+  return riderId;
+}
+
+/* =======================================================
+   PREFILL FROM PROFILE (local)
 ======================================================= */
 function prefillFromProfile(){
   const name = localStorage.getItem("riderName");
@@ -337,32 +247,41 @@ function prefillFromProfile(){
   const home = localStorage.getItem("riderHome");
   const gate = localStorage.getItem("riderGate");
 
-  if (name)  document.getElementById("riderName").value = name;
-  if (phone) document.getElementById("riderPhone").value = phone;
-  if (home)  document.getElementById("pickup").value = home;
-  if (gate)  document.getElementById("gateCode").value = gate;
+  if(name)  document.getElementById("riderName").value = name;
+  if(phone) document.getElementById("riderPhone").value = phone;
+  if(home)  document.getElementById("pickup").value = home;
+  if(gate)  document.getElementById("gateCode").value = gate;
 }
 
 /* =======================================================
-   HOLIDAY BANNER (simple rule set)
+   GOOGLE PLACES AUTOCOMPLETE (OKC-BIASED)
 ======================================================= */
-function updateHolidayBanner() {
-  const now = new Date();
-  const m = now.getMonth() + 1; // Jan = 1
-  const d = now.getDate();
-  let isHoliday = false;
+function initPlacesAutocomplete() {
+  if (!window.google || !google.maps || !google.maps.places) return;
 
-  // Simple rule: Thanksgiving week, Christmas week, New Year
-  if (m === 11 && d >= 25 && d <= 30) isHoliday = true;  // Thanksgiving window
-  if (m === 12 && d >= 20 && d <= 31) isHoliday = true;  // Christmas / NYE
-  if (m === 1 && d <= 2) isHoliday = true;               // New Year's Day
+  const bounds = new google.maps.LatLngBounds(
+    // Rough bounding box around OKC metro to BIAS results
+    new google.maps.LatLng(35.20, -97.90),
+    new google.maps.LatLng(35.80, -97.20)
+  );
 
-  const banner = document.getElementById("holidayBanner");
-  banner.style.display = isHoliday ? "block" : "none";
+  const options = {
+    bounds,
+    componentRestrictions: { country: "us" },
+    fields: ["formatted_address", "name", "geometry"]
+  };
+
+  const pickupInput  = document.getElementById("pickup");
+  const dropoffInput = document.getElementById("dropoff");
+  const stopsInput   = document.getElementById("stops");
+
+  if (pickupInput)  new google.maps.places.Autocomplete(pickupInput, options);
+  if (dropoffInput) new google.maps.places.Autocomplete(dropoffInput, options);
+  if (stopsInput)   new google.maps.places.Autocomplete(stopsInput, options);
 }
 
 /* =======================================================
-   AIRPORT DETECTION → LUGGAGE FIELD
+   SHOW LUGGAGE FOR AIRPORT
 ======================================================= */
 function detectAirport(addr){
   if(!addr) return false;
@@ -379,14 +298,11 @@ function checkLuggage(){
   const p = document.getElementById("pickup").value;
   const d = document.getElementById("dropoff").value;
   const show = detectAirport(p) || detectAirport(d);
-  document.getElementById("luggageGroup").style.display = show ? "block" : "none";
+  document.getElementById("luggageGroup").style.display = show ? "block":"none";
 }
 
-document.getElementById("pickup").addEventListener("input", checkLuggage);
-document.getElementById("dropoff").addEventListener("input", checkLuggage);
-
 /* =======================================================
-   SCHEDULED TIME TOGGLE
+   TIME PICKER BEHAVIOR
 ======================================================= */
 document.getElementById("timeType").addEventListener("change", e=>{
   document.getElementById("scheduledGroup").style.display =
@@ -394,157 +310,21 @@ document.getElementById("timeType").addEventListener("change", e=>{
 });
 
 /* =======================================================
-   PASSENGER LIMIT BASED ON ACTIVE VEHICLE
-======================================================= */
-async function loadPassengerCap(){
-  const select = document.getElementById("partySize");
-  const hint = document.getElementById("partyHint");
-
-  let maxPassengers = 6;
-  let label = "up to 6 passengers";
-
-  try {
-    const res = await fetch("https://bigred-status-updater.bigredtransportation.workers.dev/status");
-    if (res.ok) {
-      const data = await res.json();
-      // If driver is offline or status missing → allow up to 6 (either vehicle)
-      if (!data.online || data.status === "offline") {
-        maxPassengers = 6;
-        label = "up to 6 passengers (driver currently offline)";
-      } else if (data.vehicle && data.vehicle.code) {
-        if (data.vehicle.code === "BIG_RED") {
-          maxPassengers = 4;
-          label = "up to 4 passengers (Big Red)";
-        } else if (data.vehicle.code === "BLACK_ACADIA") {
-          maxPassengers = 6;
-          label = "up to 6 passengers (Black GMC Acadia)";
-        } else {
-          maxPassengers = 4;
-          label = "up to 4 passengers (active vehicle)";
-        }
-      } else {
-        // Online but vehicle not set → play it safe
-        maxPassengers = 4;
-        label = "up to 4 passengers (driver online)";
-      }
-    }
-  } catch(e){
-    // On error, fallback to 6
-    maxPassengers = 6;
-    label = "up to 6 passengers";
-  }
-
-  select.innerHTML = "";
-  for (let i = 1; i <= maxPassengers; i++) {
-    const opt = document.createElement("option");
-    opt.value = String(i);
-    opt.textContent = String(i);
-    select.appendChild(opt);
-  }
-
-  hint.textContent = `Current max capacity: ${label}.`;
-}
-
-/* =======================================================
-   STOPS: ADD / REMOVE DYNAMIC FIELDS
-======================================================= */
-const stopsContainer = document.getElementById("stopsContainer");
-const btnAddStop = document.getElementById("btnAddStop");
-let stopCounter = 0;
-let allAutocompleteInstances = [];
-let userLocationBounds = null;
-
-btnAddStop.addEventListener("click", () => addStopField());
-
-function addStopField(value = "") {
-  stopCounter++;
-  const id = "stop-" + stopCounter;
-
-  const row = document.createElement("div");
-  row.className = "stop-row";
-  row.innerHTML = `
-    <input id="${id}" placeholder="Extra stop address"/>
-    <button type="button" class="remove-stop-btn" data-target="${id}">✖</button>
-  `;
-  stopsContainer.appendChild(row);
-
-  if (window.google && window.google.maps && window.google.maps.places) {
-    setupAutocompleteForField(id);
-  }
-}
-
-stopsContainer.addEventListener("click", (e) => {
-  if (!e.target.classList.contains("remove-stop-btn")) return;
-  const targetId = e.target.getAttribute("data-target");
-  const input = document.getElementById(targetId);
-  if (input && input.parentElement) {
-    input.parentElement.remove();
-  }
-});
-
-/* =======================================================
-   GOOGLE PLACES AUTOCOMPLETE
-======================================================= */
-function setupAutocompleteForField(inputId) {
-  const input = document.getElementById(inputId);
-  if (!input) return;
-
-  const ac = new google.maps.places.Autocomplete(input, {
-    fields: ["formatted_address", "name", "geometry"],
-    componentRestrictions: { country: "us" }
-  });
-
-  if (userLocationBounds) {
-    ac.setBounds(userLocationBounds);
-  }
-
-  allAutocompleteInstances.push(ac);
-}
-
-function initUserLocationBias() {
-  if (!navigator.geolocation) return;
-
-  navigator.geolocation.getCurrentPosition(
-    (pos) => {
-      const center = new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude);
-      const circle = new google.maps.Circle({
-        center,
-        radius: 30000 // ~30km bias
-      });
-      userLocationBounds = circle.getBounds();
-
-      allAutocompleteInstances.forEach(ac => {
-        ac.setBounds(userLocationBounds);
-      });
-    },
-    () => {
-      // ignore errors, autocomplete will still work
-    },
-    { enableHighAccuracy:false, timeout:5000, maximumAge:60000 }
-  );
-}
-
-function initAutocomplete() {
-  // Base fields
-  setupAutocompleteForField("pickup");
-  setupAutocompleteForField("dropoff");
-
-  // Any existing stop fields
-  const stopInputs = stopsContainer.querySelectorAll("input[id^='stop-']");
-  stopInputs.forEach(input => setupAutocompleteForField(input.id));
-
-  initUserLocationBias();
-}
-
-/* =======================================================
    SUBMIT RIDE REQUEST
 ======================================================= */
+document.getElementById("pickup").addEventListener("input", checkLuggage);
+document.getElementById("dropoff").addEventListener("input", checkLuggage);
+
 document.getElementById("btnSubmit").addEventListener("click", submitRide);
 
 async function submitRide(){
-  const name = document.getElementById("riderName").value.trim();
-  const phone = document.getElementById("riderPhone").value.trim();
-  const pickup = document.getElementById("pickup").value.trim();
+  // Make sure this device is actually "logged in"
+  const riderId = requireRiderIdOrRedirect();
+  if (!riderId) return;
+
+  const name    = document.getElementById("riderName").value.trim();
+  const phone   = document.getElementById("riderPhone").value.trim();
+  const pickup  = document.getElementById("pickup").value.trim();
   const dropoff = document.getElementById("dropoff").value.trim();
 
   if(!name || !phone || !pickup || !dropoff){
@@ -552,40 +332,28 @@ async function submitRide(){
     return;
   }
 
-  // Save profile pieces for future forms
+  // Save profile bits locally for next time
   localStorage.setItem("riderName", name);
   localStorage.setItem("riderPhone", phone);
   localStorage.setItem("riderHome", pickup);
   localStorage.setItem("riderGate", document.getElementById("gateCode").value.trim());
 
-  // Stops
-  const stopInputs = stopsContainer.querySelectorAll("input[id^='stop-']");
-  const stopList = [];
-  const stopStrings = [];
-  stopInputs.forEach(input => {
-    const val = input.value.trim();
-    if (val) {
-      stopList.push({ address: val });
-      stopStrings.push(val);
-    }
-  });
+  const stopsRaw = document.getElementById("stops").value.trim();
+  const stopList = stopsRaw
+    ? [{ address: stopsRaw }]   // simple single-stop support for now
+    : [];
 
-  const partySize = Number(document.getElementById("partySize").value || "1");
-  const luggage = document.getElementById("luggageGroup").style.display==="block"
+  const partySize = Number(document.getElementById("partySize").value);
+  const luggage   = document.getElementById("luggageGroup").style.display==="block"
       ? Number(document.getElementById("luggage").value)
       : 0;
 
-  const whenType = document.getElementById("timeType").value;
+  const whenType     = document.getElementById("timeType").value;
   const scheduledFor = whenType==="schedule"
       ? document.getElementById("scheduledFor").value
       : null;
 
   const estimateVal = document.getElementById("estimate").value.replace("$","") || 0;
-
-  // Rider identity
-  const storedRiderId = localStorage.getItem("riderId");
-  const riderId = storedRiderId || crypto.randomUUID();
-  localStorage.setItem("riderId", riderId);
 
   const body = {
     type: scheduledFor ? "SCHEDULED":"INSTANT",
@@ -608,52 +376,44 @@ async function submitRide(){
     });
 
     if(!res.ok){
-      showToast("Error submitting ride");
+      showToast("Error submitting");
       return;
     }
 
     const booking = await res.json();
 
-    // Build Google Maps route link
-    let routeUrl = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(pickup)}&destination=${encodeURIComponent(dropoff)}`;
-    if (stopStrings.length) {
-      routeUrl += `&waypoints=${encodeURIComponent(stopStrings.join("|"))}`;
-    }
-
-    // Open SMS pre-fill
-    const smsBody =
-      `Ride Request:\n` +
-      `From: ${pickup}\n` +
-      `To: ${dropoff}\n` +
-      `Name: ${name}\n` +
-      `Phone: ${phone}\n` +
-      `Stops: ${stopStrings.join(" | ") || "None"}\n` +
-      `Passengers: ${partySize}\n` +
-      `Luggage: ${luggage}\n` +
-      `Booking ID: ${booking.id}\n` +
-      `Route: ${routeUrl}`;
-
+    // Open SMS pre-fill (keeps your dual-channel flow)
     const sms =
       `sms:+14053784024?body=` +
-      encodeURIComponent(smsBody);
+      encodeURIComponent(`Ride Request:
+From: ${pickup}
+To: ${dropoff}
+Name: ${name}
+Phone: ${phone}
+Stops: ${stopsRaw || "None"}
+Passengers: ${partySize}
+Luggage: ${luggage}
+Booking ID: ${booking.id}`);
 
     window.location.href = sms;
-  } catch(e){
-    console.error(e);
-    showToast("Error submitting ride");
+  } catch (err) {
+    console.error(err);
+    showToast("Network error");
   }
 }
 
 /* =======================================================
    ON LOAD
 ======================================================= */
-prefillFromProfile();
-updateHolidayBanner();
-loadPassengerCap();
+window.addEventListener("load", () => {
+  // If riderId is missing, this will redirect to login
+  requireRiderIdOrRedirect();
+  // Prefill anything we have stored locally
+  prefillFromProfile();
+  // Enable Google Places autocomplete
+  initPlacesAutocomplete();
+});
 </script>
-
-<!-- Google Maps Places (Autocomplete) -->
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places&callback=initAutocomplete" async defer></script>
 
 </body>
 </html>
