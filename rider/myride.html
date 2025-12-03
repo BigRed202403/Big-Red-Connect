@@ -5,359 +5,212 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>My Ride – Big Red Connect</title>
 
-  <!-- Icons -->
+  <!-- PWA + Icons -->
   <link rel="apple-touch-icon" href="/icon.PNG">
   <link rel="icon" type="image/png" sizes="192x192" href="/icon.PNG">
   <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#000000"/>
+  <meta name="theme-color" content="#000"/>
 
   <style>
-    :root {
-      --red:#b30000;
-      --bg:#000;
-      --panel:#111;
-      --border:#222;
-      --muted:#888;
-      --pill-active:#12b886;
-      --pill-warn:#f59f00;
-      --pill-info:#228be6;
-      --pill-off:#555;
-    }
-
-    * { box-sizing:border-box; }
-
     body {
       margin:0;
       background:#000;
       color:#fff;
-      font-family:-apple-system, BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-      padding-bottom:70px; /* for bottom nav */
+      font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      padding-bottom:50px;
     }
 
+    /* HEADER + MENU */
     header {
+      background:#000;
       padding:12px;
+      border-bottom:2px solid #b30000;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      position:sticky;
+      top:0;
+      z-index:50;
+    }
+    .header-left {
       display:flex;
       align-items:center;
       gap:10px;
-      border-bottom:2px solid var(--red);
-      background:#000;
-      position:sticky;
-      top:0;
-      z-index:20;
     }
-    header img {
-      height:44px;
-      border-radius:6px;
+    .logo {
+      height:42px;
     }
-    .header-title {
-      display:flex;
+    #menuBtn {
+      font-size:1.6rem;
+      background:none;
+      border:none;
+      color:white;
+      cursor:pointer;
+    }
+    #menuPanel {
+      display:none;
       flex-direction:column;
-      gap:2px;
-    }
-    .header-title-main {
-      font-weight:700;
-      font-size:.95rem;
-    }
-    .header-title-sub {
-      font-size:.8rem;
-      color:#aaa;
-    }
-    .header-actions {
-      margin-left:auto;
-      display:flex;
-      gap:8px;
-    }
-    .icon-btn {
       background:#111;
-      border:1px solid #333;
+      border-bottom:2px solid #b30000;
+      animation:drop .15s ease-out;
+    }
+    #menuPanel a {
+      padding:16px;
       color:#fff;
-      border-radius:999px;
-      padding:6px 10px;
-      font-size:.8rem;
-      display:flex;
-      align-items:center;
-      gap:4px;
+      text-decoration:none;
+      border-bottom:1px solid #222;
+      font-size:1rem;
+    }
+    #menuPanel a:hover { background:#222; }
+
+    @keyframes drop {
+      from { opacity:0; transform:translateY(-10px); }
+      to   { opacity:1; transform:translateY(0); }
     }
 
     h1 {
+      text-align:center;
       font-size:1.4rem;
-      margin:16px 14px 6px;
+      margin:18px 0;
+      font-weight:700;
     }
-    .subtitle {
-      margin:0 14px 10px;
-      font-size:.85rem;
-      color:var(--muted);
+
+    .section-title {
+      font-size:1rem;
+      font-weight:700;
+      margin:10px 0 6px;
+      padding:0 12px;
     }
 
     .card {
-      background:var(--panel);
-      border:1px solid var(--border);
-      border-radius:12px;
-      margin:10px 12px;
-      padding:12px;
+      background:#111;
+      border:1px solid #333;
+      border-radius:10px;
+      padding:14px;
+      margin:0 12px 14px;
     }
 
-    .status-row {
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      margin-bottom:8px;
-    }
-    .status-label {
-      font-size:.85rem;
+    .status {
+      font-size:.88rem;
+      margin-bottom:4px;
       color:#ccc;
-      text-transform:uppercase;
-      letter-spacing:.04em;
-    }
-    .status-pill {
-      padding:6px 12px;
-      border-radius:999px;
-      font-size:.8rem;
-      border:1px solid #444;
-      text-transform:uppercase;
-      letter-spacing:.03em;
-    }
-    .pill-requested  { background:#111; border-color:#666; color:#eee; }
-    .pill-accepted   { background:#111827; border-color:var(--pill-info); color:#e7f5ff; }
-    .pill-enroute    { background:#2b1600; border-color:var(--pill-warn); color:#ffe8a1; }
-    .pill-arrived    { background:#102a1c; border-color:var(--pill-active); color:#c3fae8; }
-    .pill-completed  { background:#000; border-color:var(--pill-active); color:#c3fae8; }
-    .pill-cancelled  { background:#000; border-color:#fa5252; color:#ffc9c9; }
-
-    .field-label {
-      font-size:.8rem;
-      color:#aaa;
-      margin-top:8px;
-      margin-bottom:2px;
-    }
-    .field-value {
-      font-size:.92rem;
     }
 
-    .map-card {
-      margin:12px;
-      border-radius:12px;
-      overflow:hidden;
-      border:1px solid #222;
-      background:#050505;
-    }
-    #map {
-      width:100%;
-      height:260px;
-    }
-    .eta-line {
-      padding:8px 10px 10px;
-      font-size:.85rem;
-      color:#ddd;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:8px;
-    }
-    .eta-chip {
-      padding:4px 8px;
-      border-radius:999px;
-      border:1px solid #444;
-      font-size:.75rem;
-      color:#eee;
-      background:#111;
+    .loc-line {
+      margin:6px 0;
+      font-size:.9rem;
     }
 
-    .vehicle-row {
-      display:flex;
-      align-items:center;
-      gap:10px;
-      margin-top:10px;
-      padding-top:8px;
-      border-top:1px dashed #222;
-    }
-    .veh-thumb {
-      width:60px;
-      height:auto;
-      border-radius:8px;
-      border:1px solid #333;
-      background:#000;
-    }
-    .veh-text {
-      font-size:.85rem;
-      color:#ddd;
-    }
-
-    .btn-primary {
-      display:block;
-      width:100%;
-      padding:12px;
-      margin-top:10px;
+    .vehicle-thumb {
+      width:80px;
       border-radius:10px;
-      border:none;
-      background:var(--red);
-      color:#fff;
+      margin-top:10px;
+      border:1px solid #333;
+    }
+
+    .btn-primary, .btn-ghost {
+      display:block;
+      width:calc(100% - 24px);
+      margin:12px auto;
+      padding:15px;
+      text-align:center;
+      border-radius:10px;
+      text-decoration:none;
       font-weight:700;
-      font-size:1rem;
-      text-align:center;
+      font-size:1.05rem;
     }
-    .btn-secondary {
-      display:block;
-      width:100%;
-      padding:11px;
-      margin-top:8px;
-      border-radius:10px;
-      border:1px solid #333;
+    .btn-primary {
+      background:#b30000;
+      color:#fff;
+    }
+    .btn-ghost {
       background:#111;
       color:#fff;
-      font-weight:600;
-      font-size:.95rem;
-      text-align:center;
+      border:1px solid #333;
     }
 
-    .small-note {
-      font-size:.78rem;
-      color:#aaa;
-      margin-top:6px;
-    }
-
-    /* Bottom nav */
-    .bottom-nav {
-      position:fixed;
-      bottom:0;
-      left:0;
-      right:0;
-      background:#000;
-      border-top:1px solid #222;
-      display:flex;
-      justify-content:space-around;
-      padding:6px 0 8px;
-      z-index:30;
-    }
-    .nav-item {
-      flex:1;
-      text-align:center;
-      font-size:.75rem;
-      color:#aaa;
-    }
-    .nav-item button {
-      background:none;
-      border:none;
-      color:inherit;
-      font:inherit;
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      gap:2px;
-      width:100%;
-    }
-    .nav-item span.icon {
-      font-size:1.1rem;
-    }
-    .nav-item.active {
-      color:#fff;
+    #map {
+      width:calc(100% - 24px);
+      height:300px;
+      margin:12px auto;
+      border-radius:12px;
+      border:1px solid #333;
     }
 
     #toast {
       position:fixed;
-      bottom:80px;
+      bottom:22px;
       left:50%;
       transform:translateX(-50%);
       background:#111;
-      border:1px solid var(--red);
-      padding:8px 16px;
+      border:1px solid #b30000;
+      padding:10px 18px;
       border-radius:999px;
-      font-size:.8rem;
       opacity:0;
-      pointer-events:none;
-      transition:opacity .25s;
-      z-index:40;
+      transition:.25s;
+      z-index:999;
     }
     #toast.show { opacity:1; }
+
   </style>
+
+  <!-- Google Maps JS API -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=geometry"></script>
 </head>
+
 <body>
 
+<!-- HEADER -->
 <header>
-  <button class="icon-btn" onclick="goBackHub()" aria-label="Back">
-    ⬅︎
-  </button>
-  <img src="/icon.PNG" alt="Big Red Connect">
-  <div class="header-title">
-    <div class="header-title-main">My Ride</div>
-    <div class="header-title-sub" id="headerStatus">Loading status…</div>
+  <div class="header-left">
+    <a href="/index.html"><img src="/icon.PNG" class="logo"></a>
+    <div style="font-weight:700;font-size:1rem;">My Ride</div>
   </div>
-  <div class="header-actions">
-    <button class="icon-btn" onclick="reloadRide()">🔄</button>
-  </div>
+  <button id="menuBtn">☰</button>
 </header>
 
-<h1 id="rideTitle">Your Ride</h1>
-<p class="subtitle" id="rideSubtitle">Tracking your connection details.</p>
+<!-- MENU -->
+<nav id="menuPanel">
+  <a href="/rider/rider.html">Rider Hub</a>
+  <a href="/rider/ride-request.html">Request a Ride</a>
+  <a href="/rider/myride.html">My Ride</a>
+  <a href="/rider/profile.html">Profile</a>
+  <a href="#" id="logoutBtn">Log Out</a>
+</nav>
 
-<!-- ACTIVE / RECENT RIDE CARD -->
-<div class="card" id="rideCard">
-  <div class="field-value">Loading ride…</div>
-</div>
+<h1>Your Ride</h1>
 
-<!-- MAP + ETA -->
-<div class="map-card" id="mapWrapper" style="display:none;">
-  <div id="map"></div>
-  <div class="eta-line">
-    <div id="etaText">Calculating route…</div>
-    <div class="eta-chip" id="distanceChip">–</div>
-  </div>
-</div>
+<!-- ACTIVE -->
+<div id="activeContainer"></div>
 
-<!-- ACTIONS -->
-<div class="card" id="actionsCard" style="display:none;">
-  <button class="btn-primary" id="btnReRequest" style="display:none;">Re-request This Route</button>
-  <button class="btn-secondary" onclick="reloadRide()">Reload Ride</button>
-  <div class="small-note">
-    Tip: Keep this screen open during your ride for live updates.
-  </div>
-</div>
+<!-- MAP -->
+<div id="map" style="display:none;"></div>
+
+<!-- PAST RIDES -->
+<h2 class="section-title">Past Rides</h2>
+<div id="pastContainer"></div>
+
+<a href="/rider/ride-request.html" class="btn-primary">Request Another Ride</a>
+<a href="/rider/rider.html" class="btn-ghost">Back to Rider Hub</a>
 
 <div id="toast"></div>
 
-<!-- Bottom Navigation -->
-<nav class="bottom-nav">
-  <div class="nav-item">
-    <button onclick="window.location.href='/'">
-      <span class="icon">🏠</span>
-      <span>Home</span>
-    </button>
-  </div>
-  <div class="nav-item">
-    <button onclick="window.location.href='/rider/ride-request.html'">
-      <span class="icon">🚗</span>
-      <span>Request</span>
-    </button>
-  </div>
-  <div class="nav-item active">
-    <button onclick="window.location.href='/rider/myride.html'">
-      <span class="icon">📍</span>
-      <span>My Ride</span>
-    </button>
-  </div>
-  <div class="nav-item">
-    <button onclick="window.location.href='/rider/profile.html'">
-      <span class="icon">👤</span>
-      <span>Profile</span>
-    </button>
-  </div>
-</nav>
-
-<!-- Google Maps JS (no callback; we use it after load) -->
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I"></script>
-
 <script>
-const API = "https://bigred-bookings.bigredtransportation.workers.dev";
-const params = new URLSearchParams(location.search);
-const rideId = params.get("id");
+const API_BOOKINGS = "https://bigred-bookings.bigredtransportation.workers.dev";
+const API_STATUS = "https://bigred-status-updater.bigredtransportation.workers.dev";
+let map, driverMarker, pickupMarker;
+let activeRide = null;
 
-let booking = null;
-let map, directionsService, directionsRenderer;
-let mapReady = false;
+/* MENU */
+document.getElementById("menuBtn").addEventListener("click", ()=>{
+  const p = document.getElementById("menuPanel");
+  p.style.display = (p.style.display==="flex"?"none":"flex");
+});
+document.getElementById("logoutBtn").addEventListener("click", ()=>{
+  localStorage.clear();
+  window.location.href="/index.html";
+});
 
-/* ===========================
-   TOAST
-=========================== */
 function showToast(msg){
   const t = document.getElementById("toast");
   t.textContent = msg;
@@ -365,298 +218,124 @@ function showToast(msg){
   setTimeout(()=> t.classList.remove("show"), 1900);
 }
 
-/* ===========================
-   NAV HELPERS
-=========================== */
-function goBackHub(){
-  window.location.href = "/rider/rider.html";
-}
-
-function reloadRide(){
-  if(!rideId){
-    showToast("No ride id found.");
-    return;
-  }
-  loadRide();
-}
-
-/* ===========================
-   LOAD RIDE
-=========================== */
-async function loadRide(){
-  const card = document.getElementById("rideCard");
-  if(!rideId){
-    card.innerHTML = "<div class='field-value'>Invalid ride link.</div>";
-    document.getElementById("headerStatus").textContent = "No ride loaded";
+/* LOAD RIDES */
+async function loadRides(){
+  const riderId = localStorage.getItem("riderId");
+  if(!riderId){
+    document.getElementById("activeContainer").innerHTML =
+      `<div class="card">No rider ID found. Please update your profile.</div>`;
     return;
   }
 
-  try {
-    const res = await fetch(`${API}/api/bookings?id=${encodeURIComponent(rideId)}&t=${Date.now()}`);
-    if(!res.ok){
-      card.innerHTML = "<div class='field-value'>Ride not found.</div>";
-      document.getElementById("headerStatus").textContent = "Not found";
-      return;
-    }
-    booking = await res.json();
-    renderRide(booking);
-    if (window.google && google.maps) {
-      initMapForBooking();
-    }
-  } catch (e) {
-    console.error(e);
-    card.innerHTML = "<div class='field-value'>Error loading ride.</div>";
-    document.getElementById("headerStatus").textContent = "Error";
-  }
+  const res = await fetch(`${API_BOOKINGS}/api/driver/bookings?scope=all`);
+  const all = await res.json();
+
+  const myRides = all.filter(r => r.rider?.riderId === riderId);
+
+  const active = myRides.find(r => ["REQUESTED","ACCEPTED","ENROUTE","ARRIVED"].includes(r.status));
+  const done   = myRides.filter(r => ["COMPLETED","CANCELLED"].includes(r.status));
+
+  renderActive(active);
+  renderPast(done.reverse());
 }
 
-/* ===========================
-   RENDER RIDE
-=========================== */
-function renderRide(b){
-  const card = document.getElementById("rideCard");
-  const actionsCard = document.getElementById("actionsCard");
-  actionsCard.style.display = "block";
+function renderActive(ride){
+  const box = document.getElementById("activeContainer");
 
-  const status = (b.status || "REQUESTED").toUpperCase();
-  const isActive = ["REQUESTED","ACCEPTED","ENROUTE","ARRIVED"].includes(status);
-  const isDone = ["COMPLETED","CANCELLED"].includes(status);
-
-  const statusLabel = isActive ? "Active Ride" : "Recent Ride";
-
-  // Status pill class
-  let pillClass = "pill-requested";
-  if (status === "ACCEPTED") pillClass = "pill-accepted";
-  else if (status === "ENROUTE") pillClass = "pill-enroute";
-  else if (status === "ARRIVED") pillClass = "pill-arrived";
-  else if (status === "COMPLETED") pillClass = "pill-completed";
-  else if (status === "CANCELLED") pillClass = "pill-cancelled";
-
-  document.getElementById("rideTitle").textContent = "My Ride";
-  document.getElementById("rideSubtitle").textContent =
-    isActive ? "Follow your current ride in real time." :
-               "This is a recent connection you completed with Big Red.";
-  document.getElementById("headerStatus").textContent = statusLabel + " – " + status;
-
-  const pickupAddr  = b.pickup?.address || "—";
-  const dropAddr    = b.dropoff?.address || "—";
-  const gate        = b.pickup?.gate || "";
-  const estimate    = b.pricing?.estimate ? `$${b.pricing.estimate.toFixed(2)}` : "--";
-  const riderName   = b.rider?.name || "";
-  const riderPhone  = b.rider?.phone || "";
-
-  // Vehicle
-  const veh = b.vehicle || null;
-  const vehLabel = veh?.label || "Vehicle not yet assigned";
-  const vehImg   = veh?.image || "/Black Acadia Thumbnail.PNG";
-
-  // Build STOPS display
-  let stopsHtml = "";
-  if (b.stops && b.stops.length) {
-    const list = b.stops.map(s=>s.address).join(" → ");
-    stopsHtml = `
-      <div class="field-label">Stops</div>
-      <div class="field-value">${list}</div>
-    `;
+  if(!ride){
+    box.innerHTML = `<div class="card">You have no active rides.</div>`;
+    document.getElementById("map").style.display="none";
+    activeRide = null;
+    return;
   }
 
-  // Gate note
-  let gateHtml = "";
-  if (gate) {
-    gateHtml = `
-      <div class="field-label">Gate / Access</div>
-      <div class="field-value">${gate}</div>
-    `;
-  }
+  activeRide = ride;
 
-  card.innerHTML = `
-    <div class="status-row">
-      <div class="status-label">${statusLabel}</div>
-      <div class="status-pill ${pillClass}">${status}</div>
-    </div>
-
-    <div class="field-label">Pickup</div>
-    <div class="field-value">${pickupAddr}</div>
-
-    ${gateHtml}
-
-    ${stopsHtml}
-
-    <div class="field-label">Dropoff</div>
-    <div class="field-value">${dropAddr}</div>
-
-    <div class="field-label">Estimated Fare</div>
-    <div class="field-value">${estimate}</div>
-
-    <div class="field-label">Rider</div>
-    <div class="field-value">
-      ${riderName || "—"}${riderPhone ? ` · ${riderPhone}` : ""}
-    </div>
-
-    <div class="vehicle-row">
-      <img src="${vehImg}" alt="Assigned vehicle" class="veh-thumb">
-      <div class="veh-text">
-        <div style="font-weight:600;">${vehLabel}</div>
-        <div style="font-size:.78rem;color:#aaa;">Vehicle for this connection</div>
-      </div>
+  box.innerHTML = `
+    <div class="card">
+      <div class="status">Status: ${ride.status}</div>
+      <div class="loc-line">Pickup: ${ride.pickup.address}</div>
+      <div class="loc-line">Dropoff: ${ride.dropoff.address}</div>
+      ${ride.vehicle ? `
+         <img class="vehicle-thumb" src="${ride.vehicle.image}"/>
+      ` : ""}
     </div>
   `;
 
-  // Re-request button (only for completed / cancelled)
-  const reBtn = document.getElementById("btnReRequest");
-  if (isDone) {
-    reBtn.style.display = "block";
-    reBtn.onclick = () => reRequestRide(b);
-  } else {
-    reBtn.style.display = "none";
-  }
-
-  // Show map wrapper
-  document.getElementById("mapWrapper").style.display = "block";
+  initMap(ride);
 }
 
-/* ===========================
-   RE-REQUEST RIDE (simple version)
-=========================== */
-function reRequestRide(b){
-  if(!b) return;
+function renderPast(list){
+  const box = document.getElementById("pastContainer");
+  box.innerHTML = "";
 
-  // Stash last route in localStorage for future prefill enhancement
-  try {
-    localStorage.setItem("lastRoutePickup", b.pickup?.address || "");
-    localStorage.setItem("lastRouteDropoff", b.dropoff?.address || "");
-    localStorage.setItem("lastRouteStops", (b.stops || []).map(s=>s.address).join(", "));
-  } catch(e) {
-    console.warn("Unable to store last route", e);
-  }
-
-  window.location.href = "/rider/ride-request.html";
-}
-
-/* ===========================
-   MAP + ROUTE + ETA
-=========================== */
-function getMapStyleForTime(){
-  const hour = new Date().getHours();
-  const night = (hour >= 18 || hour < 6);
-
-  if (!night) return null; // default Google day style
-
-  // Simple dark/night style
-  return [
-    { elementType: "geometry", stylers: [{ color: "#1c1c1c" }] },
-    { elementType: "labels.text.stroke", stylers: [{ color: "#1c1c1c" }] },
-    { elementType: "labels.text.fill", stylers: [{ color: "#f0f0f0" }] },
-    {
-      featureType:"road",
-      elementType:"geometry",
-      stylers:[{ color:"#2c2c2c" }]
-    },
-    {
-      featureType:"road",
-      elementType:"labels.text.fill",
-      stylers:[{ color:"#e0e0e0" }]
-    },
-    {
-      featureType:"poi",
-      stylers:[{ visibility:"off" }]
-    },
-    {
-      featureType:"transit",
-      stylers:[{ visibility:"off" }]
-    }
-  ];
-}
-
-function initMapForBooking(){
-  if (!booking) return;
-
-  if (!directionsService) {
-    directionsService = new google.maps.DirectionsService();
-  }
-  if (!map) {
-    const style = getMapStyleForTime();
-    map = new google.maps.Map(document.getElementById("map"), {
-      zoom: 12,
-      center: { lat:35.4676, lng:-97.5164 }, // OKC fallback
-      styles: style || null,
-      disableDefaultUI: true,
-      gestureHandling: "greedy"
-    });
-    directionsRenderer = new google.maps.DirectionsRenderer({
-      map,
-      suppressMarkers:false,
-      preserveViewport:false
-    });
-  }
-
-  const pickupAddr = booking.pickup?.address;
-  const dropAddr   = booking.dropoff?.address;
-  if(!pickupAddr || !dropAddr){
-    document.getElementById("etaText").textContent = "Route unavailable.";
-    document.getElementById("distanceChip").textContent = "—";
+  if(!list.length){
+    box.innerHTML = `<div class="card">No past rides yet.</div>`;
     return;
   }
 
-  const waypoints = (booking.stops || [])
-    .filter(s => s.address)
-    .map(s => ({ location: s.address, stopover:true }));
-
-  const req = {
-    origin: pickupAddr,
-    destination: dropAddr,
-    waypoints,
-    travelMode: google.maps.TravelMode.DRIVING,
-    drivingOptions: {
-      departureTime: new Date()
-    }
-  };
-
-  directionsService.route(req, (result, status) => {
-    if (status === "OK" && result.routes && result.routes.length) {
-      directionsRenderer.setDirections(result);
-
-      const leg = result.routes[0].legs.reduce((sum, l) => {
-        return {
-          duration: { value:(sum.duration?.value || 0) + l.duration.value },
-          distance: { value:(sum.distance?.value || 0) + l.distance.value }
-        };
-      }, { duration:{value:0}, distance:{value:0} });
-
-      const mins = Math.round(leg.duration.value / 60);
-      const miles = (leg.distance.value / 1609.34);
-      const milesRounded = miles.toFixed(1);
-
-      const status = (booking.status || "REQUESTED").toUpperCase();
-      const etaPrefix = ["ENROUTE","ARRIVED"].includes(status)
-        ? "Estimated time to destination:"
-        : "Estimated trip time once ride begins:";
-
-      document.getElementById("etaText").textContent =
-        `${etaPrefix} ~${mins} min`;
-      document.getElementById("distanceChip").textContent =
-        `${milesRounded} mi`;
-    } else {
-      console.warn("Directions failed:", status);
-      document.getElementById("etaText").textContent = "Route unavailable.";
-      document.getElementById("distanceChip").textContent = "—";
-    }
+  list.forEach(r=>{
+    box.innerHTML += `
+      <div class="card">
+        <div class="status">${r.status}</div>
+        <div class="loc-line">From: ${r.pickup.address}</div>
+        <div class="loc-line">To: ${r.dropoff.address}</div>
+      </div>
+    `;
   });
 }
 
-/* ===========================
-   AUTO REFRESH
-=========================== */
-setInterval(() => {
-  if (rideId) loadRide();
-}, 12000);
+/* MAP */
+function initMap(ride){
+  document.getElementById("map").style.display="block";
 
-/* ===========================
-   INIT
-=========================== */
-window.addEventListener("load", () => {
-  loadRide();
-});
+  map = new google.maps.Map(document.getElementById("map"), {
+    zoom: 12,
+    center: {lat:35.4676, lng:-97.5164}, // OKC fallback center
+    mapId:"DEMO_MAP"
+  });
+
+  // Place pickup marker
+  new google.maps.Geocoder().geocode({ address: ride.pickup.address }, function(res){
+    if(res && res[0]){
+      const pos = res[0].geometry.location;
+      pickupMarker = new google.maps.Marker({
+        map,
+        position: pos,
+        icon:{ url:"https://maps.google.com/mapfiles/ms/icons/green-dot.png" }
+      });
+      map.setCenter(pos);
+    }
+  });
+
+  pollDriverLocation();
+  setInterval(pollDriverLocation, 5000);
+}
+
+async function pollDriverLocation(){
+  if(!activeRide) return;
+
+  const res = await fetch(`${API_STATUS}/status`);
+  const data = await res.json();
+
+  if(!data.location) return;
+
+  const { lat, lng } = data.location;
+
+  const pos = {lat, lng};
+
+  if(!driverMarker){
+    driverMarker = new google.maps.Marker({
+      map,
+      position:pos,
+      icon:{ url:"https://maps.google.com/mapfiles/ms/icons/red-dot.png" }
+    });
+  } else {
+    driverMarker.setPosition(pos);
+  }
+}
+
+loadRides();
 </script>
 
 </body>
