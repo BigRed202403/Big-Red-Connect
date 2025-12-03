@@ -1,317 +1,626 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>My Ride – Big Red Connect</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Ride – Big Red Connect</title>
 
-<link rel="apple-touch-icon" href="/icon.PNG">
-<link rel="icon" type="image/png" href="/icon.PNG">
-<link rel="shortcut icon" href="/icon.PNG">
-<link rel="manifest" href="/manifest-rider.json">
-<meta name="theme-color" content="#000">
+  <!-- PWA / Icons -->
+  <link rel="apple-touch-icon" href="/icon.PNG">
+  <link rel="icon" type="image/png" sizes="192x192" href="/icon.PNG">
+  <link rel="shortcut icon" href="/icon.PNG">
+  <link rel="manifest" href="/manifest-rider.json">
+  <meta name="theme-color" content="#000000">
 
-<link rel="stylesheet" href="/style.css">
+  <!-- Disable cache -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
 
-<style>
-/* ===========================
-   MY RIDE – FACELIFT STYLES
-   matches ride-request & hub
-   mobile-first
-=========================== */
+  <!-- Global styles -->
+  <link rel="stylesheet" href="/style.css" />
 
-.page-wrap {
-  max-width: 650px;
-  margin: 0 auto;
-  padding: 16px;
-}
+  <style>
+    /* Page wrapper */
+    body {
+      margin: 0;
+      background: #000;
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      text-align: left;
+    }
 
-/* Section headers */
-.section-header {
-  margin: 28px 0 14px;
-  font-size: 1.4em;
-  font-weight: 700;
-  text-align: left;
-  color: #ff1a1a;
-  border-left: 4px solid #ff1a1a;
-  padding-left: 10px;
-}
+    /* Simple top bar to match rider app */
+    header {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:10px 14px;
+      border-bottom:2px solid #b30000;
+      background:#000;
+      position:sticky;
+      top:0;
+      z-index:10;
+    }
+    header .logo-wrap {
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    header img {
+      height:36px;
+      border-radius:4px;
+    }
+    header .title-block {
+      font-size:0.9rem;
+    }
+    header .title-block div:first-child {
+      font-weight:700;
+    }
+    header .title-block div:last-child {
+      color:#888;
+      font-size:0.78rem;
+    }
+    header .back-link {
+      text-decoration:none;
+      color:#fff;
+      font-size:0.8rem;
+      padding:6px 10px;
+      border-radius:8px;
+      border:1px solid #b30000;
+      background:#111;
+    }
 
-/* Cards */
-.ride-card {
-  background: #111;
-  border-radius: 12px;
-  padding: 16px 18px;
-  margin-bottom: 20px;
-  border: 1px solid #222;
-  box-shadow: 0 2px 8px rgba(255,0,0,0.15);
-}
+    main {
+      max-width:700px;
+      margin:0 auto;
+      padding:14px 14px 24px;
+    }
 
-.label {
-  color: #888;
-  font-size: 0.85em;
-  margin-top: 10px;
-}
+    h1 {
+      font-size:1.4rem;
+      margin:4px 0 4px;
+      text-align:left;
+      color:#ff1a1a;
+    }
+    .tagline {
+      font-size:0.9rem;
+      color:#ccc;
+      margin:0 0 12px;
+      text-align:left;
+    }
 
-.value {
-  color: #fff;
-  font-size: 1em;
-  margin-top: 4px;
-  font-weight: 600;
-}
+    .section-title {
+      margin-top:16px;
+      margin-bottom:6px;
+      font-size:1rem;
+      font-weight:700;
+      color:#ff4444;
+    }
 
-/* Status pill */
-.status-pill {
-  display: inline-block;
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 0.85em;
-  margin-top: 10px;
-  border: 1px solid #444;
-}
+    .card {
+      background:#111;
+      border-radius:10px;
+      border:1px solid #222;
+      padding:12px 12px 14px;
+      margin-bottom:10px;
+      font-size:0.9rem;
+    }
 
-.status-REQUESTED { background: #222; color: #ffcc66; }
-status-ACCEPTED { background: #1d381d; color: #4caf50; }
-.status-ENROUTE { background: #1e3a5f; color: #4dabff; }
-.status-ARRIVED { background: #3a2d00; color: #ffda6b; }
-.status-COMPLETED { background: #1d381d; color: #4caf50; }
-.status-CANCELLED { background: #3a0000; color: #ff6b6b; }
+    .card-header-line {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:6px;
+      margin-bottom:4px;
+      font-size:0.82rem;
+      color:#aaa;
+    }
 
-/* Buttons */
-.btn-full {
-  width: 100%;
-  padding: 14px;
-  border-radius: 10px;
-  margin: 10px 0;
-  font-size: 1.05em;
-  font-weight: 700;
-  text-align: center;
-  display: block;
-  text-decoration: none;
-}
+    .card-loc {
+      margin-top:4px;
+      font-size:0.9rem;
+    }
+    .card-loc span.label {
+      font-size:0.8rem;
+      color:#888;
+      text-transform:uppercase;
+      letter-spacing:0.03em;
+    }
 
-/* Primary (red) */
-.btn-primary {
-  background: linear-gradient(180deg, #c40000, #9a0000);
-  color: #fff;
-  border: 1px solid #c40000;
-}
+    .card-meta {
+      margin-top:6px;
+      font-size:0.82rem;
+      color:#ccc;
+    }
 
-/* Secondary (dark) */
-.btn-secondary {
-  background: linear-gradient(180deg, #222, #111);
-  color: #fff;
-  border: 1px solid #444;
-}
+    /* Status + vehicle inline (Layout C) */
+    .status-row {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:8px;
+      margin-top:8px;
+    }
 
-/* Outline */
-.btn-outline {
-  background: transparent;
-  color: #fff;
-  border: 1px solid #666;
-}
+    .status-pill {
+      display:inline-block;
+      padding:4px 10px;
+      border-radius:999px;
+      font-size:0.78rem;
+      border:1px solid #555;
+      background:#000;
+      text-transform:uppercase;
+      letter-spacing:0.04em;
+    }
+    .status-pill.active {
+      border-color:#4CAF50;
+      color:#b6ffb6;
+    }
+    .status-pill.done {
+      border-color:#777;
+      color:#ddd;
+    }
+    .status-pill.warn {
+      border-color:#ff9800;
+      color:#ffe3b3;
+    }
 
-/* Live Map Container */
-#map {
-  width: 100%;
-  height: 240px;
-  margin-top: 15px;
-  border-radius: 10px;
-  border: 2px solid #c40000;
-}
+    .vehicle-inline {
+      display:flex;
+      align-items:center;
+      gap:6px;
+      font-size:0.8rem;
+      color:#eee;
+    }
+    .vehicle-inline-thumb {
+      width:32px;
+      height:auto;
+      border-radius:4px;
+      border:1px solid #333;
+    }
+    .vehicle-inline span {
+      white-space:nowrap;
+    }
 
-/* Info divider */
-.date-label {
-  margin-top: 30px;
-  color: #aaa;
-  font-size: 0.9em;
-  border-bottom: 1px solid #333;
-  padding-bottom: 4px;
-}
-</style>
+    @media (max-width:480px) {
+      .status-row {
+        flex-direction:column;
+        align-items:flex-start;
+      }
+    }
 
+    .card-actions {
+      margin-top:10px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+
+    .btn-full {
+      display:block;
+      width:100%;
+      text-align:center;
+      padding:10px 14px;
+      border-radius:10px;
+      border:none;
+      font-weight:700;
+      font-size:0.95rem;
+      cursor:pointer;
+    }
+    .btn-primary {
+      background:linear-gradient(180deg,#c40000,#9a0000);
+      color:#fff;
+      border:1px solid #c40000;
+    }
+    .btn-secondary {
+      background:#000;
+      color:#fff;
+      border:1px solid #444;
+    }
+
+    .hint {
+      font-size:0.8rem;
+      color:#888;
+      margin-top:4px;
+    }
+
+    .empty-block {
+      font-size:0.85rem;
+      color:#aaa;
+      padding:10px 4px;
+    }
+
+    #toast {
+      position:fixed;
+      bottom:20px;
+      left:50%;
+      transform:translateX(-50%);
+      background:#111;
+      border:1px solid #b30000;
+      padding:8px 14px;
+      border-radius:999px;
+      opacity:0;
+      pointer-events:none;
+      transition:opacity .25s;
+      z-index:50;
+      font-size:0.85rem;
+    }
+    #toast.show { opacity:1; }
+  </style>
 </head>
 <body>
 
-<header class="topbar" style="justify-content:space-between;">
-  <span style="font-weight:700;">My Ride</span>
-  <a href="/rider/rider.html" class="btn secondary" style="padding:8px 12px;">🏠 Hub</a>
+<header>
+  <div class="logo-wrap">
+    <img src="/icon.PNG" alt="Big Red Connect Logo" />
+    <div class="title-block">
+      <div>My Ride</div>
+      <div>Live status & history</div>
+    </div>
+  </div>
+  <a href="/rider/rider.html" class="back-link">⬅ Rider Hub</a>
 </header>
 
-<div class="page-wrap">
+<main>
+  <h1>Your Rides</h1>
+  <p class="tagline">
+    View your current ride, see recent trips, and re-request a route when needed.
+  </p>
 
-  <h1>My Ride</h1>
-  <p class="tagline">View your live ride status and recent rides.</p>
+  <div id="profileInfo" class="hint"></div>
 
-  <!-- ============================
-       ACTIVE RIDE SECTION
-  ============================= -->
-  <div class="section-header">Active Ride</div>
-  <div id="activeContainer">Loading…</div>
+  <h2 class="section-title">Active Ride</h2>
+  <div id="activeRide"></div>
 
-  <!-- ============================
-       RECENT RIDES
-  ============================= -->
-  <div class="section-header">Recent Rides</div>
-  <div id="recentContainer">Loading…</div>
+  <h2 class="section-title">Recent Rides</h2>
+  <div id="recentRides"></div>
 
-</div>
+  <div class="hint" id="deepLinkHint" style="margin-top:14px;"></div>
 
-<footer>
-  <p>&copy; 2025 Big Red Connect — Local. Affordable. Trusted.</p>
-</footer>
+  <div class="card" style="margin-top:18px;">
+    <div class="card-header-line">
+      <span>Need a new connection?</span>
+    </div>
+    <div class="card-actions">
+      <button class="btn-full btn-primary" id="btnNewRide">📝 Request a New Ride</button>
+    </div>
+  </div>
+</main>
 
+<div id="toast"></div>
 
 <script>
-const API = "https://bigred-bookings.bigredtransportation.workers.dev";
-const riderPhone = localStorage.getItem("bigred_rider_id_normalized") || null;
+  const API = "https://bigred-bookings.bigredtransportation.workers.dev";
 
-/* Redirect if no login */
-if (!riderPhone) {
-  window.location.href = "/rider-login.html";
-}
+  const activeRideEl   = document.getElementById("activeRide");
+  const recentRidesEl  = document.getElementById("recentRides");
+  const profileInfoEl  = document.getElementById("profileInfo");
+  const deepLinkHintEl = document.getElementById("deepLinkHint");
+  const toastEl        = document.getElementById("toast");
 
-let map, marker;
+  const url = new URL(window.location.href);
+  const paramId = url.searchParams.get("id");
 
-/* Fetch all bookings and split */
-async function loadRides() {
-  const res = await fetch(API + "/api/driver/bookings?scope=all");
-  const list = await res.json();
-
-  const mine = list.filter(b => b.rider?.phone === riderPhone);
-
-  const active = mine.filter(b =>
-    ["REQUESTED", "ACCEPTED", "ENROUTE", "ARRIVED"].includes(b.status)
-  );
-
-  const recent = mine
-    .filter(b => ["COMPLETED","CANCELLED"].includes(b.status))
-    .sort((a,b) => b.createdAt.localeCompare(a.createdAt))
-    .slice(0,10);
-
-  renderActive(active);
-  renderRecent(recent);
-}
-
-/* Render ACTIVE ride */
-function renderActive(arr) {
-  const container = document.getElementById("activeContainer");
-
-  if (!arr.length) {
-    container.innerHTML = `<div class="ride-card"><p style="color:#aaa;">No active ride.</p></div>`;
-    return;
+  function showToast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add("show");
+    setTimeout(() => toastEl.classList.remove("show"), 1900);
   }
 
-  const b = arr[0];
-
-  container.innerHTML = `
-    <div class="ride-card">
-      <div class="label">Pickup</div>
-      <div class="value">${b.pickup.address}</div>
-
-      ${b.stops?.length ? `
-        <div class="label">Stops</div>
-        <div class="value">${b.stops.map(s=>s.address).join(" → ")}</div>
-      ` : ""}
-
-      <div class="label">Dropoff</div>
-      <div class="value">${b.dropoff.address}</div>
-
-      <div class="label">Estimate</div>
-      <div class="value">$${b.pricing.estimate?.toFixed(2)}</div>
-
-      <div class="status-pill status-${b.status}">${b.status}</div>
-
-      ${b.status === "ENROUTE" ? `<div id="map"></div>` : ""}
-
-      ${b.status === "REQUESTED" || b.status === "ACCEPTED" ? `
-        <button class="btn-full btn-outline" onclick="cancelRide('${b.id}')">❌ Cancel Ride</button>
-      ` : ""}
-
-    </div>
-  `;
-
-  if (b.status === "ENROUTE") initMap();
-}
-
-/* Render RECENT rides */
-function renderRecent(arr) {
-  const container = document.getElementById("recentContainer");
-
-  if (!arr.length) {
-    container.innerHTML = `<div class="ride-card"><p style="color:#aaa;">No recent rides.</p></div>`;
-    return;
+  function getStoredProfile() {
+    try {
+      const raw = localStorage.getItem("bigred_rider_profile_v1");
+      if (!raw) return null;
+      const p = JSON.parse(raw);
+      if (!p || typeof p !== "object") return null;
+      return {
+        name: p.name || "",
+        phone: p.phone || "",
+        home: p.home || ""
+      };
+    } catch (e) {
+      return null;
+    }
   }
 
-  container.innerHTML = arr.map(b => `
-    <div class="ride-card">
-      <div class="label">Pickup</div>
-      <div class="value">${b.pickup.address}</div>
+  function formatStatusPillClass(status) {
+    const s = (status || "").toUpperCase();
+    if (["REQUESTED","ACCEPTED","ENROUTE","ARRIVED"].includes(s)) return "status-pill active";
+    if (["COMPLETED","CANCELLED"].includes(s)) return "status-pill done";
+    return "status-pill warn";
+  }
 
-      <div class="label">Dropoff</div>
-      <div class="value">${b.dropoff.address}</div>
+  function formatStatusLabel(status) {
+    return (status || "").toUpperCase() || "UNKNOWN";
+  }
 
-      <div class="label">Fare Estimate</div>
-      <div class="value">$${b.pricing.estimate?.toFixed(2)}</div>
+  function renderVehicleInline(vehicle) {
+    if (!vehicle || (!vehicle.label && !vehicle.code)) {
+      return `
+        <div class="vehicle-inline">
+          <span>Vehicle: Not yet assigned</span>
+        </div>
+      `;
+    }
+    const label = vehicle.label || vehicle.code || "Assigned Vehicle";
+    const img   = vehicle.image || "/Black Acadia Thumbnail.PNG";
+    return `
+      <div class="vehicle-inline">
+        <img src="${img}" class="vehicle-inline-thumb" alt="${label}">
+        <span>${label}</span>
+      </div>
+    `;
+  }
 
-      <div class="status-pill status-${b.status}">${b.status}</div>
+  function renderRideCard(booking, opts = {}) {
+    const {
+      showActions = false,
+      allowRerequest = false
+    } = opts;
 
-      <a href="/rider/ride-request.html?repeat=${b.id}"
-         class="btn-full btn-secondary">🔁 Request Again</a>
-    </div>
-  `).join("");
-}
+    const statusClass = formatStatusPillClass(booking.status);
+    const statusLabel = formatStatusLabel(booking.status);
+    const vehicleHtml = renderVehicleInline(booking.vehicle);
 
-/* Cancel */
-async function cancelRide(id) {
-  if (!confirm("Cancel this ride?")) return;
+    const estimate = booking.pricing?.estimate != null
+      ? `$${booking.pricing.estimate.toFixed(2)}`
+      : "--";
 
-  const res = await fetch(API + "/api/driver/bookings/" + id, {
-    method: "PUT",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({status: "CANCELLED"})
+    const created = booking.createdAt ? new Date(booking.createdAt) : null;
+    const timeStr = created
+      ? `${created.toLocaleDateString()} · ${created.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' })}`
+      : "";
+
+    const stopsLine = (booking.stops && booking.stops.length)
+      ? `<div class="card-loc"><span class="label">STOPS</span><br>${booking.stops.map(s=>s.address).join(" → ")}</div>`
+      : "";
+
+    return `
+      <div class="card" data-id="${booking.id}">
+        <div class="card-header-line">
+          <span>${booking.type || "Ride"}</span>
+          <span>${timeStr}</span>
+        </div>
+
+        <div class="card-loc">
+          <span class="label">FROM</span><br>
+          ${booking.pickup?.address || "—"}
+        </div>
+
+        ${stopsLine}
+
+        <div class="card-loc">
+          <span class="label">TO</span><br>
+          ${booking.dropoff?.address || "—"}
+        </div>
+
+        <div class="card-meta">
+          Estimate: ${estimate}<br>
+          Party: ${booking.rider?.partySize || 1}
+        </div>
+
+        <div class="status-row">
+          <span class="${statusClass}">${statusLabel}</span>
+          ${vehicleHtml}
+        </div>
+
+        ${
+          showActions
+            ? `<div class="card-actions">
+                 <button class="btn-full btn-secondary js-refresh-one" data-id="${booking.id}">
+                   🔄 Refresh Status
+                 </button>
+                 ${
+                   allowRerequest
+                     ? `<button class="btn-full btn-primary js-rerequest" data-id="${booking.id}">
+                          🔁 Re-request This Route
+                        </button>`
+                     : ""
+                 }
+               </div>`
+            : ""
+        }
+      </div>
+    `;
+  }
+
+  async function fetchSingleRide(id) {
+    try {
+      const res = await fetch(`${API}/api/bookings?id=${encodeURIComponent(id)}&t=${Date.now()}`, {
+        cache: "no-store"
+      });
+      if (!res.ok) return null;
+      return await res.json();
+    } catch {
+      return null;
+    }
+  }
+
+  async function fetchRidesForPhone(phone) {
+    // Requires worker patch that supports riderPhone filter
+    try {
+      const res = await fetch(`${API}/api/bookings?riderPhone=${encodeURIComponent(phone)}&t=${Date.now()}`, {
+        cache: "no-store"
+      });
+      if (!res.ok) return [];
+      const list = await res.json();
+      return Array.isArray(list) ? list : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function splitActiveRecent(list) {
+    const activeStates = ["REQUESTED","ACCEPTED","ENROUTE","ARRIVED"];
+    const completedStates = ["COMPLETED","CANCELLED"];
+
+    const active = list
+      .filter(b => activeStates.includes((b.status || "").toUpperCase()))
+      .sort((a,b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+
+    const recent = list
+      .filter(b => completedStates.includes((b.status || "").toUpperCase()))
+      .sort((a,b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+
+    return { active, recent };
+  }
+
+  async function renderPage() {
+    const profile = getStoredProfile();
+    const riderPhone = profile?.phone?.trim();
+
+    if (profile && riderPhone) {
+      profileInfoEl.textContent = `Profile: ${profile.name || "Rider"} (${riderPhone}).`;
+    } else {
+      profileInfoEl.textContent = "Tip: Save your rider profile so Big Red can match your rides to your phone number.";
+    }
+
+    // If we have a deep-linked rideId, render that as the primary focus.
+    if (paramId) {
+      const booking = await fetchSingleRide(paramId);
+      if (!booking) {
+        activeRideEl.innerHTML = `<div class="empty-block">That ride link could not be found. It may have expired or been deleted.</div>`;
+        return;
+      }
+
+      const isActive = ["REQUESTED","ACCEPTED","ENROUTE","ARRIVED"].includes(
+        (booking.status || "").toUpperCase()
+      );
+
+      activeRideEl.innerHTML = renderRideCard(booking, {
+        showActions: true,
+        allowRerequest: !isActive
+      });
+
+      deepLinkHintEl.textContent =
+        "This view is linked to a specific ride. You can still see other rides when your profile phone number is saved.";
+
+      // If we have a profile phone, grab the rest for history
+      if (riderPhone) {
+        const list = await fetchRidesForPhone(riderPhone);
+        const { recent } = splitActiveRecent(list.filter(b => b.id !== booking.id));
+        if (!recent.length) {
+          recentRidesEl.innerHTML = `<div class="empty-block">No recent rides found yet under your phone number.</div>`;
+        } else {
+          recentRidesEl.innerHTML = recent
+            .slice(0, 5)
+            .map(b => renderRideCard(b, { showActions: true, allowRerequest: true }))
+            .join("");
+        }
+      } else {
+        recentRidesEl.innerHTML = `<div class="empty-block">Save your rider profile to see your full ride history.</div>`;
+      }
+
+      return;
+    }
+
+    // No id param: normal phone-based dashboard
+    if (!riderPhone) {
+      activeRideEl.innerHTML =
+        `<div class="empty-block">No phone number found. Save your rider profile first so rides can be linked to you.</div>`;
+      recentRidesEl.innerHTML =
+        `<div class="empty-block">Once your profile is saved and you complete rides, they’ll appear here.</div>`;
+      return;
+    }
+
+    const list = await fetchRidesForPhone(riderPhone);
+    if (!list.length) {
+      activeRideEl.innerHTML =
+        `<div class="empty-block">No active rides found under ${riderPhone}.</div>`;
+      recentRidesEl.innerHTML =
+        `<div class="empty-block">No recent rides yet. Your history will appear here after your trips.</div>`;
+      return;
+    }
+
+    const { active, recent } = splitActiveRecent(list);
+
+    if (!active.length) {
+      activeRideEl.innerHTML =
+        `<div class="empty-block">No active rides at the moment. When you have a ride in progress, it will show up here.</div>`;
+    } else {
+      // Show the most recent active ride
+      const top = active[0];
+      activeRideEl.innerHTML = renderRideCard(top, {
+        showActions: true,
+        allowRerequest: false
+      });
+    }
+
+    if (!recent.length) {
+      recentRidesEl.innerHTML =
+        `<div class="empty-block">No completed or cancelled rides found yet.</div>`;
+    } else {
+      recentRidesEl.innerHTML = recent
+        .slice(0, 5)
+        .map(b => renderRideCard(b, { showActions: true, allowRerequest: true }))
+        .join("");
+    }
+  }
+
+  // Click handlers for refresh/re-request buttons
+  document.addEventListener("click", async (e) => {
+    const refreshBtn = e.target.closest(".js-refresh-one");
+    const rerequestBtn = e.target.closest(".js-rerequest");
+    const newRideBtn = e.target.id === "btnNewRide";
+
+    if (refreshBtn) {
+      const id = refreshBtn.dataset.id;
+      if (!id) return;
+      const booking = await fetchSingleRide(id);
+      if (!booking) {
+        showToast("Unable to refresh this ride.");
+        return;
+      }
+      const cardHtml = renderRideCard(booking, {
+        showActions: true,
+        allowRerequest: !["REQUESTED","ACCEPTED","ENROUTE","ARRIVED"].includes(
+          (booking.status || "").toUpperCase()
+        )
+      });
+      const parent = refreshBtn.closest(".card");
+      if (parent) parent.outerHTML = cardHtml;
+      showToast("Ride status refreshed");
+    }
+
+    if (rerequestBtn) {
+      const id = rerequestBtn.dataset.id;
+      if (!id) return;
+      // Just send them to the ride request page with prefilled query
+      const cardEl = rerequestBtn.closest(".card");
+      if (!cardEl) return;
+
+      // We’ll just trust backend for now; simple redirect:
+      window.location.href = "/rider/ride-request.html";
+    }
+
+    if (newRideBtn) {
+      window.location.href = "/rider/ride-request.html";
+    }
   });
 
-  loadRides();
-}
+  // Initial render + periodic refresh of active if in normal mode
+  renderPage();
 
-/* Live map for ENROUTE */
-function initMap() {
-  map = new google.maps.Map(document.getElementById("map"), {
-    center: {lat:35.4676, lng:-97.5164},
-    zoom: 12,
-    disableDefaultUI: true
-  });
+  // If in deep-link mode, re-poll that single ride every 20s
+  if (paramId) {
+    setInterval(async () => {
+      const booking = await fetchSingleRide(paramId);
+      if (!booking) return;
+      const isActive = ["REQUESTED","ACCEPTED","ENROUTE","ARRIVED"].includes(
+        (booking.status || "").toUpperCase()
+      );
+      activeRideEl.innerHTML = renderRideCard(booking, {
+        showActions: true,
+        allowRerequest: !isActive
+      });
+    }, 20000);
+  } else {
+    // Phone-based dashboard: refresh everything every 30s
+    setInterval(renderPage, 30000);
+  }
 
-  marker = new google.maps.Marker({
-    position: {lat:35.4676, lng:-97.5164},
-    map: map
-  });
-
-  pollDriverLocation();
-}
-
-async function pollDriverLocation() {
-  const res = await fetch("https://location-reader.bigredtransportation.workers.dev");
-  const j = await res.json();
-
-  const lat = parseFloat(j.latitude);
-  const lng = parseFloat(j.longitude);
-
-  if (!map || !marker || isNaN(lat) || isNaN(lng)) return;
-
-  const pos = {lat, lng};
-  marker.setPosition(pos);
-  map.setCenter(pos);
-
-  setTimeout(pollDriverLocation, 5000);
-}
-
-loadRides();
-setInterval(loadRides, 15000);
 </script>
-
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I"></script>
 
 </body>
 </html>
