@@ -1,161 +1,200 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Rider Login – Big Red Connect</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Big Red Connect — Rider Login</title>
 
-<link rel="apple-touch-icon" href="/icon.PNG">
-<link rel="icon" type="image/png" sizes="192x192" href="/icon.png">
-<link rel="shortcut icon" href="/icon.PNG">
-<link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#000">
+  <link rel="apple-touch-icon" href="/icon.PNG">
+  <link rel="icon" type="image/png" href="/icon.PNG">
 
-<link rel="stylesheet" href="/style.css?v=1" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
 
-<style>
-  body {
-    background:#000;
-    color:#fff;
-    padding:0;
-    margin:0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  }
-  .login-wrap {
-    max-width:420px;
-    margin:40px auto;
-    background:#111;
-    border:1px solid #222;
-    border-radius:12px;
-    padding:24px;
-    box-shadow:0 2px 12px rgba(0,0,0,0.4);
-  }
-  h1 {
-    font-size:1.6rem;
-    margin-bottom:6px;
-    text-align:center;
-    color:#ff1a1a;
-  }
-  p.tag {
-    text-align:center;
-    color:#bbb;
-    font-size:.95rem;
-    margin-bottom:20px;
-  }
-  label {
-    display:block;
-    color:#ccc;
-    margin:10px 0 4px;
-    font-size:.9rem;
-  }
-  input {
-    width:100%;
-    padding:12px;
-    border-radius:8px;
-    background:#000;
-    color:#fff;
-    border:1px solid #333;
-    font-size:1rem;
-  }
-  button {
-    width:100%;
-    margin-top:22px;
-    padding:14px;
-    border:none;
-    border-radius:8px;
-    background:#b30000;
-    color:#fff;
-    font-weight:700;
-    font-size:1.05rem;
-    cursor:pointer;
-  }
-  button:active {
-    transform:scale(.97);
-  }
-  .hint {
-    text-align:center;
-    font-size:.85rem;
-    color:#777;
-    margin-top:12px;
-  }
-  .logo-top {
-    display:block;
-    margin:40px auto 10px;
-    width:110px;
-  }
-</style>
+  <style>
+    :root {
+      --red:#b30000;
+      --bg:#000;
+      --panel:#111;
+      --border:#222;
+      --muted:#999;
+    }
 
+    body {
+      background:#000;
+      color:#fff;
+      font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin:0;
+      padding:0;
+    }
+
+    header {
+      padding:14px;
+      border-bottom:2px solid var(--red);
+      display:flex;
+      align-items:center;
+      gap:12px;
+    }
+
+    header img {
+      height:40px;
+      border-radius:6px;
+    }
+
+    .container {
+      padding:20px;
+    }
+
+    .panel {
+      background:var(--panel);
+      border:1px solid var(--border);
+      padding:20px;
+      border-radius:12px;
+      margin-top:20px;
+    }
+
+    label {
+      display:block;
+      font-size:.85rem;
+      margin-bottom:6px;
+      color:#ccc;
+    }
+
+    input {
+      width:100%;
+      background:#000;
+      border:1px solid #333;
+      border-radius:10px;
+      padding:12px;
+      color:#fff;
+      font-size:1rem;
+      margin-bottom:18px;
+    }
+
+    .btn-primary {
+      width:100%;
+      padding:14px;
+      background:var(--red);
+      color:#fff;
+      border:none;
+      border-radius:10px;
+      font-size:1rem;
+      font-weight:700;
+      cursor:pointer;
+    }
+
+    #toast {
+      position:fixed;
+      bottom:20px;
+      left:50%;
+      transform:translateX(-50%);
+      background:#111;
+      border:1px solid var(--red);
+      padding:12px 18px;
+      border-radius:999px;
+      opacity:0;
+      pointer-events:none;
+      transition:.25s;
+      z-index:1000;
+    }
+    #toast.show { opacity:1; }
+  </style>
 </head>
+
 <body>
 
-<img src="/icon.PNG" class="logo-top" alt="Big Red Logo">
+<header>
+  <img src="/icon.PNG">
+  <div>
+    <div style="font-size:.9rem;font-weight:700;">Rider Login</div>
+    <div style="font-size:.75rem;color:#999;">Access your Big Red rider hub</div>
+  </div>
+</header>
 
-<div class="login-wrap">
-  <h1>Rider Login</h1>
-  <p class="tag">Enter your mobile number to continue</p>
+<div class="container">
 
-  <form id="loginForm">
-    <label for="riderPhone">Mobile Number</label>
-    <input id="riderPhone" type="tel" inputmode="numeric" placeholder="405-555-1234" />
+  <div class="panel">
+    <label for="phone">Your Mobile Number</label>
+    <input id="phone" placeholder="405-555-1234" inputmode="tel" />
 
-    <button type="submit">Continue</button>
-  </form>
+    <button class="btn-primary" id="loginBtn">Continue</button>
+  </div>
 
-  <p class="hint">Your number becomes your Rider ID for all ride requests.</p>
 </div>
 
+<div id="toast"></div>
+
 <script>
-  const loginForm = document.getElementById("loginForm");
-  const phoneInput = document.getElementById("riderPhone");
+  const API = "https://bigred-rider-profiles.bigredtransportation.workers.dev";
 
-  /* Get redirect target */
-  const params = new URL(location.href).searchParams;
-  const next = params.get("next") || "hub";
-  const prefillAddress = params.get("address") || "";
-
-  function normalizePhone(p) {
-    p = p.replace(/\D+/g, ""); // digits only
-    if (p.length === 10) return "+1" + p;
-    if (p.length === 11 && p.startsWith("1")) return "+" + p;
-    return "+1" + p; // fallback
+  function toast(msg) {
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    setTimeout(() => t.classList.remove("show"), 1800);
   }
 
-  function saveProfile(phone) {
-    const profile = {
+  async function handleLogin() {
+    const phoneRaw = document.getElementById("phone").value.trim();
+
+    if (!phoneRaw) return toast("Enter phone number");
+
+    // Normalize phone (remove spaces, dashes, etc.)
+    const phone = phoneRaw.replace(/\D/g, "");
+
+    if (phone.length < 10) {
+      return toast("Enter a valid 10-digit number");
+    }
+
+    // Save phone early (needed for profile.html UI)
+    localStorage.setItem("rider_phone", phone);
+
+    // 1️⃣ Try to fetch existing profile
+    let res = await fetch(`${API}/api/profile/by-phone/${phone}`);
+    let data = await res.json();
+
+    if (data && data.id) {
+      // Existing → save riderId
+      localStorage.setItem("rider_id", data.id);
+      window.location = "/rider/rider.html";
+      return;
+    }
+
+    // 2️⃣ No profile → create new one
+    const newProfile = {
+      phone,
       name: "",
-      home: "",
-      phone
+      partySize: 1,
+      homeAddress: "",
+      gateCode: ""
     };
-    localStorage.setItem("bigred_rider_profile_v1", JSON.stringify(profile));
-    localStorage.setItem("bigred_rider_id", phone);
+
+    res = await fetch(`${API}/api/profile`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newProfile)
+    });
+
+    if (!res.ok) {
+      toast("Login failed");
+      return;
+    }
+
+    const created = await res.json();
+
+    if (!created.id) {
+      toast("Profile error");
+      return;
+    }
+
+    // Save new riderId
+    localStorage.setItem("rider_id", created.id);
+
+    window.location = "/rider/rider.html";
   }
 
-  loginForm.addEventListener("submit", e => {
-    e.preventDefault();
-    let rawPhone = phoneInput.value.trim();
-    if (!rawPhone) {
-      alert("Please enter your mobile number.");
-      return;
-    }
-
-    const phone = normalizePhone(rawPhone);
-    saveProfile(phone);
-
-    /* Routing Logic */
-    if (next === "request") {
-      window.location.href = "/rider/rider.html";
-      return;
-    }
-
-    if (next === "ride-from-search" && prefillAddress) {
-      window.location.href =
-        "/rider/ride-request.html?dropoff=" + encodeURIComponent(prefillAddress);
-      return;
-    }
-
-    /* default: go to rider hub */
-    window.location.href = "/rider/rider.html";
-  });
+  document.getElementById("loginBtn").addEventListener("click", handleLogin);
 </script>
 
 </body>
