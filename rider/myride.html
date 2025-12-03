@@ -2,265 +2,464 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>My Ride — Big Red Connect</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Ride – Big Red Connect</title>
 
+  <!-- PWA Icons -->
   <link rel="apple-touch-icon" href="../icon.PNG">
   <link rel="icon" type="image/png" sizes="192x192" href="../icon.PNG">
-  <meta name="theme-color" content="#000">
+  <link rel="manifest" href="../manifest.json">
+  <meta name="theme-color" content="#000000">
+
+  <!-- Disable cache -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
 
   <style>
-    body {
-      margin:0;
-      background:#000;
-      color:#fff;
-      font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    :root{
+      --red:#b30000;
+      --bg:#000;
+      --panel:#111;
+      --border:#222;
+      --muted:#888;
     }
 
-    header {
-      padding:12px 16px;
-      border-bottom:2px solid #b30000;
+    body{
+      margin:0;
+      background:var(--bg);
+      color:#fff;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+      padding-bottom:32px;
+    }
+
+    header{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:10px;
+      border-bottom:2px solid var(--red);
       position:sticky;
       top:0;
       background:#000;
-      z-index:20;
+      z-index:5;
     }
 
-    header h1 {
-      margin:0;
+    header img{
+      height:42px;
+      border-radius:6px;
+    }
+
+    header-title{
+      display:block;
+    }
+
+    h1{
       font-size:1.2rem;
-      font-weight:700;
+      text-align:center;
+      margin:14px 12px 6px;
     }
 
-    .container {
-      padding:16px;
-      max-width:600px;
-      margin:auto;
+    .subtitle{
+      font-size:.85rem;
+      color:var(--muted);
+      text-align:center;
+      margin-bottom:10px;
     }
 
-    .section-title {
-      font-size:1rem;
-      font-weight:700;
-      margin-top:22px;
-      margin-bottom:8px;
+    .card{
+      background:var(--panel);
+      border:1px solid var(--border);
+      border-radius:12px;
+      margin:10px 12px;
+      padding:12px;
+      font-size:.9rem;
     }
 
-    .card {
-      background:#111;
-      border:1px solid #222;
-      border-radius:10px;
-      padding:16px;
-      margin-bottom:16px;
-    }
-
-    .label {
-      font-size:.8rem;
-      color:#888;
-      margin-top:6px;
-    }
-
-    .value {
-      margin-top:2px;
+    .card h2{
       font-size:.95rem;
-      font-weight:500;
+      margin:0 0 6px;
     }
 
-    .vehicle-block {
-      display:flex;
-      align-items:center;
-      gap:12px;
-      margin-top:12px;
+    .row{
+      margin:6px 0;
     }
 
-    .vehicle-thumb {
-      width:65px;
-      border-radius:8px;
-      border:1px solid #333;
+    .label{
+      font-size:.75rem;
+      color:#aaa;
+      margin-bottom:2px;
     }
 
-    .btn-primary {
+    .value{
+      font-size:.9rem;
+    }
+
+    .status-pill{
+      display:inline-block;
+      padding:5px 11px;
+      border-radius:999px;
+      border:1px solid #444;
+      font-size:.8rem;
+      margin-top:4px;
+      text-transform:uppercase;
+    }
+
+    .status-pill.active{
+      border-color:var(--red);
+      color:#ffdada;
+    }
+
+    .status-pill.done{
+      border-color:#3c8c3c;
+      color:#d6ffd6;
+    }
+
+    .btn{
       width:100%;
-      padding:14px;
-      background:#b30000;
       border:none;
-      border-radius:10px;
-      color:#fff;
-      font-weight:700;
-      font-size:1rem;
-      margin-top:20px;
+      border-radius:9px;
+      padding:11px 10px;
+      font-size:.95rem;
+      font-weight:600;
+      margin-top:8px;
       cursor:pointer;
     }
 
-    .btn-primary:active { transform:scale(.98); }
-
-    .back-link {
-      display:block;
-      color:#bbb;
-      text-decoration:none;
-      font-size:.9rem;
-      margin-bottom:20px;
+    .btn-primary{
+      background:var(--red);
+      color:#fff;
     }
 
-    footer {
-      text-align:center;
-      margin-top:35px;
-      margin-bottom:25px;
-      color:#666;
-      font-size:.8rem;
+    .btn-ghost{
+      background:#111;
+      color:#fff;
+      border:1px solid #333;
     }
+
+    .btn-outline{
+      background:#000;
+      color:#fff;
+      border:1px solid #444;
+    }
+
+    #mapWrapper{
+      margin-top:10px;
+    }
+
+    #map{
+      width:100%;
+      height:230px;
+      border-radius:10px;
+      border:1px solid #333;
+      overflow:hidden;
+    }
+
+    #etaText{
+      font-size:.85rem;
+      color:#ccc;
+      margin-top:6px;
+    }
+
+    #toast{
+      position:fixed;
+      bottom:18px;
+      left:50%;
+      transform:translateX(-50%);
+      background:#111;
+      border:1px solid var(--red);
+      padding:9px 16px;
+      border-radius:999px;
+      font-size:.85rem;
+      opacity:0;
+      pointer-events:none;
+      transition:opacity .25s;
+      z-index:20;
+    }
+    #toast.show{ opacity:1; }
   </style>
 </head>
 
 <body>
+
 <header>
-  <h1>My Ride</h1>
+  <a href="../index.html">
+    <img src="../icon.PNG" alt="Big Red Connect">
+  </a>
+  <div>
+    <div style="font-weight:700;font-size:.95rem;">My Ride</div>
+    <div style="font-size:.8rem;color:var(--muted);">Live status & map</div>
+  </div>
 </header>
 
-<div class="container">
+<h1>Your Ride Details</h1>
+<div class="subtitle" id="subtitleText">Loading your ride…</div>
 
-  <a class="back-link" href="rider.html">← Back to Rider Hub</a>
-
-  <div id="activeRide"></div>
-
-  <div class="section-title">Past Rides</div>
-  <div id="pastRides"></div>
-
+<!-- RIDE OVERVIEW -->
+<div class="card" id="overviewCard">
+  <h2>Ride Overview</h2>
+  <div id="rideDetails">Loading…</div>
 </div>
 
-<footer>&copy; 2025 Big Red Connect</footer>
+<!-- LIVE MAP & ETA -->
+<div class="card" id="mapCard">
+  <h2>Live Map & ETA</h2>
+  <div id="mapWrapper">
+    <div id="map"></div>
+    <div id="etaText">Map appears once your driver is on the way.</div>
+  </div>
+</div>
+
+<!-- ACTIONS -->
+<div class="card">
+  <h2>Actions</h2>
+  <button class="btn btn-primary" id="btnRefresh">🔄 Refresh Status</button>
+  <button class="btn btn-ghost" id="btnReRequest">📋 Re-request This Route</button>
+</div>
+
+<div id="toast"></div>
 
 <script>
-const API = "https://bigred-bookings.bigredtransportation.workers.dev";
+/* =====================================================
+   CONFIG
+===================================================== */
+const BOOKINGS_API = "https://bigred-bookings.bigredtransportation.workers.dev";
+const LOCATION_API = "https://update-location.bigredtransportation.workers.dev/"; // your GPS worker
+const rideId = new URL(location.href).searchParams.get("id");
 
-// Identify ride from URL or saved
-function getRideId() {
-  const url = new URL(window.location.href);
-  const id = url.searchParams.get("id");
-  if (id) {
-    localStorage.setItem("lastRideId", id);
-    return id;
-  }
-  return localStorage.getItem("lastRideId");
+const overviewCard = document.getElementById("overviewCard");
+const rideDetailsEl = document.getElementById("rideDetails");
+const subtitleEl = document.getElementById("subtitleText");
+const mapCard = document.getElementById("mapCard");
+const etaTextEl = document.getElementById("etaText");
+const toast = document.getElementById("toast");
+
+let currentBooking = null;
+let mapsReady = false;
+let map, directionsService, directionsRenderer;
+
+/* =====================================================
+   TOAST
+===================================================== */
+function showToast(msg){
+  toast.textContent = msg;
+  toast.classList.add("show");
+  setTimeout(()=>toast.classList.remove("show"),1800);
 }
 
-// Fetch single ride
-async function fetchRide(id) {
-  const res = await fetch(`${API}/api/bookings?id=${id}&t=${Date.now()}`);
-  if (!res.ok) return null;
-  return res.json();
-}
-
-// Fetch past rides (completed/cancelled)
-async function fetchPast(phone) {
-  const res = await fetch(`${API}/api/bookings?riderPhone=${encodeURIComponent(phone)}`);
-  if (!res.ok) return [];
-  const all = await res.json();
-  return all.filter(r => ["COMPLETED","CANCELLED"].includes(r.status));
-}
-
-function renderActive(ride) {
-  if (!ride) {
-    document.getElementById("activeRide").innerHTML =
-      `<div class="card">No active ride.</div>`;
+/* =====================================================
+   LOAD RIDE
+===================================================== */
+async function loadRide(){
+  if(!rideId){
+    rideDetailsEl.innerHTML = "<div>Missing ride id.</div>";
+    subtitleEl.textContent = "Invalid ride link.";
+    mapCard.style.display = "none";
     return;
   }
 
-  const vehicle = ride.vehicle ? `
-      <div class="vehicle-block">
-        <img src="${ride.vehicle.image}" class="vehicle-thumb">
-        <div>
-          <div class="label">Vehicle</div>
-          <div class="value">${ride.vehicle.label}</div>
-        </div>
+  try{
+    const res = await fetch(`${BOOKINGS_API}/api/bookings?id=${encodeURIComponent(rideId)}&t=${Date.now()}`);
+    if(!res.ok){
+      rideDetailsEl.innerHTML = "<div>We couldn’t find this ride.</div>";
+      subtitleEl.textContent = "Ride not found.";
+      mapCard.style.display = "none";
+      return;
+    }
+    const b = await res.json();
+    currentBooking = b;
+    renderRide(b);
+    maybeRenderMap();
+  }catch(err){
+    console.error(err);
+    rideDetailsEl.innerHTML = "<div>Error loading ride.</div>";
+    subtitleEl.textContent = "Error loading ride.";
+  }
+}
+
+function formatStatus(status){
+  return (status || "").toUpperCase();
+}
+
+function renderRide(b){
+  const status = formatStatus(b.status);
+  const isDone = (status === "COMPLETED" || status === "CANCELLED");
+  const isOnTheWay = ["ACCEPTED","ENROUTE","ARRIVED"].includes(status);
+
+  subtitleEl.textContent = isOnTheWay
+    ? "Your driver is getting you taken care of."
+    : (isDone ? "This ride is finished." : "Ride requested — waiting on driver.");
+
+  const estimate = b.pricing?.estimate ? `$${b.pricing.estimate.toFixed(2)}` : "--";
+  const vehicleLabel = b.vehicle?.label || "Pending assignment";
+
+  rideDetailsEl.innerHTML = `
+    <div class="row">
+      <div class="label">FROM</div>
+      <div class="value">${b.pickup?.address || "—"}</div>
+    </div>
+
+    ${b.stops && b.stops.length ? `
+      <div class="row">
+        <div class="label">STOPS</div>
+        <div class="value">${b.stops.map(s=>s.address).join(" → ")}</div>
       </div>
-    ` : `
-      <div class="label" style="margin-top:12px;">Vehicle</div>
-      <div class="value">Not assigned yet</div>
-    `;
+    ` : ""}
 
-  const mapsLink = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(ride.pickup.address)}&destination=${encodeURIComponent(ride.dropoff.address)}`;
+    <div class="row">
+      <div class="label">TO</div>
+      <div class="value">${b.dropoff?.address || "—"}</div>
+    </div>
 
-  document.getElementById("activeRide").innerHTML = `
-    <div class="card">
+    <div class="row">
+      <div class="label">Estimated Flat Rate</div>
+      <div class="value">${estimate}</div>
+    </div>
+
+    <div class="row">
+      <div class="label">Assigned Vehicle</div>
+      <div class="value">${vehicleLabel}</div>
+    </div>
+
+    <div class="row">
       <div class="label">Status</div>
-      <div class="value">${ride.status}</div>
-
-      <div class="label">Pickup</div>
-      <div class="value">${ride.pickup.address}</div>
-
-      <div class="label">Dropoff</div>
-      <div class="value">${ride.dropoff.address}</div>
-
-      <div class="label">Map</div>
-      <div class="value">
-        <a href="${mapsLink}" target="_blank" style="color:#ffcc66;text-decoration:none;">
-          Open Route in Google Maps →
-        </a>
-      </div>
-
-      <div class="label">ETA</div>
-      <div class="value" id="etaText">${ride.status === "ENROUTE" ? "Updating…" : "—"}</div>
-
-      ${vehicle}
-
+      <span class="status-pill ${isDone ? "done":"active"}">${status}</span>
     </div>
   `;
+
+  // If ride is finished, map is still allowed but ETA becomes "completed"
+  if(isDone){
+    etaTextEl.textContent = "This ride is completed — map view is for reference only.";
+  }
 }
 
-function renderPast(list) {
-  const box = document.getElementById("pastRides");
-  box.innerHTML = "";
+/* =====================================================
+   MAP + ETA
+===================================================== */
+async function fetchDriverLocation(){
+  try{
+    const res = await fetch(LOCATION_API + "?t=" + Date.now());
+    if(!res.ok) return null;
+    const data = await res.json();
+    if(typeof data.latitude !== "number" || typeof data.longitude !== "number") return null;
+    return { lat: data.latitude, lng: data.longitude };
+  }catch(e){
+    console.warn("Location fetch failed", e);
+    return null;
+  }
+}
 
-  if (!list.length) {
-    box.innerHTML = `<div class="card">No past rides.</div>`;
+function shouldShowMapForStatus(status){
+  const s = formatStatus(status);
+  return ["ACCEPTED","ENROUTE","ARRIVED"].includes(s);
+}
+
+async function maybeRenderMap(){
+  if(!currentBooking) return;
+  if(!mapsReady){
+    // wait for Google Maps to load, callback will call this again
     return;
   }
 
-  list.sort((a, b) => (b.updatedAt || "").localeCompare(a.updatedAt || ""));
+  const status = formatStatus(currentBooking.status);
 
-  list.forEach(r => {
-    const v = r.vehicle?.label ? r.vehicle.label : "—";
-    const s = r.status === "COMPLETED" ? "Completed" : "Cancelled";
-
-    box.innerHTML += `
-      <div class="card">
-        <div class="label">Status</div>
-        <div class="value">${s}</div>
-
-        <div class="label">From</div>
-        <div class="value">${r.pickup.address}</div>
-
-        <div class="label">To</div>
-        <div class="value">${r.dropoff.address}</div>
-
-        <div class="label">Vehicle</div>
-        <div class="value">${v}</div>
-      </div>
-    `;
-  });
-}
-
-async function update() {
-  const id = getRideId();
-  if (!id) {
-    document.getElementById("activeRide").innerHTML =
-      `<div class="card">No ride found.</div>`;
+  if(!shouldShowMapForStatus(status)){
+    // Show friendly note, hide map if not on the way yet
+    etaTextEl.textContent = "Map & ETA will appear once your driver accepts and starts heading your way.";
+    document.getElementById("map").style.display = "none";
     return;
   }
 
-  const ride = await fetchRide(id);
-  renderActive(ride);
+  document.getElementById("map").style.display = "block";
 
-  const phone = ride?.rider?.phone || localStorage.getItem("riderPhone");
-  if (phone) {
-    const past = await fetchPast(phone);
-    renderPast(past);
+  const driverLoc = await fetchDriverLocation();
+  if(!driverLoc){
+    etaTextEl.textContent = "We couldn't pull live GPS yet. Try refreshing in a moment.";
+    return;
   }
+
+  // lazy init map + services
+  if(!map){
+    map = new google.maps.Map(document.getElementById("map"), {
+      center: driverLoc,
+      zoom: 12,
+      disableDefaultUI: true,
+      styles: [
+        { elementType:"geometry", stylers:[{color:"#1d1d1d"}]},
+        { elementType:"labels.text.fill", stylers:[{color:"#f5f5f5"}]},
+        { elementType:"labels.text.stroke", stylers:[{color:"#1d1d1d"}]},
+      ]
+    });
+    directionsService = new google.maps.DirectionsService();
+    directionsRenderer = new google.maps.DirectionsRenderer({
+      map,
+      suppressMarkers:false,
+      preserveViewport:false
+    });
+  }
+
+  const pickupAddress = currentBooking.pickup?.address;
+  if(!pickupAddress){
+    etaTextEl.textContent = "Pickup address missing — route unavailable.";
+    return;
+  }
+
+  directionsService.route(
+    {
+      origin: driverLoc,
+      destination: pickupAddress,
+      travelMode: google.maps.TravelMode.DRIVING
+    },
+    (result, statusCode) => {
+      if(statusCode === "OK" && result.routes.length){
+        directionsRenderer.setDirections(result);
+        const leg = result.routes[0].legs[0];
+        const durationText = leg.duration ? leg.duration.text : null;
+        etaTextEl.textContent = durationText
+          ? `Approx. ${durationText} to pickup (traffic-aware).`
+          : "Route loaded — ETA unavailable.";
+      } else {
+        console.warn("Directions error:", statusCode, result);
+        etaTextEl.textContent = "We couldn't draw the route, but your driver is on the move.";
+      }
+    }
+  );
 }
 
-update();
-setInterval(update, 12000);
+/* Callback from Google Maps script */
+function onMapsReady(){
+  mapsReady = true;
+  maybeRenderMap();
+}
+window.onMapsReady = onMapsReady; // expose global for callback
+
+/* =====================================================
+   ACTIONS
+===================================================== */
+document.getElementById("btnRefresh").addEventListener("click", () => {
+  loadRide();
+  showToast("Refreshing ride status…");
+});
+
+document.getElementById("btnReRequest").addEventListener("click", () => {
+  if(!currentBooking){
+    showToast("Ride info not loaded yet.");
+    return;
+  }
+  const from = encodeURIComponent(currentBooking.pickup?.address || "");
+  const to   = encodeURIComponent(currentBooking.dropoff?.address || "");
+  // Send them back into the rider request flow, pre-filled
+  window.location.href = `ride-request.html?from=${from}&to=${to}`;
+});
+
+/* =====================================================
+   INITIAL LOAD
+===================================================== */
+loadRide();
 </script>
+
+<!-- Google Maps JS (same key you already use) -->
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&callback=onMapsReady" async defer></script>
 
 </body>
 </html>
