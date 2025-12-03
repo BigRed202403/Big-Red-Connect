@@ -12,6 +12,14 @@
   <meta name="theme-color" content="#000"/>
 
   <style>
+    :root {
+      --red: #b30000;
+      --bg: #000;
+      --panel: #111;
+      --border: #222;
+      --muted: #aaa;
+    }
+
     body {
       margin:0;
       background:#000;
@@ -19,30 +27,140 @@
       font-family:-apple-system, BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
       padding-bottom:40px;
     }
-    header {
-      padding:15px 12px;
+
+    /* Compact App Header */
+    header.app-header {
+      padding:10px 10px;
       display:flex;
       align-items:center;
-      gap:12px;
-      border-bottom:2px solid #b30000;
+      justify-content:space-between;
+      gap:10px;
+      border-bottom:2px solid var(--red);
       background:#000;
       position:sticky;
       top:0;
-      z-index:12;
+      z-index:20;
     }
-    header img { height:46px; }
+
+    .header-left {
+      display:flex;
+      align-items:center;
+      gap:8px;
+      min-width:0;
+    }
+
+    .back-btn {
+      background:#111;
+      border:1px solid #333;
+      color:#fff;
+      border-radius:999px;
+      width:34px;
+      height:34px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:1.1rem;
+      cursor:pointer;
+      flex-shrink:0;
+    }
+
+    .header-logo {
+      display:flex;
+      align-items:center;
+      gap:6px;
+      cursor:pointer;
+      min-width:0;
+    }
+
+    .header-logo img {
+      height:34px;
+      border-radius:4px;
+      flex-shrink:0;
+    }
+
+    .header-title-block {
+      display:flex;
+      flex-direction:column;
+      min-width:0;
+    }
+
+    .header-title {
+      font-size:.95rem;
+      font-weight:700;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .header-subtitle {
+      font-size:.75rem;
+      color:#888;
+    }
+
+    .menu-btn {
+      background:#111;
+      border:1px solid #333;
+      color:#fff;
+      border-radius:999px;
+      padding:6px 10px;
+      font-size:.9rem;
+      cursor:pointer;
+      flex-shrink:0;
+    }
+
+    /* Slide-down Menu */
+    .menu-sheet {
+      position:fixed;
+      top:56px; /* just under header */
+      left:0;
+      right:0;
+      background:#050505f0;
+      border-bottom:1px solid #222;
+      backdrop-filter:blur(8px);
+      z-index:19;
+      transform:translateY(-100%);
+      opacity:0;
+      transition:transform .2s ease-out, opacity .2s ease-out;
+    }
+    .menu-sheet.open {
+      transform:translateY(0);
+      opacity:1;
+    }
+    .menu-list {
+      list-style:none;
+      margin:0;
+      padding:8px 0 10px;
+    }
+    .menu-item-btn {
+      width:100%;
+      text-align:left;
+      padding:10px 16px;
+      background:transparent;
+      border:none;
+      color:#fff;
+      font-size:.95rem;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      cursor:pointer;
+    }
+    .menu-item-btn span.icon {
+      width:20px;
+      text-align:center;
+    }
 
     h1 {
       text-align:center;
-      margin:20px 0 10px;
+      margin:18px 0 10px;
       font-size:1.4rem;
       font-weight:700;
     }
 
     .form {
       width:calc(100% - 24px);
-      margin:10px auto;
+      margin:0 auto 24px;
     }
+
     .input-group {
       margin-bottom:14px;
     }
@@ -60,6 +178,7 @@
       border-radius:8px;
       color:#fff;
       font-size:.95rem;
+      box-sizing:border-box;
     }
 
     .btn {
@@ -67,13 +186,21 @@
       width:100%;
       margin-top:14px;
       padding:14px;
-      background:#b30000;
+      background:var(--red);
       color:#fff;
       text-align:center;
       font-weight:700;
       border-radius:10px;
       text-decoration:none;
       font-size:1.05rem;
+    }
+
+    .btn-secondary {
+      background:#111;
+      border:1px solid #333;
+      margin-top:8px;
+      font-size:.9rem;
+      padding:10px;
     }
 
     #holidayBanner {
@@ -87,49 +214,37 @@
       font-size:.85rem;
     }
 
-    /* Stops UI */
-    .stops-header-row {
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      margin-bottom:6px;
-    }
-    .stops-header-row label {
-      margin-bottom:0;
-    }
-
-    #addStopBtn {
-      background:#111;
-      color:#fff;
-      border:1px solid #444;
-      border-radius:999px;
-      padding:6px 10px;
-      font-size:.8rem;
-    }
-
-    .stop-row {
+    /* Stops list */
+    #stopsContainer {
       margin-bottom:10px;
     }
-
-    .stop-row-header {
+    .stop-row {
       display:flex;
-      justify-content:space-between;
       align-items:center;
-      margin-bottom:4px;
-      font-size:.8rem;
+      gap:8px;
+      margin-bottom:8px;
     }
-
-    .stop-label {
-      color:#ccc;
-      font-size:.8rem;
+    .stop-row input {
+      flex:1;
     }
-
     .remove-stop-btn {
-      background:none;
-      border:none;
-      color:#ff9999;
-      font-size:.8rem;
-      padding:4px 0 4px 8px;
+      background:#330000;
+      border:1px solid #552222;
+      color:#ffcccc;
+      border-radius:999px;
+      width:32px;
+      height:32px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:1rem;
+      cursor:pointer;
+      flex-shrink:0;
+    }
+    .stop-hint {
+      font-size:.75rem;
+      color:#777;
+      margin-top:4px;
     }
 
     #toast {
@@ -145,25 +260,65 @@
       pointer-events:none;
       transition:.25s;
       z-index:99;
+      font-size:.9rem;
     }
     #toast.show { opacity:1; }
   </style>
 </head>
 
 <body>
-<header>
-  <img src="/icon.PNG" alt="Big Red Connect logo"/>
-  <div>
-    <div style="font-weight:700;">Big Red Connect</div>
-    <div style="font-size:.8rem;color:#888;">Ride Request</div>
+
+<!-- HEADER -->
+<header class="app-header">
+  <div class="header-left">
+    <button class="back-btn" id="backBtn" aria-label="Back">←</button>
+    <div class="header-logo" id="logoHome">
+      <img src="/icon.PNG" alt="Big Red Connect Logo">
+      <div class="header-title-block">
+        <div class="header-title">Big Red Connect</div>
+        <div class="header-subtitle">Request a Ride</div>
+      </div>
+    </div>
   </div>
+  <button class="menu-btn" id="menuBtn">☰</button>
 </header>
+
+<!-- MENU SHEET -->
+<div class="menu-sheet" id="menuSheet">
+  <ul class="menu-list">
+    <li>
+      <button class="menu-item-btn" data-link="/">
+        <span class="icon">🏠</span> <span>Home</span>
+      </button>
+    </li>
+    <li>
+      <button class="menu-item-btn" data-link="/rider/rider.html">
+        <span class="icon">🚗</span> <span>Rider Hub</span>
+      </button>
+    </li>
+    <li>
+      <button class="menu-item-btn" data-link="/rider/ride-request.html">
+        <span class="icon">📝</span> <span>Request a Ride</span>
+      </button>
+    </li>
+    <li>
+      <button class="menu-item-btn" data-link="/rider/myride.html">
+        <span class="icon">📍</span> <span>My Rides</span>
+      </button>
+    </li>
+    <li>
+      <button class="menu-item-btn" data-link="/rider/profile.html">
+        <span class="icon">👤</span> <span>My Profile</span>
+      </button>
+    </li>
+  </ul>
+</div>
 
 <h1>Request a Ride</h1>
 
 <div class="form">
 
-  <!-- Holiday Banner -->
+  <!-- Holiday Banner (logic can be wired later) -->
   <div id="holidayBanner">
     🎄 Holiday Rate Applied — Thank you for riding local during peak holiday dates.
   </div>
@@ -192,13 +347,12 @@
     <input id="gateCode" placeholder="Gate code, building, apartment…"/>
   </div>
 
-  <!-- STOPS (dynamic) -->
+  <!-- STOPS -->
   <div class="input-group">
-    <div class="stops-header-row">
-      <label>Stops (optional)</label>
-      <button type="button" id="addStopBtn">➕ Add Stop</button>
-    </div>
+    <label>Stops (optional)</label>
     <div id="stopsContainer"></div>
+    <button type="button" class="btn-secondary" id="btnAddStop">➕ Add a Stop</button>
+    <div class="stop-hint">You can add a couple of quick stops on the way.</div>
   </div>
 
   <!-- DROPOFF -->
@@ -244,7 +398,7 @@
     <input type="datetime-local" id="scheduledFor"/>
   </div>
 
-  <!-- ESTIMATE -->
+  <!-- ESTIMATE (placeholder, could be wired to fare calc later) -->
   <div class="input-group">
     <label>Estimated Fare</label>
     <input id="estimate" disabled placeholder="$0.00"/>
@@ -258,17 +412,57 @@
 
 <script>
 /* =======================================================
-   TOAST
+   BASIC TOAST
 ======================================================= */
 function showToast(msg){
   const t = document.getElementById("toast");
   t.textContent = msg;
   t.classList.add("show");
-  setTimeout(()=> t.classList.remove("show"), 1800);
+  setTimeout(()=> t.classList.remove("show"), 2000);
 }
 
 /* =======================================================
-   PREFILL FROM PROFILE
+   HEADER NAVIGATION
+======================================================= */
+const backBtn   = document.getElementById("backBtn");
+const logoHome  = document.getElementById("logoHome");
+const menuBtn   = document.getElementById("menuBtn");
+const menuSheet = document.getElementById("menuSheet");
+
+backBtn.addEventListener("click", () => {
+  if (window.history.length > 1) {
+    window.history.back();
+  } else {
+    window.location.href = "/rider/rider.html";
+  }
+});
+
+logoHome.addEventListener("click", () => {
+  window.location.href = "/rider/rider.html";
+});
+
+menuBtn.addEventListener("click", () => {
+  menuSheet.classList.toggle("open");
+});
+
+menuSheet.addEventListener("click", (e) => {
+  const btn = e.target.closest(".menu-item-btn");
+  if (!btn) return;
+  const link = btn.getAttribute("data-link");
+  if (link) window.location.href = link;
+});
+
+document.addEventListener("click", (e) => {
+  if (!menuSheet.classList.contains("open")) return;
+  const withinHeader = e.target.closest(".app-header");
+  const withinMenu = e.target.closest(".menu-sheet");
+  if (!withinHeader && !withinMenu) {
+    menuSheet.classList.remove("open");
+  }
+});
+
+/* =======================================================
+   PREFILL FROM PROFILE (localStorage)
 ======================================================= */
 function prefillFromProfile(){
   const name = localStorage.getItem("riderName");
@@ -283,7 +477,7 @@ function prefillFromProfile(){
 }
 
 /* =======================================================
-   AIRPORT DETECTION → SHOW LUGGAGE
+   AIRPORT / LUGGAGE DETECTION
 ======================================================= */
 function detectAirport(addr){
   if(!addr) return false;
@@ -307,7 +501,7 @@ document.getElementById("pickup").addEventListener("input", checkLuggage);
 document.getElementById("dropoff").addEventListener("input", checkLuggage);
 
 /* =======================================================
-   SCHEDULED TOGGLE
+   SCHEDULED TIME TOGGLE
 ======================================================= */
 document.getElementById("timeType").addEventListener("change", e=>{
   document.getElementById("scheduledGroup").style.display =
@@ -315,64 +509,89 @@ document.getElementById("timeType").addEventListener("change", e=>{
 });
 
 /* =======================================================
-   STOPS UI (max 3)
+   STOPS: ADD / REMOVE (max 3)
 ======================================================= */
+const stopsContainer = document.getElementById("stopsContainer");
+const btnAddStop = document.getElementById("btnAddStop");
 const MAX_STOPS = 3;
 
-function refreshStopLabels(){
-  const rows = document.querySelectorAll(".stop-row");
-  rows.forEach((row, idx)=>{
-    const labelEl = row.querySelector(".stop-label");
-    if(labelEl) labelEl.textContent = "Stop " + (idx+1);
-  });
-}
-
-function addStopField(prefillValue){
-  const container = document.getElementById("stopsContainer");
-  const current = container.querySelectorAll(".stop-row").length;
-  if(current >= MAX_STOPS){
-    showToast("Max 3 stops");
+btnAddStop.addEventListener("click", () => {
+  const current = stopsContainer.querySelectorAll(".stop-row").length;
+  if (current >= MAX_STOPS) {
+    showToast("Max stops reached");
     return;
   }
+  addStopRow("");
+});
 
+function addStopRow(initialValue){
   const row = document.createElement("div");
   row.className = "stop-row";
+  row.innerHTML = '' +
+    '<input class="stop-input" placeholder="Add a quick stop" />' +
+    '<button type="button" class="remove-stop-btn" aria-label="Remove stop">✕</button>';
+  stopsContainer.appendChild(row);
 
-  const headerRow = document.createElement("div");
-  headerRow.className = "stop-row-header";
+  const input = row.querySelector(".stop-input");
+  if (initialValue) input.value = initialValue;
 
-  const label = document.createElement("span");
-  label.className = "stop-label";
-  label.textContent = "Stop";
+  // Autocomplete hookup if Google is ready
+  if (window.google && google.maps && google.maps.places) {
+    setupAutocomplete(input);
+  }
 
-  const removeBtn = document.createElement("button");
-  removeBtn.type = "button";
-  removeBtn.className = "remove-stop-btn";
-  removeBtn.textContent = "Remove";
-  removeBtn.addEventListener("click", ()=>{
+  const removeBtn = row.querySelector(".remove-stop-btn");
+  removeBtn.addEventListener("click", () => {
     row.remove();
-    refreshStopLabels();
   });
-
-  headerRow.appendChild(label);
-  headerRow.appendChild(removeBtn);
-
-  const input = document.createElement("input");
-  input.className = "stop-input";
-  input.placeholder = "Add a stop";
-  if(prefillValue) input.value = prefillValue;
-
-  row.appendChild(headerRow);
-  row.appendChild(input);
-  container.appendChild(row);
-
-  // Tie into autocomplete if maps has loaded
-  attachAutocompleteToInput(input);
-
-  refreshStopLabels();
 }
 
-document.getElementById("addStopBtn").addEventListener("click", ()=> addStopField(""));
+/* =======================================================
+   GOOGLE PLACES AUTOCOMPLETE
+   - Biased to rider's current location when available
+======================================================= */
+let autocompleteInstances = [];
+let userBounds = null;
+
+function setupAutocomplete(inputEl){
+  if (!window.google || !google.maps || !google.maps.places) return;
+
+  const opts = {
+    fields: ["formatted_address", "name", "geometry"],
+    componentRestrictions: { country: "us" }
+  };
+  const ac = new google.maps.places.Autocomplete(inputEl, opts);
+  if (userBounds) ac.setBounds(userBounds);
+
+  autocompleteInstances.push(ac);
+}
+
+function initPlaces() {
+  const pickupEl  = document.getElementById("pickup");
+  const dropoffEl = document.getElementById("dropoff");
+
+  if (pickupEl)  setupAutocomplete(pickupEl);
+  if (dropoffEl) setupAutocomplete(dropoffEl);
+
+  // Try to bias to user location (50km radius)
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const center = new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude);
+        const circle = new google.maps.Circle({
+          center,
+          radius: 50000
+        });
+        userBounds = circle.getBounds();
+        autocompleteInstances.forEach(ac => ac.setBounds(userBounds));
+      },
+      () => {
+        // Ignore errors silently, autocomplete still works
+      },
+      { enableHighAccuracy:false, timeout:8000, maximumAge:600000 }
+    );
+  }
+}
 
 /* =======================================================
    SUBMIT RIDE REQUEST
@@ -390,19 +609,18 @@ async function submitRide(){
     return;
   }
 
-  // Save profile parts locally
+  // Save profile pieces locally
   localStorage.setItem("riderName", name);
   localStorage.setItem("riderPhone", phone);
   localStorage.setItem("riderHome", pickup);
   localStorage.setItem("riderGate", document.getElementById("gateCode").value.trim());
 
-  // Build stops from dynamic fields
-  const stopInputs = document.querySelectorAll(".stop-input");
-  const stopList = [];
-  stopInputs.forEach(input=>{
-    const addr = input.value.trim();
-    if(addr) stopList.push({ address: addr });
-  });
+  // Collect stops from inputs
+  const stopInputs = Array.from(document.querySelectorAll(".stop-input"));
+  const stopList = stopInputs
+    .map(i => i.value.trim())
+    .filter(v => v.length)
+    .map(addr => ({ address: addr }));
 
   const partySize = Number(document.getElementById("partySize").value);
   const luggage = document.getElementById("luggageGroup").style.display==="block"
@@ -414,122 +632,77 @@ async function submitRide(){
       ? document.getElementById("scheduledFor").value
       : null;
 
-  const estimateVal = document.getElementById("estimate").value.replace("$","") || 0;
+  const estimateValRaw = document.getElementById("estimate").value.replace("$","").trim();
+  const estimateVal = estimateValRaw ? Number(estimateValRaw) : 0;
 
-  const riderId = localStorage.getItem("riderId") || (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()));
-  localStorage.setItem("riderId", riderId);
-
-  const gateCode = document.getElementById("gateCode").value.trim();
+  // Rider ID (for future profile worker integration)
+  let riderId = localStorage.getItem("riderId");
+  if (!riderId) {
+    riderId = crypto.randomUUID();
+    localStorage.setItem("riderId", riderId);
+  }
 
   const body = {
     type: scheduledFor ? "SCHEDULED":"INSTANT",
-    pickup: { address: pickup, gate: gateCode },
+    pickup: { address: pickup, gate: document.getElementById("gateCode").value.trim() },
     dropoff: { address: dropoff },
     stops: stopList,
     rider: { name, phone, partySize, riderId },
-    pricing: { estimate: Number(estimateVal), travelFee:0 },
+    pricing: { estimate: estimateVal, travelFee:0 },
     scheduledFor,
     source: "RIDER_APP"
   };
 
   const API = "https://bigred-bookings.bigredtransportation.workers.dev";
 
+  let res;
   try {
-    const res = await fetch(`${API}/api/bookings`, {
+    res = await fetch(`${API}/api/bookings`, {
       method:"POST",
       headers:{ "Content-Type":"application/json" },
       body:JSON.stringify(body)
     });
+  } catch(err) {
+    console.error(err);
+    showToast("Error submitting");
+    return;
+  }
 
-    if(!res.ok){
-      showToast("Error submitting");
-      return;
-    }
+  if(!res.ok){
+    showToast("Error submitting");
+    return;
+  }
 
-    const booking = await res.json();
+  const booking = await res.json();
 
-    // Build stops string for SMS
-    const stopsText = stopList.length
-      ? stopList.map(s=>s.address).join(" → ")
-      : "None";
-
-    // Open SMS pre-fill (kept from your original flow)
-    const sms =
-      `sms:+14053784024?body=` +
-      encodeURIComponent(`Ride Request:
+  // Open SMS pre-fill so everything stays like your original flow
+  const sms =
+    "sms:+14053784024?body=" +
+    encodeURIComponent(
+      `Ride Request:
 From: ${pickup}
 To: ${dropoff}
 Name: ${name}
 Phone: ${phone}
-Stops: ${stopsText}
+Stops: ${stopInputs.length ? stopInputs.map(i=>i.value.trim()).filter(v=>v).join(" | ") : "None"}
 Passengers: ${partySize}
 Luggage: ${luggage}
-Booking ID: ${booking.id}`);
+Booking ID: ${booking.id}`
+    );
 
-    window.location.href = sms;
-  } catch (e) {
-    console.error(e);
-    showToast("Error submitting");
-  }
+  window.location.href = sms;
 }
 
 /* =======================================================
-   GOOGLE PLACES AUTOCOMPLETE (OKC-biased)
-======================================================= */
-
-let okcBounds = null;
-let autocompleteReady = false;
-
-function buildOkcBounds(){
-  // Rough bounding box for OKC metro (OKC, Moore, Norman, Yukon, Mustang, Shawnee)
-  // SW corner, NE corner
-  okcBounds = new google.maps.LatLngBounds(
-    new google.maps.LatLng(34.9, -97.9),
-    new google.maps.LatLng(35.8, -96.3)
-  );
-}
-
-function attachAutocompleteToInput(inputEl){
-  // If maps not ready yet, do nothing — we'll attach later in callback
-  if (!window.google || !google.maps || !google.maps.places || !okcBounds) return;
-  const options = {
-    fields: ["formatted_address","geometry","name"],
-    componentRestrictions: { country: "us" },
-    strictBounds: false
-  };
-  const ac = new google.maps.places.Autocomplete(inputEl, options);
-  ac.setBounds(okcBounds);
-}
-
-function initAutocompleteForAll(){
-  const pickupEl = document.getElementById("pickup");
-  const dropoffEl = document.getElementById("dropoff");
-  if (pickupEl) attachAutocompleteToInput(pickupEl);
-  if (dropoffEl) attachAutocompleteToInput(dropoffEl);
-
-  const stopInputs = document.querySelectorAll(".stop-input");
-  stopInputs.forEach(input => attachAutocompleteToInput(input));
-}
-
-// This function will be called by the Google Maps script callback
-function initRideRequestAutocomplete(){
-  if (!window.google || !google.maps || !google.maps.places) return;
-  buildOkcBounds();
-  autocompleteReady = true;
-  initAutocompleteForAll();
-}
-
-// Expose to global for callback
-window.initRideRequestAutocomplete = initRideRequestAutocomplete;
-
-/* =======================================================
-   INIT
+   INITIALIZE
 ======================================================= */
 prefillFromProfile();
 </script>
 
-<!-- Google Places API (same key as main site, with callback) -->
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places&callback=initRideRequestAutocomplete" async defer></script>
+<!-- Google Places JS (same key you use on main index) -->
+<script
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places&callback=initPlaces"
+  async defer></script>
 
 </body>
 </html>
