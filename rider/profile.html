@@ -3,448 +3,337 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Rider Profile – Big Red Connect</title>
+  <title>Your Profile – Big Red Connect</title>
 
   <!-- Icons / PWA -->
   <link rel="apple-touch-icon" href="/icon.PNG">
   <link rel="icon" type="image/png" sizes="192x192" href="/icon.PNG">
   <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#000000"/>
-
-  <!-- No cache -->
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <meta http-equiv="Pragma" content="no-cache" />
-  <meta http-equiv="Expires" content="0" />
+  <meta name="theme-color" content="#000"/>
 
   <style>
-    :root {
-      --red: #b30000;
-      --bg: #000000;
-      --panel: #111111;
-      --border: #222222;
-      --muted: #aaaaaa;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
     body {
-      margin: 0;
-      padding-bottom: 70px; /* space for bottom nav */
-      background: var(--bg);
-      color: #ffffff;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin:0;
+      background:#000;
+      color:#fff;
+      font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      padding-bottom:40px;
     }
 
+    /* HEADER + MENU (shared pattern) */
     header {
-      padding: 12px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      border-bottom: 2px solid var(--red);
-      background: #000000;
-      position: sticky;
-      top: 0;
-      z-index: 20;
+      background:#000;
+      padding:12px;
+      border-bottom:2px solid #b30000;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      position:sticky;
+      top:0;
+      z-index:50;
     }
-
-    header img {
-      height: 44px;
-      border-radius: 4px;
+    .header-left {
+      display:flex;
+      align-items:center;
+      gap:10px;
     }
-
-    header-title-main {
-      font-weight: 700;
-      font-size: 0.95rem;
+    .logo {
+      height:42px;
     }
+    .header-title {
+      font-weight:700;
+      font-size:1rem;
+    }
+    #menuBtn {
+      font-size:1.6rem;
+      background:none;
+      border:none;
+      color:white;
+      cursor:pointer;
+    }
+    #menuPanel {
+      display:none;
+      flex-direction:column;
+      background:#111;
+      border-bottom:2px solid #b30000;
+      animation:drop .15s ease-out;
+    }
+    #menuPanel a {
+      padding:16px;
+      color:#fff;
+      text-decoration:none;
+      border-bottom:1px solid #222;
+      font-size:1rem;
+    }
+    #menuPanel a:hover { background:#222; }
 
-    header-title-sub {
-      display: block;
-      font-size: 0.8rem;
-      color: #888888;
+    @keyframes drop {
+      from { opacity:0; transform:translateY(-10px); }
+      to   { opacity:1; transform:translateY(0); }
     }
 
     h1 {
-      font-size: 1.3rem;
-      text-align: center;
-      margin: 18px 12px 6px;
+      text-align:center;
+      margin:18px 0 8px;
+      font-size:1.4rem;
+      font-weight:700;
     }
 
-    p.subtitle {
-      text-align: center;
-      margin: 0 20px 16px;
-      font-size: 0.85rem;
-      color: var(--muted);
-    }
-
-    .card {
-      background: var(--panel);
-      border-radius: 12px;
-      border: 1px solid var(--border);
-      margin: 0 12px 16px;
-      padding: 14px;
-    }
-
-    .section-title {
-      font-size: 0.9rem;
-      font-weight: 600;
-      margin-bottom: 6px;
+    .subtitle {
+      text-align:center;
+      font-size:.9rem;
+      color:#aaa;
+      margin-bottom:16px;
     }
 
     .form {
-      width: 100%;
+      width:calc(100% - 24px);
+      max-width:480px;
+      margin:0 auto;
     }
 
-    .field-group {
-      margin-bottom: 12px;
+    .input-group {
+      margin-bottom:14px;
     }
-
     label {
-      display: block;
-      font-size: 0.8rem;
-      color: #cccccc;
-      margin-bottom: 4px;
+      display:block;
+      font-size:.85rem;
+      margin-bottom:4px;
+      color:#ccc;
     }
-
-    input, select, textarea {
-      width: 100%;
-      padding: 11px 12px;
-      border-radius: 8px;
-      border: 1px solid #333333;
-      background: #111111;
-      color: #ffffff;
-      font-size: 0.95rem;
+    input, textarea {
+      width:100%;
+      padding:12px;
+      background:#111;
+      border:1px solid #333;
+      border-radius:8px;
+      color:#fff;
+      font-size:.95rem;
     }
-
-    input::placeholder,
-    textarea::placeholder {
-      color: #666666;
-    }
-
-    textarea {
-      min-height: 70px;
-      resize: vertical;
-    }
-
-    .hint {
-      font-size: 0.75rem;
-      color: var(--muted);
-      margin-top: 3px;
+    input::placeholder {
+      color:#555;
     }
 
     .btn-primary {
-      display: block;
-      width: 100%;
-      margin-top: 14px;
-      padding: 13px;
-      background: var(--red);
-      color: #ffffff;
-      border-radius: 10px;
-      text-align: center;
-      font-weight: 700;
-      text-decoration: none;
-      border: none;
-      font-size: 1rem;
+      display:block;
+      width:100%;
+      padding:16px;
+      margin-top:20px;
+      background:#b30000;
+      color:#fff;
+      text-align:center;
+      font-weight:700;
+      border-radius:10px;
+      text-decoration:none;
+      font-size:1.05rem;
     }
-
-    .btn-primary:active {
-      opacity: 0.9;
+    .btn-ghost {
+      display:block;
+      width:100%;
+      padding:14px;
+      margin-top:10px;
+      background:#111;
+      border:1px solid #333;
+      color:#fff;
+      text-align:center;
+      border-radius:10px;
+      font-size:.95rem;
+      text-decoration:none;
     }
 
     #toast {
-      position: fixed;
-      bottom: 80px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #111111;
-      border: 1px solid var(--red);
-      padding: 9px 16px;
-      border-radius: 999px;
-      font-size: 0.85rem;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.25s;
-      z-index: 50;
+      position:fixed;
+      bottom:22px;
+      left:50%;
+      transform:translateX(-50%);
+      background:#111;
+      border:1px solid #b30000;
+      padding:10px 18px;
+      border-radius:999px;
+      opacity:0;
+      pointer-events:none;
+      transition:.25s;
+      z-index:999;
     }
-    #toast.show { opacity: 1; }
+    #toast.show { opacity:1; }
 
-    /* Bottom Nav */
-    .bottom-nav {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 54px;
-      background: #000000;
-      border-top: 1px solid #222222;
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      z-index: 40;
-    }
-
-    .bottom-nav a {
-      flex: 1;
-      text-align: center;
-      text-decoration: none;
-      color: #bbbbbb;
-      font-size: 0.78rem;
-      padding-top: 3px;
-    }
-
-    .bottom-nav a span.icon {
-      display: block;
-      font-size: 1.1rem;
-      margin-bottom: -1px;
-    }
-
-    .bottom-nav a.active {
-      color: #ffffff;
-      font-weight: 600;
-    }
-
-    .bottom-nav a.active span.icon {
-      color: var(--red);
-    }
-
-    @media (min-width: 900px) {
-      body {
-        max-width: 480px;
-        margin: 0 auto;
-        border-left: 1px solid #111;
-        border-right: 1px solid #111;
-      }
-    }
   </style>
 </head>
 
 <body>
 
+<!-- HEADER -->
 <header>
-  <a href="/index.html">
-    <img src="/icon.PNG" alt="Big Red Connect">
-  </a>
-  <div>
-    <div style="font-weight:700;font-size:0.95rem;">Rider Profile</div>
-    <span style="display:block;font-size:0.8rem;color:#888;">Save your usual info once.</span>
+  <div class="header-left">
+    <a href="/index.html"><img src="/icon.PNG" class="logo"></a>
+    <div class="header-title">Your Profile</div>
   </div>
+  <button id="menuBtn">☰</button>
 </header>
 
-<h1>Your Rider Details</h1>
-<p class="subtitle">Set it once — your name, mobile, and usual pickup spot will auto-fill future ride requests.</p>
+<!-- MENU -->
+<nav id="menuPanel">
+  <a href="/rider/rider.html">Rider Hub</a>
+  <a href="/rider/ride-request.html">Request a Ride</a>
+  <a href="/rider/myride.html">My Ride</a>
+  <a href="/rider/profile.html">Profile</a>
+  <a href="#" id="logoutBtn">Log Out</a>
+</nav>
 
-<div class="card">
-  <div class="section-title">Basic Info</div>
-  <div class="form">
-    <div class="field-group">
-      <label for="riderName">Name</label>
-      <input id="riderName" type="text" placeholder="First & last name">
-    </div>
+<h1>Your Profile</h1>
+<div class="subtitle">Saved info helps speed up future requests.</div>
 
-    <div class="field-group">
-      <label for="riderPhone">Mobile Number</label>
-      <input id="riderPhone" type="tel" inputmode="tel" placeholder="555-555-5555">
-      <div class="hint">Used to confirm rides and help find you at pickup.</div>
-    </div>
+<div class="form">
+
+  <div class="input-group">
+    <label>Your Name</label>
+    <input id="name" placeholder="Your name">
   </div>
-</div>
 
-<div class="card">
-  <div class="section-title">Home / Usual Pickup</div>
-  <div class="form">
-    <div class="field-group">
-      <label for="homeAddress">Home or Usual Pickup Address</label>
-      <input id="homeAddress" type="text" placeholder="Start typing an address…">
-      <div class="hint">Autocomplete is biased to the OKC metro (Moore, Norman, Yukon, Mustang, Shawnee, etc.).</div>
-    </div>
-
-    <div class="field-group">
-      <label for="gateCode">Gate / Access Details (optional)</label>
-      <input id="gateCode" type="text" placeholder="Gate code, building #, apartment, landmark…">
-    </div>
-
-    <div class="field-group">
-      <label for="partySize">Typical Party Size</label>
-      <select id="partySize">
-        <option value="1">Just me (1)</option>
-        <option value="2">2 riders</option>
-        <option value="3">3 riders</option>
-        <option value="4">4 riders</option>
-        <option value="5">5 riders</option>
-        <option value="6">6 riders</option>
-      </select>
-      <div class="hint">You can still change this per ride. Max capacity depends on which vehicle is serving your trip.</div>
-    </div>
+  <div class="input-group">
+    <label>Mobile Number</label>
+    <input id="phone" placeholder="555-555-5555" inputmode="tel">
   </div>
-</div>
 
-<button class="btn-primary" id="btnSaveProfile">💾 Save Profile</button>
+  <div class="input-group">
+    <label>Preferred Pickup Address (Home)</label>
+    <input id="home" placeholder="Home or usual pickup location">
+  </div>
+
+  <div class="input-group">
+    <label>Gate Code / Access Notes</label>
+    <input id="gate" placeholder="Gate code, building, apartment…">
+  </div>
+
+  <div class="input-group">
+    <label>Your Rider ID</label>
+    <input id="riderId" disabled style="opacity:.7;">
+  </div>
+
+  <a href="javascript:void(0)" id="btnSave" class="btn-primary">Save Profile</a>
+  <a href="/rider/rider.html" class="btn-ghost">Back to Rider Hub</a>
+
+</div>
 
 <div id="toast"></div>
 
-<!-- Bottom navigation -->
-<nav class="bottom-nav">
-  <a href="/index.html">
-    <span class="icon">🏠</span>
-    Home
-  </a>
-  <a href="/rider/rider.html">
-    <span class="icon">🚗</span>
-    Rider Hub
-  </a>
-  <a href="/rider/myride.html">
-    <span class="icon">📍</span>
-    My Ride
-  </a>
-  <a href="/rider/profile.html" class="active">
-    <span class="icon">👤</span>
-    Profile
-  </a>
-</nav>
-
 <script>
-  const PROFILE_API = "https://bigred-rider-profile.bigredtransportation.workers.dev";
-  let riderId = null;
+const API = "https://bigred-rider-profile.bigredtransportation.workers.dev";
 
-  function showToast(msg) {
-    const t = document.getElementById("toast");
-    t.textContent = msg;
-    t.classList.add("show");
-    setTimeout(() => t.classList.remove("show"), 2000);
+/* ============================================
+   TOAST
+============================================ */
+function showToast(msg){
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(()=> t.classList.remove("show"), 1800);
+}
+
+/* ============================================
+   HEADER MENU
+============================================ */
+document.getElementById("menuBtn").addEventListener("click", ()=>{
+  const panel = document.getElementById("menuPanel");
+  panel.style.display = (panel.style.display === "flex" ? "none" : "flex");
+});
+
+document.getElementById("logoutBtn").addEventListener("click", ()=>{
+  localStorage.clear();
+  window.location.href = "/index.html";
+});
+
+/* ============================================
+   LOAD PROFILE FROM WORKER
+============================================ */
+async function loadProfile(){
+  let riderId = localStorage.getItem("riderId");
+
+  if (!riderId){
+    // Make one
+    riderId = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()));
+    localStorage.setItem("riderId", riderId);
   }
 
-  function ensureRiderId() {
-    let existing = localStorage.getItem("riderId");
-    if (!existing) {
-      if (crypto && crypto.randomUUID) {
-        existing = crypto.randomUUID();
-      } else {
-        existing = "rider-" + Date.now() + "-" + Math.random().toString(16).slice(2);
-      }
-      localStorage.setItem("riderId", existing);
-    }
-    riderId = existing;
-  }
+  document.getElementById("riderId").value = riderId;
 
-  async function loadProfile() {
-    ensureRiderId();
-
-    const nameLS  = localStorage.getItem("riderName");
-    const phoneLS = localStorage.getItem("riderPhone");
-    const homeLS  = localStorage.getItem("riderHome");
-    const gateLS  = localStorage.getItem("riderGate");
-
-    if (nameLS)  document.getElementById("riderName").value = nameLS;
-    if (phoneLS) document.getElementById("riderPhone").value = phoneLS;
-    if (homeLS)  document.getElementById("homeAddress").value = homeLS;
-    if (gateLS)  document.getElementById("gateCode").value = gateLS;
-
-    try {
-      const res = await fetch(`${PROFILE_API}/api/profile/${encodeURIComponent(riderId)}`);
-      if (!res.ok) {
-        if (res.status !== 404) {
-          console.warn("Profile load error status", res.status);
-        }
-        return;
-      }
-      const data = await res.json();
-
-      if (data.name)        document.getElementById("riderName").value = data.name;
-      if (data.phone)       document.getElementById("riderPhone").value = data.phone;
-      if (data.homeAddress) document.getElementById("homeAddress").value = data.homeAddress;
-      if (data.gateCode)    document.getElementById("gateCode").value = data.gateCode;
-      if (data.partySize)   document.getElementById("partySize").value = String(data.partySize);
-    } catch (err) {
-      console.warn("Profile load failed", err);
-    }
-  }
-
-  async function saveProfile() {
-    ensureRiderId();
-
-    const name = document.getElementById("riderName").value.trim();
-    const phone = document.getElementById("riderPhone").value.trim();
-    const homeAddress = document.getElementById("homeAddress").value.trim();
-    const gateCode = document.getElementById("gateCode").value.trim();
-    const partySize = parseInt(document.getElementById("partySize").value, 10) || 1;
-
-    if (!name || !phone) {
-      showToast("Name and mobile are required.");
+  try {
+    const res = await fetch(`${API}/profile/${riderId}`);
+    if (!res.ok){
+      // No profile saved yet → use local storage fallback
+      loadLocalFallback();
       return;
     }
 
-    const payload = {
-      riderId,
-      name,
-      phone,
-      homeAddress,
-      gateCode,
-      partySize
-    };
+    const data = await res.json();
 
-    localStorage.setItem("riderName", name);
-    localStorage.setItem("riderPhone", phone);
-    if (homeAddress) localStorage.setItem("riderHome", homeAddress);
-    if (gateCode)    localStorage.setItem("riderGate", gateCode);
+    document.getElementById("name").value = data.name || "";
+    document.getElementById("phone").value = data.phone || "";
+    document.getElementById("home").value = data.home || "";
+    document.getElementById("gate").value = data.gate || "";
 
-    try {
-      const res = await fetch(`${PROFILE_API}/api/profile/${encodeURIComponent(riderId)}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
+    // Mirror to localStorage (lets ride-request prefill)
+    localStorage.setItem("riderName", data.name || "");
+    localStorage.setItem("riderPhone", data.phone || "");
+    localStorage.setItem("riderHome", data.home || "");
+    localStorage.setItem("riderGate", data.gate || "");
 
-      if (!res.ok) {
-        showToast("Error saving profile.");
-        return;
-      }
-
-      showToast("Profile saved.");
-    } catch (err) {
-      console.error("Save profile error", err);
-      showToast("Network error.");
-    }
+  } catch(e){
+    console.error(e);
+    loadLocalFallback();
   }
+}
 
-  document.getElementById("btnSaveProfile").addEventListener("click", saveProfile);
+function loadLocalFallback(){
+  document.getElementById("name").value  = localStorage.getItem("riderName") || "";
+  document.getElementById("phone").value = localStorage.getItem("riderPhone") || "";
+  document.getElementById("home").value  = localStorage.getItem("riderHome") || "";
+  document.getElementById("gate").value  = localStorage.getItem("riderGate") || "";
+}
 
-  window.addEventListener("load", loadProfile);
-</script>
+/* ============================================
+   SAVE PROFILE
+============================================ */
+document.getElementById("btnSave").addEventListener("click", saveProfile);
 
-<!-- Google Places Autocomplete (biased to OKC Metro) -->
-<script
-  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places&callback=initAutocomplete"
-  async defer></script>
+async function saveProfile(){
+  const riderId = localStorage.getItem("riderId");
 
-<script>
-  function initAutocomplete() {
-    const input = document.getElementById("homeAddress");
-    if (!input || !google || !google.maps || !google.maps.places) return;
+  const body = {
+    name: document.getElementById("name").value.trim(),
+    phone: document.getElementById("phone").value.trim(),
+    home: document.getElementById("home").value.trim(),
+    gate: document.getElementById("gate").value.trim()
+  };
 
-    const okcBounds = {
-      north: 35.8,
-      south: 35.1,
-      east: -97.2,
-      west: -97.8
-    };
+  // Update local storage mirror
+  localStorage.setItem("riderName", body.name);
+  localStorage.setItem("riderPhone", body.phone);
+  localStorage.setItem("riderHome", body.home);
+  localStorage.setItem("riderGate", body.gate);
 
-    const options = {
-      bounds: okcBounds,
-      strictBounds: false,
-      componentRestrictions: { country: "us" },
-      fields: ["formatted_address", "geometry"]
-    };
-
-    const autocomplete = new google.maps.places.Autocomplete(input, options);
-
-    autocomplete.addListener("place_changed", () => {
-      const place = autocomplete.getPlace();
-      if (place && place.formatted_address) {
-        input.value = place.formatted_address;
-      }
+  try {
+    const res = await fetch(`${API}/profile/${riderId}`, {
+      method:"PUT",
+      headers:{ "Content-Type":"application/json" },
+      body:JSON.stringify(body)
     });
+
+    if (!res.ok){
+      showToast("Save failed");
+      return;
+    }
+
+    showToast("Profile saved");
+  } catch {
+    showToast("Save error");
   }
+}
+
+/* ============================================
+   Init
+============================================ */
+loadProfile();
 </script>
 
 </body>
