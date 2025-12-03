@@ -87,6 +87,51 @@
       font-size:.85rem;
     }
 
+    /* Stops UI */
+    .stops-header-row {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:6px;
+    }
+    .stops-header-row label {
+      margin-bottom:0;
+    }
+
+    #addStopBtn {
+      background:#111;
+      color:#fff;
+      border:1px solid #444;
+      border-radius:999px;
+      padding:6px 10px;
+      font-size:.8rem;
+    }
+
+    .stop-row {
+      margin-bottom:10px;
+    }
+
+    .stop-row-header {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:4px;
+      font-size:.8rem;
+    }
+
+    .stop-label {
+      color:#ccc;
+      font-size:.8rem;
+    }
+
+    .remove-stop-btn {
+      background:none;
+      border:none;
+      color:#ff9999;
+      font-size:.8rem;
+      padding:4px 0 4px 8px;
+    }
+
     #toast {
       position:fixed;
       bottom:22px;
@@ -107,7 +152,7 @@
 
 <body>
 <header>
-  <img src="/icon.PNG"/>
+  <img src="/icon.PNG" alt="Big Red Connect logo"/>
   <div>
     <div style="font-weight:700;">Big Red Connect</div>
     <div style="font-size:.8rem;color:#888;">Ride Request</div>
@@ -147,10 +192,13 @@
     <input id="gateCode" placeholder="Gate code, building, apartment…"/>
   </div>
 
-  <!-- STOPS -->
+  <!-- STOPS (dynamic) -->
   <div class="input-group">
-    <label>Stops (optional)</label>
-    <input id="stops" placeholder="Comma-separated stops"/>
+    <div class="stops-header-row">
+      <label>Stops (optional)</label>
+      <button type="button" id="addStopBtn">➕ Add Stop</button>
+    </div>
+    <div id="stopsContainer"></div>
   </div>
 
   <!-- DROPOFF -->
@@ -235,7 +283,7 @@ function prefillFromProfile(){
 }
 
 /* =======================================================
-   SHOW LUGGAGE FOR AIRPORT
+   AIRPORT DETECTION → SHOW LUGGAGE
 ======================================================= */
 function detectAirport(addr){
   if(!addr) return false;
@@ -248,9 +296,6 @@ function detectAirport(addr){
   );
 }
 
-document.getElementById("pickup").addEventListener("input", checkLuggage);
-document.getElementById("dropoff").addEventListener("input", checkLuggage);
-
 function checkLuggage(){
   const p = document.getElementById("pickup").value;
   const d = document.getElementById("dropoff").value;
@@ -258,13 +303,76 @@ function checkLuggage(){
   document.getElementById("luggageGroup").style.display = show ? "block":"none";
 }
 
+document.getElementById("pickup").addEventListener("input", checkLuggage);
+document.getElementById("dropoff").addEventListener("input", checkLuggage);
+
 /* =======================================================
-   SHOW SCHEDULE INPUT
+   SCHEDULED TOGGLE
 ======================================================= */
 document.getElementById("timeType").addEventListener("change", e=>{
   document.getElementById("scheduledGroup").style.display =
     e.target.value==="schedule" ? "block":"none";
 });
+
+/* =======================================================
+   STOPS UI (max 3)
+======================================================= */
+const MAX_STOPS = 3;
+
+function refreshStopLabels(){
+  const rows = document.querySelectorAll(".stop-row");
+  rows.forEach((row, idx)=>{
+    const labelEl = row.querySelector(".stop-label");
+    if(labelEl) labelEl.textContent = "Stop " + (idx+1);
+  });
+}
+
+function addStopField(prefillValue){
+  const container = document.getElementById("stopsContainer");
+  const current = container.querySelectorAll(".stop-row").length;
+  if(current >= MAX_STOPS){
+    showToast("Max 3 stops");
+    return;
+  }
+
+  const row = document.createElement("div");
+  row.className = "stop-row";
+
+  const headerRow = document.createElement("div");
+  headerRow.className = "stop-row-header";
+
+  const label = document.createElement("span");
+  label.className = "stop-label";
+  label.textContent = "Stop";
+
+  const removeBtn = document.createElement("button");
+  removeBtn.type = "button";
+  removeBtn.className = "remove-stop-btn";
+  removeBtn.textContent = "Remove";
+  removeBtn.addEventListener("click", ()=>{
+    row.remove();
+    refreshStopLabels();
+  });
+
+  headerRow.appendChild(label);
+  headerRow.appendChild(removeBtn);
+
+  const input = document.createElement("input");
+  input.className = "stop-input";
+  input.placeholder = "Add a stop";
+  if(prefillValue) input.value = prefillValue;
+
+  row.appendChild(headerRow);
+  row.appendChild(input);
+  container.appendChild(row);
+
+  // Tie into autocomplete if maps has loaded
+  attachAutocompleteToInput(input);
+
+  refreshStopLabels();
+}
+
+document.getElementById("addStopBtn").addEventListener("click", ()=> addStopField(""));
 
 /* =======================================================
    SUBMIT RIDE REQUEST
@@ -282,14 +390,19 @@ async function submitRide(){
     return;
   }
 
-  // Save profile parts
+  // Save profile parts locally
   localStorage.setItem("riderName", name);
   localStorage.setItem("riderPhone", phone);
   localStorage.setItem("riderHome", pickup);
   localStorage.setItem("riderGate", document.getElementById("gateCode").value.trim());
 
-  const stopsRaw = document.getElementById("stops").value.trim();
-  const stopList = stopsRaw ? stopsRaw.split(",").map(s=>({address:s.trim()})) : [];
+  // Build stops from dynamic fields
+  const stopInputs = document.querySelectorAll(".stop-input");
+  const stopList = [];
+  stopInputs.forEach(input=>{
+    const addr = input.value.trim();
+    if(addr) stopList.push({ address: addr });
+  });
 
   const partySize = Number(document.getElementById("partySize").value);
   const luggage = document.getElementById("luggageGroup").style.display==="block"
@@ -303,12 +416,14 @@ async function submitRide(){
 
   const estimateVal = document.getElementById("estimate").value.replace("$","") || 0;
 
-  const riderId = localStorage.getItem("riderId") || crypto.randomUUID();
+  const riderId = localStorage.getItem("riderId") || (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()));
   localStorage.setItem("riderId", riderId);
+
+  const gateCode = document.getElementById("gateCode").value.trim();
 
   const body = {
     type: scheduledFor ? "SCHEDULED":"INSTANT",
-    pickup: { address: pickup, gate: document.getElementById("gateCode").value },
+    pickup: { address: pickup, gate: gateCode },
     dropoff: { address: dropoff },
     stops: stopList,
     rider: { name, phone, partySize, riderId },
@@ -319,37 +434,102 @@ async function submitRide(){
 
   const API = "https://bigred-bookings.bigredtransportation.workers.dev";
 
-  const res = await fetch(`${API}/api/bookings`, {
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify(body)
-  });
+  try {
+    const res = await fetch(`${API}/api/bookings`, {
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body:JSON.stringify(body)
+    });
 
-  if(!res.ok){
-    showToast("Error submitting");
-    return;
-  }
+    if(!res.ok){
+      showToast("Error submitting");
+      return;
+    }
 
-  const booking = await res.json();
+    const booking = await res.json();
 
-  // Open SMS pre-fill
-  const sms =
-    `sms:+14053784024?body=` +
-    encodeURIComponent(`Ride Request:
+    // Build stops string for SMS
+    const stopsText = stopList.length
+      ? stopList.map(s=>s.address).join(" → ")
+      : "None";
+
+    // Open SMS pre-fill (kept from your original flow)
+    const sms =
+      `sms:+14053784024?body=` +
+      encodeURIComponent(`Ride Request:
 From: ${pickup}
 To: ${dropoff}
 Name: ${name}
 Phone: ${phone}
-Stops: ${stopsRaw || "None"}
+Stops: ${stopsText}
 Passengers: ${partySize}
 Luggage: ${luggage}
 Booking ID: ${booking.id}`);
 
-  window.location.href = sms;
+    window.location.href = sms;
+  } catch (e) {
+    console.error(e);
+    showToast("Error submitting");
+  }
 }
 
+/* =======================================================
+   GOOGLE PLACES AUTOCOMPLETE (OKC-biased)
+======================================================= */
+
+let okcBounds = null;
+let autocompleteReady = false;
+
+function buildOkcBounds(){
+  // Rough bounding box for OKC metro (OKC, Moore, Norman, Yukon, Mustang, Shawnee)
+  // SW corner, NE corner
+  okcBounds = new google.maps.LatLngBounds(
+    new google.maps.LatLng(34.9, -97.9),
+    new google.maps.LatLng(35.8, -96.3)
+  );
+}
+
+function attachAutocompleteToInput(inputEl){
+  // If maps not ready yet, do nothing — we'll attach later in callback
+  if (!window.google || !google.maps || !google.maps.places || !okcBounds) return;
+  const options = {
+    fields: ["formatted_address","geometry","name"],
+    componentRestrictions: { country: "us" },
+    strictBounds: false
+  };
+  const ac = new google.maps.places.Autocomplete(inputEl, options);
+  ac.setBounds(okcBounds);
+}
+
+function initAutocompleteForAll(){
+  const pickupEl = document.getElementById("pickup");
+  const dropoffEl = document.getElementById("dropoff");
+  if (pickupEl) attachAutocompleteToInput(pickupEl);
+  if (dropoffEl) attachAutocompleteToInput(dropoffEl);
+
+  const stopInputs = document.querySelectorAll(".stop-input");
+  stopInputs.forEach(input => attachAutocompleteToInput(input));
+}
+
+// This function will be called by the Google Maps script callback
+function initRideRequestAutocomplete(){
+  if (!window.google || !google.maps || !google.maps.places) return;
+  buildOkcBounds();
+  autocompleteReady = true;
+  initAutocompleteForAll();
+}
+
+// Expose to global for callback
+window.initRideRequestAutocomplete = initRideRequestAutocomplete;
+
+/* =======================================================
+   INIT
+======================================================= */
 prefillFromProfile();
 </script>
+
+<!-- Google Places API (same key as main site, with callback) -->
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places&callback=initRideRequestAutocomplete" async defer></script>
 
 </body>
 </html>
