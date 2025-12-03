@@ -1,163 +1,158 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Big Red Connect — Rider Hub</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rider Hub – Big Red Connect</title>
 
-  <link rel="apple-touch-icon" href="../icon.PNG">
-  <link rel="icon" type="image/png" sizes="192x192" href="../icon.PNG">
-  <link rel="manifest" href="../manifest.json">
-  <meta name="theme-color" content="#000000">
+  <!-- PWA Icons -->
+  <link rel="apple-touch-icon" href="/icon.PNG">
+  <link rel="icon" type="image/png" sizes="192x192" href="/icon.PNG">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#000">
 
   <style>
     body {
-      margin: 0;
-      background: #000;
-      color: #fff;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin:0;
+      background:#000;
+      color:#fff;
+      font-family:-apple-system, BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+      padding-bottom:40px;
     }
 
     header {
-      padding: 18px;
-      text-align: center;
-      border-bottom: 2px solid #b30000;
+      padding:15px 12px;
+      display:flex;
+      align-items:center;
+      gap:12px;
+      border-bottom:2px solid #b30000;
+      background:#000;
+      position:sticky;
+      top:0;
+      z-index:12;
+    }
+    header img { height:46px; }
+
+    h1 {
+      text-align:center;
+      margin:18px 10px 10px;
+      font-size:1.4rem;
+      font-weight:700;
     }
 
-    header img {
-      width: 130px;
-      border-radius: 6px;
-    }
-
-    .container {
-      padding: 25px 18px;
-      max-width: 500px;
-      margin: auto;
-    }
-
-    .section-title {
-      font-size: 1.1rem;
-      margin-bottom: 22px;
-      text-align: center;
-      color: #ddd;
-      font-weight: 600;
+    .sub {
+      text-align:center;
+      font-size:.9rem;
+      color:#aaa;
+      margin-bottom:18px;
     }
 
     .btn {
-      width: 100%;
-      background: #b30000;
-      color: #fff;
-      font-size: 1rem;
-      padding: 15px;
-      margin-bottom: 15px;
-      border: none;
-      border-radius: 10px;
-      font-weight: 600;
-      cursor: pointer;
+      display:block;
+      width:calc(100% - 24px);
+      margin:12px auto;
+      padding:15px;
+      background:#b30000;
+      color:#fff;
+      text-align:center;
+      text-decoration:none;
+      font-weight:700;
+      font-size:1.05rem;
+      border-radius:10px;
     }
 
     .btn-secondary {
-      background: #111;
-      border: 1px solid #333;
-      color: #fff;
+      background:#111;
+      border:1px solid #333;
     }
 
-    .footer {
-      text-align: center;
-      margin-top: 30px;
-      color: #777;
-      font-size: .85rem;
+    .profile-tip {
+      text-align:center;
+      margin:10px 8px 20px;
+      font-size:.85rem;
+      color:#ffcc66;
     }
+
+    #toast {
+      position:fixed;
+      bottom:22px;
+      left:50%;
+      transform:translateX(-50%);
+      background:#111;
+      border:1px solid #b30000;
+      padding:10px 18px;
+      border-radius:999px;
+      opacity:0;
+      pointer-events:none;
+      transition:.25s;
+      z-index:99;
+    }
+    #toast.show { opacity:1; }
   </style>
 </head>
 
 <body>
 
 <header>
-  <img src="../official_logo_Nov.png" alt="Big Red Connect Logo">
+  <img src="/icon.PNG"/>
+  <div>
+    <div style="font-weight:700;">Big Red Connect</div>
+    <div style="font-size:.8rem;color:#888;">Rider Hub</div>
+  </div>
 </header>
 
-<div class="container">
+<h1 id="greeting">Welcome!</h1>
+<div id="subGreeting" class="sub"></div>
+<div id="profileTip" class="profile-tip" style="display:none;">Complete your profile to speed up bookings.</div>
 
-  <div class="section-title">Welcome to Your Rider Hub</div>
+<!-- MAIN NAV BUTTONS -->
+<a href="/rider/ride-request.html" class="btn">Request a Ride</a>
+<a href="/rider/myride.html" class="btn btn-secondary">View My Rides</a>
+<a href="/rider/profile.html" class="btn btn-secondary">My Profile</a>
+<a href="/index.html" class="btn btn-secondary">Back to Home</a>
 
-  <button class="btn" onclick="goTo('ride-request.html')">
-    Request a Ride
-  </button>
-
-  <button class="btn" onclick="goTo('myride.html')">
-    My Ride
-  </button>
-
-  <button class="btn" onclick="goTo('profile.html')">
-    My Profile
-  </button>
-
-  <button class="btn btn-secondary" onclick="logout()">
-    Log Out
-  </button>
-
-</div>
-
-<div class="footer">Veteran Owned • Affordable • Local • Trusted.</div>
+<div id="toast"></div>
 
 <script>
-/* ==========================================================
-   INITIAL LOAD — confirm rider profile exists
-   Loads profile into localStorage + auto-creates missing
-========================================================== */
+/* =======================================================
+   TOAST
+======================================================= */
+function showToast(msg){
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(()=> t.classList.remove("show"), 1800);
+}
 
-const PROFILE_API = "https://bigred-profile.bigredtransportation.workers.dev/api/profile";
+/* =======================================================
+   LOAD LOCAL PROFILE DATA
+======================================================= */
+function loadGreeting(){
+  const name = localStorage.getItem("riderName");
+  const home = localStorage.getItem("riderHome");
 
-async function loadProfile() {
-  const phone = localStorage.getItem("riderPhone");
-
-  if (!phone) {
-    window.location.href = "../rider-login.html";
-    return;
+  if(name){
+    document.getElementById("greeting").textContent = `Welcome, ${name}!`;
+    document.getElementById("subGreeting").textContent =
+      home ? `Home: ${home}` : "";
+  } else {
+    document.getElementById("greeting").textContent = "Welcome!";
+    document.getElementById("subGreeting").textContent = "";
   }
 
-  try {
-    const res = await fetch(`${PROFILE_API}?riderPhone=${encodeURIComponent(phone)}`);
-    if (res.ok) {
-      const data = await res.json();
-      localStorage.setItem("riderProfile", JSON.stringify(data));
-    } else {
-      // Auto-create blank profile if missing
-      await fetch(PROFILE_API, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ riderPhone: phone })
-      });
+  const profileIncomplete =
+    !localStorage.getItem("riderName") ||
+    !localStorage.getItem("riderPhone");
 
-      const res2 = await fetch(`${PROFILE_API}?riderPhone=${encodeURIComponent(phone)}`);
-      if (res2.ok) {
-        const data = await res2.json();
-        localStorage.setItem("riderProfile", JSON.stringify(data));
-      }
-    }
-  } catch (err) {
-    // No debug logs per production rules
+  if(profileIncomplete){
+    document.getElementById("profileTip").style.display = "block";
   }
 }
 
-loadProfile();
-
-/* ==========================================================
-   NAVIGATION
-========================================================== */
-function goTo(page) {
-  window.location.href = page;
-}
-
-/* ==========================================================
-   LOG OUT
-========================================================== */
-function logout() {
-  localStorage.removeItem("riderPhone");
-  localStorage.removeItem("riderProfile");
-  window.location.href = "../rider-login.html";
-}
+/* =======================================================
+   INIT
+======================================================= */
+loadGreeting();
 </script>
 
 </body>
