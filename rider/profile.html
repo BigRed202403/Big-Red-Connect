@@ -1,148 +1,169 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your Rider Profile — Big Red Connect</title>
 
-<title>Big Red Connect — Rider Profile</title>
+  <link rel="apple-touch-icon" href="../icon.PNG">
+  <link rel="icon" type="image/png" href="../icon.PNG">
+  <meta name="theme-color" content="#000000">
 
-<link rel="apple-touch-icon" href="/icon.PNG">
-<link rel="icon" type="image/png" href="/icon.PNG">
-<meta name="theme-color" content="#000000">
-
-<style>
+  <style>
     :root {
-        --red: #b30000;
-        --bg: #000;
-        --panel: #111;
-        --border: #222;
-        --text-muted: #aaa;
+      --red:#b30000;
+      --bg:#000;
+      --panel:#111;
+      --border:#222;
+      --muted:#aaa;
     }
 
     body {
-        margin: 0;
-        background: var(--bg);
-        color: #fff;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin:0;
+      background:#000;
+      color:#fff;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
     }
 
     header {
-        text-align: center;
-        padding: 18px 10px;
-        border-bottom: 2px solid var(--red);
-        background: #000;
+      padding:14px;
+      background:#000;
+      border-bottom:2px solid var(--red);
+      display:flex;
+      align-items:center;
+      gap:12px;
+      position:sticky;
+      top:0;
+      z-index:10;
     }
 
-    header img {
-        width: 140px;
-        margin-bottom: 6px;
-    }
+    header img { height:42px; }
 
     h1 {
-        margin: 0;
-        font-size: 1.3rem;
-        font-weight: 700;
+      text-align:center;
+      margin:20px 0 10px;
+      font-size:1.7rem;
+      color:#fff;
     }
 
-    .container {
-        padding: 18px;
-        max-width: 520px;
-        margin: 0 auto;
+    .desc {
+      text-align:center;
+      color:var(--muted);
+      margin-bottom:18px;
+      font-size:.9rem;
+    }
+
+    .panel {
+      background:#111;
+      border:1px solid #222;
+      padding:16px;
+      margin:0 14px 20px;
+      border-radius:12px;
     }
 
     label {
-        font-size: .85rem;
-        color: var(--text-muted);
-        margin-bottom: 4px;
-        display: block;
+      display:block;
+      margin-top:14px;
+      font-size:.85rem;
+      font-weight:600;
+      color:#ddd;
     }
 
-    input, textarea {
-        width: 100%;
-        padding: 12px;
-        border-radius: 10px;
-        background: #111;
-        border: 1px solid #333;
-        color: #fff;
-        margin-bottom: 16px;
-        font-size: 1rem;
+    input, textarea, select {
+      width:100%;
+      margin-top:6px;
+      padding:10px 12px;
+      border-radius:8px;
+      border:1px solid #333;
+      background:#000;
+      color:#fff;
+      font-size:.95rem;
     }
 
     textarea {
-        min-height: 80px;
-        resize: vertical;
+      min-height:70px;
+      resize:none;
     }
 
-    .btn-primary {
-        width: 100%;
-        padding: 14px;
-        background: var(--red);
-        color: #fff;
-        border: none;
-        border-radius: 10px;
-        font-size: 1rem;
-        font-weight: 700;
-        margin-top: 10px;
+    .btn {
+      width:100%;
+      background:var(--red);
+      color:#fff;
+      padding:12px;
+      border:none;
+      border-radius:10px;
+      font-size:1rem;
+      margin-top:18px;
+      font-weight:700;
+      cursor:pointer;
     }
 
     .btn-secondary {
-        width: 100%;
-        padding: 12px;
-        background: #111;
-        border: 1px solid #333;
-        color: #fff;
-        border-radius: 10px;
-        font-size: .95rem;
-        margin-top: 16px;
+      background:#111;
+      border:1px solid #333;
+      margin-top:10px;
+      color:#fff;
     }
 
     #toast {
-        position: fixed;
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: #111;
-        border: 1px solid var(--red);
-        padding: 12px 20px;
-        border-radius: 999px;
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity .25s;
-        z-index: 999;
+      position:fixed;
+      bottom:20px;
+      left:50%;
+      transform:translateX(-50%);
+      background:#111;
+      border:1px solid var(--red);
+      padding:12px 18px;
+      border-radius:999px;
+      opacity:0;
+      pointer-events:none;
+      transition:opacity .25s;
+      z-index:999;
     }
-    #toast.show { opacity: 1; }
-</style>
+    #toast.show { opacity:1; }
+  </style>
 </head>
-
 <body>
 
 <header>
-    <img src="/official_logo_Nov.png">
-    <h1>Your Rider Profile</h1>
+  <a href="../index.html">
+    <img src="../official_logo_Nov.png">
+  </a>
+  <div style="font-size:1.1rem;font-weight:700;">Rider Profile</div>
 </header>
 
-<div class="container">
+<h1>Your Rider Profile</h1>
+<p class="desc">Save your details for faster ride requests.</p>
 
-    <label>Name</label>
-    <input id="nameInput" type="text" placeholder="Your name">
+<div class="panel">
 
-    <label>Phone (read-only)</label>
-    <input id="phoneInput" type="text" disabled>
+  <label>Your Name</label>
+  <input id="name">
 
-    <label>Home / Usual Pickup Address</label>
-    <input id="homeInput" type="text" placeholder="123 Main St, Moore OK">
+  <label>Mobile Number</label>
+  <input id="phone" disabled style="opacity:.6;">
 
-    <label>Gate Code (if applicable)</label>
-    <input id="gateInput" type="text" placeholder="Gate / entry code">
+  <label>Home / Usual Pickup Address</label>
+  <input id="homeAddress" placeholder="Optional">
 
-    <label>Notes (visible only to you and the driver)</label>
-    <textarea id="notesInput" placeholder="Apartment building, preferred pickup spot, etc."></textarea>
+  <label>Gate Code / Access Notes</label>
+  <input id="gateCode" placeholder="Optional">
 
-    <button class="btn-primary" id="btnSave">Save Profile</button>
+  <label>Rider Notes (private)</label>
+  <textarea id="notes" placeholder="Optional"></textarea>
 
-    <button class="btn-secondary" onclick="window.location.href='/rider/rider.html'">
-        ← Back to Rider Hub
-    </button>
+  <label>Default Party Size</label>
+  <select id="partySize">
+    <option value="1">1 passenger</option>
+    <option value="2">2 passengers</option>
+    <option value="3">3 passengers</option>
+    <option value="4">4 passengers</option>
+    <option value="5">5 passengers</option>
+    <option value="6">6 passengers</option>
+  </select>
+
+  <button class="btn" id="btnSave">Save Profile</button>
+  <button class="btn btn-secondary" onclick="window.location='rider.html'">← Back to Rider Hub</button>
+
 </div>
 
 <div id="toast"></div>
@@ -150,76 +171,63 @@
 <script>
 const API = "https://bigred-bookings.bigredtransportation.workers.dev";
 
-// Toast helper
-function showToast(msg) {
-    const t = document.getElementById("toast");
-    t.textContent = msg;
-    t.classList.add("show");
-    setTimeout(() => t.classList.remove("show"), 1800);
+function showToast(msg){
+  const t=document.getElementById("toast");
+  t.textContent=msg;
+  t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"),1800);
 }
 
-// Load localStorage copy + fetch KV copy
-async function loadProfile() {
-    const local = JSON.parse(localStorage.getItem("brc_rider_profile") || "{}");
-
-    // Prefill from localStorage immediately
-    document.getElementById("nameInput").value  = local.name  || "";
-    document.getElementById("phoneInput").value = local.phone || "";
-    document.getElementById("homeInput").value  = local.home  || "";
-    document.getElementById("gateInput").value  = local.gate  || "";
-    document.getElementById("notesInput").value = local.notes || "";
-
-    // If phone is missing, redirect → login
-    if (!local.phone) {
-        showToast("Login required");
-        setTimeout(() => window.location.href = "/rider-login.html", 900);
-        return;
-    }
-
-    try {
-        const res = await fetch(`${API}/api/rider/profile?phone=${encodeURIComponent(local.phone)}`);
-        if (res.ok) {
-            const kv = await res.json();
-            // Overwrite with KV data if exists
-            document.getElementById("nameInput").value = kv.name || "";
-            document.getElementById("homeInput").value = kv.home || "";
-            document.getElementById("gateInput").value = kv.gate || "";
-            document.getElementById("notesInput").value = kv.notes || "";
-        }
-    } catch (e) {
-        console.warn("KV load failed", e);
-    }
+function getPhone(){
+  return localStorage.getItem("riderPhone") || "";
 }
 
-// Save to KV + localStorage
-async function saveProfile() {
-    const profile = {
-        name:  document.getElementById("nameInput").value.trim(),
-        phone: document.getElementById("phoneInput").value.trim(),
-        home:  document.getElementById("homeInput").value.trim(),
-        gate:  document.getElementById("gateInput").value.trim(),
-        notes: document.getElementById("notesInput").value.trim()
-    };
+async function loadProfile(){
+  const phone = getPhone();
+  if(!phone){
+    showToast("Missing phone. Login again.");
+    setTimeout(()=>window.location="../rider-login.html",1500);
+    return;
+  }
+  document.getElementById("phone").value = phone;
 
-    // Save local copy
-    localStorage.setItem("brc_rider_profile", JSON.stringify(profile));
+  const res = await fetch(`${API}/api/rider/profile?phone=${encodeURIComponent(phone)}`);
+  if(!res.ok){
+    showToast("No profile saved yet.");
+    return;
+  }
+  const p = await res.json();
 
-    // Push to KV
-    try {
-        const res = await fetch(`${API}/api/rider/profile`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(profile)
-        });
+  document.getElementById("name").value = p.name || "";
+  document.getElementById("homeAddress").value = p.homeAddress || "";
+  document.getElementById("gateCode").value = p.gateCode || "";
+  document.getElementById("notes").value = p.notes || "";
+  document.getElementById("partySize").value = p.defaultPartySize || 1;
+}
 
-        if (res.ok) {
-            showToast("Saved!");
-        } else {
-            showToast("Save failed");
-        }
-    } catch (e) {
-        showToast("Network error");
-    }
+async function saveProfile(){
+  const phone = getPhone();
+  const payload = {
+    phone,
+    name: document.getElementById("name").value.trim(),
+    homeAddress: document.getElementById("homeAddress").value.trim(),
+    gateCode: document.getElementById("gateCode").value.trim(),
+    notes: document.getElementById("notes").value.trim(),
+    defaultPartySize: Number(document.getElementById("partySize").value)
+  };
+
+  const res = await fetch(`${API}/api/rider/profile`,{
+    method:"PUT",
+    headers:{ "Content-Type":"application/json"},
+    body:JSON.stringify(payload)
+  });
+
+  if(res.ok){
+    showToast("Profile saved!");
+    setTimeout(()=>window.location="rider.html",1200);
+  } else {
+    showToast("Save failed.");
+  }
 }
 
 document.getElementById("btnSave").addEventListener("click", saveProfile);
