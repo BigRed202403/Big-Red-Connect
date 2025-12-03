@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Big Red Connect — Rider Login</title>
 
+  <!-- ICONS -->
   <link rel="apple-touch-icon" href="/icon.PNG">
   <link rel="icon" type="image/png" href="/icon.PNG">
 
@@ -38,7 +39,8 @@
     }
 
     header img {
-      height:40px;
+      height:42px;
+      width:42px;
       border-radius:6px;
     }
 
@@ -136,32 +138,26 @@
   }
 
   async function handleLogin() {
-    const phoneRaw = document.getElementById("phone").value.trim();
+    const raw = document.getElementById("phone").value.trim();
+    if (!raw) return toast("Enter phone number");
 
-    if (!phoneRaw) return toast("Enter phone number");
+    // Normalize numeric digits only
+    const phone = raw.replace(/\D/g, "");
+    if (phone.length < 10) return toast("Enter valid 10-digit number");
 
-    // Normalize phone (remove spaces, dashes, etc.)
-    const phone = phoneRaw.replace(/\D/g, "");
-
-    if (phone.length < 10) {
-      return toast("Enter a valid 10-digit number");
-    }
-
-    // Save phone early (needed for profile.html UI)
     localStorage.setItem("rider_phone", phone);
 
-    // 1️⃣ Try to fetch existing profile
+    // 1️ Try fetching existing profile
     let res = await fetch(`${API}/api/profile/by-phone/${phone}`);
     let data = await res.json();
 
     if (data && data.id) {
-      // Existing → save riderId
       localStorage.setItem("rider_id", data.id);
       window.location = "/rider/rider.html";
       return;
     }
 
-    // 2️⃣ No profile → create new one
+    // 2️ Create new profile
     const newProfile = {
       phone,
       name: "",
@@ -171,8 +167,8 @@
     };
 
     res = await fetch(`${API}/api/profile`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method:"POST",
+      headers: { "Content-Type":"application/json" },
       body: JSON.stringify(newProfile)
     });
 
@@ -182,15 +178,12 @@
     }
 
     const created = await res.json();
-
     if (!created.id) {
       toast("Profile error");
       return;
     }
 
-    // Save new riderId
     localStorage.setItem("rider_id", created.id);
-
     window.location = "/rider/rider.html";
   }
 
