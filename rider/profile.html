@@ -1,271 +1,450 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Your Profile – Big Red Connect</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Rider Profile – Big Red Connect</title>
 
-<link rel="apple-touch-icon" href="/icon.PNG">
-<link rel="icon" type="image/png" sizes="192x192" href="/icon.PNG">
-<link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#000"/>
+  <!-- Icons / PWA -->
+  <link rel="apple-touch-icon" href="/icon.PNG">
+  <link rel="icon" type="image/png" sizes="192x192" href="/icon.PNG">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#000000"/>
 
-<style>
-  body {
-    margin:0;
-    background:#000;
-    color:#fff;
-    font-family:-apple-system, BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-    padding-bottom:70px;
-  }
+  <!-- No cache -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
 
-  header {
-    padding:16px 14px;
-    display:flex;
-    align-items:center;
-    gap:12px;
-    border-bottom:2px solid #b30000;
-    position:sticky;
-    top:0;
-    background:#000;
-    z-index:10;
-  }
-  header img { height:46px; }
+  <style>
+    :root {
+      --red: #b30000;
+      --bg: #000000;
+      --panel: #111111;
+      --border: #222222;
+      --muted: #aaaaaa;
+    }
 
-  h1 {
-    text-align:center;
-    margin:20px 0 10px;
-    font-size:1.4rem;
-    font-weight:700;
-  }
+    * {
+      box-sizing: border-box;
+    }
 
-  .container {
-    width:calc(100% - 26px);
-    margin:0 auto;
-    margin-top:10px;
-  }
+    body {
+      margin: 0;
+      padding-bottom: 70px; /* space for bottom nav */
+      background: var(--bg);
+      color: #ffffff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
 
-  label {
-    display:block;
-    font-size:.85rem;
-    margin-bottom:4px;
-    color:#bbb;
-  }
+    header {
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 2px solid var(--red);
+      background: #000000;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
 
-  .input-group { margin-bottom:18px; }
+    header img {
+      height: 44px;
+      border-radius: 4px;
+    }
 
-  input, textarea {
-    width:100%;
-    padding:14px;
-    font-size:1rem;
-    background:#111;
-    border:1px solid #333;
-    border-radius:10px;
-    color:#fff;
-  }
+    header-title-main {
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
 
-  textarea { resize:none; height:70px; }
+    header-title-sub {
+      display: block;
+      font-size: 0.8rem;
+      color: #888888;
+    }
 
-  .btn {
-    width:100%;
-    padding:16px;
-    background:#b30000;
-    text-align:center;
-    color:#fff;
-    font-weight:700;
-    border-radius:10px;
-    font-size:1.1rem;
-    margin-top:10px;
-    cursor:pointer;
-    text-decoration:none;
-    display:block;
-  }
+    h1 {
+      font-size: 1.3rem;
+      text-align: center;
+      margin: 18px 12px 6px;
+    }
 
-  /* Bottom Navigation */
-  .nav {
-    position:fixed;
-    bottom:0;
-    left:0;
-    width:100%;
-    background:#111;
-    border-top:2px solid #222;
-    display:flex;
-    justify-content:space-around;
-    padding:10px 0;
-    z-index:20;
-  }
+    p.subtitle {
+      text-align: center;
+      margin: 0 20px 16px;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
 
-  .nav-btn {
-    color:#fff;
-    font-size:.8rem;
-    text-align:center;
-    text-decoration:none;
-  }
-  .nav-btn img {
-    display:block;
-    margin:0 auto 4px;
-    height:26px;
-    opacity:.85;
-  }
+    .card {
+      background: var(--panel);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      margin: 0 12px 16px;
+      padding: 14px;
+    }
 
-  #toast {
-    position:fixed;
-    bottom:85px;
-    left:50%;
-    transform:translateX(-50%);
-    background:#111;
-    border:1px solid #b30000;
-    padding:10px 18px;
-    border-radius:999px;
-    opacity:0;
-    pointer-events:none;
-    transition:.25s;
-    z-index:50;
-  }
-  #toast.show { opacity:1; }
-</style>
+    .section-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
 
-<!-- Google Places Autocomplete -->
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places"></script>
+    .form {
+      width: 100%;
+    }
 
+    .field-group {
+      margin-bottom: 12px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.8rem;
+      color: #cccccc;
+      margin-bottom: 4px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 11px 12px;
+      border-radius: 8px;
+      border: 1px solid #333333;
+      background: #111111;
+      color: #ffffff;
+      font-size: 0.95rem;
+    }
+
+    input::placeholder,
+    textarea::placeholder {
+      color: #666666;
+    }
+
+    textarea {
+      min-height: 70px;
+      resize: vertical;
+    }
+
+    .hint {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 3px;
+    }
+
+    .btn-primary {
+      display: block;
+      width: 100%;
+      margin-top: 14px;
+      padding: 13px;
+      background: var(--red);
+      color: #ffffff;
+      border-radius: 10px;
+      text-align: center;
+      font-weight: 700;
+      text-decoration: none;
+      border: none;
+      font-size: 1rem;
+    }
+
+    .btn-primary:active {
+      opacity: 0.9;
+    }
+
+    #toast {
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #111111;
+      border: 1px solid var(--red);
+      padding: 9px 16px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s;
+      z-index: 50;
+    }
+    #toast.show { opacity: 1; }
+
+    /* Bottom Nav */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 54px;
+      background: #000000;
+      border-top: 1px solid #222222;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      z-index: 40;
+    }
+
+    .bottom-nav a {
+      flex: 1;
+      text-align: center;
+      text-decoration: none;
+      color: #bbbbbb;
+      font-size: 0.78rem;
+      padding-top: 3px;
+    }
+
+    .bottom-nav a span.icon {
+      display: block;
+      font-size: 1.1rem;
+      margin-bottom: -1px;
+    }
+
+    .bottom-nav a.active {
+      color: #ffffff;
+      font-weight: 600;
+    }
+
+    .bottom-nav a.active span.icon {
+      color: var(--red);
+    }
+
+    @media (min-width: 900px) {
+      body {
+        max-width: 480px;
+        margin: 0 auto;
+        border-left: 1px solid #111;
+        border-right: 1px solid #111;
+      }
+    }
+  </style>
 </head>
+
 <body>
 
 <header>
-  <img src="/icon.PNG">
+  <a href="/index.html">
+    <img src="/icon.PNG" alt="Big Red Connect">
+  </a>
   <div>
-    <div style="font-weight:700;">Big Red Connect</div>
-    <div style="font-size:.8rem;color:#888;">Your Profile</div>
+    <div style="font-weight:700;font-size:0.95rem;">Rider Profile</div>
+    <span style="display:block;font-size:0.8rem;color:#888;">Save your usual info once.</span>
   </div>
 </header>
 
-<h1>Your Profile</h1>
+<h1>Your Rider Details</h1>
+<p class="subtitle">Set it once — your name, mobile, and usual pickup spot will auto-fill future ride requests.</p>
 
-<div class="container">
+<div class="card">
+  <div class="section-title">Basic Info</div>
+  <div class="form">
+    <div class="field-group">
+      <label for="riderName">Name</label>
+      <input id="riderName" type="text" placeholder="First & last name">
+    </div>
 
-  <div class="input-group">
-    <label>Your Name</label>
-    <input id="name"/>
+    <div class="field-group">
+      <label for="riderPhone">Mobile Number</label>
+      <input id="riderPhone" type="tel" inputmode="tel" placeholder="555-555-5555">
+      <div class="hint">Used to confirm rides and help find you at pickup.</div>
+    </div>
   </div>
-
-  <div class="input-group">
-    <label>Mobile Number</label>
-    <input id="phone" inputmode="tel"/>
-  </div>
-
-  <div class="input-group">
-    <label>Home / Usual Pickup Address</label>
-    <input id="homeAddress" placeholder="Start typing…"/>
-  </div>
-
-  <div class="input-group">
-    <label>Gate Code (optional)</label>
-    <input id="gateCode"/>
-  </div>
-
-  <div class="input-group">
-    <label>Notes (optional)</label>
-    <textarea id="notes" placeholder="Building number, airline, instructions…"></textarea>
-  </div>
-
-  <a class="btn" id="saveBtn">Save Profile</a>
-
 </div>
+
+<div class="card">
+  <div class="section-title">Home / Usual Pickup</div>
+  <div class="form">
+    <div class="field-group">
+      <label for="homeAddress">Home or Usual Pickup Address</label>
+      <input id="homeAddress" type="text" placeholder="Start typing an address…">
+      <div class="hint">Autocomplete is biased to the OKC metro (Moore, Norman, Yukon, Mustang, Shawnee, etc.).</div>
+    </div>
+
+    <div class="field-group">
+      <label for="gateCode">Gate / Access Details (optional)</label>
+      <input id="gateCode" type="text" placeholder="Gate code, building #, apartment, landmark…">
+    </div>
+
+    <div class="field-group">
+      <label for="partySize">Typical Party Size</label>
+      <select id="partySize">
+        <option value="1">Just me (1)</option>
+        <option value="2">2 riders</option>
+        <option value="3">3 riders</option>
+        <option value="4">4 riders</option>
+        <option value="5">5 riders</option>
+        <option value="6">6 riders</option>
+      </select>
+      <div class="hint">You can still change this per ride. Max capacity depends on which vehicle is serving your trip.</div>
+    </div>
+  </div>
+</div>
+
+<button class="btn-primary" id="btnSaveProfile">💾 Save Profile</button>
 
 <div id="toast"></div>
 
-<!-- Bottom Navigation -->
-<div class="nav">
-  <a class="nav-btn" href="/rider/hub.html">
-    <img src="/icon.PNG"><span>Home</span>
+<!-- Bottom navigation -->
+<nav class="bottom-nav">
+  <a href="/index.html">
+    <span class="icon">🏠</span>
+    Home
   </a>
-  <a class="nav-btn" href="/rider/ride-request.html">
-    <img src="/icon.PNG"><span>Request</span>
+  <a href="/rider/rider.html">
+    <span class="icon">🚗</span>
+    Rider Hub
   </a>
-  <a class="nav-btn" href="/rider/profile.html">
-    <img src="/icon.PNG"><span>Profile</span>
+  <a href="/rider/myride.html">
+    <span class="icon">📍</span>
+    My Ride
   </a>
-</div>
+  <a href="/rider/profile.html" class="active">
+    <span class="icon">👤</span>
+    Profile
+  </a>
+</nav>
 
 <script>
-/* =======================
-   TOAST
-======================= */
-function showToast(msg){
-  const t = document.getElementById("toast");
-  t.textContent = msg;
-  t.classList.add("show");
-  setTimeout(()=>t.classList.remove("show"),1800);
-}
+  const PROFILE_API = "https://bigred-rider-profile.bigredtransportation.workers.dev";
+  let riderId = null;
 
-/* =======================
-   AUTOCOMPLETE
-======================= */
-let homeAuto;
-function initPlaces(){
-  const input = document.getElementById("homeAddress");
-  homeAuto = new google.maps.places.Autocomplete(input, {
-    componentRestrictions:{ country:["us"] },
-    fields:["formatted_address","geometry"],
-  });
-}
-
-/* =======================
-   PREFILL LOCAL
-======================= */
-function loadLocal(){
-  document.getElementById("name").value = localStorage.getItem("riderName") || "";
-  document.getElementById("phone").value = localStorage.getItem("riderPhone") || "";
-  document.getElementById("homeAddress").value = localStorage.getItem("riderHome") || "";
-  document.getElementById("gateCode").value = localStorage.getItem("riderGate") || "";
-  document.getElementById("notes").value = localStorage.getItem("riderNotes") || "";
-}
-
-/* =======================
-   SAVE PROFILE
-======================= */
-document.getElementById("saveBtn").addEventListener("click", saveProfile);
-
-async function saveProfile(){
-
-  const riderId = localStorage.getItem("riderId");
-  if(!riderId){
-    showToast("Error: Missing rider ID");
-    return;
+  function showToast(msg) {
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    setTimeout(() => t.classList.remove("show"), 2000);
   }
 
-  const name = document.getElementById("name").value.trim();
-  const phone = document.getElementById("phone").value.trim();
-  const home = document.getElementById("homeAddress").value.trim();
-  const gate = document.getElementById("gateCode").value.trim();
-  const notes = document.getElementById("notes").value.trim();
-
-  // Save local
-  localStorage.setItem("riderName", name);
-  localStorage.setItem("riderPhone", phone);
-  localStorage.setItem("riderHome", home);
-  localStorage.setItem("riderGate", gate);
-  localStorage.setItem("riderNotes", notes);
-
-  // Save remote
-  const API = "https://bigred-profile.bigredtransportation.workers.dev";
-
-  const res = await fetch(`${API}/profile/${riderId}`, {
-    method:"PUT",
-    headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({ name, phone, home, gate, notes })
-  });
-
-  if(res.ok){
-    showToast("Profile saved");
-  } else {
-    showToast("Save failed");
+  function ensureRiderId() {
+    let existing = localStorage.getItem("riderId");
+    if (!existing) {
+      if (crypto && crypto.randomUUID) {
+        existing = crypto.randomUUID();
+      } else {
+        existing = "rider-" + Date.now() + "-" + Math.random().toString(16).slice(2);
+      }
+      localStorage.setItem("riderId", existing);
+    }
+    riderId = existing;
   }
-}
 
-/* Init */
-loadLocal();
-window.onload = initPlaces;
+  async function loadProfile() {
+    ensureRiderId();
+
+    const nameLS  = localStorage.getItem("riderName");
+    const phoneLS = localStorage.getItem("riderPhone");
+    const homeLS  = localStorage.getItem("riderHome");
+    const gateLS  = localStorage.getItem("riderGate");
+
+    if (nameLS)  document.getElementById("riderName").value = nameLS;
+    if (phoneLS) document.getElementById("riderPhone").value = phoneLS;
+    if (homeLS)  document.getElementById("homeAddress").value = homeLS;
+    if (gateLS)  document.getElementById("gateCode").value = gateLS;
+
+    try {
+      const res = await fetch(`${PROFILE_API}/api/profile/${encodeURIComponent(riderId)}`);
+      if (!res.ok) {
+        if (res.status !== 404) {
+          console.warn("Profile load error status", res.status);
+        }
+        return;
+      }
+      const data = await res.json();
+
+      if (data.name)        document.getElementById("riderName").value = data.name;
+      if (data.phone)       document.getElementById("riderPhone").value = data.phone;
+      if (data.homeAddress) document.getElementById("homeAddress").value = data.homeAddress;
+      if (data.gateCode)    document.getElementById("gateCode").value = data.gateCode;
+      if (data.partySize)   document.getElementById("partySize").value = String(data.partySize);
+    } catch (err) {
+      console.warn("Profile load failed", err);
+    }
+  }
+
+  async function saveProfile() {
+    ensureRiderId();
+
+    const name = document.getElementById("riderName").value.trim();
+    const phone = document.getElementById("riderPhone").value.trim();
+    const homeAddress = document.getElementById("homeAddress").value.trim();
+    const gateCode = document.getElementById("gateCode").value.trim();
+    const partySize = parseInt(document.getElementById("partySize").value, 10) || 1;
+
+    if (!name || !phone) {
+      showToast("Name and mobile are required.");
+      return;
+    }
+
+    const payload = {
+      riderId,
+      name,
+      phone,
+      homeAddress,
+      gateCode,
+      partySize
+    };
+
+    localStorage.setItem("riderName", name);
+    localStorage.setItem("riderPhone", phone);
+    if (homeAddress) localStorage.setItem("riderHome", homeAddress);
+    if (gateCode)    localStorage.setItem("riderGate", gateCode);
+
+    try {
+      const res = await fetch(`${PROFILE_API}/api/profile/${encodeURIComponent(riderId)}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        showToast("Error saving profile.");
+        return;
+      }
+
+      showToast("Profile saved.");
+    } catch (err) {
+      console.error("Save profile error", err);
+      showToast("Network error.");
+    }
+  }
+
+  document.getElementById("btnSaveProfile").addEventListener("click", saveProfile);
+
+  window.addEventListener("load", loadProfile);
+</script>
+
+<!-- Google Places Autocomplete (biased to OKC Metro) -->
+<script
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places&callback=initAutocomplete"
+  async defer></script>
+
+<script>
+  function initAutocomplete() {
+    const input = document.getElementById("homeAddress");
+    if (!input || !google || !google.maps || !google.maps.places) return;
+
+    const okcBounds = {
+      north: 35.8,
+      south: 35.1,
+      east: -97.2,
+      west: -97.8
+    };
+
+    const options = {
+      bounds: okcBounds,
+      strictBounds: false,
+      componentRestrictions: { country: "us" },
+      fields: ["formatted_address", "geometry"]
+    };
+
+    const autocomplete = new google.maps.places.Autocomplete(input, options);
+
+    autocomplete.addListener("place_changed", () => {
+      const place = autocomplete.getPlace();
+      if (place && place.formatted_address) {
+        input.value = place.formatted_address;
+      }
+    });
+  }
 </script>
 
 </body>
