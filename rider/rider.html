@@ -1,289 +1,163 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Big Red Rider Hub</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Big Red Connect — Rider Hub</title>
 
-<!-- PWA Icons -->
-<link rel="apple-touch-icon" href="/icon.PNG">
-<link rel="icon" type="image/png" href="/icon.PNG">
-<link rel="shortcut icon" href="/icon.PNG">
-<link rel="manifest" href="/manifest-rider.json">
-<meta name="theme-color" content="#000" />
+  <link rel="apple-touch-icon" href="../icon.PNG">
+  <link rel="icon" type="image/png" sizes="192x192" href="../icon.PNG">
+  <link rel="manifest" href="../manifest.json">
+  <meta name="theme-color" content="#000000">
 
-<!-- Global Stylesheet -->
-<link rel="stylesheet" href="/style.css" />
+  <style>
+    body {
+      margin: 0;
+      background: #000;
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
 
-<style>
-/* Rider Hub Enhancements (mobile-first) */
+    header {
+      padding: 18px;
+      text-align: center;
+      border-bottom: 2px solid #b30000;
+    }
 
-.page-wrap {
-  max-width: 650px;
-  margin: 0 auto;
-  padding: 16px;
-}
+    header img {
+      width: 130px;
+      border-radius: 6px;
+    }
 
-/* Section Headers matching ride-request */
-.section-header {
-  margin: 28px 0 14px;
-  font-size: 1.4em;
-  font-weight: 700;
-  text-align: left;
-  color: #ff1a1a;
-  border-left: 4px solid #ff1a1a;
-  padding-left: 10px;
-}
+    .container {
+      padding: 25px 18px;
+      max-width: 500px;
+      margin: auto;
+    }
 
-/* Card matching ride-request form */
-.card {
-  background: #111;
-  border-radius: 12px;
-  padding: 16px 18px;
-  margin-bottom: 20px;
-  border: 1px solid #222;
-  box-shadow: 0 2px 8px rgba(255,0,0,0.15);
-}
+    .section-title {
+      font-size: 1.1rem;
+      margin-bottom: 22px;
+      text-align: center;
+      color: #ddd;
+      font-weight: 600;
+    }
 
-/* Rider profile form fields */
-.card label {
-  display: block;
-  margin: 14px 0 4px;
-  font-weight: 600;
-  color: #ddd;
-}
+    .btn {
+      width: 100%;
+      background: #b30000;
+      color: #fff;
+      font-size: 1rem;
+      padding: 15px;
+      margin-bottom: 15px;
+      border: none;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+    }
 
-.card input {
-  width: 100%;
-  padding: 12px;
-  border-radius: 8px;
-  background: #000;
-  color: #fff;
-  border: 1px solid #333;
-  font-size: 1em;
-}
+    .btn-secondary {
+      background: #111;
+      border: 1px solid #333;
+      color: #fff;
+    }
 
-/* Action buttons (C: mixed hierarchy) */
-.btn-full {
-  width: 100%;
-  padding: 14px;
-  border-radius: 10px;
-  margin: 10px 0;
-  font-size: 1.05em;
-  font-weight: 700;
-  text-align: center;
-  display: block;
-  text-decoration: none;
-}
-
-/* Primary (red) */
-.btn-primary {
-  background: linear-gradient(180deg, #c40000, #9a0000);
-  color: #fff;
-  border: 1px solid #c40000;
-}
-
-/* Secondary (dark) */
-.btn-secondary {
-  background: linear-gradient(180deg, #222, #111);
-  color: #fff;
-  border: 1px solid #444;
-}
-
-/* Tertiary (outline) */
-.btn-outline {
-  background: transparent;
-  color: #fff;
-  border: 1px solid #666;
-}
-
-/* Info Banner */
-.info-banner {
-  background: #0d0d0d;
-  border-left: 4px solid #444;
-  padding: 10px 12px;
-  margin-bottom: 20px;
-  border-radius: 6px;
-  color: #ccc;
-  font-size: 0.9em;
-  line-height: 1.45;
-}
-
-/* Spacing under main title */
-.tagline2 {
-  color: #ccc;
-  margin-top: -6px;
-  margin-bottom: 20px;
-  font-size: 0.95em;
-}
-
-header {
-  background: #000;
-  border-bottom: 2px solid #b30000;
-  padding: 10px 14px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  position: sticky;
-  top:0;
-  z-index: 5;
-}
-
-header img {
-  height: 42px;
-}
-
-header .title {
-  font-size: 1.1em;
-  font-weight: 700;
-  color: #fff;
-}
-</style>
-
+    .footer {
+      text-align: center;
+      margin-top: 30px;
+      color: #777;
+      font-size: .85rem;
+    }
+  </style>
 </head>
+
 <body>
 
 <header>
-  <div class="title">Rider Hub</div>
-  <a href="/index.html" class="btn secondary" style="padding:8px 12px;">🏠 Home</a>
+  <img src="../official_logo_Nov.png" alt="Big Red Connect Logo">
 </header>
 
-<div class="page-wrap">
+<div class="container">
 
-  <h1>Your Rider Hub</h1>
-  <p class="tagline2">Manage your profile and request flat-rate rides anytime.</p>
+  <div class="section-title">Welcome to Your Rider Hub</div>
 
-  <!-- =======================
-       RIDER PROFILE
-  ======================== -->
-  <div class="section-header">Rider Profile</div>
+  <button class="btn" onclick="goTo('ride-request.html')">
+    Request a Ride
+  </button>
 
-  <div class="card">
-    <form id="profileForm">
+  <button class="btn" onclick="goTo('myride.html')">
+    My Ride
+  </button>
 
-      <label for="riderName">Your Name</label>
-      <input id="riderName" type="text" placeholder="First name or nickname" autocomplete="name" />
+  <button class="btn" onclick="goTo('profile.html')">
+    My Profile
+  </button>
 
-      <label for="riderPhone">Mobile Number</label>
-      <input id="riderPhone" type="tel" placeholder="405-555-1234" autocomplete="tel" />
+  <button class="btn btn-secondary" onclick="logout()">
+    Log Out
+  </button>
 
-      <label for="riderHome">Home / Usual Pickup (optional)</label>
-      <input id="riderHome" type="text" placeholder="Neighborhood or address" />
+</div>
 
-      <button type="submit" class="btn-full btn-primary">💾 Save Changes</button>
-      <button type="button" id="clearBtn" class="btn-full btn-outline">🧹 Reset</button>
-
-    </form>
-  </div>
-
-  <div id="profileStatus" class="info-banner" style="display:none;"></div>
-
-  <!-- =======================
-       RIDE ACTIONS
-  ======================== -->
-  <div class="section-header">Ride Actions</div>
-
-  <a href="/rider/ride-request.html" class="btn-full btn-primary">🚗 Request a Ride</a>
-  <a href="/rider/myride.html" class="btn-full btn-secondary">📍 View My Ride</a>
-  <button id="logoutBtn" class="btn-full btn-outline">🔐 Logout</button>
-
-  <!-- =======================
-       NOTIFICATIONS (Coming Soon)
-  ======================== -->
-  <div class="section-header">Notifications</div>
-  <div class="card">
-    <p style="color:#bbb;font-size:0.9em;">
-      Push alerts for ride updates will be added soon.
-    </p>
-  </div>
-
-</div> <!-- end page-wrap -->
-
-<footer>
-  <p>&copy; 2025 Big Red Connect — Local. Affordable Flat Rates. Trusted.</p>
-</footer>
-
+<div class="footer">Veteran Owned • Affordable • Local • Trusted.</div>
 
 <script>
-/* =============================================
-   RIDER PROFILE STORAGE (with phone normalization)
-============================================= */
+/* ==========================================================
+   INITIAL LOAD — confirm rider profile exists
+   Loads profile into localStorage + auto-creates missing
+========================================================== */
 
-const KEY = "bigred_rider_profile_v1";
-const KEY_ID = "bigred_rider_id_normalized";
+const PROFILE_API = "https://bigred-profile.bigredtransportation.workers.dev/api/profile";
 
-function normalizePhone(p) {
-  if (!p) return "";
-  const digits = p.replace(/\D/g, "");
-  if (digits.length === 10) return "+1" + digits;
-  if (digits.length === 11 && digits.startsWith("1")) return "+" + digits;
-  return "+" + digits;
-}
+async function loadProfile() {
+  const phone = localStorage.getItem("riderPhone");
 
-function loadProfile() {
-  const raw = localStorage.getItem(KEY);
-  const status = document.getElementById("profileStatus");
-
-  if (!raw) {
-    status.style.display = "block";
-    status.textContent = "No profile saved yet.";
+  if (!phone) {
+    window.location.href = "../rider-login.html";
     return;
   }
 
   try {
-    const p = JSON.parse(raw);
-    document.getElementById("riderName").value = p.name || "";
-    document.getElementById("riderPhone").value = p.phone || "";
-    document.getElementById("riderHome").value = p.home || "";
+    const res = await fetch(`${PROFILE_API}?riderPhone=${encodeURIComponent(phone)}`);
+    if (res.ok) {
+      const data = await res.json();
+      localStorage.setItem("riderProfile", JSON.stringify(data));
+    } else {
+      // Auto-create blank profile if missing
+      await fetch(PROFILE_API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ riderPhone: phone })
+      });
 
-    status.style.display = "block";
-    status.textContent = `Profile loaded for ${p.name || "rider"} (${p.phone || "no phone on file"}).`;
-  } catch (e) {
-    status.style.display = "block";
-    status.textContent = "Profile could not be loaded.";
+      const res2 = await fetch(`${PROFILE_API}?riderPhone=${encodeURIComponent(phone)}`);
+      if (res2.ok) {
+        const data = await res2.json();
+        localStorage.setItem("riderProfile", JSON.stringify(data));
+      }
+    }
+  } catch (err) {
+    // No debug logs per production rules
   }
 }
 
-document.getElementById("profileForm").addEventListener("submit", e => {
-  e.preventDefault();
+loadProfile();
 
-  const name = document.getElementById("riderName").value.trim();
-  const phone = normalizePhone(document.getElementById("riderPhone").value.trim());
-  const home = document.getElementById("riderHome").value.trim();
-  const status = document.getElementById("profileStatus");
+/* ==========================================================
+   NAVIGATION
+========================================================== */
+function goTo(page) {
+  window.location.href = page;
+}
 
-  if (!phone) {
-    alert("Please enter your mobile number.");
-    return;
-  }
-
-  const profile = { name, phone, home };
-  localStorage.setItem(KEY, JSON.stringify(profile));
-  localStorage.setItem(KEY_ID, phone);
-
-  status.style.display = "block";
-  status.textContent = `Profile saved for ${name || "rider"} (${phone}).`;
-});
-
-document.getElementById("clearBtn").addEventListener("click", () => {
-  localStorage.removeItem(KEY);
-  localStorage.removeItem(KEY_ID);
-  document.getElementById("riderName").value = "";
-  document.getElementById("riderPhone").value = "";
-  document.getElementById("riderHome").value = "";
-
-  const status = document.getElementById("profileStatus");
-  status.style.display = "block";
-  status.textContent = "Profile cleared.";
-});
-
-/* Logout */
-document.getElementById("logoutBtn").addEventListener("click", () => {
-  localStorage.removeItem(KEY_ID);
-  alert("You are now logged out.");
-});
-  
-document.addEventListener("DOMContentLoaded", loadProfile);
+/* ==========================================================
+   LOG OUT
+========================================================== */
+function logout() {
+  localStorage.removeItem("riderPhone");
+  localStorage.removeItem("riderProfile");
+  window.location.href = "../rider-login.html";
+}
 </script>
 
 </body>
