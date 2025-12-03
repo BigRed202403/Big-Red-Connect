@@ -1,245 +1,354 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Request a Ride — Big Red Connect</title>
+  <title>Request a Ride – Big Red Connect</title>
 
-  <!-- Branding -->
-  <link rel="apple-touch-icon" href="../icon.PNG">
-  <link rel="icon" type="image/png" sizes="192x192" href="../icon.PNG">
-  <meta name="theme-color" content="#000">
+  <!-- Icons -->
+  <link rel="apple-touch-icon" href="/icon.PNG">
+  <link rel="icon" type="image/png" sizes="192x192" href="/icon.PNG">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#000"/>
 
   <style>
     body {
       margin:0;
       background:#000;
       color:#fff;
-      font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-family:-apple-system, BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+      padding-bottom:40px;
     }
-
     header {
-      padding:12px 16px;
+      padding:15px 12px;
+      display:flex;
+      align-items:center;
+      gap:12px;
       border-bottom:2px solid #b30000;
       background:#000;
       position:sticky;
       top:0;
-      z-index:20;
+      z-index:12;
     }
+    header img { height:46px; }
 
-    header h1 {
-      margin:0;
-      font-size:1.2rem;
+    h1 {
+      text-align:center;
+      margin:20px 0 10px;
+      font-size:1.4rem;
       font-weight:700;
     }
 
-    .container {
-      padding:16px;
-      max-width:600px;
-      margin:auto;
+    .form {
+      width:calc(100% - 24px);
+      margin:10px auto;
     }
-
-    .section-title {
-      font-size:1rem;
-      font-weight:700;
-      margin-top:22px;
-      margin-bottom:8px;
+    .input-group {
+      margin-bottom:14px;
     }
-
+    label {
+      display:block;
+      font-size:.85rem;
+      margin-bottom:4px;
+      color:#ccc;
+    }
     input, select, textarea {
       width:100%;
       padding:12px;
-      border-radius:10px;
-      border:1px solid #333;
       background:#111;
+      border:1px solid #333;
+      border-radius:8px;
       color:#fff;
-      margin-bottom:14px;
-      font-size:1rem;
+      font-size:.95rem;
     }
 
-    textarea {
-      resize:none;
-      min-height:70px;
-    }
-
-    .btn-primary {
+    .btn {
+      display:block;
       width:100%;
+      margin-top:14px;
       padding:14px;
       background:#b30000;
-      border:none;
-      border-radius:10px;
       color:#fff;
-      font-weight:700;
-      font-size:1rem;
-      cursor:pointer;
-      margin-top:10px;
-    }
-
-    .btn-primary:active {
-      transform:scale(.98);
-    }
-
-    .back-link {
-      color:#bbb;
-      text-decoration:none;
-      font-size:.9rem;
-      display:inline-block;
-      margin-bottom:20px;
-    }
-
-    footer {
       text-align:center;
-      margin-top:35px;
-      margin-bottom:25px;
-      color:#666;
-      font-size:.8rem;
+      font-weight:700;
+      border-radius:10px;
+      text-decoration:none;
+      font-size:1.05rem;
     }
+
+    #holidayBanner {
+      display:none;
+      background:#331111;
+      border:1px solid #b30000;
+      padding:12px;
+      border-radius:8px;
+      margin-bottom:15px;
+      color:#ffcccc;
+      font-size:.85rem;
+    }
+
+    #toast {
+      position:fixed;
+      bottom:22px;
+      left:50%;
+      transform:translateX(-50%);
+      background:#111;
+      border:1px solid #b30000;
+      padding:10px 18px;
+      border-radius:999px;
+      opacity:0;
+      pointer-events:none;
+      transition:.25s;
+      z-index:99;
+    }
+    #toast.show { opacity:1; }
   </style>
 </head>
 
 <body>
-
 <header>
-  <h1>Request a Ride</h1>
+  <img src="/icon.PNG"/>
+  <div>
+    <div style="font-weight:700;">Big Red Connect</div>
+    <div style="font-size:.8rem;color:#888;">Ride Request</div>
+  </div>
 </header>
 
-<div class="container">
+<h1>Request a Ride</h1>
 
-  <a href="rider.html" class="back-link">← Back to Rider Hub</a>
+<div class="form">
 
-  <!-- Rider Info -->
-  <div class="section-title">Your Info</div>
-  <input id="riderName" type="text" placeholder="Your Name" />
-  <input id="riderPhone" type="tel" placeholder="Phone Number" disabled />
-  <select id="partySize">
-    <option value="1">1 Passenger</option>
-    <option value="2">2 Passengers</option>
-    <option value="3">3 Passengers</option>
-    <option value="4">4 Passengers</option>
-    <option value="5">5 Passengers</option>
-    <option value="6">6 Passengers</option>
-  </select>
+  <!-- Holiday Banner -->
+  <div id="holidayBanner">
+    🎄 Holiday Rate Applied — Thank you for riding local during peak holiday dates.
+  </div>
 
-  <!-- Pickup -->
-  <div class="section-title">Pickup Location</div>
-  <input id="pickupAddress" type="text" placeholder="Pickup Address" />
-  <input id="gateCode" type="text" placeholder="Gate Code (optional)" />
-  <textarea id="pickupNotes" placeholder="Pickup Notes (optional)"></textarea>
+  <!-- NAME -->
+  <div class="input-group">
+    <label>Your Name</label>
+    <input id="riderName" placeholder="Your name"/>
+  </div>
 
-  <!-- Dropoff -->
-  <div class="section-title">Dropoff Location</div>
-  <input id="dropoffAddress" type="text" placeholder="Dropoff Address" />
-  <textarea id="travelNotes" placeholder="Travel / Airline Notes (optional)"></textarea>
+  <!-- PHONE -->
+  <div class="input-group">
+    <label>Mobile Number</label>
+    <input id="riderPhone" placeholder="555-555-5555" inputmode="tel"/>
+  </div>
 
-  <button class="btn-primary" id="requestBtn">Submit Ride Request</button>
+  <!-- PICKUP -->
+  <div class="input-group">
+    <label>Pickup Address</label>
+    <input id="pickup" placeholder="Where should we pick you up?"/>
+  </div>
+
+  <!-- GATE CODE -->
+  <div class="input-group">
+    <label>Gate Code / Access Notes (optional)</label>
+    <input id="gateCode" placeholder="Gate code, building, apartment…"/>
+  </div>
+
+  <!-- STOPS -->
+  <div class="input-group">
+    <label>Stops (optional)</label>
+    <input id="stops" placeholder="Comma-separated stops"/>
+  </div>
+
+  <!-- DROPOFF -->
+  <div class="input-group">
+    <label>Dropoff Address</label>
+    <input id="dropoff" placeholder="Where are you going?"/>
+  </div>
+
+  <!-- PASSENGERS -->
+  <div class="input-group">
+    <label>Passengers</label>
+    <select id="partySize">
+      <option value="1">1</option>
+      <option value="2">2</option>
+      <option value="3">3</option>
+      <option value="4">4</option>
+      <option value="5">5+</option>
+    </select>
+  </div>
+
+  <!-- LUGGAGE (auto-shown for airport rides) -->
+  <div class="input-group" id="luggageGroup" style="display:none;">
+    <label>Luggage Pieces</label>
+    <select id="luggage">
+      <option value="0">0</option>
+      <option value="1">1</option>
+      <option value="2">2</option>
+      <option value="3">3+</option>
+    </select>
+  </div>
+
+  <!-- TIME -->
+  <div class="input-group">
+    <label>When?</label>
+    <select id="timeType">
+      <option value="now">Right now</option>
+      <option value="schedule">Schedule a time</option>
+    </select>
+  </div>
+
+  <div class="input-group" id="scheduledGroup" style="display:none;">
+    <label>Pick a Time</label>
+    <input type="datetime-local" id="scheduledFor"/>
+  </div>
+
+  <!-- ESTIMATE -->
+  <div class="input-group">
+    <label>Estimated Fare</label>
+    <input id="estimate" disabled placeholder="$0.00"/>
+  </div>
+
+  <a class="btn" id="btnSubmit">Submit Ride Request</a>
 
 </div>
 
-<footer>&copy; 2025 Big Red Connect</footer>
+<div id="toast"></div>
 
 <script>
-/* ===========================================================
-   PREFILL RIDER PROFILE → NAME, HOME ADDRESS, NOTES
-=========================================================== */
+/* =======================================================
+   TOAST
+======================================================= */
+function showToast(msg){
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(()=> t.classList.remove("show"), 1800);
+}
 
-const PROFILE_API = "https://bigred-profile.bigredtransportation.workers.dev/api/profile";
-
-async function loadProfile() {
+/* =======================================================
+   PREFILL FROM PROFILE
+======================================================= */
+function prefillFromProfile(){
+  const name = localStorage.getItem("riderName");
   const phone = localStorage.getItem("riderPhone");
-  if (!phone) {
-    window.location.href = "../rider-login.html";
+  const home = localStorage.getItem("riderHome");
+  const gate = localStorage.getItem("riderGate");
+
+  if(name)  document.getElementById("riderName").value = name;
+  if(phone) document.getElementById("riderPhone").value = phone;
+  if(home)  document.getElementById("pickup").value = home;
+  if(gate)  document.getElementById("gateCode").value = gate;
+}
+
+/* =======================================================
+   SHOW LUGGAGE FOR AIRPORT
+======================================================= */
+function detectAirport(addr){
+  if(!addr) return false;
+  addr = addr.toLowerCase();
+  return (
+    addr.includes("will rogers") ||
+    addr.includes("okc airport") ||
+    addr.includes("terminal") ||
+    addr.includes("airport")
+  );
+}
+
+document.getElementById("pickup").addEventListener("input", checkLuggage);
+document.getElementById("dropoff").addEventListener("input", checkLuggage);
+
+function checkLuggage(){
+  const p = document.getElementById("pickup").value;
+  const d = document.getElementById("dropoff").value;
+  const show = detectAirport(p) || detectAirport(d);
+  document.getElementById("luggageGroup").style.display = show ? "block":"none";
+}
+
+/* =======================================================
+   SHOW SCHEDULE INPUT
+======================================================= */
+document.getElementById("timeType").addEventListener("change", e=>{
+  document.getElementById("scheduledGroup").style.display =
+    e.target.value==="schedule" ? "block":"none";
+});
+
+/* =======================================================
+   SUBMIT RIDE REQUEST
+======================================================= */
+document.getElementById("btnSubmit").addEventListener("click", submitRide);
+
+async function submitRide(){
+  const name = document.getElementById("riderName").value.trim();
+  const phone = document.getElementById("riderPhone").value.trim();
+  const pickup = document.getElementById("pickup").value.trim();
+  const dropoff = document.getElementById("dropoff").value.trim();
+
+  if(!name || !phone || !pickup || !dropoff){
+    showToast("Missing required fields");
     return;
   }
 
-  document.getElementById("riderPhone").value = phone; // locked
+  // Save profile parts
+  localStorage.setItem("riderName", name);
+  localStorage.setItem("riderPhone", phone);
+  localStorage.setItem("riderHome", pickup);
+  localStorage.setItem("riderGate", document.getElementById("gateCode").value.trim());
 
-  try {
-    const res = await fetch(`${PROFILE_API}?riderPhone=${encodeURIComponent(phone)}`);
-    if (!res.ok) return;
+  const stopsRaw = document.getElementById("stops").value.trim();
+  const stopList = stopsRaw ? stopsRaw.split(",").map(s=>({address:s.trim()})) : [];
 
-    const p = await res.json();
+  const partySize = Number(document.getElementById("partySize").value);
+  const luggage = document.getElementById("luggageGroup").style.display==="block"
+      ? Number(document.getElementById("luggage").value)
+      : 0;
 
-    // Prefill main info
-    document.getElementById("riderName").value = p.name || "";
-    document.getElementById("partySize").value = p.partySize || "1";
+  const whenType = document.getElementById("timeType").value;
+  const scheduledFor = whenType==="schedule"
+      ? document.getElementById("scheduledFor").value
+      : null;
 
-    // Address
-    if (p.homeAddress) {
-      document.getElementById("pickupAddress").value = p.homeAddress;
-    }
+  const estimateVal = document.getElementById("estimate").value.replace("$","") || 0;
 
-    // Notes fields
-    document.getElementById("gateCode").value = p.gateCode || "";
-    document.getElementById("pickupNotes").value = p.pickupNotes || "";
-    document.getElementById("travelNotes").value = p.travelNotes || "";
+  const riderId = localStorage.getItem("riderId") || crypto.randomUUID();
+  localStorage.setItem("riderId", riderId);
 
-  } catch (err) {
-    console.warn("Profile prefill error", err);
-  }
-}
-
-document.addEventListener("DOMContentLoaded", loadProfile);
-
-
-/* ===========================================================
-   SUBMIT RIDE REQUEST
-=========================================================== */
-
-async function submitRide() {
-  const phone = localStorage.getItem("riderPhone");
-  if (!phone) return alert("Please log in again.");
-
-  const payload = {
-    type: "INSTANT",
-    source: "RIDER_APP",
-
-    rider: {
-      name: document.getElementById("riderName").value.trim(),
-      phone,
-      partySize: Number(document.getElementById("partySize").value || 1)
-    },
-
-    pickup: {
-      address: document.getElementById("pickupAddress").value.trim(),
-      gateCode: document.getElementById("gateCode").value.trim(),
-      notes: document.getElementById("pickupNotes").value.trim()
-    },
-
-    dropoff: {
-      address: document.getElementById("dropoffAddress").value.trim(),
-      notes: document.getElementById("travelNotes").value.trim()
-    },
-
-    stops: [],
-    pricing: {
-      estimate: window.estimate || 0,
-      travelFee: window.travelFee || 0,
-      ratePlan: window.ratePlan || "STANDARD"
-    }
+  const body = {
+    type: scheduledFor ? "SCHEDULED":"INSTANT",
+    pickup: { address: pickup, gate: document.getElementById("gateCode").value },
+    dropoff: { address: dropoff },
+    stops: stopList,
+    rider: { name, phone, partySize, riderId },
+    pricing: { estimate: Number(estimateVal), travelFee:0 },
+    scheduledFor,
+    source: "RIDER_APP"
   };
 
-  try {
-    const res = await fetch("https://bigred-bookings.bigredtransportation.workers.dev/api/bookings", {
-      method: "POST",
-      headers: {"Content-Type":"application/json"},
-      body: JSON.stringify(payload)
-    });
+  const API = "https://bigred-bookings.bigredtransportation.workers.dev";
 
-    if (!res.ok) throw new Error("Failed");
+  const res = await fetch(`${API}/api/bookings`, {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify(body)
+  });
 
-    const booking = await res.json();
-
-    // Save for MyRide page
-    localStorage.setItem("lastRideId", booking.id);
-
-    window.location.href = `myride.html?id=${booking.id}`;
-
-  } catch (err) {
-    alert("Could not send ride request. Try again.");
+  if(!res.ok){
+    showToast("Error submitting");
+    return;
   }
+
+  const booking = await res.json();
+
+  // Open SMS pre-fill
+  const sms =
+    `sms:+14053784024?body=` +
+    encodeURIComponent(`Ride Request:
+From: ${pickup}
+To: ${dropoff}
+Name: ${name}
+Phone: ${phone}
+Stops: ${stopsRaw || "None"}
+Passengers: ${partySize}
+Luggage: ${luggage}
+Booking ID: ${booking.id}`);
+
+  window.location.href = sms;
 }
 
-document.getElementById("requestBtn").addEventListener("click", submitRide);
+prefillFromProfile();
 </script>
 
 </body>
