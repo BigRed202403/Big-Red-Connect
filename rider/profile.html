@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<title>Big Red Connect — Rider Profile</title>
+
+<link rel="apple-touch-icon" href="/icon.PNG">
+<link rel="icon" type="image/png" href="/icon.PNG">
+<meta name="theme-color" content="#000000">
+
+<style>
+    :root {
+        --red: #b30000;
+        --bg: #000;
+        --panel: #111;
+        --border: #222;
+        --text-muted: #aaa;
+    }
+
+    body {
+        margin: 0;
+        background: var(--bg);
+        color: #fff;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    header {
+        text-align: center;
+        padding: 18px 10px;
+        border-bottom: 2px solid var(--red);
+        background: #000;
+    }
+
+    header img {
+        width: 140px;
+        margin-bottom: 6px;
+    }
+
+    h1 {
+        margin: 0;
+        font-size: 1.3rem;
+        font-weight: 700;
+    }
+
+    .container {
+        padding: 18px;
+        max-width: 520px;
+        margin: 0 auto;
+    }
+
+    label {
+        font-size: .85rem;
+        color: var(--text-muted);
+        margin-bottom: 4px;
+        display: block;
+    }
+
+    input, textarea {
+        width: 100%;
+        padding: 12px;
+        border-radius: 10px;
+        background: #111;
+        border: 1px solid #333;
+        color: #fff;
+        margin-bottom: 16px;
+        font-size: 1rem;
+    }
+
+    textarea {
+        min-height: 80px;
+        resize: vertical;
+    }
+
+    .btn-primary {
+        width: 100%;
+        padding: 14px;
+        background: var(--red);
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        font-size: 1rem;
+        font-weight: 700;
+        margin-top: 10px;
+    }
+
+    .btn-secondary {
+        width: 100%;
+        padding: 12px;
+        background: #111;
+        border: 1px solid #333;
+        color: #fff;
+        border-radius: 10px;
+        font-size: .95rem;
+        margin-top: 16px;
+    }
+
+    #toast {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #111;
+        border: 1px solid var(--red);
+        padding: 12px 20px;
+        border-radius: 999px;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity .25s;
+        z-index: 999;
+    }
+    #toast.show { opacity: 1; }
+</style>
+</head>
+
+<body>
+
+<header>
+    <img src="/official_logo_Nov.png">
+    <h1>Your Rider Profile</h1>
+</header>
+
+<div class="container">
+
+    <label>Name</label>
+    <input id="nameInput" type="text" placeholder="Your name">
+
+    <label>Phone (read-only)</label>
+    <input id="phoneInput" type="text" disabled>
+
+    <label>Home / Usual Pickup Address</label>
+    <input id="homeInput" type="text" placeholder="123 Main St, Moore OK">
+
+    <label>Gate Code (if applicable)</label>
+    <input id="gateInput" type="text" placeholder="Gate / entry code">
+
+    <label>Notes (visible only to you and the driver)</label>
+    <textarea id="notesInput" placeholder="Apartment building, preferred pickup spot, etc."></textarea>
+
+    <button class="btn-primary" id="btnSave">Save Profile</button>
+
+    <button class="btn-secondary" onclick="window.location.href='/rider/rider.html'">
+        ← Back to Rider Hub
+    </button>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const API = "https://bigred-bookings.bigredtransportation.workers.dev";
+
+// Toast helper
+function showToast(msg) {
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    setTimeout(() => t.classList.remove("show"), 1800);
+}
+
+// Load localStorage copy + fetch KV copy
+async function loadProfile() {
+    const local = JSON.parse(localStorage.getItem("brc_rider_profile") || "{}");
+
+    // Prefill from localStorage immediately
+    document.getElementById("nameInput").value  = local.name  || "";
+    document.getElementById("phoneInput").value = local.phone || "";
+    document.getElementById("homeInput").value  = local.home  || "";
+    document.getElementById("gateInput").value  = local.gate  || "";
+    document.getElementById("notesInput").value = local.notes || "";
+
+    // If phone is missing, redirect → login
+    if (!local.phone) {
+        showToast("Login required");
+        setTimeout(() => window.location.href = "/rider-login.html", 900);
+        return;
+    }
+
+    try {
+        const res = await fetch(`${API}/api/rider/profile?phone=${encodeURIComponent(local.phone)}`);
+        if (res.ok) {
+            const kv = await res.json();
+            // Overwrite with KV data if exists
+            document.getElementById("nameInput").value = kv.name || "";
+            document.getElementById("homeInput").value = kv.home || "";
+            document.getElementById("gateInput").value = kv.gate || "";
+            document.getElementById("notesInput").value = kv.notes || "";
+        }
+    } catch (e) {
+        console.warn("KV load failed", e);
+    }
+}
+
+// Save to KV + localStorage
+async function saveProfile() {
+    const profile = {
+        name:  document.getElementById("nameInput").value.trim(),
+        phone: document.getElementById("phoneInput").value.trim(),
+        home:  document.getElementById("homeInput").value.trim(),
+        gate:  document.getElementById("gateInput").value.trim(),
+        notes: document.getElementById("notesInput").value.trim()
+    };
+
+    // Save local copy
+    localStorage.setItem("brc_rider_profile", JSON.stringify(profile));
+
+    // Push to KV
+    try {
+        const res = await fetch(`${API}/api/rider/profile`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(profile)
+        });
+
+        if (res.ok) {
+            showToast("Saved!");
+        } else {
+            showToast("Save failed");
+        }
+    } catch (e) {
+        showToast("Network error");
+    }
+}
+
+document.getElementById("btnSave").addEventListener("click", saveProfile);
+
+loadProfile();
+</script>
+
+</body>
+</html>
