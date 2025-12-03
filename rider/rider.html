@@ -5,10 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Rider Hub – Big Red Connect</title>
 
-  <!-- Icons -->
   <link rel="apple-touch-icon" href="/icon.PNG">
   <link rel="icon" type="image/png" sizes="192x192" href="/icon.PNG">
-  <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#000"/>
 
   <style>
@@ -17,166 +15,162 @@
       background:#000;
       color:#fff;
       font-family:-apple-system, BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-      padding-bottom:70px; /* Make room for footer nav */
     }
 
+    /* HEADER */
     header {
-      padding:15px 12px;
-      display:flex;
-      align-items:center;
-      gap:12px;
-      border-bottom:2px solid #b30000;
       background:#000;
+      padding:12px;
+      border-bottom:2px solid #b30000;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
       position:sticky;
       top:0;
-      z-index:12;
+      z-index:50;
     }
 
-    header img { height:46px; }
+    .logo {
+      height:42px;
+    }
+
+    .header-left {
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+
+    .header-title {
+      font-weight:700;
+      font-size:1rem;
+    }
+
+    #menuBtn {
+      font-size:1.6rem;
+      background:none;
+      border:none;
+      color:white;
+      cursor:pointer;
+    }
+
+    /* MENU */
+    #menuPanel {
+      display:none;
+      flex-direction:column;
+      background:#111;
+      border-bottom:2px solid #b30000;
+      animation:drop .15s ease-out;
+    }
+
+    #menuPanel a {
+      padding:16px;
+      color:#fff;
+      text-decoration:none;
+      border-bottom:1px solid #222;
+      font-size:1rem;
+    }
+    #menuPanel a:hover {
+      background:#222;
+    }
+
+    @keyframes drop {
+      from { opacity:0; transform:translateY(-10px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+
+    /* CONTENT */
+    .container {
+      padding:20px;
+      text-align:center;
+    }
 
     h1 {
-      text-align:center;
-      margin:20px 0 10px;
       font-size:1.5rem;
-      font-weight:700;
-    }
-
-    .section {
-      width:calc(100% - 24px);
-      margin:20px auto;
-      background:#111;
-      border:1px solid #222;
-      border-radius:12px;
-      padding:16px;
-    }
-
-    .section-title {
-      font-size:1.1rem;
       margin-bottom:10px;
-      font-weight:700;
-      color:#ffdddd;
     }
 
-    .info-line {
-      font-size:.9rem;
-      margin:6px 0;
-      color:#ccc;
+    .welcome {
+      color:#bbb;
+      margin-bottom:26px;
+      font-size:.95rem;
     }
 
-    .btn-big {
+    .btn {
       display:block;
       width:100%;
-      margin:14px auto;
-      padding:15px;
+      max-width:340px;
+      margin:12px auto;
+      padding:18px;
       background:#b30000;
       color:#fff;
-      text-align:center;
-      font-weight:700;
-      border-radius:10px;
       text-decoration:none;
-      font-size:1.05rem;
+      font-size:1.15rem;
+      border-radius:12px;
+      font-weight:700;
     }
 
-    .danger {
-      background:#660000;
+    .btn-secondary {
+      background:#111;
+      border:1px solid #333;
     }
 
-    /* Bottom Navigation (A1) */
-    .nav-footer {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      background: #000;
-      border-top: 2px solid #b30000;
-      display: flex;
-      justify-content: space-between;
-      padding: 8px;
-      z-index: 50;
-    }
-
-    .nav-btn {
-      flex: 1;
-      margin: 0 4px;
-      background: #b30000;
-      color: #fff;
-      text-align: center;
-      padding: 10px 0;
-      border-radius: 10px;
-      font-weight: 700;
-      font-size: .9rem;
-      text-decoration: none;
-    }
   </style>
 </head>
 
 <body>
 
+<!-- HEADER -->
 <header>
-  <img src="/icon.PNG"/>
-  <div>
-    <div style="font-weight:700;">Big Red Connect</div>
-    <div style="font-size:.8rem;color:#888;">Rider Hub</div>
+  <div class="header-left">
+    <a href="/index.html"><img src="/icon.PNG" class="logo"></a>
+    <div class="header-title">Rider Hub</div>
   </div>
+  <button id="menuBtn">☰</button>
 </header>
 
-<h1>Your Rider Hub</h1>
+<!-- MENU -->
+<nav id="menuPanel">
+  <a href="/rider/rider.html">Rider Hub</a>
+  <a href="/rider/ride-request.html">Request a Ride</a>
+  <a href="/rider/myride.html">My Ride</a>
+  <a href="/rider/profile.html">Profile</a>
+  <a href="#" id="logoutBtn">Log Out</a>
+</nav>
 
-<div class="section">
-  <div class="section-title">Your Info</div>
-  <div class="info-line" id="displayName">Name: —</div>
-  <div class="info-line" id="displayPhone">Phone: —</div>
-  <div class="info-line" id="displayHome">Home: —</div>
-  <a href="/rider/profile.html" class="btn-big">Edit Profile</a>
+<!-- MAIN CONTENT -->
+<div class="container">
+  <h1>Welcome</h1>
+  <div id="welcomeName" class="welcome"></div>
+
+  <a class="btn" href="/rider/ride-request.html">Request a Ride</a>
+  <a class="btn" href="/rider/myride.html">My Ride</a>
+  <a class="btn btn-secondary" href="/rider/profile.html">Profile</a>
 </div>
-
-<div class="section">
-  <div class="section-title">Rides</div>
-  <a href="/rider/ride-request.html" class="btn-big">Request a Ride</a>
-  <a href="/rider/myride.html" class="btn-big">View My Rides</a>
-</div>
-
-<div class="section">
-  <div class="section-title">Account</div>
-  <a id="btnLogout" class="btn-big danger">Log Out</a>
-</div>
-
-<!-- Bottom Navigation -->
-<footer class="nav-footer">
-  <a href="/rider/rider.html" class="nav-btn">🏠 Home</a>
-  <a href="/rider/ride-request.html" class="nav-btn">🚗 Request</a>
-  <a href="/rider/profile.html" class="nav-btn">👤 Profile</a>
-</footer>
 
 <script>
-/* ======================================================
-   LOAD PROFILE FROM LOCALSTORAGE
-====================================================== */
-function loadProfile(){
-  const name  = localStorage.getItem("riderName")  || "—";
-  const phone = localStorage.getItem("riderPhone") || "—";
-  const home  = localStorage.getItem("riderHome")  || "—";
+/* MENU TOGGLE */
+document.getElementById("menuBtn").addEventListener("click", () => {
+  const panel = document.getElementById("menuPanel");
+  panel.style.display = panel.style.display === "flex" ? "none" : "flex";
+});
 
-  document.getElementById("displayName").textContent  = "Name: " + name;
-  document.getElementById("displayPhone").textContent = "Phone: " + phone;
-  document.getElementById("displayHome").textContent  = "Home: " + home;
-}
-
-/* ======================================================
-   LOG OUT (clears riderId + profile)
-====================================================== */
-document.getElementById("btnLogout").addEventListener("click", ()=>{
+/* LOGOUT */
+document.getElementById("logoutBtn").addEventListener("click", () => {
   localStorage.removeItem("riderId");
   localStorage.removeItem("riderName");
   localStorage.removeItem("riderPhone");
   localStorage.removeItem("riderHome");
   localStorage.removeItem("riderGate");
 
-  // Reset to login
-  window.location.href = "/rider/rider-login.html";
+  window.location.href = "/index.html";
 });
 
-loadProfile();
+/* PERSONALIZED WELCOME */
+const n = localStorage.getItem("riderName");
+document.getElementById("welcomeName").textContent = n
+  ? `Hi ${n}, let’s get you moving.`
+  : `Let’s get you moving.`;
+
 </script>
 
 </body>
