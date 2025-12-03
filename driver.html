@@ -61,8 +61,8 @@
       font-weight:600;
     }
     .btn-primary { background:var(--red); color:#fff; }
-    .btn-ghost { background:#111; color:#fff; border:1px solid #444; }
-    .btn-notify { background:#111; color:#fff; border:1px solid #555; }
+    .btn-ghost   { background:#111; color:#fff; border:1px solid #444; }
+    .btn-notify  { background:#111; color:#fff; border:1px solid #555; }
 
     .grid {
       padding:12px;
@@ -131,12 +131,21 @@
 
     .loc-line { margin:4px 0; font-size:.78rem; }
 
+    .eta-line {
+      margin-top:4px;
+      font-size:.78rem;
+      color:#ccc;
+    }
+
     .card-footer {
       border-top:1px solid #222;
       margin-top:8px;
       padding-top:6px;
       display:flex;
       justify-content:space-between;
+      align-items:center;
+      gap:6px;
+      flex-wrap:wrap;
     }
 
     select.status-dropdown {
@@ -147,7 +156,7 @@
       border-radius:6px;
     }
 
-    /* NEW — Vehicle Selector */
+    /* Vehicle Selector */
     .vehicle-select-row {
       display:flex;
       align-items:center;
@@ -171,6 +180,21 @@
       border-radius:6px;
       font-size:.8rem;
     }
+
+    /* Chips (actions) */
+    .chip {
+      padding:4px 8px;
+      border-radius:999px;
+      border:1px solid #444;
+      background:#111;
+      color:#eee;
+      font-size:.7rem;
+      cursor:pointer;
+      text-decoration:none;
+      display:inline-block;
+    }
+    .chip.primary { border-color:var(--red); color:#ffdada; }
+    .chip.muted   { border-color:#444; color:#ccc; }
 
     #toast {
       position:fixed;
@@ -286,6 +310,7 @@ let scope = "active";
 async function fetchBookings() {
   try {
     const res = await fetch(`${API}/api/driver/bookings?scope=${scope}&t=${Date.now()}`);
+    if (!res.ok) throw new Error("HTTP " + res.status);
     const data = await res.json();
     renderAll(data);
   } catch (e) {
@@ -303,9 +328,9 @@ function renderAll(list) {
   renderColumn("listActive", activeArr);
   renderColumn("listDone", doneArr);
 
-  document.getElementById("countNew").textContent = newArr.length;
+  document.getElementById("countNew").textContent    = newArr.length;
   document.getElementById("countActive").textContent = activeArr.length;
-  document.getElementById("countDone").textContent = doneArr.length;
+  document.getElementById("countDone").textContent   = doneArr.length;
 }
 
 function renderColumn(id, arr) {
@@ -321,7 +346,16 @@ function renderColumn(id, arr) {
     const div = document.createElement("div");
     div.className = "card";
 
-    const est = b.pricing?.estimate ? `$${b.pricing.estimate.toFixed(2)}` : "--";
+    const estFare = b.pricing?.estimate
+      ? `$${b.pricing.estimate.toFixed(2)}`
+      : "--";
+
+    const estMinutes = b.metrics?.minutes
+      ? `${Math.round(b.metrics.minutes)} min`
+      : null;
+
+    const rideId = b.id;
+    const isEnrouteOrArrived = ["ENROUTE","ARRIVED"].includes(b.status);
 
     div.innerHTML = `
       <div class="card-label-row">
@@ -330,24 +364,27 @@ function renderColumn(id, arr) {
       </div>
 
       <div class="loc-line">FROM: ${b.pickup.address}</div>
-
-      ${b.stops?.length ? `<div class="loc-line">STOPS: ${b.stops.map(s=>s.address).join(" → ")}</div>` : ""}
-
+      ${
+        b.stops?.length
+          ? `<div class="loc-line">STOPS: ${b.stops.map(s=>s.address).join(" → ")}</div>`
+          : ""
+      }
       <div class="loc-line">TO: ${b.dropoff.address}</div>
 
-      <!-- NEW VEHICLE SELECTOR -->
+      <!-- VEHICLE SELECTOR -->
       <div class="vehicle-select-row">
-        <img src="${b.vehicle?.image || '/Black Acadia Thumbnail.PNG'}" class="vehicle-thumb" id="vehImg-${b.id}">
-        <select class="vehicle-dropdown" data-id="${b.id}" id="vehSel-${b.id}">
-          <option value="BLACK_ACADIA" 
-                  data-label="Black GMC Acadia (SUV)" 
+        <img src="${b.vehicle?.image || '/Black Acadia Thumbnail.PNG'}"
+             class="vehicle-thumb"
+             id="vehImg-${rideId}">
+        <select class="vehicle-dropdown" data-id="${rideId}" id="vehSel-${rideId}">
+          <option value="BLACK_ACADIA"
+                  data-label="Black GMC Acadia (SUV)"
                   data-img="/Black Acadia Thumbnail.PNG"
-                  ${b.vehicle?.code === "BLACK_ACADIA" ? "selected" : ""}>
+                  ${b.vehicle?.code === "BLACK_ACADIA" || !b.vehicle ? "selected" : ""}>
             Black GMC Acadia (SUV)
           </option>
-
           <option value="BIG_RED"
-                  data-label="Big Red"
+                  data-label="Big Red (Red Silverado)"
                   data-img="/Big Red Thumbnail.PNG"
                   ${b.vehicle?.code === "BIG_RED" ? "selected" : ""}>
             Big Red (Red Silverado)
@@ -355,11 +392,16 @@ function renderColumn(id, arr) {
         </select>
       </div>
 
-      <div style="margin-top:6px;">Est: ${est}</div>
+      <div style="margin-top:6px;">Est Fare: ${estFare}</div>
+      ${
+        estMinutes
+          ? `<div class="eta-line">Est. ride time (from calculator): ${estMinutes}</div>`
+          : ""
+      }
 
       <div class="card-footer">
         <div>
-          <select class="status-dropdown" data-id="${b.id}">
+          <select class="status-dropdown" data-id="${rideId}">
             <option ${b.status==="REQUESTED"?"selected":""}>REQUESTED</option>
             <option ${b.status==="ACCEPTED"?"selected":""}>ACCEPTED</option>
             <option ${b.status==="ENROUTE"?"selected":""}>ENROUTE</option>
@@ -369,8 +411,22 @@ function renderColumn(id, arr) {
           </select>
         </div>
 
-        <div style="font-size:.75rem;color:#bbb;">
-          Rider: ${b.rider?.name || "—"}
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+          <div style="font-size:.75rem;color:#bbb;">
+            Rider: ${b.rider?.name || "—"}
+          </div>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;">
+            ${
+              b.rider?.phone
+                ? `<a class="chip muted" href="sms:${b.rider.phone}">Text Rider</a>`
+                : ""
+            }
+            ${
+              isEnrouteOrArrived
+                ? `<a class="chip primary" href="https://location-reader.bigredtransportation.workers.dev/?id=${rideId}" target="_blank">Live Map</a>`
+                : ""
+            }
+          </div>
         </div>
       </div>
     `;
@@ -388,16 +444,21 @@ document.body.addEventListener("change", async (e) => {
   const id = e.target.dataset.id;
   const newState = e.target.value;
 
-  const res = await fetch(`${API}/api/driver/bookings/${id}`, {
-    method:"PUT",
-    headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({ status:newState })
-  });
+  try {
+    const res = await fetch(`${API}/api/driver/bookings/${id}`, {
+      method:"PUT",
+      headers:{ "Content-Type":"application/json" },
+      body:JSON.stringify({ status:newState })
+    });
 
-  if (res.ok) {
-    showToast(`Status → ${newState}`);
-    fetchBookings();
-  } else {
+    if (res.ok) {
+      showToast(`Status → ${newState}`);
+      fetchBookings();
+    } else {
+      showToast("Update failed");
+    }
+  } catch (err) {
+    console.error(err);
     showToast("Update failed");
   }
 });
@@ -412,32 +473,37 @@ document.body.addEventListener("change", async (e) => {
   const option = e.target.selectedOptions[0];
 
   const vehicle = {
-    code: option.value,
+    code:  option.value,
     label: option.dataset.label,
     image: option.dataset.img
   };
 
   // Update thumbnail instantly
   const img = document.querySelector(`#vehImg-${id}`);
-  img.src = vehicle.image;
+  if (img) img.src = vehicle.image;
 
-  const res = await fetch(`${API}/api/driver/bookings/${id}`, {
-    method:"PUT",
-    headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({ vehicle })
-  });
+  try {
+    const res = await fetch(`${API}/api/driver/bookings/${id}`, {
+      method:"PUT",
+      headers:{ "Content-Type":"application/json" },
+      body:JSON.stringify({ vehicle })
+    });
 
-  if (res.ok) showToast("Vehicle updated");
-  else showToast("Update failed");
+    if (res.ok) showToast("Vehicle updated");
+    else       showToast("Update failed");
+  } catch (err) {
+    console.error(err);
+    showToast("Update failed");
+  }
 });
 
 /* ======================================================
    SCOPE + REFRESH
 ====================================================== */
 document.querySelector("#btnScope").addEventListener("click", () => {
-  if (scope === "active") { scope = "upcoming"; }
-  else if (scope === "upcoming") { scope = "all"; }
-  else { scope = "active"; }
+  if (scope === "active")      scope = "upcoming";
+  else if (scope === "upcoming") scope = "all";
+  else                          scope = "active";
 
   document.querySelector("#btnScope").textContent = `📋 ${scope}`;
   fetchBookings();
@@ -453,7 +519,6 @@ document.querySelector("#btnRefresh").addEventListener("click", () => {
 ====================================================== */
 setInterval(fetchBookings, 20000);
 fetchBookings();
-
 </script>
 
 </body>
