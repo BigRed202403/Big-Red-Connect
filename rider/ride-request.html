@@ -1,242 +1,144 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Request a Ride – Big Red Connect</title>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Request a Ride – Big Red Connect</title>
 
-  <!-- Icons / PWA -->
-  <link rel="apple-touch-icon" href="/icon.PNG">
-  <link rel="icon" type="image/png" sizes="192x192" href="/icon.PNG">
-  <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#000"/>
+<!-- Icons -->
+<link rel="apple-touch-icon" href="/icon.PNG">
+<link rel="icon" type="image/png" sizes="192x192" href="/icon.PNG">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#000"/>
 
-  <style>
-    body {
-      margin:0;
-      background:#000;
-      color:#fff;
-      font-family:-apple-system, BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-      padding-bottom:40px;
-    }
+<!-- Google Maps Autocomplete -->
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5GOBSnINeO5hcS3Ks5I&libraries=places"></script>
 
-    /* HEADER + MENU (shared pattern) */
-    header {
-      background:#000;
-      padding:12px;
-      border-bottom:2px solid #b30000;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      position:sticky;
-      top:0;
-      z-index:50;
-    }
-    .header-left {
-      display:flex;
-      align-items:center;
-      gap:10px;
-    }
-    .logo {
-      height:42px;
-    }
-    .header-title {
-      font-weight:700;
-      font-size:1rem;
-    }
-    #menuBtn {
-      font-size:1.6rem;
-      background:none;
-      border:none;
-      color:white;
-      cursor:pointer;
-    }
-    #menuPanel {
-      display:none;
-      flex-direction:column;
-      background:#111;
-      border-bottom:2px solid #b30000;
-      animation:drop .15s ease-out;
-    }
-    #menuPanel a {
-      padding:16px;
-      color:#fff;
-      text-decoration:none;
-      border-bottom:1px solid #222;
-      font-size:1rem;
-    }
-    #menuPanel a:hover { background:#222; }
+<style>
+  body {
+    margin:0;
+    background:#000;
+    color:#fff;
+    font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    padding-bottom:60px;
+  }
 
-    @keyframes drop {
-      from { opacity:0; transform:translateY(-10px); }
-      to   { opacity:1; transform:translateY(0); }
-    }
+  /* Header */
+  header {
+    background:#000;
+    padding:12px;
+    border-bottom:2px solid #b30000;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    position:sticky;
+    top:0;
+    z-index:50;
+  }
+  .header-left { display:flex; align-items:center; gap:10px; }
+  .logo { height:42px; cursor:pointer; }
 
-    /* MAIN LAYOUT */
-    h1 {
-      text-align:center;
-      margin:18px 0 8px;
-      font-size:1.4rem;
-      font-weight:700;
-    }
+  #menuBtn {
+    font-size:1.6rem;
+    background:none;
+    color:white;
+    border:none;
+    cursor:pointer;
+  }
 
-    .subtitle {
-      text-align:center;
-      color:#aaa;
-      font-size:.9rem;
-      margin-bottom:16px;
-    }
+  #menuPanel {
+    display:none;
+    flex-direction:column;
+    background:#111;
+    border-bottom:2px solid #b30000;
+  }
+  #menuPanel a {
+    padding:16px;
+    color:#fff;
+    text-decoration:none;
+    border-bottom:1px solid #222;
+    font-size:1rem;
+  }
+  #menuPanel a:hover { background:#222; }
 
-    .form {
-      width:calc(100% - 24px);
-      max-width:480px;
-      margin:0 auto;
-    }
+  h1 {
+    text-align:center;
+    margin:20px 0 10px;
+    font-size:1.4rem;
+    font-weight:700;
+  }
 
-    .input-group {
-      margin-bottom:14px;
-    }
-    label {
-      display:block;
-      font-size:.85rem;
-      margin-bottom:4px;
-      color:#ccc;
-    }
-    input, select, textarea {
-      width:100%;
-      padding:12px;
-      background:#111;
-      border:1px solid #333;
-      border-radius:8px;
-      color:#fff;
-      font-size:.95rem;
-    }
-    input::placeholder {
-      color:#555;
-    }
+  .form { width:calc(100% - 24px); margin:10px auto; }
+  .input-group { margin-bottom:14px; }
+  label {
+    display:block;
+    font-size:.85rem;
+    margin-bottom:4px;
+    color:#ccc;
+  }
+  input, select {
+    width:100%;
+    padding:12px;
+    background:#111;
+    border:1px solid #333;
+    border-radius:8px;
+    color:#fff;
+    font-size:.95rem;
+  }
 
-    .row-inline {
-      display:flex;
-      gap:10px;
-    }
-    .row-inline > div {
-      flex:1;
-    }
+  .btn {
+    display:block;
+    width:100%;
+    margin-top:14px;
+    padding:14px;
+    background:#b30000;
+    color:#fff;
+    text-align:center;
+    font-weight:700;
+    border-radius:10px;
+    text-decoration:none;
+    font-size:1.05rem;
+  }
+  .btn-small {
+    width:100%;
+    background:#111;
+    border:1px solid #444;
+    padding:10px;
+    text-align:center;
+    border-radius:8px;
+    font-size:.85rem;
+    margin-bottom:10px;
+  }
 
-    .btn-primary {
-      display:block;
-      width:100%;
-      padding:16px;
-      margin-top:16px;
-      background:#b30000;
-      color:#fff;
-      text-align:center;
-      font-weight:700;
-      border-radius:10px;
-      text-decoration:none;
-      font-size:1.05rem;
-    }
-
-    .btn-ghost {
-      display:block;
-      width:100%;
-      padding:12px;
-      margin-top:10px;
-      background:#111;
-      border:1px solid #333;
-      color:#fff;
-      text-align:center;
-      border-radius:10px;
-      text-decoration:none;
-      font-size:.95rem;
-    }
-
-    .btn-small {
-      padding:8px 10px;
-      font-size:.8rem;
-      border-radius:999px;
-      background:#111;
-      border:1px solid #444;
-      color:#fff;
-      cursor:pointer;
-    }
-
-    .add-stop-row {
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      margin-bottom:6px;
-    }
-    .add-stop-row span {
-      font-size:.85rem;
-      color:#aaa;
-    }
-
-    .stop-row {
-      display:flex;
-      align-items:center;
-      gap:6px;
-      margin-bottom:8px;
-    }
-    .stop-row input {
-      flex:1;
-    }
-    .stop-remove {
-      background:#220000;
-      border:1px solid #b30000;
-      border-radius:999px;
-      color:#fff;
-      width:30px;
-      height:30px;
-      text-align:center;
-      font-size:1rem;
-      line-height:28px;
-      cursor:pointer;
-    }
-
-    #holidayBanner {
-      display:none;
-      background:#331111;
-      border:1px solid #b30000;
-      padding:10px;
-      border-radius:8px;
-      margin-bottom:15px;
-      color:#ffcccc;
-      font-size:.85rem;
-    }
-
-    #toast {
-      position:fixed;
-      bottom:22px;
-      left:50%;
-      transform:translateX(-50%);
-      background:#111;
-      border:1px solid #b30000;
-      padding:10px 18px;
-      border-radius:999px;
-      opacity:0;
-      pointer-events:none;
-      transition:.25s;
-      z-index:99;
-      font-size:.9rem;
-    }
-    #toast.show { opacity:1; }
-
-  </style>
+  #toast {
+    position:fixed;
+    bottom:22px;
+    left:50%;
+    transform:translateX(-50%);
+    background:#111;
+    border:1px solid #b30000;
+    padding:10px 18px;
+    border-radius:999px;
+    opacity:0;
+    pointer-events:none;
+    transition:.25s;
+    z-index:999;
+  }
+  #toast.show { opacity:1; }
+</style>
 </head>
 
 <body>
 
-<!-- HEADER -->
 <header>
   <div class="header-left">
-    <a href="/index.html"><img src="/icon.PNG" class="logo" alt="Big Red Connect logo"></a>
-    <div class="header-title">Request a Ride</div>
+    <img src="/icon.PNG" class="logo" onclick="window.location.href='/index.html';">
+    <div style="font-weight:700;font-size:1rem;">Request a Ride</div>
   </div>
   <button id="menuBtn">☰</button>
 </header>
 
-<!-- MENU -->
+<!-- MENU PANEL -->
 <nav id="menuPanel">
   <a href="/rider/rider.html">Rider Hub</a>
   <a href="/rider/ride-request.html">Request a Ride</a>
@@ -246,16 +148,9 @@
 </nav>
 
 <h1>Request a Ride</h1>
-<div class="subtitle">Quick, simple, flat-rate request straight to Big Red.</div>
 
 <div class="form">
 
-  <!-- Holiday Banner (basic date-based, can be tuned later) -->
-  <div id="holidayBanner">
-    🎄 Holiday rate may apply on select peak dates. I’ll always confirm your total before you ride.
-  </div>
-
-  <!-- NAME/PHONE -->
   <div class="input-group">
     <label>Your Name</label>
     <input id="riderName" placeholder="Your name">
@@ -266,427 +161,274 @@
     <input id="riderPhone" placeholder="555-555-5555" inputmode="tel">
   </div>
 
-  <!-- PICKUP -->
   <div class="input-group">
     <label>Pickup Address</label>
-    <input id="pickup" class="addr-input" placeholder="Where should I pick you up?">
+    <input id="pickup" placeholder="Where should we pick you up?">
   </div>
 
-  <!-- GATE CODE -->
   <div class="input-group">
-    <label>Gate Code / Access Notes (optional)</label>
-    <input id="gateCode" placeholder="Gate code, building, apartment…">
+    <label>Gate / Access Code (optional)</label>
+    <input id="gateCode" placeholder="Gate code, building, apt…">
   </div>
 
-  <!-- STOPS -->
-  <div class="input-group">
-    <div class="add-stop-row">
-      <span>Optional Stops</span>
-      <button type="button" id="addStopBtn" class="btn-small">+ Add a Stop</button>
-    </div>
-    <div id="stopsContainer"></div>
-  </div>
+  <!-- Dynamic Stops -->
+  <button class="btn-small" id="btnAddStop">➕ Add Stop</button>
+  <div id="stopsContainer"></div>
 
-  <!-- DROPOFF -->
   <div class="input-group">
     <label>Dropoff Address</label>
-    <input id="dropoff" class="addr-input" placeholder="Where are you going?">
+    <input id="dropoff" placeholder="Where are you going?">
   </div>
 
-  <!-- PASSENGERS + LUGGAGE -->
-  <div class="row-inline">
-    <div class="input-group">
-      <label>Passengers</label>
-      <select id="partySize">
-        <option value="1">1</option>
-        <option value="2">2</option>
-        <option value="3">3</option>
-        <option value="4">4</option>
-        <option value="5">5</option>
-        <option value="6">6</option>
-      </select>
-    </div>
-
-    <div class="input-group" id="luggageGroup" style="display:none;">
-      <label>Luggage</label>
-      <select id="luggage">
-        <option value="0">0</option>
-        <option value="1">1</option>
-        <option value="2">2</option>
-        <option value="3">3+</option>
-      </select>
-    </div>
-  </div>
-
-  <!-- WHEN -->
-  <div class="row-inline">
-    <div class="input-group">
-      <label>When?</label>
-      <select id="timeType">
-        <option value="now">Right now</option>
-        <option value="schedule">Schedule a time</option>
-      </select>
-    </div>
-
-    <div class="input-group" id="scheduledGroup" style="display:none;">
-      <label>Pick a Time</label>
-      <input type="datetime-local" id="scheduledFor">
-    </div>
-  </div>
-
-  <!-- ESTIMATE (placeholder only for now) -->
   <div class="input-group">
-    <label>Estimated Fare (shown after confirm)</label>
-    <input id="estimate" disabled placeholder="Will be confirmed directly by Big Red">
+    <label>Passengers</label>
+    <select id="partySize">
+      <option value="1">1</option>
+      <option value="2">2</option>
+      <option value="3">3</option>
+      <option value="4">4</option>
+      <option value="5">5+</option>
+    </select>
   </div>
 
-  <a href="javascript:void(0)" class="btn-primary" id="btnSubmit">Submit Ride Request</a>
-  <a href="/rider/rider.html" class="btn-ghost">Back to Rider Hub</a>
+  <div class="input-group" id="luggageGroup" style="display:none;">
+    <label>Luggage (airport ride)</label>
+    <select id="luggage">
+      <option value="0">0</option>
+      <option value="1">1</option>
+      <option value="2">2</option>
+      <option value="3">3+</option>
+    </select>
+  </div>
+
+  <div class="input-group">
+    <label>When?</label>
+    <select id="timeType">
+      <option value="now">Right now</option>
+      <option value="schedule">Schedule a time</option>
+    </select>
+  </div>
+
+  <div class="input-group" id="scheduledGroup" style="display:none;">
+    <label>Pick a Time</label>
+    <input type="datetime-local" id="scheduledFor">
+  </div>
+
+  <div class="input-group">
+    <label>Estimated Fare</label>
+    <input id="estimate" disabled placeholder="$0.00">
+  </div>
+
+  <a class="btn" id="btnSubmit">Submit Ride Request</a>
 
 </div>
 
 <div id="toast"></div>
 
 <script>
-/* =========================
-   SIMPLE TOAST
-========================= */
+/* MENU LOGIC */
+document.getElementById("menuBtn").addEventListener("click",()=>{
+  const m=document.getElementById("menuPanel");
+  m.style.display=(m.style.display==="flex"?"none":"flex");
+});
+document.getElementById("logoutBtn").addEventListener("click",()=>{
+  localStorage.clear();
+  window.location.href="/index.html";
+});
+
+/* TOAST */
 function showToast(msg){
-  const t = document.getElementById("toast");
-  t.textContent = msg;
+  const t=document.getElementById("toast");
+  t.textContent=msg;
   t.classList.add("show");
-  setTimeout(() => t.classList.remove("show"), 1900);
+  setTimeout(()=>t.classList.remove("show"),1800);
 }
 
-/* =========================
-   HEADER MENU + LOGOUT
-========================= */
-document.getElementById("menuBtn").addEventListener("click", () => {
-  const panel = document.getElementById("menuPanel");
-  panel.style.display = panel.style.display === "flex" ? "none" : "flex";
-});
-
-document.getElementById("logoutBtn").addEventListener("click", () => {
-  localStorage.removeItem("riderId");
-  localStorage.removeItem("riderName");
-  localStorage.removeItem("riderPhone");
-  localStorage.removeItem("riderHome");
-  localStorage.removeItem("riderGate");
-  window.location.href = "/index.html";
-});
-
-/* =========================
-   PREFILL FROM PROFILE (local)
-========================= */
-function prefillFromProfile(){
-  const name = localStorage.getItem("riderName");
-  const phone = localStorage.getItem("riderPhone");
-  const home = localStorage.getItem("riderHome");
-  const gate = localStorage.getItem("riderGate");
-
-  if (name)  document.getElementById("riderName").value = name;
-  if (phone) document.getElementById("riderPhone").value = phone;
-  if (home)  document.getElementById("pickup").value = home;
-  if (gate)  document.getElementById("gateCode").value = gate;
+/* PREFILL FROM PROFILE */
+function prefill(){
+  ["riderName","riderPhone","riderHome","riderGate"].forEach(k=>{
+    const v=localStorage.getItem(k);
+    if(v){
+      if(k==="riderHome") document.getElementById("pickup").value=v;
+      else if(k==="riderGate") document.getElementById("gateCode").value=v;
+      else document.getElementById(k).value=v;
+    }
+  });
 }
 
-/* =========================
-   HOLIDAY BANNER (simple rules)
-========================= */
-function checkHolidayBanner(){
-  const d = new Date();
-  const mmdd = String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
-  const holidays = [
-    "11-28", // example: Thanksgiving-ish
-    "12-24", "12-25", // Christmas Eve/Day
-    "12-31", "01-01"  // New Year
-  ];
-  if (holidays.includes(mmdd)) {
-    document.getElementById("holidayBanner").style.display = "block";
-  }
-}
+/* GOOGLE AUTOCOMPLETE SETUP */
+let autoPickup, autoDropoff;
+let autoStops = [];
 
-/* =========================
-   LUGGAGE LOGIC FOR AIRPORT
-========================= */
-function detectAirport(addr){
-  if(!addr) return false;
-  addr = addr.toLowerCase();
-  return (
-    addr.includes("will rogers") ||
-    addr.includes("okc airport") ||
-    addr.includes("terminal") ||
-    addr.includes("airport")
+function initAutocomplete(){
+  // OKC Metro Bounds
+  const okcBounds = new google.maps.LatLngBounds(
+    { lat: 34.8, lng: -98.0 },   // SW
+    { lat: 36.0, lng: -96.0 }    // NE
   );
-}
 
-function updateLuggageVisibility(){
-  const p = document.getElementById("pickup").value;
-  const d = document.getElementById("dropoff").value;
-  const show = detectAirport(p) || detectAirport(d);
-  document.getElementById("luggageGroup").style.display = show ? "block" : "none";
-}
-
-document.getElementById("pickup").addEventListener("input", updateLuggageVisibility);
-document.getElementById("dropoff").addEventListener("input", updateLuggageVisibility);
-
-/* =========================
-   SCHEDULE TOGGLE
-========================= */
-document.getElementById("timeType").addEventListener("change", (e) => {
-  document.getElementById("scheduledGroup").style.display =
-      e.target.value === "schedule" ? "block" : "none";
-});
-
-/* =========================
-   DYNAMIC STOPS
-========================= */
-const MAX_STOPS = 3;
-const stopsContainer = document.getElementById("stopsContainer");
-const addStopBtn = document.getElementById("addStopBtn");
-
-addStopBtn.addEventListener("click", () => {
-  const currentStops = stopsContainer.querySelectorAll(".stop-row").length;
-  if (currentStops >= MAX_STOPS) {
-    showToast(`Max ${MAX_STOPS} stops`);
-    return;
-  }
-  addStopRow("");
-});
-
-function addStopRow(value){
-  const row = document.createElement("div");
-  row.className = "stop-row";
-  const id = "stop-" + Date.now() + "-" + Math.floor(Math.random()*1000);
-
-  row.innerHTML = `
-    <input id="${id}" class="addr-input stop-input" placeholder="Add a stop address" value="${value || ""}">
-    <button type="button" class="stop-remove">✕</button>
-  `;
-  stopsContainer.appendChild(row);
-
-  // Attach remove handler
-  row.querySelector(".stop-remove").addEventListener("click", () => {
-    row.remove();
-  });
-
-  // Attach autocomplete after Maps is ready
-  if (window._attachAutocompleteToInput) {
-    window._attachAutocompleteToInput(document.getElementById(id));
-  }
-}
-
-/* =========================
-   GOOGLE PLACES + LOCATION BIAS
-========================= */
-
-let biasBounds = null;      // LatLngBounds to bias suggestions
-let mapsReady = false;
-const autocompleteInstances = [];
-
-// Called by Google script
-function initPlaces(){
-  mapsReady = true;
-
-  // Determine bias center from status worker or fall back to OKC
-  setupLocationBias().then(() => {
-    // Attach to pickup/dropoff
-    document.querySelectorAll(".addr-input").forEach(input => {
-      attachAutocompleteToInput(input);
-    });
-  });
-}
-
-async function setupLocationBias(){
-  try {
-    const res = await fetch("https://bigred-status-updater.bigredtransportation.workers.dev/status");
-    if (!res.ok) throw new Error("Status HTTP " + res.status);
-    const data = await res.json();
-
-    let center = null;
-
-    if (data && data.location && typeof data.location.lat === "number" && typeof data.location.lng === "number") {
-      center = { lat: data.location.lat, lng: data.location.lng };
-    } else {
-      // Fallback: OKC-ish center
-      center = { lat: 35.4676, lng: -97.5164 };
-    }
-
-    const circle = new google.maps.Circle({
-      center,
-      radius: 40000 // ~25 miles
-    });
-    biasBounds = circle.getBounds();
-  } catch(e) {
-    // Fallback if status worker fails: OKC center, same radius
-    const center = { lat: 35.4676, lng: -97.5164 };
-    const circle = new google.maps.Circle({
-      center,
-      radius: 40000
-    });
-    biasBounds = circle.getBounds();
-  }
-}
-
-function attachAutocompleteToInput(input){
-  if (!mapsReady || !window.google || !google.maps || !google.maps.places) {
-    return;
-  }
-
-  const ac = new google.maps.places.Autocomplete(input, {
-    fields: ["formatted_address", "name", "geometry"],
-    componentRestrictions: { country: "us" }
-  });
-
-  if (biasBounds) {
-    ac.setBounds(biasBounds);
-    ac.setOptions({ strictBounds:false });
-  }
-
-  ac.addListener("place_changed", () => {
-    const place = ac.getPlace();
-    if (place && place.formatted_address) {
-      input.value = place.formatted_address;
-    }
-    // Luggage might depend on these
-    updateLuggageVisibility();
-  });
-
-  autocompleteInstances.push(ac);
-}
-
-// Expose attach function so new stops can use it
-window._attachAutocompleteToInput = attachAutocompleteToInput;
-
-/* =========================
-   SUBMIT RIDE REQUEST
-========================= */
-const API = "https://bigred-bookings.bigredtransportation.workers.dev";
-
-document.getElementById("btnSubmit").addEventListener("click", submitRide);
-
-async function submitRide(){
-  const name    = document.getElementById("riderName").value.trim();
-  const phone   = document.getElementById("riderPhone").value.trim();
-  const pickup  = document.getElementById("pickup").value.trim();
-  const dropoff = document.getElementById("dropoff").value.trim();
-
-  if (!name || !phone || !pickup || !dropoff) {
-    showToast("Please fill name, phone, pickup & dropoff");
-    return;
-  }
-
-  // Save basic profile locally
-  localStorage.setItem("riderName", name);
-  localStorage.setItem("riderPhone", phone);
-  localStorage.setItem("riderHome", pickup);
-  localStorage.setItem("riderGate", document.getElementById("gateCode").value.trim());
-
-  // Build stops array
-  const stopInputs = stopsContainer.querySelectorAll(".stop-input");
-  const stops = [];
-  stopInputs.forEach(i => {
-    const v = i.value.trim();
-    if (v) stops.push({ address: v });
-  });
-
-  // Passengers / luggage
-  const partySize = Number(document.getElementById("partySize").value);
-  if (partySize > 6) {
-    showToast("Max 6 passengers allowed");
-    return;
-  }
-
-  const luggage = document.getElementById("luggageGroup").style.display === "block"
-    ? Number(document.getElementById("luggage").value)
-    : 0;
-
-  // Time
-  const timeType = document.getElementById("timeType").value;
-  const scheduledFor = timeType === "schedule"
-    ? document.getElementById("scheduledFor").value
-    : null;
-
-  const estimateValRaw = document.getElementById("estimate").value.replace("$","").trim();
-  const estimateVal = estimateValRaw ? Number(estimateValRaw) : 0;
-
-  // Rider identity
-  let riderId = localStorage.getItem("riderId");
-  if (!riderId) {
-    riderId = (crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now());
-    localStorage.setItem("riderId", riderId);
-  }
-
-  const body = {
-    type: scheduledFor ? "SCHEDULED" : "INSTANT",
-    pickup: {
-      address: pickup,
-      gate: document.getElementById("gateCode").value.trim()
-    },
-    dropoff: { address: dropoff },
-    stops,
-    rider: {
-      name,
-      phone,
-      partySize,
-      riderId
-    },
-    pricing: {
-      estimate: estimateVal,
-      travelFee: 0,
-      ratePlan: "STANDARD"
-    },
-    metrics: { miles:null, minutes:null },
-    scheduledFor,
-    source: "RIDER_APP"
+  const options = {
+    bounds: okcBounds,
+    strictBounds:false,
+    fields:["formatted_address","geometry","name"]
   };
 
-  try {
-    const res = await fetch(`${API}/api/bookings`, {
-      method:"POST",
-      headers:{ "Content-Type":"application/json" },
-      body:JSON.stringify(body)
+  // MAIN FIELDS
+  autoPickup = new google.maps.places.Autocomplete(
+    document.getElementById("pickup"), options
+  );
+  autoDropoff = new google.maps.places.Autocomplete(
+    document.getElementById("dropoff"), options
+  );
+
+  // BIAS TO USER LOCATION
+  if(navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(pos=>{
+      const userCircle = new google.maps.Circle({
+        center:{lat:pos.coords.latitude,lng:pos.coords.longitude},
+        radius:25000
+      });
+      autoPickup.setBounds(userCircle.getBounds());
+      autoDropoff.setBounds(userCircle.getBounds());
+      autoStops.forEach(a=>a.setBounds(userCircle.getBounds()));
     });
-
-    if (!res.ok) {
-      showToast("Could not submit ride");
-      return;
-    }
-
-    const booking = await res.json();
-
-    // Prepare SMS handoff
-    const smsBody =
-`Ride Request:
-From: ${pickup}
-To: ${dropoff}
-Stops: ${stops.length ? stops.map(s => s.address).join(" → ") : "None"}
-Name: ${name}
-Phone: ${phone}
-Passengers: ${partySize}
-Luggage: ${luggage}
-Booking ID: ${booking.id}`;
-
-    const smsUrl = `sms:+14053784024?body=${encodeURIComponent(smsBody)}`;
-    window.location.href = smsUrl;
-
-  } catch (e) {
-    console.error(e);
-    showToast("Error submitting ride");
   }
 }
 
-/* =========================
-   INIT ON LOAD
-========================= */
-prefillFromProfile();
-checkHolidayBanner();
-</script>
+/* ADD STOP */
+let stopCount = 0;
+document.getElementById("btnAddStop").addEventListener("click",()=>{
+  stopCount++;
+  const id="stop"+stopCount;
+  const div=document.createElement("div");
+  div.className="input-group";
+  div.innerHTML=`
+    <label>Stop ${stopCount}</label>
+    <input id="${id}" placeholder="Add stop address">
+  `;
+  document.getElementById("stopsContainer").appendChild(div);
 
-<!-- Google Maps Places (autocomplete) -->
-<script async
-  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places&callback=initPlaces">
-</script>
+  const a = new google.maps.places.Autocomplete(
+    document.getElementById(id),
+    { fields:["formatted_address","geometry","name"] }
+  );
+  autoStops.push(a);
+});
 
+/* AIRPORT LUGGAGE DETECTION */
+function detectAirport(t){
+  if(!t) return false;
+  t=t.toLowerCase();
+  return t.includes("will rogers") || t.includes("airport");
+}
+function checkAirport(){
+  const p=document.getElementById("pickup").value;
+  const d=document.getElementById("dropoff").value;
+  document.getElementById("luggageGroup").style.display=
+    (detectAirport(p)||detectAirport(d))?"block":"none";
+}
+document.getElementById("pickup").addEventListener("input",checkAirport);
+document.getElementById("dropoff").addEventListener("input",checkAirport);
+
+/* SHOW SCHEDULE BOX */
+document.getElementById("timeType").addEventListener("change",e=>{
+  document.getElementById("scheduledGroup").style.display=
+    (e.target.value==="schedule"?"block":"none");
+});
+
+/* SUBMIT RIDE */
+document.getElementById("btnSubmit").addEventListener("click",submitRide);
+
+async function submitRide(){
+  const name=document.getElementById("riderName").value.trim();
+  const phone=document.getElementById("riderPhone").value.trim();
+  const pickup=document.getElementById("pickup").value.trim();
+  const dropoff=document.getElementById("dropoff").value.trim();
+
+  if(!name||!phone||!pickup||!dropoff){
+    showToast("Missing required fields");
+    return;
+  }
+
+  /* Save Local Profile */
+  localStorage.setItem("riderName",name);
+  localStorage.setItem("riderPhone",phone);
+  localStorage.setItem("riderHome",pickup);
+  localStorage.setItem("riderGate",document.getElementById("gateCode").value.trim());
+
+  /* Stops */
+  const stops=[];
+  for(let i=1;i<=stopCount;i++){
+    const val=document.getElementById("stop"+i)?.value.trim();
+    if(val) stops.push({ address:val });
+  }
+
+  /* Luggage */
+  const luggage =
+    document.getElementById("luggageGroup").style.display==="block" ?
+    Number(document.getElementById("luggage").value) :
+    0;
+
+  /* Time */
+  const when=document.getElementById("timeType").value;
+  const scheduledFor =
+    (when==="schedule") ? document.getElementById("scheduledFor").value : null;
+
+  /* Estimate placeholder */
+  const est = Number(
+    document.getElementById("estimate").value.replace("$","") || 0
+  );
+
+  /* Rider ID */
+  const riderId = localStorage.getItem("riderId") || crypto.randomUUID();
+  localStorage.setItem("riderId", riderId);
+
+  /* Build Body */
+  const body={
+    type: scheduledFor ? "SCHEDULED" : "INSTANT",
+    pickup:{ address:pickup, gate:document.getElementById("gateCode").value },
+    dropoff:{ address:dropoff },
+    stops,
+    rider:{ name, phone, partySize:Number(document.getElementById("partySize").value), riderId },
+    pricing:{ estimate:est },
+    scheduledFor,
+    luggage,
+    source:"RIDER_APP"
+  };
+
+  const API="https://bigred-bookings.bigredtransportation.workers.dev";
+
+  const res=await fetch(`${API}/api/bookings`,{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify(body)
+  });
+
+  if(!res.ok){
+    showToast("Error submitting request");
+    return;
+  }
+
+  const b=await res.json();
+
+  // Auto-open SMS
+  const sms =
+    `sms:+14053784024?body=` +
+    encodeURIComponent(`Ride Request:
+From: ${pickup}
+To: ${dropoff}
+Name: ${name}
+Phone: ${phone}
+Stops: ${stops.map(s=>s.address).join(", ") || "None"}
+Passengers: ${body.rider.partySize}
+Luggage: ${luggage}
+Booking ID: ${b.id}`);
+
+  window.location.href=sms;
+}
+
+prefill();
+window.onload=initAutocomplete;
+</script>
 </body>
 </html>
