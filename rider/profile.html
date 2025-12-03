@@ -1,108 +1,106 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Profile — Big Red Connect</title>
+  <title>My Profile – Big Red Connect</title>
 
-  <!-- Icons -->
+  <!-- PWA Icons -->
   <link rel="apple-touch-icon" href="/icon.PNG">
-  <link rel="icon" type="image/png" href="/icon.PNG">
-
-  <!-- No cache -->
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <meta http-equiv="Pragma" content="no-cache" />
-  <meta http-equiv="Expires" content="0" />
+  <link rel="icon" type="image/png" sizes="192x192" href="/icon.PNG">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#000">
 
   <style>
-    :root {
-      --red: #b30000;
-      --bg: #000;
-      --panel: #111;
-      --border: #222;
-      --muted: #aaa;
-      --accent: #ffcc00;
-    }
-
     body {
       margin:0;
-      padding:0;
       background:#000;
       color:#fff;
-      font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-family:-apple-system, BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+      padding-bottom:40px;
     }
 
     header {
-      background:#000;
-      border-bottom:2px solid var(--red);
-      padding:12px 16px;
+      padding:15px 12px;
       display:flex;
       align-items:center;
       gap:12px;
+      border-bottom:2px solid #b30000;
+      background:#000;
+      position:sticky;
+      top:0;
+      z-index:12;
     }
+    header img { height:46px; }
 
-    header img.logo {
-      height:40px;
-      border-radius:6px;
-    }
-
-    .container {
-      padding:16px;
-    }
-
-    .section {
-      background:var(--panel);
-      border:1px solid var(--border);
-      border-radius:12px;
-      padding:18px;
-      margin-bottom:18px;
-    }
-
-    .section-title {
-      font-size:1rem;
+    h1 {
+      text-align:center;
+      margin:18px 10px 10px;
+      font-size:1.4rem;
       font-weight:700;
-      margin-bottom:12px;
-      text-transform:uppercase;
-      letter-spacing:0.5px;
-      color:#ddd;
+    }
+
+    .box {
+      background:#111;
+      border:1px solid #222;
+      border-radius:12px;
+      margin:12px;
+      padding:16px;
     }
 
     label {
       display:block;
-      font-size:.8rem;
-      margin-bottom:4px;
-      color:#ccc;
+      margin-top:14px;
+      font-size:.85rem;
+      color:#bbb;
     }
 
-    input, textarea {
+    input {
       width:100%;
+      padding:10px;
+      margin-top:6px;
       background:#000;
       border:1px solid #333;
       border-radius:8px;
-      padding:10px;
-      font-size:.9rem;
       color:#fff;
-      margin-bottom:14px;
+      font-size:1rem;
     }
 
-    textarea {
-      resize:none;
-      min-height:70px;
+    .small-note {
+      font-size:.75rem;
+      color:#888;
+      margin-top:4px;
     }
 
-    .btn {
-      width:100%;
-      padding:12px;
+    button {
+      width:calc(100% - 24px);
+      margin:20px 12px;
+      padding:13px;
+      background:#b30000;
       border:none;
       border-radius:10px;
-      font-size:1rem;
+      color:#fff;
       font-weight:700;
+      font-size:1rem;
       cursor:pointer;
-      margin-top:10px;
     }
 
-    .btn-primary { background:var(--red); color:#fff; }
-    .btn-secondary { background:#111; border:1px solid #333; color:#fff; }
+    .danger {
+      background:#550000;
+    }
+
+    .link-btn {
+      display:block;
+      margin:20px 12px;
+      padding:12px;
+      background:#111;
+      color:#fff;
+      border:1px solid #333;
+      border-radius:10px;
+      text-align:center;
+      text-decoration:none;
+      font-weight:600;
+    }
 
     #toast {
       position:fixed;
@@ -110,138 +108,169 @@
       left:50%;
       transform:translateX(-50%);
       background:#111;
-      border:1px solid var(--red);
-      padding:12px 18px;
+      border:1px solid #b30000;
+      padding:12px 20px;
       border-radius:999px;
-      color:#fff;
       opacity:0;
       pointer-events:none;
       transition:.25s;
-      z-index:1000;
+      z-index:999;
     }
-
     #toast.show { opacity:1; }
-
-    .footer-space { height:40px; }
   </style>
 </head>
 
 <body>
 
 <header>
-  <a href="/rider/rider.html"><img src="/official_logo_Nov.png" class="logo"></a>
+  <img src="/icon.PNG" />
   <div>
-    <div style="font-size:.9rem;font-weight:700;">My Profile</div>
-    <div style="font-size:.75rem;color:#888;">Customize your ride details</div>
+    <div style="font-weight:700;">Big Red Connect</div>
+    <div style="font-size:.8rem;color:#888;">Your Rider Profile</div>
   </div>
 </header>
 
-<div class="container">
+<h1>My Profile</h1>
 
-  <!-- IDENTIFICATION -->
-  <div class="section">
-    <div class="section-title">Your Info</div>
+<div class="box">
+  <label>Your Name</label>
+  <input id="pName" placeholder="John Doe">
 
-    <label for="name">Your Name</label>
-    <input id="name" placeholder="Enter your name">
+  <label>Mobile Number</label>
+  <input id="pPhone" inputmode="tel" placeholder="4055551234">
 
-    <label for="phone">Phone Number</label>
-    <input id="phone" disabled style="opacity:0.7;">
-    <div style="font-size:.75rem;color:#999;margin-top:-10px;margin-bottom:10px;">
-      (Phone is used as login and cannot be changed)
-    </div>
+  <label>Home / Usual Pickup</label>
+  <input id="pHome" placeholder="123 Main St, Norman OK">
 
-    <label for="partySize">Default Group Size</label>
-    <input id="partySize" type="number" min="1" placeholder="1">
-  </div>
-
-  <!-- HOME PICKUP -->
-  <div class="section">
-    <div class="section-title">Home / Usual Pickup</div>
-
-    <label for="home">Home Address</label>
-    <input id="home" placeholder="123 Main St, Moore OK">
-
-    <label for="gateCode">Gate Code / Access Instructions</label>
-    <textarea id="gateCode" placeholder="Optional"></textarea>
-  </div>
-
-  <button class="btn btn-primary" id="saveBtn">Save Profile</button>
-  <button class="btn btn-secondary" onclick="window.location='/rider/rider.html'">Back</button>
-
-  <div class="footer-space"></div>
+  <label>Gate Code / Notes for Driver</label>
+  <input id="pNotes" placeholder="Optional (gate code, apt building #)">
 </div>
+
+<button id="btnSave">Save Profile</button>
+
+<a href="/rider/rider.html" class="link-btn">← Back to Rider Hub</a>
+
+<button id="btnLogout" class="danger">Log Out</button>
 
 <div id="toast"></div>
 
 <script>
-  const API = "https://bigred-rider-profiles.bigredtransportation.workers.dev";
-  let riderId = localStorage.getItem("rider_id");
-  let riderPhone = localStorage.getItem("rider_phone");
+/* ---------------------------------------------------------
+   API CONFIG
+--------------------------------------------------------- */
+const PROFILE_API = "https://bigred-profile.bigredtransportation.workers.dev";
 
-  function showToast(msg) {
-    const t = document.getElementById("toast");
-    t.textContent = msg;
-    t.classList.add("show");
-    setTimeout(() => t.classList.remove("show"), 1800);
+/* ---------------------------------------------------------
+   UTILITIES
+--------------------------------------------------------- */
+function showToast(msg){
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(()=> t.classList.remove("show"), 1800);
+}
+
+function normalizePhone(str){
+  return (str || "").replace(/\D/g,"");
+}
+
+/* ---------------------------------------------------------
+   LOAD PROFILE FROM KV
+--------------------------------------------------------- */
+async function loadProfile(){
+  const riderId = localStorage.getItem("riderId");
+
+  if(!riderId){
+    showToast("No riderId found");
+    return;
   }
 
-  async function loadProfile() {
-    if (!riderId) return;
-
-    try {
-      const res = await fetch(`${API}/api/profile/${riderId}`);
-      if (!res.ok) return;
-
-      const data = await res.json();
-
-      document.getElementById("name").value = data.name || "";
-      document.getElementById("phone").value = data.phone || riderPhone || "";
-      document.getElementById("partySize").value = data.partySize || "";
-      document.getElementById("home").value = data.homeAddress || "";
-      document.getElementById("gateCode").value = data.gateCode || "";
-
-    } catch (err) {
-      console.error("Load profile error:", err);
-    }
-  }
-
-  async function saveProfile() {
-    if (!riderId) {
-      showToast("Missing rider ID.");
+  try{
+    const res = await fetch(`${PROFILE_API}/api/profile/${riderId}`);
+    if(!res.ok){
+      console.warn("Profile missing in KV");
       return;
     }
 
-    const body = {
-      id: riderId,
-      name: document.getElementById("name").value.trim(),
-      phone: riderPhone,
-      partySize: Number(document.getElementById("partySize").value || 1),
-      homeAddress: document.getElementById("home").value.trim(),
-      gateCode: document.getElementById("gateCode").value.trim()
-    };
+    const data = await res.json();
 
-    try {
-      const res = await fetch(`${API}/api/profile/${riderId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body)
-      });
+    // Fill form
+    document.getElementById("pName").value  = data.name || "";
+    document.getElementById("pPhone").value = data.phone || "";
+    document.getElementById("pHome").value  = data.homeAddress || "";
+    document.getElementById("pNotes").value = data.notes || "";
 
-      if (res.ok) {
-        showToast("Profile saved ✔");
-      } else {
-        showToast("Save failed");
-      }
-    } catch (err) {
-      console.error("Save error:", err);
-      showToast("Save failed");
-    }
+  } catch(err){
+    console.error(err);
+    showToast("Error loading profile");
+  }
+}
+
+/* ---------------------------------------------------------
+   SAVE PROFILE
+--------------------------------------------------------- */
+document.getElementById("btnSave").addEventListener("click", async () => {
+  const riderId = localStorage.getItem("riderId");
+  if(!riderId){
+    showToast("Missing rider profile");
+    return;
   }
 
-  document.getElementById("saveBtn").addEventListener("click", saveProfile);
+  const name  = document.getElementById("pName").value.trim();
+  const phone = normalizePhone(document.getElementById("pPhone").value);
+  const home  = document.getElementById("pHome").value.trim();
+  const notes = document.getElementById("pNotes").value.trim();
 
-  loadProfile();
+  if(!name || !phone){
+    showToast("Name + valid phone required");
+    return;
+  }
+
+  try{
+    await fetch(`${PROFILE_API}/api/profile/${riderId}`, {
+      method:"PUT",
+      headers:{ "Content-Type":"application/json" },
+      body:JSON.stringify({
+        name,
+        phone,
+        homeAddress: home,
+        notes
+      })
+    });
+
+    // Update local cache
+    localStorage.setItem("riderName", name);
+    localStorage.setItem("riderPhone", phone);
+    localStorage.setItem("riderHome", home);
+
+    showToast("Profile saved!");
+
+  } catch(err){
+    console.error(err);
+    showToast("Save failed");
+  }
+});
+
+/* ---------------------------------------------------------
+   LOG OUT
+--------------------------------------------------------- */
+document.getElementById("btnLogout").addEventListener("click", () => {
+  localStorage.removeItem("riderId");
+  localStorage.removeItem("riderName");
+  localStorage.removeItem("riderPhone");
+  localStorage.removeItem("riderHome");
+
+  showToast("Logged out");
+
+  setTimeout(()=> {
+    location.href = "/rider/rider-login.html";
+  }, 800);
+});
+
+/* ---------------------------------------------------------
+   INIT
+--------------------------------------------------------- */
+loadProfile();
 </script>
 
 </body>
