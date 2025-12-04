@@ -106,7 +106,6 @@
       border-radius:10px;
       margin-top:10px;
       border:1px solid #333;
-      display:block;
     }
 
     .btn-primary, .btn-ghost {
@@ -139,18 +138,9 @@
       display:none;
     }
 
-    /* ETA panel */
-    #etaPanel {
+    #etaBox {
       display:none;
-    }
-    #etaLine {
-      font-weight:600;
-      margin-bottom:4px;
-    }
-    #distLine, #updatedLine {
-      font-size:.85rem;
-      color:#aaa;
-      margin:2px 0;
+      margin:-4px 12px 14px;
     }
 
     #toast {
@@ -167,9 +157,10 @@
       z-index:999;
     }
     #toast.show { opacity:1; }
+
   </style>
 
-  <!-- Google Maps JS API (standard blue route style) -->
+  <!-- Google Maps JS API -->
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=geometry"></script>
 </head>
 
@@ -195,18 +186,14 @@
 
 <h1>Your Ride</h1>
 
-<!-- ACTIVE RIDE -->
+<!-- ACTIVE -->
 <div id="activeContainer"></div>
 
-<!-- LIVE MAP -->
+<!-- MAP -->
 <div id="map"></div>
 
-<!-- ETA PANEL -->
-<div id="etaPanel" class="card">
-  <div id="etaLine"></div>
-  <div id="distLine"></div>
-  <div id="updatedLine"></div>
-</div>
+<!-- ETA CARD -->
+<div id="etaBox" class="card"></div>
 
 <!-- PAST RIDES -->
 <h2 class="section-title">Past Rides</h2>
@@ -218,77 +205,101 @@
 <div id="toast"></div>
 
 <script>
-const API_BOOKINGS    = "https://bigred-bookings.bigredtransportation.workers.dev";
-const LOCATION_READER = "https://update-location.bigredtransportation.workers.dev";
+const API_BOOKINGS = "https://bigred-bookings.bigredtransportation.workers.dev";
+const API_STATUS   = "https://bigred-status-updater.bigredtransportation.workers.dev/status";
 
-let map, directionsService, directionsRenderer;
-let pickupLatLng = null;
-let driverPos = null;
-let driverMarker = null;
-let pickupMarker = null;
+let map, driverMarker, pickupMarker;
+let geocoder, directionsService;
 let activeRide = null;
-let pollTimer = null;
+let pickupLatLng = null;
+let etaInterval = null;
 
 /* MENU */
-document.getElementById("menuBtn").addEventListener("click", () => {
+document.getElementById("menuBtn").addEventListener("click", ()=>{
   const p = document.getElementById("menuPanel");
-  p.style.display = (p.style.display === "flex" ? "none" : "flex");
+  p.style.display = (p.style.display==="flex"?"none":"flex");
 });
-document.getElementById("logoutBtn").addEventListener("click", () => {
+document.getElementById("logoutBtn").addEventListener("click", ()=>{
   localStorage.clear();
-  window.location.href = "/index.html";
+  window.location.href="/index.html";
 });
 
 function showToast(msg){
   const t = document.getElementById("toast");
   t.textContent = msg;
   t.classList.add("show");
-  setTimeout(() => t.classList.remove("show"), 1900);
+  setTimeout(()=> t.classList.remove("show"), 1900);
 }
 
-/* LOAD RIDES FOR THIS RIDER */
+/* Ensure riderId exists (fallback like ride-request) */
+function ensureRiderId() {
+  let rid = localStorage.getItem("riderId");
+  if (!rid) {
+    try {
+      if (window.crypto && crypto.getRandomValues) {
+        const buf = new Uint8Array(8);
+        crypto.getRandomValues(buf);
+        rid = "r_" + Array.from(buf).map(b => b.toString(16).padStart(2,"0")).join("");
+      } else {
+        rid = "r_" + Date.now().toString(36);
+      }
+    } catch(e) {
+      rid = "r_" + Date.now().toString(36);
+    }
+    localStorage.setItem("riderId", rid);
+  }
+  return rid;
+}
+
+/* LOAD RIDES */
 async function loadRides(){
-  const riderId = localStorage.getItem("riderId");
-  if (!riderId) {
-    document.getElementById("activeContainer").innerHTML =
-      `<div class="card">No rider profile found. Please update your profile and request a ride.</div>`;
-    document.getElementById("map").style.display = "none";
-    document.getElementById("etaPanel").style.display = "none";
+  const riderId   = ensureRiderId();
+  const riderPhone = localStorage.getItem("riderPhone") || "";
+
+  let all = [];
+  try {
+    const res = await fetch(`${API_BOOKINGS}/api/driver/bookings?scope=all`);
+    if (!res.ok) {
+      showToast("Error loading rides");
+      return;
+    }
+    all = await res.json();
+  } catch (e) {
+    console.error(e);
+    showToast("Network error loading rides");
     return;
   }
 
-  try {
-    const res = await fetch(`${API_BOOKINGS}/api/driver/bookings?scope=all`);
-    if (!res.ok) throw new Error("HTTP " + res.status);
-    const all = await res.json();
+  const phoneClean = riderPhone.replace(/\D/g,"");
 
-    const myRides = all.filter(r => r.rider && r.rider.riderId === riderId);
+  const myRides = all.filter(r => {
+    const rId = r.rider?.riderId || null;
+    const rPhone = (r.rider?.phone || "").replace(/\D/g,"");
+    if (rId && rId === riderId) return true;
+    if (phoneClean && rPhone && rPhone === phoneClean) return true;
+    return false;
+  });
 
-    const active = myRides.find(r =>
-      ["REQUESTED", "ACCEPTED", "ENROUTE", "ARRIVED"].includes(r.status)
-    );
-    const done = myRides.filter(r =>
-      ["COMPLETED", "CANCELLED"].includes(r.status)
-    );
+  const active = myRides.find(r => ["REQUESTED","ACCEPTED","ENROUTE","ARRIVED"].includes(r.status));
+  const done   = myRides.filter(r => ["COMPLETED","CANCELLED"].includes(r.status));
 
-    renderActive(active);
-    renderPast(done.reverse());
-  } catch (e) {
-    console.error(e);
-    showToast("Could not load rides");
-  }
+  renderActive(active);
+  renderPast(done.reverse());
 }
 
-/* RENDER ACTIVE RIDE CARD + INIT MAP/ETA */
 function renderActive(ride){
   const box = document.getElementById("activeContainer");
 
-  if (!ride) {
+  // stop ETA loop when no active ride
+  if (!ride){
     box.innerHTML = `<div class="card">You have no active rides.</div>`;
-    document.getElementById("map").style.display = "none";
-    document.getElementById("etaPanel").style.display = "none";
+    document.getElementById("map").style.display="none";
+    document.getElementById("etaBox").style.display="none";
     activeRide = null;
-    if (pollTimer) clearInterval(pollTimer);
+    if (etaInterval) {
+      clearInterval(etaInterval);
+      etaInterval = null;
+    }
     return;
   }
 
@@ -299,34 +310,28 @@ function renderActive(ride){
       <div class="status">Status: ${ride.status}</div>
       <div class="loc-line">Pickup: ${ride.pickup.address}</div>
       <div class="loc-line">Dropoff: ${ride.dropoff.address}</div>
-      ${ride.vehicle && ride.vehicle.image ? `
-        <img class="vehicle-thumb" src="${ride.vehicle.image}" alt="Vehicle"/>
+      ${ride.vehicle ? `
+         <img class="vehicle-thumb" src="${ride.vehicle.image}" alt="${ride.vehicle.label || "Vehicle"}"/>
       ` : ""}
     </div>
   `;
 
-  initMapAndEta(ride);
+  initMapForRide(ride);
 }
 
-/* RENDER PAST RIDES */
 function renderPast(list){
   const box = document.getElementById("pastContainer");
   box.innerHTML = "";
 
-  if (!list.length) {
+  if(!list.length){
     box.innerHTML = `<div class="card">No past rides yet.</div>`;
     return;
   }
 
-  list.forEach(r => {
-    const created = r.createdAt ? new Date(r.createdAt) : null;
-    const whenStr = created
-      ? created.toLocaleString("en-US", { month:"short", day:"numeric", hour:"numeric", minute:"2-digit" })
-      : "";
-
+  list.forEach(r=>{
     box.innerHTML += `
       <div class="card">
-        <div class="status">${r.status}${whenStr ? " · " + whenStr : ""}</div>
+        <div class="status">${r.status}</div>
         <div class="loc-line">From: ${r.pickup.address}</div>
         <div class="loc-line">To: ${r.dropoff.address}</div>
       </div>
@@ -334,142 +339,125 @@ function renderPast(list){
   });
 }
 
-/* INIT MAP + DIRECTIONS FOR THIS RIDE (driver → pickup) */
-function initMapAndEta(ride){
-  const mapEl = document.getElementById("map");
-  mapEl.style.display = "block";
+/* MAP + ETA */
+function initMapForRide(ride){
+  const mapDiv = document.getElementById("map");
+  mapDiv.style.display="block";
 
-  // Create map & services if first time
   if (!map) {
-    map = new google.maps.Map(mapEl, {
-      zoom: 11,
-      center: { lat:35.4676, lng:-97.5164 } // OKC baseline
+    map = new google.maps.Map(mapDiv, {
+      zoom: 12,
+      center: {lat:35.4676, lng:-97.5164}, // OKC fallback
+      mapTypeControl:false,
+      streetViewControl:false,
+      fullscreenControl:false
     });
-    directionsService = new google.maps.DirectionsService();
-    directionsRenderer = new google.maps.DirectionsRenderer({
-      suppressMarkers: true   // Use our own markers; route stays standard Google blue
-    });
-    directionsRenderer.setMap(map);
   }
 
-  const geocoder = new google.maps.Geocoder();
-  geocoder.geocode({ address: ride.pickup.address }, (results, status) => {
-    if (status === "OK" && results[0]?.geometry?.location) {
-      pickupLatLng = results[0].geometry.location;
+  if (!geocoder) {
+    geocoder = new google.maps.Geocoder();
+  }
+  if (!directionsService) {
+    directionsService = new google.maps.DirectionsService();
+  }
+
+  // Geocode pickup address to get LatLng
+  geocoder.geocode({ address: ride.pickup.address }, function(res, status){
+    if(status === "OK" && res && res[0]){
+      pickupLatLng = res[0].geometry.location;
 
       if (pickupMarker) pickupMarker.setMap(null);
       pickupMarker = new google.maps.Marker({
         map,
         position: pickupLatLng,
-        label: "📍"
+        icon:{ url:"https://maps.google.com/mapfiles/ms/icons/green-dot.png" }
       });
 
-      // Once we know pickup, fetch driver location & draw route
-      refreshDriverAndRoute();
-      if (pollTimer) clearInterval(pollTimer);
-      pollTimer = setInterval(refreshDriverAndRoute, 30000);
+      map.setCenter(pickupLatLng);
+      startEtaLoop();
     } else {
-      console.warn("Geocode failed:", status);
+      console.warn("Geocode failed for pickup:", status);
     }
   });
 }
 
-/* GET DRIVER LOCATION FROM UPDATE-LOCATION WORKER */
-async function fetchDriverLocation(){
+async function pollDriverAndUpdateETA(){
+  if (!activeRide || !pickupLatLng) return;
+
+  let data;
   try {
-    const res = await fetch(LOCATION_READER + "?nocache=" + Date.now(), { cache:"no-store" });
-    if (!res.ok) return null;
-    const data = await res.json();
-
-    const lat = parseFloat(data.latitude);
-    const lng = parseFloat(data.longitude);
-    if (Number.isNaN(lat) || Number.isNaN(lng)) return null;
-
-    return { lat, lng };
+    const res = await fetch(API_STATUS);
+    if (!res.ok) return;
+    data = await res.json();
   } catch (e) {
-    console.warn("Driver location fetch failed:", e);
-    return null;
+    console.warn("Status fetch failed:", e);
+    return;
   }
-}
 
-/* REFRESH DRIVER POSITION AND REDRAW ROUTE/ETA */
-async function refreshDriverAndRoute(){
-  if (!pickupLatLng || !activeRide) return;
+  if (!data.location || typeof data.location.lat !== "number" || typeof data.location.lng !== "number") {
+    return;
+  }
 
-  const pos = await fetchDriverLocation();
-  if (!pos) return;
+  const driverPos = new google.maps.LatLng(data.location.lat, data.location.lng);
 
-  driverPos = pos;
-
-  // Update or create driver marker
   if (!driverMarker) {
     driverMarker = new google.maps.Marker({
       map,
       position: driverPos,
-      label: "🚗"
+      icon:{ url:"https://maps.google.com/mapfiles/ms/icons/red-dot.png" }
     });
   } else {
     driverMarker.setPosition(driverPos);
   }
 
-  drawRouteAndEta();
+  // Route from driver → pickup
+  let route;
+  try {
+    route = await new Promise((resolve, reject) => {
+      directionsService.route(
+        {
+          origin: driverPos,
+          destination: pickupLatLng,
+          travelMode: "DRIVING"
+        },
+        (r, status) => status === "OK" ? resolve(r) : reject(status)
+      );
+    });
+  } catch (errStatus) {
+    console.warn("Directions failed:", errStatus);
+    return;
+  }
+
+  const leg = route.routes[0].legs[0];
+  const miles = leg.distance.value / 1609.34;
+  const mins  = Math.round(leg.duration.value / 60);
+
+  // Fit bounds around driver + pickup
+  const bounds = new google.maps.LatLngBounds();
+  bounds.extend(driverPos);
+  bounds.extend(pickupLatLng);
+  map.fitBounds(bounds);
+
+  // Update ETA box
+  const etaBox = document.getElementById("etaBox");
+  etaBox.style.display = "block";
+  etaBox.innerHTML = `
+    <div class="status">ETA from driver ≈ ${mins} min</div>
+    <div class="status">Distance ≈ ${miles.toFixed(1)} mi</div>
+    <div class="status">Updated ${new Date().toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})}</div>
+  `;
 }
 
-/* DRAW GOOGLE ROUTE + UPDATE ETA/DISTANCE */
-function drawRouteAndEta(){
-  if (!driverPos || !pickupLatLng || !directionsService || !directionsRenderer) return;
-
-  const req = {
-    origin: driverPos,
-    destination: pickupLatLng,
-    travelMode: "DRIVING"
-  };
-
-  directionsService.route(req, (result, status) => {
-    if (status !== "OK" || !result?.routes?.length) {
-      console.warn("Directions failed:", status);
-      return;
-    }
-
-    directionsRenderer.setDirections(result);
-
-    const leg = result.routes[0].legs[0];
-    const distMiles = leg.distance?.value ? (leg.distance.value / 1609.34) : null;
-    const durMins = leg.duration?.value ? Math.round(leg.duration.value / 60) : null;
-
-    const etaLine = document.getElementById("etaLine");
-    const distLine = document.getElementById("distLine");
-    const updatedLine = document.getElementById("updatedLine");
-    const etaPanel = document.getElementById("etaPanel");
-
-    if (durMins != null) {
-      etaLine.textContent = `ETA ≈ ${durMins} min`;
-    } else {
-      etaLine.textContent = "ETA unavailable";
-    }
-
-    if (distMiles != null) {
-      distLine.textContent = `Distance ≈ ${distMiles.toFixed(1)} miles`;
-    } else {
-      distLine.textContent = "";
-    }
-
-    updatedLine.textContent =
-      "Updated at " +
-      new Date().toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit" }) +
-      " CT";
-
-    etaPanel.style.display = "block";
-
-    // Fit map to show both driver and pickup
-    const bounds = new google.maps.LatLngBounds();
-    bounds.extend(new google.maps.LatLng(driverPos.lat, driverPos.lng));
-    bounds.extend(pickupLatLng);
-    map.fitBounds(bounds);
-  });
+function startEtaLoop(){
+  if (etaInterval) {
+    clearInterval(etaInterval);
+  }
+  // Immediate update, then every 15s
+  pollDriverAndUpdateETA();
+  etaInterval = setInterval(pollDriverAndUpdateETA, 15000);
 }
 
-/* KICK OFF */
+/* INIT */
 loadRides();
 </script>
 
