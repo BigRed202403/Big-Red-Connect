@@ -87,7 +87,7 @@
       }
     }
 
-    /* Intercept the Request-a-Ride tile click */
+    /* Request-a-Ride tile → login if needed */
     function goRequestRide() {
       if (!isRiderLoggedIn()) {
         window.location.href = "/rider-login.html?next=request";
@@ -96,7 +96,7 @@
       }
     }
 
-    /* Intercept Quick Destination Search */
+    /* Quick Destination Search */
     function goToFare(e) {
       e.preventDefault();
       const dest = document.getElementById("quickWhere").value.trim();
@@ -112,6 +112,29 @@
           encodeURIComponent(dest);
       }
     }
+
+    /* ------------------------------------------------------
+       NEW: My Profile Tile Logic
+       ------------------------------------------------------ */
+    function goMyProfile() {
+      try {
+        const raw = localStorage.getItem("bigred_rider_profile_v1");
+
+        // Not logged in → route to login
+        if (!raw) {
+          window.location.href = "/rider-login.html?next=profile";
+          return;
+        }
+
+        // Logged in → rider hub
+        window.location.href = "/rider/rider.html";
+
+      } catch (err) {
+        console.error(err);
+        window.location.href = "/rider-login.html?next=profile";
+      }
+    }
+
   </script>
 
 </head>
@@ -188,6 +211,7 @@
     <a href="live.html" class="tile">🗺️<br>Live Map</a>
     <a href="reviews.html" class="tile">⭐<br>Rider Reviews</a>
     <a href="faq.html" class="tile">ℹ️<br>FAQ & Info</a>
+    <a onclick="goMyProfile()" class="tile" style="cursor:pointer;">👤<br>My Profile</a>
     <a href="https://www.facebook.com/share/1BWCx63CUt/?mibextid=wwXIfr" target="_blank" class="tile">👍<br>Follow on Facebook</a>
   </div>
 
