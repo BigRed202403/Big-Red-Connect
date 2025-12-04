@@ -19,7 +19,6 @@
       font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       padding-bottom:40px;
     }
-
     header {
       padding:15px 12px;
       display:flex;
@@ -30,7 +29,6 @@
       position:sticky;
       top:0;
     }
-
     header img { height:46px; cursor:pointer; }
 
     h1 {
@@ -122,84 +120,95 @@
 
 <div id="toast"></div>
 
+<!-- 🔔 OneSignal SDK -->
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <script>
-/* -------------------------------------------------------
-   CONFIG
-------------------------------------------------------- */
-const PROFILE_API = "https://bigred-rider-profile.bigredtransportation.workers.dev";
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
 
-/* -------------------------------------------------------
-   TOAST
-------------------------------------------------------- */
-function showToast(msg){
-  const t = document.getElementById("toast");
-  t.textContent = msg;
-  t.classList.add("show");
-  setTimeout(() => t.classList.remove("show"), 1800);
-}
-
-/* -------------------------------------------------------
-   LOGO → HOME
-------------------------------------------------------- */
-document.getElementById("logoHome").onclick = () => {
-  window.location.href = "/index.html";
-};
-
-/* -------------------------------------------------------
-   LOGIN HANDLER
-------------------------------------------------------- */
-document.getElementById("btnLogin").addEventListener("click", async () => {
-  const name = document.getElementById("name").value.trim();
-  const phone = document.getElementById("phone").value.trim().replace(/\D/g, "");
-
-  if (!name || !phone) {
-    showToast("Name & phone required");
-    return;
+  function showToast(msg){
+    const t=document.getElementById("toast");
+    t.textContent=msg;
+    t.classList.add("show");
+    setTimeout(()=>t.classList.remove("show"),1800);
   }
 
-  if (phone.length < 10) {
-    showToast("Invalid phone number");
-    return;
-  }
+  document.getElementById("logoHome").onclick=()=>location.href="/index.html";
 
-  try {
-    // 1️⃣ Login / Create riderId
-    const loginRes = await fetch(`${PROFILE_API}/api/rider/login`, {
-      method:"POST",
-      headers:{ "Content-Type":"application/json" },
-      body: JSON.stringify({ phone })
-    });
+  const PROFILE_API="https://bigred-rider-profile.bigredtransportation.workers.dev";
 
-    const loginData = await loginRes.json();
-    if (!loginRes.ok) {
-      showToast("Error logging in");
+  /* -------------------------------------------------------
+     LOGIN HANDLER
+  ------------------------------------------------------- */
+  document.getElementById("btnLogin").addEventListener("click", async () => {
+    const name=document.getElementById("name").value.trim();
+    const phone=document.getElementById("phone").value.trim().replace(/\D/g,"");
+
+    if(!name || !phone){
+      showToast("Name & phone required");
       return;
     }
 
-    const riderId = loginData.riderId;
-    localStorage.setItem("riderId", riderId);
-    localStorage.setItem("riderPhone", phone);
-    localStorage.setItem("riderName", name);
+    if(phone.length < 10){
+      showToast("Invalid phone number");
+      return;
+    }
 
-    // 2️⃣ Update profile with name
-    await fetch(`${PROFILE_API}/api/rider/profile`, {
-      method:"PUT",
-      headers:{ "Content-Type":"application/json" },
-      body: JSON.stringify({
+    try {
+      // 1️⃣ Login → receive riderId (UUID)
+      const loginRes = await fetch(`${PROFILE_API}/api/rider/login`, {
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body:JSON.stringify({ phone })
+      });
+
+      const loginData = await loginRes.json();
+      if(!loginRes.ok){
+        showToast("Error logging in");
+        return;
+      }
+
+      const riderId = loginData.riderId;
+
+      // Store locally
+      const profile = {
         riderId,
         name,
         phone
-      })
-    });
+      };
+      localStorage.setItem("bigred_rider_profile_v1", JSON.stringify(profile));
 
-    // 3️⃣ Redirect to hub
-    window.location.href = "/rider/rider.html";
+      // 2️⃣ Update profile with name
+      await fetch(`${PROFILE_API}/api/rider/profile`, {
+        method:"PUT",
+        headers:{ "Content-Type":"application/json" },
+        body:JSON.stringify({ riderId, name, phone })
+      });
 
-  } catch (err) {
-    console.error(err);
-    showToast("Connection error");
-  }
-});
+      // 3️⃣ OneSignal login + tags
+      OneSignalDeferred.push(async function(OneSignal){
+        try {
+          await OneSignal.login(riderId);
+
+          await OneSignal.User.addTags({
+            role_rider: "true",
+            rider_phone: phone,
+            env: "live"
+          });
+
+        } catch(err){
+          console.warn("OneSignal rider login failed:", err);
+        }
+      });
+
+      // 4️⃣ Redirect to hub
+      window.location.href="/rider/rider.html";
+
+    } catch(err){
+      console.error(err);
+      showToast("Connection error");
+    }
+  });
+
 </script>
 
 </body>
