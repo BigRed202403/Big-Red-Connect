@@ -449,6 +449,31 @@
   }
 
   // =====================================================
+  // RIDER ID HELPER
+  // =====================================================
+  function ensureRiderId() {
+    let rid = localStorage.getItem("riderId");
+    if (!rid) {
+      try {
+        if (window.crypto && crypto.getRandomValues) {
+          const buf = new Uint8Array(8);
+          crypto.getRandomValues(buf);
+          rid = "r_" + Array.from(buf).map(b => b.toString(16).padStart(2,"0")).join("");
+        } else {
+          rid = "r_" + Date.now().toString(36);
+        }
+      } catch(e) {
+        rid = "r_" + Date.now().toString(36);
+      }
+      localStorage.setItem("riderId", rid);
+    }
+    return rid;
+  }
+
+  // Ensure it exists as soon as this page loads
+  ensureRiderId();
+
+  // =====================================================
   // NAV
   // =====================================================
   document.getElementById("logoHome").addEventListener("click", () => {
@@ -472,6 +497,9 @@
     const home  = localStorage.getItem("riderHome")  || "";
     const gate  = localStorage.getItem("riderGate")  || "";
 
+    // make sure riderId exists and is stable
+    const rid = ensureRiderId();
+
     const summary = document.getElementById("profileSummary");
 
     if (!name && !phone) {
@@ -480,7 +508,8 @@
       const phonePretty = phone ? formatPhone(phone) : "";
       summary.innerHTML =
         `<span><strong>${name || "Rider"}</strong>${phonePretty ? " · " + phonePretty : ""}</span>` +
-        (home ? `<br><span>Home pickup: ${home}</span>` : "");
+        (home ? `<br><span>Home pickup: ${home}</span>` : "") +
+        `<br><span style="font-size:0.7rem;color:#666;">Profile ID: ${rid}</span>`;
     }
 
     // Prefill trip fields where helpful
@@ -489,7 +518,7 @@
   }
 
   function formatPhone(p) {
-    const digits = String(p || "").replace(/\\D/g, "");
+    const digits = String(p || "").replace(/\D/g, "");
     if (digits.length === 10) {
       return `(${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6)}`;
     }
@@ -1000,7 +1029,7 @@
 
     const name  = localStorage.getItem("riderName")  || "Rider";
     const phone = localStorage.getItem("riderPhone") || "";
-    const riderId = localStorage.getItem("riderId")  || null;
+    const riderId = ensureRiderId();  // ✅ always non-null and stable
 
     const q = lastFare;
 
@@ -1021,7 +1050,7 @@
         name,
         phone,
         partySize: q.passengers || 1,
-        riderId: riderId || null
+        riderId: riderId
       },
       pricing: {
         estimate: Number(q.total),
@@ -1130,6 +1159,8 @@
     setupAutocomplete("pickup", true);
     setupAutocomplete("dropoff", false);
 
+    // ensure riderId exists & then load profile summary
+    ensureRiderId();
     loadProfileSummary();
     fetchDriverOrigin();
   };
