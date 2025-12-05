@@ -111,10 +111,15 @@ textarea{width:100%;min-height:90px;background:#111;color:#fff;border:1px solid 
 #toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#111;color:#fff;border:1px solid var(--red);padding:8px 16px;border-radius:16px;opacity:0;pointer-events:none;transition:opacity .35s;z-index:50;font-size:.8rem;}
 #toast.show{opacity:1;}
 #debugLog{font-family:monospace;font-size:.72rem;color:#0f0;background:#000;padding:6px;max-height:180px;overflow:auto;border-top:1px solid #222;}
+
+/* 🔀 Admin / Driver mode visibility */
+body.mode-driver .admin-only{display:none;}
+/* (driver-only sections would be hidden in mode-admin if we add them later) */
+body.mode-admin .driver-only{display:block;}
 </style>
 </head>
 
-<body>
+<body class="mode-admin">
 <header>
   <div class="header-left">
     <a href="index.html"><img src="official_logo_Nov.png" alt="Big Red Connect logo"></a>
@@ -125,6 +130,7 @@ textarea{width:100%;min-height:90px;background:#111;color:#fff;border:1px solid 
     <span id="livePill" class="pill offline">📡 Tracking: OFF</span>
   </div>
   <div class="header-right">
+    <button class="btn btn-secondary" id="btnModeToggle">🛠 Admin Mode</button>
     <button class="btn btn-ghost" id="btnRefreshPage">🔄 Refresh</button>
     <button class="btn btn-secondary" onclick="enableAdminAlerts()">🔔 Alerts</button>
   </div>
@@ -150,14 +156,24 @@ textarea{width:100%;min-height:90px;background:#111;color:#fff;border:1px solid 
         </select>
         <button class="btn btn-primary" id="updateStatusBtn">💾 Save</button>
       </div>
+
+      <!-- NEW: Global Vehicle Selector -->
+      <div class="row">
+        <label for="globalVehicleSelect" style="font-size:.8rem;color:#ccc;">Active Vehicle</label>
+        <select id="globalVehicleSelect" class="vehicle-dropdown">
+          <option value="BLACK_ACADIA">Black GMC Acadia (SUV)</option>
+          <option value="BIG_RED">Big Red (Red Silverado)</option>
+        </select>
+      </div>
+
       <div class="meta">
         Last status update: <span id="statusStamp">—</span><br>
         Last GPS ping: <span id="gpsStamp">—</span> • Interval: <span id="gpsRate">—</span>
       </div>
     </section>
 
-    <!-- BROADCAST PUSH -->
-    <section>
+    <!-- BROADCAST PUSH (Admin-only) -->
+    <section class="admin-only">
       <h2>Broadcast Push Alerts (Riders)</h2>
 
       <div class="row">
@@ -206,8 +222,8 @@ textarea{width:100%;min-height:90px;background:#111;color:#fff;border:1px solid 
       </p>
     </section>
 
-    <!-- LIVE MAP -->
-    <section>
+    <!-- LIVE MAP (Admin-only) -->
+    <section class="admin-only">
       <h2>Live Map — Image & Caption</h2>
       <div class="img-box">
         <img id="statusImage" src="" alt="Live status image">
@@ -236,7 +252,7 @@ textarea{width:100%;min-height:90px;background:#111;color:#fff;border:1px solid 
     </section>
   </div>
 
-  <!-- DISPATCH BOARD -->
+  <!-- DISPATCH BOARD (Visible in both modes) -->
   <div>
     <section>
       <h2>Driver Dispatch Board</h2>
@@ -266,7 +282,7 @@ textarea{width:100%;min-height:90px;background:#111;color:#fff;border:1px solid 
 </div>
 
 <div id="toast"></div>
-<div id="debugLog">[Debug started]</div>
+<div id="debugLog" class="admin-only">[Debug started]</div>
 
 <script>
 const STATUS_WORKER="https://bigred-status-updater.bigredtransportation.workers.dev";
@@ -323,8 +339,19 @@ let gpsTimer=null;
 let gpsLastTs=null;
 let dispatchScope="active";
 
-/* NEW: track current status so we can detect offline → online */
-let currentStatusVal = "offline";
+/* Mode management */
+let currentMode = localStorage.getItem("adminDriverMode") || "admin";
+function applyMode(mode){
+  currentMode = mode === "driver" ? "driver" : "admin";
+  const body=document.body;
+  body.classList.remove("mode-admin","mode-driver");
+  body.classList.add(currentMode==="driver"?"mode-driver":"mode-admin");
+  const btn=document.getElementById("btnModeToggle");
+  if(btn){
+    btn.textContent = currentMode==="driver" ? "🚗 Driver Mode" : "🛠 Admin Mode";
+  }
+  localStorage.setItem("adminDriverMode",currentMode);
+}
 
 function showToast(msg){
   const t=document.getElementById("toast");
@@ -334,6 +361,7 @@ function showToast(msg){
 }
 function log(msg){
   const box=document.getElementById("debugLog");
+  if(!box) return;
   const time=new Date().toLocaleTimeString("en-US",{hour12:false});
   box.innerHTML=`[${time}] ${msg}<br>`+box.innerHTML;
 }
@@ -366,10 +394,6 @@ async function loadStatus(){
     const data=await res.json();
     log("Status GET OK: "+JSON.stringify(data));
     let statusVal=data.status||"offline";
-
-    /* update tracker */
-    currentStatusVal = statusVal;
-
     const pill=document.getElementById("status-pill");
     const headerPill=document.getElementById("livePill");
     pill.classList.remove("online","away","offline");
@@ -395,6 +419,17 @@ async function loadStatus(){
     pill.textContent=`Status: ${label} • as of ${when}`;
     document.getElementById("statusStamp").textContent=when;
     document.getElementById("statusSelect").value=statusVal;
+
+    /* NEW: restore global vehicle from status */
+    const globalVeh=document.getElementById("globalVehicleSelect");
+    if(globalVeh){
+      if(data.vehicle && data.vehicle.code){
+        globalVeh.value=data.vehicle.code;
+      }else{
+        globalVeh.value="BLACK_ACADIA";
+      }
+    }
+
     handleGpsForStatus(statusVal);
   }catch(e){
     log("Status error: "+e.message);
@@ -403,40 +438,31 @@ async function loadStatus(){
 
 async function updateStatus(){
   const val=document.getElementById("statusSelect").value;
+  const globalVeh=document.getElementById("globalVehicleSelect");
+  const vehicleCode = globalVeh ? globalVeh.value : undefined;
+
   let normalized=val;
   let message=val==="online"?"On the Road":val==="away"?"Limited Availability":"Offline";
-
-  const wasOnline = (currentStatusVal === "online");
-
   try{
     log("Status PUT…");
+    const bodyPayload = {
+      status:normalized,
+      online:(normalized==="online"),
+      message
+    };
+    if(vehicleCode){
+      bodyPayload.vehicleCode = vehicleCode;
+    }
     const res=await fetch(STATUS_WORKER+"/status",{
       method:"PUT",
       headers:{
         "Content-Type":"application/json",
         "X-Auth-Token":AUTH_SECRET
       },
-      body:JSON.stringify({
-        status:normalized,
-        online:(normalized==="online"),
-        message
-      })
+      body:JSON.stringify(bodyPayload)
     });
-    const bodyText = await res.text();
-    log("Status PUT response: "+bodyText);
+    log("Status PUT response: "+await res.text());
     showToast(res.ok?"Status updated":"Status update failed");
-
-    if(res.ok){
-      /* update local tracker */
-      currentStatusVal = normalized;
-
-      /* if we just transitioned OFFLINE/AWAY → ONLINE, fire auto push */
-      if(!wasOnline && normalized === "online"){
-        log("Auto-online push trigger fired.");
-        autoOnlinePush();
-      }
-    }
-
     loadStatus();
   }catch(e){
     log("PUT error:"+e.message);
@@ -590,25 +616,12 @@ function handlePushBroadcast(){
     title,
     message: msg,
     url,
+    // Riders-only: devices tagged env = "live"
     filters: [
       { field: "tag", key: "env", value: "live" }
     ]
   };
 
-  sendPush(payload);
-}
-
-/* NEW: automatic online push – uses same path as broadcast */
-function autoOnlinePush(){
-  const payload = {
-    type: "broadcast",
-    title: "Big Red is LIVE",
-    message: "🚗 Big Red Connect is LIVE across the metro — text RED to 405-378-4024 for a flat-rate connection.",
-    url: HOME_URL,
-    filters: [
-      { field: "tag", key: "env", value: "live" }
-    ]
-  };
   sendPush(payload);
 }
 
@@ -767,7 +780,8 @@ document.getElementById("clearPush").onclick=clearPush;
 document.getElementById("sendBroadcastPush").onclick=handlePushBroadcast;
 
 ["pushTitle","pushMessage","pushUrl"].forEach(id=>{
-  document.getElementById(id).oninput=updPrev;
+  const el=document.getElementById(id);
+  if(el) el.oninput=updPrev;
 });
 
 document.getElementById("btnRefreshPage").onclick=()=>location.reload(true);
@@ -776,8 +790,15 @@ document.getElementById("btnDispatchRefresh").onclick=()=>{
   showToast("Dispatch refreshed");
 };
 
+document.getElementById("btnModeToggle").onclick=()=>{
+  applyMode(currentMode==="admin"?"driver":"admin");
+};
+
 /* INIT */
 window.addEventListener("load",()=>{
+  // apply mode from storage
+  applyMode(currentMode);
+
   updPrev();
   applyTemplateToCaption("LIVE");
   loadImages();
