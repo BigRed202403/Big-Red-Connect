@@ -114,7 +114,6 @@ textarea{width:100%;min-height:90px;background:#111;color:#fff;border:1px solid 
 
 /* 🔀 Admin / Driver mode visibility */
 body.mode-driver .admin-only{display:none;}
-/* (driver-only sections would be hidden in mode-admin if we add them later) */
 body.mode-admin .driver-only{display:block;}
 </style>
 </head>
@@ -157,7 +156,7 @@ body.mode-admin .driver-only{display:block;}
         <button class="btn btn-primary" id="updateStatusBtn">💾 Save</button>
       </div>
 
-      <!-- NEW: Global Vehicle Selector -->
+      <!-- Global Vehicle Selector -->
       <div class="row">
         <label for="globalVehicleSelect" style="font-size:.8rem;color:#ccc;">Active Vehicle</label>
         <select id="globalVehicleSelect" class="vehicle-dropdown">
@@ -420,7 +419,7 @@ async function loadStatus(){
     document.getElementById("statusStamp").textContent=when;
     document.getElementById("statusSelect").value=statusVal;
 
-    /* NEW: restore global vehicle from status */
+    // Restore global vehicle from status
     const globalVeh=document.getElementById("globalVehicleSelect");
     if(globalVeh){
       if(data.vehicle && data.vehicle.code){
@@ -461,7 +460,8 @@ async function updateStatus(){
       },
       body:JSON.stringify(bodyPayload)
     });
-    log("Status PUT response: "+await res.text());
+    const txt = await res.text();
+    log("Status PUT response: "+txt);
     showToast(res.ok?"Status updated":"Status update failed");
     loadStatus();
   }catch(e){
@@ -557,12 +557,17 @@ async function postToLive(){
 
 /* PUSH PREVIEW + BROADCAST */
 function updPrev(){
+  const tInput = document.getElementById("pushTitle");
+  const mInput = document.getElementById("pushMessage");
+  const uInput = document.getElementById("pushUrl");
+  if(!tInput || !mInput || !uInput) return;
+
   document.getElementById("pushPrevTitle").textContent=
-    document.getElementById("pushTitle").value||"Big Red Connect";
+    tInput.value || "Big Red Connect";
   document.getElementById("pushPrevMessage").textContent=
-    document.getElementById("pushMessage").value||"Message will appear here.";
+    mInput.value || "Message will appear here.";
   document.getElementById("pushPrevUrl").textContent=
-    document.getElementById("pushUrl").value||HOME_URL;
+    uInput.value || HOME_URL;
 }
 function applyPushTemplate(){
   const k=document.getElementById("pushTemplate").value;
@@ -576,9 +581,13 @@ function applyPushTemplate(){
   captionIndex=CAPTION_KEYS.indexOf(k);
 }
 function clearPush(){
-  document.getElementById("pushTitle").value="";
-  document.getElementById("pushMessage").value="";
-  document.getElementById("pushUrl").value="";
+  const tInput = document.getElementById("pushTitle");
+  const mInput = document.getElementById("pushMessage");
+  const uInput = document.getElementById("pushUrl");
+  if(!tInput || !mInput || !uInput) return;
+  tInput.value="";
+  mInput.value="";
+  uInput.value="";
   updPrev();
 }
 
@@ -603,9 +612,17 @@ async function sendPush(payload){
 
 /* 🔔 RIDER BROADCAST: env = live */
 function handlePushBroadcast(){
-  const title=document.getElementById("pushTitle").value.trim()||"Big Red Connect";
-  const msg=document.getElementById("pushMessage").value.trim();
-  const url=document.getElementById("pushUrl").value.trim()||HOME_URL;
+  const tInput = document.getElementById("pushTitle");
+  const mInput = document.getElementById("pushMessage");
+  const uInput = document.getElementById("pushUrl");
+  if(!tInput || !mInput || !uInput){
+    showToast("Push UI not available");
+    return;
+  }
+
+  const title=tInput.value.trim()||"Big Red Connect";
+  const msg=mInput.value.trim();
+  const url=uInput.value.trim()||HOME_URL;
   if(!msg){
     showToast("Message required");
     return;
@@ -616,7 +633,6 @@ function handlePushBroadcast(){
     title,
     message: msg,
     url,
-    // Riders-only: devices tagged env = "live"
     filters: [
       { field: "tag", key: "env", value: "live" }
     ]
@@ -796,9 +812,7 @@ document.getElementById("btnModeToggle").onclick=()=>{
 
 /* INIT */
 window.addEventListener("load",()=>{
-  // apply mode from storage
   applyMode(currentMode);
-
   updPrev();
   applyTemplateToCaption("LIVE");
   loadImages();
