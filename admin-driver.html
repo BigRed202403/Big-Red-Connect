@@ -323,6 +323,9 @@ let gpsTimer=null;
 let gpsLastTs=null;
 let dispatchScope="active";
 
+/* NEW: track current status so we can detect offline → online */
+let currentStatusVal = "offline";
+
 function showToast(msg){
   const t=document.getElementById("toast");
   t.textContent=msg;
@@ -363,6 +366,10 @@ async function loadStatus(){
     const data=await res.json();
     log("Status GET OK: "+JSON.stringify(data));
     let statusVal=data.status||"offline";
+
+    /* update tracker */
+    currentStatusVal = statusVal;
+
     const pill=document.getElementById("status-pill");
     const headerPill=document.getElementById("livePill");
     pill.classList.remove("online","away","offline");
@@ -398,6 +405,9 @@ async function updateStatus(){
   const val=document.getElementById("statusSelect").value;
   let normalized=val;
   let message=val==="online"?"On the Road":val==="away"?"Limited Availability":"Offline";
+
+  const wasOnline = (currentStatusVal === "online");
+
   try{
     log("Status PUT…");
     const res=await fetch(STATUS_WORKER+"/status",{
@@ -412,8 +422,21 @@ async function updateStatus(){
         message
       })
     });
-    log("Status PUT response: "+await res.text());
+    const bodyText = await res.text();
+    log("Status PUT response: "+bodyText);
     showToast(res.ok?"Status updated":"Status update failed");
+
+    if(res.ok){
+      /* update local tracker */
+      currentStatusVal = normalized;
+
+      /* if we just transitioned OFFLINE/AWAY → ONLINE, fire auto push */
+      if(!wasOnline && normalized === "online"){
+        log("Auto-online push trigger fired.");
+        autoOnlinePush();
+      }
+    }
+
     loadStatus();
   }catch(e){
     log("PUT error:"+e.message);
@@ -567,12 +590,25 @@ function handlePushBroadcast(){
     title,
     message: msg,
     url,
-    // Riders-only: devices tagged env = "live"
     filters: [
       { field: "tag", key: "env", value: "live" }
     ]
   };
 
+  sendPush(payload);
+}
+
+/* NEW: automatic online push – uses same path as broadcast */
+function autoOnlinePush(){
+  const payload = {
+    type: "broadcast",
+    title: "Big Red is LIVE",
+    message: "🚗 Big Red Connect is LIVE across the metro — text RED to 405-378-4024 for a flat-rate connection.",
+    url: HOME_URL,
+    filters: [
+      { field: "tag", key: "env", value: "live" }
+    ]
+  };
   sendPush(payload);
 }
 
