@@ -34,9 +34,9 @@
              !navigator.standalone;
     }
 
-    /* -------------------------------
-       OneSignal Initialization (Rider)
-       ------------------------------- */
+    /* -------------------------------------------------
+       OneSignal Initialization (Rider Mode)
+       ------------------------------------------------- */
     window.OneSignalDeferred = window.OneSignalDeferred || [];
     OneSignalDeferred.push(async function (OneSignal) {
       await OneSignal.init({
@@ -47,21 +47,28 @@
         path: "/"
       });
 
-      OneSignal.sendTag("role_rider", "true");
+      // Baseline tag (kept)
+      await OneSignal.sendTag("role_rider", "true");
     });
 
-    /* Enable alerts button logic */
+    /* -------------------------------------------------
+       UPDATED: Enable Alerts → Auto-tag as Rider (Live)
+       ------------------------------------------------- */
     function handleEnableAlerts() {
       window.OneSignalDeferred.push(async function (OneSignal) {
-        const supported = OneSignal.Notifications.isPushSupported();
+        const supported = await OneSignal.Notifications.isPushSupported();
         if (!supported) {
           alert("This browser does not support notifications.");
           return;
         }
 
         const permission = OneSignal.Notifications.permission;
+
         if (permission === "granted" || permission === true) {
-          alert("You're already set to receive Big Red Alerts on this device!");
+          // Already enabled → ensure correct tags exist
+          await OneSignal.sendTag("env", "live");
+          await OneSignal.sendTag("role_rider_live", "true");
+          alert("You're already set — alerts are enabled!");
           return;
         }
 
@@ -69,12 +76,19 @@
           document.getElementById("iosAlertTip").style.display = "block";
         }
 
+        // This opens the push prompt
         await OneSignal.Slidedown.promptPush();
+
+        // After permission is granted → these tags ensure the rider receives pushes
+        await OneSignal.sendTag("env", "live");
+        await OneSignal.sendTag("role_rider_live", "true");
+
+        console.log("[Rider] Push tags applied → env=live, role_rider_live=true");
       });
     }
 
     /* ------------------------------------------------------
-       LOGIN CHECK (Used for Request-a-Ride / Quick Search)
+       LOGIN CHECKS
        ------------------------------------------------------ */
     function isRiderLoggedIn() {
       try {
@@ -87,7 +101,6 @@
       }
     }
 
-    /* Request-a-Ride tile → login if needed */
     function goRequestRide() {
       if (!isRiderLoggedIn()) {
         window.location.href = "/rider-login.html?next=request";
@@ -96,7 +109,6 @@
       }
     }
 
-    /* Quick Destination Search */
     function goToFare(e) {
       e.preventDefault();
       const dest = document.getElementById("quickWhere").value.trim();
@@ -113,28 +125,21 @@
       }
     }
 
-    /* ------------------------------------------------------
-       NEW: My Profile Tile Logic
-       ------------------------------------------------------ */
     function goMyProfile() {
       try {
         const raw = localStorage.getItem("bigred_rider_profile_v1");
 
-        // Not logged in → route to login
         if (!raw) {
           window.location.href = "/rider-login.html?next=profile";
           return;
         }
 
-        // Logged in → rider hub
         window.location.href = "/rider/rider.html";
-
       } catch (err) {
         console.error(err);
         window.location.href = "/rider-login.html?next=profile";
       }
     }
-
   </script>
 
 </head>
