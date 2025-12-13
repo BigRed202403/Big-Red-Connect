@@ -773,7 +773,10 @@ function renderColumn(id,arr){
       ${estMinutes?`<div class="eta-line">Est. ride time: ${estMinutes}</div>`:""}
       <div class="card-footer">
         <div>
-          <select class="status-dropdown" data-id="${rideId}">
+          <select
+  class="status-dropdown"
+  data-id="${rideId}"
+  data-rider-id="${b.rider?.riderId || ""}">
             <option ${b.status==="REQUESTED"?"selected":""}>REQUESTED</option>
             <option ${b.status==="ACCEPTED"?"selected":""}>ACCEPTED</option>
             <option ${b.status==="ENROUTE"?"selected":""}>ENROUTE</option>
@@ -791,6 +794,9 @@ function renderColumn(id,arr){
           </div>
         </div>
       </div>`;
+          // 🔍 DEBUG: log rider object for this booking
+    log("Rendered booking rider object → " + JSON.stringify(b.rider));
+
     box.appendChild(div);
   });
 }
@@ -804,22 +810,8 @@ document.body.addEventListener("change", async (e) => {
 
   try {
     // Fetch booking first to get riderId
-    const r0 = await fetch(`${BOOKINGS_API}/api/driver/bookings/${id}`, {
-  headers: {
-    "X-Admin-Secret": AUTH_SECRET
-  }
-});
-const booking = await r0.json();
-log("Booking object → " + JSON.stringify(booking));
-
-const riderId =
-  booking?.rider?.external_id ||
-  booking?.rider?.phone ||
-  booking?.rider?.id ||
-  booking?.riderId ||
-  null;
-
-log("Resolved riderId → " + riderId);
+    const riderId = e.target.dataset.riderId || null;
+log("Resolved riderId (DOM) → " + riderId);
 
     // Update ride status
     const r = await fetch(`${BOOKINGS_API}/api/driver/bookings/${id}`, {
