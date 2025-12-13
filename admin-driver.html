@@ -810,8 +810,9 @@ document.body.addEventListener("change", async (e) => {
 
   try {
     // Fetch booking first to get riderId
-    const riderId = e.target.dataset.riderId || null;
-log("Resolved riderId (DOM) → " + riderId);
+    const select = e.target.closest("select");
+    const riderId = select?.dataset?.riderId || null;
+    log("Resolved riderId (DOM fixed) → " + riderId);
 
     // Update ride status
     const r = await fetch(`${BOOKINGS_API}/api/driver/bookings/${id}`, {
