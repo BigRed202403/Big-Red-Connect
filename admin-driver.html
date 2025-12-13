@@ -317,6 +317,43 @@ const LIVE_IMAGES=[
   "Official Logo.png"
 ];
 
+/* =====================================================
+   RIDER STATUS PUSH HELPER
+   ===================================================== */
+function sendRiderStatusPush({ riderId, rideId, status }) {
+  if (!riderId) return;
+
+  const STATUS_COPY = {
+    ACCEPTED: "✅ Your ride has been accepted.",
+    ENROUTE: "🚗 Your driver is on the way.",
+    ARRIVED: "📍 Your driver has arrived.",
+    PICKED_UP: "▶️ Your ride is now in progress.",
+    COMPLETED: "🎉 Thanks for riding with Big Red Connect!",
+    CANCELLED: "⚠️ Your ride was cancelled."
+  };
+
+  const message = STATUS_COPY[status];
+  if (!message) return;
+
+  fetch(PUSH_WORKER, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Admin-Secret": AUTH_SECRET
+    },
+    body: JSON.stringify({
+      type: "rider",
+      riderId,
+      title: "Big Red Connect",
+      message,
+      url: `${HOME_URL}/rider/myride.html?id=${rideId}`,
+      data: { rideId, status }
+    })
+  })
+  .then(() => log(`Rider push sent → ${status}`))
+  .catch(e => log(`Rider push failed: ${e.message}`));
+};
+
 let imgIndex=0;
 
 const TEMPLATES={
@@ -759,20 +796,40 @@ function renderColumn(id,arr){
 }
 
 /* DISPATCH EVENTS */
-document.body.addEventListener("change",async(e)=>{
-  if(!e.target.classList.contains("status-dropdown"))return;
-  const id=e.target.dataset.id;
-  const newState=e.target.value;
-  try{
-    const r=await fetch(`${BOOKINGS_API}/api/driver/bookings/${id}`,{
-      method:"PUT",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({status:newState})
+document.body.addEventListener("change", async (e) => {
+  if (!e.target.classList.contains("status-dropdown")) return;
+
+  const id = e.target.dataset.id;
+  const newState = e.target.value;
+
+  try {
+    // Fetch booking first to get riderId
+    const r0 = await fetch(`${BOOKINGS_API}/api/driver/bookings/${id}`);
+    const booking = await r0.json();
+    const riderId = booking?.rider?.riderId;
+
+    // Update ride status
+    const r = await fetch(`${BOOKINGS_API}/api/driver/bookings/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: newState })
     });
-    showToast(r.ok?`Status → ${newState}`:"Update failed");
+
+    showToast(r.ok ? `Status → ${newState}` : "Update failed");
+
+    // 🔔 Rider status push
+    if (r.ok) {
+      sendRiderStatusPush({
+        riderId,
+        rideId: id,
+        status: newState
+      });
+    }
+
     fetchBookings();
-  }catch(err){
+  } catch (err) {
     showToast("Failed");
+    log("Status update error: " + err.message);
   }
 });
 
