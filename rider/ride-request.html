@@ -432,6 +432,7 @@
   // =====================================================
   const API_BOOK   = "https://bigred-bookings.bigredtransportation.workers.dev";
   const STATUS_API = "https://bigred-status-updater.bigredtransportation.workers.dev/status";
+  const PUSH_API   = "https://bigred-push.bigredtransportation.workers.dev/push/ride-request";
 
   // HQ fallback (Moore)
   const HQ = { lat: 35.3207, lng: -97.4929 };
@@ -1086,6 +1087,30 @@
 
     const booking = await res.json();
     const rideId = booking.id;
+// =====================================================
+// 🔔 Ride Request Push (non-blocking, safe)
+// =====================================================
+try {
+  await fetch(PUSH_API, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Ride-Push-Key": "ride_request_ok"
+    },
+    body: JSON.stringify({
+      rideId,
+      riderName: name,
+      pickup: q.pickup,
+      dropoff: q.dropoff,
+      passengers: q.passengers || 1,
+      estimate: q.total,
+      scheduledFor: scheduledISO
+    })
+  });
+} catch (e) {
+  console.warn("Ride request push failed (non-blocking)", e);
+}
+
 
     // Disable button & prevent double sends
     const btn = document.getElementById("btnRequest");
