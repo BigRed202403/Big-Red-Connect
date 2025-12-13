@@ -806,7 +806,16 @@ document.body.addEventListener("change", async (e) => {
     // Fetch booking first to get riderId
     const r0 = await fetch(`${BOOKINGS_API}/api/driver/bookings/${id}`);
     const booking = await r0.json();
-    const riderId = booking?.rider?.riderId;
+log("Booking object → " + JSON.stringify(booking));
+
+const riderId =
+  booking?.rider?.external_id ||
+  booking?.rider?.phone ||
+  booking?.rider?.id ||
+  booking?.riderId ||
+  null;
+
+log("Resolved riderId → " + riderId);
 
     // Update ride status
     const r = await fetch(`${BOOKINGS_API}/api/driver/bookings/${id}`, {
