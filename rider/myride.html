@@ -12,16 +12,16 @@
   <meta name="theme-color" content="#000"/>
 
   <style>
-    body {
+    body{
       margin:0;
       background:#000;
       color:#fff;
-      font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
       padding-bottom:50px;
     }
 
     /* HEADER + MENU */
-    header {
+    header{
       background:#000;
       padding:12px;
       border-bottom:2px solid #b30000;
@@ -32,55 +32,50 @@
       top:0;
       z-index:50;
     }
-    .header-left {
-      display:flex;
-      align-items:center;
-      gap:10px;
-    }
-    .logo { height:42px; }
-    #menuBtn {
+    .header-left{ display:flex; align-items:center; gap:10px; }
+    .logo{ height:42px; }
+    #menuBtn{
       font-size:1.6rem;
       background:none;
       border:none;
       color:white;
       cursor:pointer;
     }
-    #menuPanel {
+    #menuPanel{
       display:none;
       flex-direction:column;
       background:#111;
       border-bottom:2px solid #b30000;
       animation:drop .15s ease-out;
     }
-    #menuPanel a {
+    #menuPanel a{
       padding:16px;
       color:#fff;
       text-decoration:none;
       border-bottom:1px solid #222;
       font-size:1rem;
     }
-    #menuPanel a:hover { background:#222; }
-
-    @keyframes drop {
-      from { opacity:0; transform:translateY(-10px); }
-      to   { opacity:1; transform:translateY(0); }
+    #menuPanel a:hover{ background:#222; }
+    @keyframes drop{
+      from{ opacity:0; transform:translateY(-10px); }
+      to{ opacity:1; transform:translateY(0); }
     }
 
-    h1 {
+    h1{
       text-align:center;
       font-size:1.4rem;
-      margin:18px 0;
+      margin:18px 0 8px;
       font-weight:700;
     }
 
-    .section-title {
+    .section-title{
       font-size:1rem;
       font-weight:700;
       margin:10px 0 6px;
       padding:0 12px;
     }
 
-    .card {
+    .card{
       background:#111;
       border:1px solid #333;
       border-radius:10px;
@@ -88,25 +83,21 @@
       margin:0 12px 14px;
     }
 
-    .status {
+    .status{
       font-size:.88rem;
       margin-bottom:4px;
       color:#ccc;
     }
 
-    .loc-line {
+    .loc-line{
       margin:6px 0;
       font-size:.9rem;
+      color:#e8e8e8;
     }
 
-    .vehicle-thumb {
-      width:80px;
-      border-radius:10px;
-      margin-top:10px;
-      border:1px solid #333;
-    }
+    .muted{ color:#aaa; font-size:.88rem; }
 
-    .btn-primary, .btn-ghost {
+    .btn-primary, .btn-ghost{
       display:block;
       width:calc(100% - 24px);
       margin:12px auto;
@@ -117,10 +108,15 @@
       font-weight:700;
       font-size:1.05rem;
     }
-    .btn-primary { background:#b30000; color:#fff; }
-    .btn-ghost   { background:#111; color:#fff; border:1px solid #333; }
+    .btn-primary{ background:#b30000; color:#fff; }
+    .btn-ghost{
+      background:#111;
+      color:#fff;
+      border:1px solid #333;
+    }
 
-    #map {
+    /* Map */
+    #map{
       width:calc(100% - 24px);
       height:320px;
       margin:12px auto;
@@ -129,13 +125,51 @@
       display:none;
     }
 
-    #etaBox {
+    #etaBox{
       display:none;
       margin:-4px 12px 14px;
-      line-height:1.35;
     }
 
-    #toast {
+    /* Diagnostics */
+    .diag-toggle{
+      display:flex;
+      justify-content:center;
+      gap:10px;
+      padding:0 12px 10px;
+    }
+    .diag-toggle button{
+      background:#111;
+      border:1px solid #333;
+      color:#fff;
+      border-radius:999px;
+      padding:10px 14px;
+      font-weight:700;
+      cursor:pointer;
+    }
+    .diag-row{
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      padding:8px 0;
+      border-bottom:1px solid #222;
+    }
+    .diag-badge{
+      min-width:78px;
+      text-align:center;
+      font-weight:800;
+      font-size:.78rem;
+      padding:6px 8px;
+      border-radius:999px;
+      border:1px solid #333;
+      background:#0b0b0b;
+    }
+    .ok{ border-color:#2d8a3a; color:#bff5c7; }
+    .warn{ border-color:#c08a2a; color:#ffe2b3; }
+    .bad{ border-color:#b30000; color:#ffb3b3; }
+    .diag-text{ font-size:.9rem; color:#ddd; }
+    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+
+    #toast{
       position:fixed;
       bottom:22px;
       left:50%;
@@ -147,26 +181,30 @@
       opacity:0;
       transition:.25s;
       z-index:999;
+      max-width:90vw;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
     }
-    #toast.show { opacity:1; }
+    #toast.show{ opacity:1; }
   </style>
 
-  <!-- 🔔 OneSignal SDK (identity re-bind, no prompt here) -->
+  <!-- OneSignal SDK (identity bind only; no prompt here) -->
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+
+  <!-- Google Maps (loaded later via script tag at bottom with callback) -->
 </head>
 
 <body>
 
-<!-- HEADER -->
 <header>
   <div class="header-left">
-    <a href="/index.html"><img src="/icon.PNG" class="logo"></a>
+    <a href="/index.html"><img src="/icon.PNG" class="logo" alt="Big Red Connect"></a>
     <div style="font-weight:700;font-size:1rem;">My Ride</div>
   </div>
   <button id="menuBtn">☰</button>
 </header>
 
-<!-- MENU -->
 <nav id="menuPanel">
   <a href="/rider/rider.html">Rider Hub</a>
   <a href="/rider/ride-request.html">Request a Ride</a>
@@ -176,6 +214,19 @@
 </nav>
 
 <h1>Your Ride</h1>
+
+<div class="diag-toggle">
+  <button id="btnToggleDiag">🧰 Show Diagnostics</button>
+  <button id="btnRefresh">🔄 Refresh</button>
+</div>
+
+<div id="diagCard" class="card" style="display:none;">
+  <div class="status" style="font-weight:800;">Diagnostics (no DevTools required)</div>
+  <div class="muted" style="margin-top:6px;">
+    This panel tells you exactly what is failing (network, CORS, unauthorized, bad JSON, no rides, etc.).
+  </div>
+  <div id="diagList" style="margin-top:10px;"></div>
+</div>
 
 <!-- ACTIVE -->
 <div id="activeContainer"></div>
@@ -196,37 +247,36 @@
 <div id="toast"></div>
 
 <script>
-/* ============================================================
+/* =========================
    CONFIG
-   ============================================================ */
-const API_BOOKINGS     = "https://bigred-bookings.bigredtransportation.workers.dev";
-const LOCATION_READER  = "https://update-location.bigredtransportation.workers.dev"; // ✅ Confirmed
-const STALE_MINUTES    = 30;        // for “stale” warning only
-const POLL_MS_ACTIVE   = 15000;     // updates while ride is active
-const OKC_FALLBACK     = { lat: 35.4676, lng: -97.5164 };
+========================= */
+const API_BOOKINGS = "https://bigred-bookings.bigredtransportation.workers.dev";
+const API_STATUS   = "https://bigred-status-updater.bigredtransportation.workers.dev/status";
 
-/* ============================================================
-   STATE
-   ============================================================ */
-let map = null;
-let geocoder = null;
-let directionsService = null;
-let directionsRenderer = null;
+/* =========================
+   UI BASICS
+========================= */
+document.getElementById("menuBtn").addEventListener("click", ()=>{
+  const p = document.getElementById("menuPanel");
+  p.style.display = (p.style.display==="flex" ? "none" : "flex");
+});
 
-let driverMarker = null;
-let pickupMarker = null;
-let dropoffMarker = null;
+document.getElementById("logoutBtn").addEventListener("click", ()=>{
+  // Only remove rider-related keys (don’t nuke everything)
+  localStorage.removeItem("bigred_rider_profile_v1");
+  localStorage.removeItem("riderId");
+  localStorage.removeItem("riderName");
+  localStorage.removeItem("riderPhone");
+  localStorage.removeItem("riderHome");
+  localStorage.removeItem("riderGate");
+  showToast("Logged out");
+  setTimeout(()=> window.location.href="/index.html", 350);
+});
 
-let activeRide = null;
-let pickupLatLng = null;
-let dropoffLatLng = null;
+document.getElementById("btnRefresh").addEventListener("click", ()=>{
+  location.reload();
+});
 
-let pollTimer = null;
-let lastDriverFix = null;
-
-/* ============================================================
-   UI HELPERS
-   ============================================================ */
 function showToast(msg){
   const t = document.getElementById("toast");
   t.textContent = msg;
@@ -234,105 +284,196 @@ function showToast(msg){
   setTimeout(()=> t.classList.remove("show"), 1900);
 }
 
-/* MENU */
-document.getElementById("menuBtn").addEventListener("click", ()=>{
-  const p = document.getElementById("menuPanel");
-  p.style.display = (p.style.display==="flex" ? "none" : "flex");
+/* =========================
+   DIAGNOSTICS (VISIBLE)
+========================= */
+const diagCard = document.getElementById("diagCard");
+const diagList = document.getElementById("diagList");
+let diagVisible = false;
+
+document.getElementById("btnToggleDiag").addEventListener("click", ()=>{
+  diagVisible = !diagVisible;
+  diagCard.style.display = diagVisible ? "block" : "none";
+  document.getElementById("btnToggleDiag").textContent = diagVisible ? "🧰 Hide Diagnostics" : "🧰 Show Diagnostics";
 });
 
-document.getElementById("logoutBtn").addEventListener("click", ()=>{
-  // Keep it targeted so we don’t nuke unrelated app storage
-  localStorage.removeItem("bigred_rider_profile_v1");
-  localStorage.removeItem("riderId");
-  localStorage.removeItem("riderName");
-  localStorage.removeItem("riderPhone");
-  localStorage.removeItem("riderHome");
-  localStorage.removeItem("riderGate");
-  window.location.href="/index.html";
-});
-
-/* ============================================================
-   RIDER ID (canonical first)
-   ============================================================ */
-function getCanonicalRiderId(){
-  try {
-    const raw = localStorage.getItem("bigred_rider_profile_v1");
-    if (raw) {
-      const p = JSON.parse(raw);
-      if (p && p.riderId) return String(p.riderId);
-    }
-  } catch {}
-  // fallback legacy
-  const legacy = localStorage.getItem("riderId");
-  return legacy ? String(legacy) : "";
+function addDiag(level, label, text){
+  const cls = level === "OK" ? "ok" : level === "WARN" ? "warn" : "bad";
+  const row = document.createElement("div");
+  row.className = "diag-row";
+  row.innerHTML = `
+    <div class="diag-badge ${cls}">${label}</div>
+    <div class="diag-text">${text}</div>
+  `;
+  diagList.appendChild(row);
 }
 
-function getRiderPhone(){
-  try {
-    const raw = localStorage.getItem("bigred_rider_profile_v1");
-    if (raw) {
-      const p = JSON.parse(raw);
-      if (p && p.phone) return String(p.phone);
-    }
-  } catch {}
-  return String(localStorage.getItem("riderPhone") || "");
+function clearDiag(){
+  diagList.innerHTML = "";
 }
 
-/* ============================================================
-   DATA LOAD
-   ============================================================ */
-async function loadRides(){
-  const riderId = getCanonicalRiderId();
-  const riderPhone = getRiderPhone().replace(/\D/g,"");
-
-  let all = [];
-  try {
-    const res = await fetch(`${API_BOOKINGS}/api/driver/bookings?scope=all`, { cache:"no-store" });
-    if (!res.ok) {
-      showToast("Error loading rides");
-      return;
+/* =========================
+   RIDER IDENTITY HELPERS
+========================= */
+function getProfile(){
+  // Canonical
+  try{
+    const raw = localStorage.getItem("bigred_rider_profile_v1");
+    if(raw){
+      const p = JSON.parse(raw);
+      return {
+        riderId: p.riderId || null,
+        name: p.name || null,
+        phone: (p.phone || "").replace(/\D/g,"") || null
+      };
     }
-    all = await res.json();
-  } catch (e) {
-    console.error(e);
-    showToast("Network error loading rides");
-    return;
+  } catch {}
+  // Legacy
+  return {
+    riderId: localStorage.getItem("riderId") || null,
+    name: localStorage.getItem("riderName") || null,
+    phone: (localStorage.getItem("riderPhone") || "").replace(/\D/g,"") || null
+  };
+}
+
+function ensureLegacyKeysFromCanonical(){
+  // Make older pages happy without breaking new canonical
+  try{
+    const p = getProfile();
+    if(p.riderId) localStorage.setItem("riderId", p.riderId);
+    if(p.name) localStorage.setItem("riderName", p.name);
+    if(p.phone) localStorage.setItem("riderPhone", p.phone);
+  } catch {}
+}
+
+/* =========================
+   BOOKINGS FETCH (SELF-DIAGNOSING)
+========================= */
+async function safeFetchJson(url){
+  // Returns { ok, status, json, text, errorType }
+  try{
+    const res = await fetch(url, { cache:"no-store" });
+    const status = res.status;
+    const text = await res.text();
+
+    // Try JSON parse
+    let j = null;
+    try{ j = JSON.parse(text); } catch {}
+
+    if(!res.ok){
+      return {
+        ok:false,
+        status,
+        json:j,
+        text,
+        errorType: (status === 401 || status === 403) ? "UNAUTHORIZED" : "HTTP_ERROR"
+      };
+    }
+
+    if(j === null){
+      return { ok:false, status, json:null, text, errorType:"BAD_JSON" };
+    }
+
+    return { ok:true, status, json:j, text };
+  } catch(e){
+    return { ok:false, status:0, json:null, text:"", errorType:"NETWORK" };
+  }
+}
+
+async function loadBookingsWithDiagnostics(){
+  clearDiag();
+  ensureLegacyKeysFromCanonical();
+
+  const prof = getProfile();
+
+  addDiag("OK", "PROFILE", `Local rider profile found: <span class="mono">${prof.riderId || "MISSING"}</span> • phone: <span class="mono">${prof.phone || "MISSING"}</span>`);
+
+  if(!prof.riderId && !prof.phone){
+    addDiag("BAD", "LOGIN", `No riderId/phone found in storage. You are effectively logged out. Go to <span class="mono">/rider-login.html</span> and log in.`);
+    return { all: [], my: [], active: null, past: [] };
   }
 
-  const myRides = all.filter(r => {
-    const rId = r?.rider?.riderId ? String(r.rider.riderId) : "";
-    const rPhone = (r?.rider?.phone || "").replace(/\D/g,"");
-    if (riderId && rId && rId === riderId) return true;
-    if (riderPhone && rPhone && rPhone === riderPhone) return true;
+  // Primary endpoint (your current pattern)
+  const urlAll = `${API_BOOKINGS}/api/driver/bookings?scope=all`;
+  addDiag("WARN", "FETCH", `Attempting bookings fetch: <span class="mono">${urlAll}</span>`);
+
+  const res1 = await safeFetchJson(urlAll);
+
+  if(!res1.ok){
+    if(res1.errorType === "NETWORK"){
+      addDiag("BAD", "NETWORK", `Browser could not reach the bookings worker at all. This is typically: offline, DNS, or a blocked request.`);
+    } else if(res1.errorType === "UNAUTHORIZED"){
+      addDiag("BAD", "AUTH", `Bookings worker responded ${res1.status}. This suggests it now requires a secret header or changed access rules.`);
+    } else if(res1.errorType === "BAD_JSON"){
+      addDiag("BAD", "JSON", `Bookings worker returned non-JSON (status ${res1.status}). First chars: <span class="mono">${(res1.text||"").slice(0,180).replace(/</g,"&lt;")}</span>`);
+    } else {
+      addDiag("BAD", "HTTP", `Bookings worker returned HTTP ${res1.status}. Body: <span class="mono">${(res1.text||"").slice(0,180).replace(/</g,"&lt;")}</span>`);
+    }
+
+    // Try a secondary fetch to help isolate
+    const urlActive = `${API_BOOKINGS}/api/driver/bookings?scope=active`;
+    addDiag("WARN", "RETRY", `Trying alternate scope: <span class="mono">${urlActive}</span>`);
+    const res2 = await safeFetchJson(urlActive);
+
+    if(res2.ok){
+      addDiag("OK", "ALT OK", `Alternate fetch works (HTTP ${res2.status}). That means the worker is reachable; the issue is likely scope/size or response formatting on scope=all.`);
+      return processBookings(res2.json, prof);
+    } else {
+      addDiag("BAD", "ALT FAIL", `Alternate fetch also failed. This confirms a worker reachability / CORS / auth issue, not a filtering issue on this page.`);
+      return { all: [], my: [], active: null, past: [] };
+    }
+  }
+
+  addDiag("OK", "OK", `Bookings fetch succeeded (HTTP ${res1.status}). Records returned: <span class="mono">${Array.isArray(res1.json) ? res1.json.length : "NOT_ARRAY"}</span>`);
+
+  if(!Array.isArray(res1.json)){
+    addDiag("BAD", "FORMAT", `Expected an array of bookings but got something else. First chars: <span class="mono">${(res1.text||"").slice(0,180).replace(/</g,"&lt;")}</span>`);
+    return { all: [], my: [], active: null, past: [] };
+  }
+
+  return processBookings(res1.json, prof);
+}
+
+function processBookings(all, prof){
+  // Filter by canonical riderId OR by phone as fallback
+  const my = all.filter(b=>{
+    const rid = b?.rider?.riderId || null;
+    const ph  = (b?.rider?.phone || "").replace(/\D/g,"");
+    if(prof.riderId && rid && rid === prof.riderId) return true;
+    if(prof.phone && ph && ph === prof.phone) return true;
     return false;
   });
 
-  // treat PICKED_UP as active (rider wants to track)
-  const ACTIVE_STATUSES = ["REQUESTED","ACCEPTED","ENROUTE","ARRIVED","PICKED_UP"];
-  const DONE_STATUSES   = ["COMPLETED","CANCELLED","DECLINED"];
+  addDiag(my.length ? "OK" : "WARN", "MATCH", `Bookings matching THIS rider: <span class="mono">${my.length}</span> (match logic: riderId first, phone fallback)`);
 
-  const active = myRides.find(r => ACTIVE_STATUSES.includes(String(r.status || "").toUpperCase()));
-  const done   = myRides.filter(r => DONE_STATUSES.includes(String(r.status || "").toUpperCase()));
+  const activeStatuses = ["REQUESTED","ACCEPTED","ENROUTE","ARRIVED","PICKED_UP"];
+  const doneStatuses   = ["COMPLETED","CANCELLED","DECLINED"];
 
-  renderActive(active || null);
-  renderPast(done.reverse());
+  const active = my.find(b => activeStatuses.includes(String(b.status||"").toUpperCase())) || null;
+  const past   = my.filter(b => doneStatuses.includes(String(b.status||"").toUpperCase()));
+
+  addDiag(active ? "OK" : "WARN", "ACTIVE", active ? `Active ride found: <span class="mono">${active.id}</span> status <span class="mono">${active.status}</span>` : `No active ride found.`);
+  addDiag(past.length ? "OK" : "WARN", "PAST", `Past rides found: <span class="mono">${past.length}</span>`);
+
+  return { all, my, active, past };
 }
 
-/* ============================================================
+/* =========================
    RENDER
-   ============================================================ */
+========================= */
+let activeRide = null;
+
 function renderActive(ride){
   const box = document.getElementById("activeContainer");
+  const mapDiv = document.getElementById("map");
+  const etaBox = document.getElementById("etaBox");
 
-  // stop polling if no active ride
-  if (!ride){
+  if(!ride){
     box.innerHTML = `<div class="card">You have no active rides.</div>`;
-    document.getElementById("map").style.display="none";
-    document.getElementById("etaBox").style.display="none";
+    mapDiv.style.display="none";
+    etaBox.style.display="none";
     activeRide = null;
-    pickupLatLng = null;
-    dropoffLatLng = null;
-    stopPolling();
+    stopLiveLoops();
     return;
   }
 
@@ -340,332 +481,338 @@ function renderActive(ride){
 
   box.innerHTML = `
     <div class="card">
-      <div class="status">Status: ${escapeHtml(ride.status || "")}</div>
-      <div class="loc-line">Pickup: ${escapeHtml(ride.pickup?.address || "")}</div>
-      <div class="loc-line">Dropoff: ${escapeHtml(ride.dropoff?.address || "")}</div>
-      ${ride.vehicle?.image ? `
-         <img class="vehicle-thumb" src="${escapeAttr(ride.vehicle.image)}" alt="${escapeAttr(ride.vehicle.label || "Vehicle")}"/>
-      ` : ""}
-      <div class="status" style="margin-top:10px; color:#888;">
-        Live map updates while your ride is active.
-      </div>
+      <div class="status">Status: <strong>${ride.status}</strong></div>
+      <div class="loc-line"><strong>Pickup:</strong> ${ride.pickup?.address || "—"}</div>
+      <div class="loc-line"><strong>Dropoff:</strong> ${ride.dropoff?.address || "—"}</div>
+      <div class="muted" style="margin-top:8px;">Ride ID: <span class="mono">${ride.id}</span></div>
     </div>
   `;
-
-  // Maps: only init when google is ready (callback will run initIfActiveRide)
-  initIfActiveRide();
 }
 
 function renderPast(list){
   const box = document.getElementById("pastContainer");
   box.innerHTML = "";
 
-  if(!list.length){
+  if(!list || !list.length){
     box.innerHTML = `<div class="card">No past rides yet.</div>`;
     return;
   }
 
-  list.forEach(r=>{
-    box.innerHTML += `
-      <div class="card">
-        <div class="status">${escapeHtml(r.status || "")}</div>
-        <div class="loc-line">From: ${escapeHtml(r.pickup?.address || "")}</div>
-        <div class="loc-line">To: ${escapeHtml(r.dropoff?.address || "")}</div>
-      </div>
-    `;
-  });
+  list
+    .slice()
+    .sort((a,b)=>(String(b.createdAt||"").localeCompare(String(a.createdAt||""))))
+    .forEach(r=>{
+      box.innerHTML += `
+        <div class="card">
+          <div class="status">${r.status}</div>
+          <div class="loc-line"><strong>From:</strong> ${r.pickup?.address || "—"}</div>
+          <div class="loc-line"><strong>To:</strong> ${r.dropoff?.address || "—"}</div>
+          <div class="muted" style="margin-top:8px;">Ride ID: <span class="mono">${r.id}</span></div>
+        </div>
+      `;
+    });
 }
 
-/* ============================================================
-   MAP INIT + ROUTING
-   ============================================================ */
-function initIfActiveRide(){
-  if (!window.google || !google.maps) return; // API not loaded yet
-  if (!activeRide) return;
+/* =========================
+   MAP + LIVE DRIVER + ROUTE + ETA
+   - Shows pickup + dropoff markers
+   - Shows driver marker
+   - Draws route:
+       before PICKED_UP -> driver -> pickup
+       after PICKED_UP  -> driver -> dropoff
+========================= */
+let map, geocoder, directionsService, directionsRenderer;
+let driverMarker, pickupMarker, dropoffMarker;
+let pickupLatLng = null;
+let dropoffLatLng = null;
+let driverLatLng = null;
+let statusLoop = null;
+let routeLoop = null;
 
+function stopLiveLoops(){
+  if(statusLoop){ clearInterval(statusLoop); statusLoop = null; }
+  if(routeLoop){ clearInterval(routeLoop); routeLoop = null; }
+}
+
+function initMapIfNeeded(){
   const mapDiv = document.getElementById("map");
   mapDiv.style.display = "block";
 
-  if (!map) {
-    map = new google.maps.Map(mapDiv, {
-      zoom: 12,
-      center: OKC_FALLBACK,
-      mapTypeControl:false,
-      streetViewControl:false,
-      fullscreenControl:false
-    });
+  if(map) return;
 
-    geocoder = new google.maps.Geocoder();
-    directionsService = new google.maps.DirectionsService();
-    directionsRenderer = new google.maps.DirectionsRenderer({
-      map,
-      suppressMarkers: true,
-      preserveViewport: false
-    });
+  map = new google.maps.Map(mapDiv, {
+    zoom: 12,
+    center: { lat:35.4676, lng:-97.5164 },
+    mapTypeControl:false,
+    streetViewControl:false,
+    fullscreenControl:false
+  });
+
+  geocoder = new google.maps.Geocoder();
+  directionsService = new google.maps.DirectionsService();
+  directionsRenderer = new google.maps.DirectionsRenderer({
+    suppressMarkers:true,
+    polylineOptions: { strokeWeight: 5 }
+  });
+  directionsRenderer.setMap(map);
+}
+
+function setMarker(existing, pos, iconUrl){
+  if(existing) existing.setMap(null);
+  return new google.maps.Marker({
+    map,
+    position: pos,
+    icon: iconUrl ? { url: iconUrl } : undefined
+  });
+}
+
+function fitAll(){
+  const bounds = new google.maps.LatLngBounds();
+  let hasAny = false;
+
+  if(driverLatLng){ bounds.extend(driverLatLng); hasAny = true; }
+  if(pickupLatLng){ bounds.extend(pickupLatLng); hasAny = true; }
+  if(dropoffLatLng){ bounds.extend(dropoffLatLng); hasAny = true; }
+
+  if(hasAny){
+    map.fitBounds(bounds);
   }
-
-  // Geocode pickup + dropoff once per ride
-  geocodeRideEndpoints(activeRide).then(() => {
-    // Draw initial markers and route immediately
-    updateFromLiveLocation(true);
-    startPolling();
-  }).catch((e) => {
-    console.warn("Endpoint geocode failed:", e);
-    showToast("Map setup error");
-  });
 }
 
-async function geocodeRideEndpoints(ride){
-  const pickupAddr = (ride.pickup?.address || "").trim();
-  const dropoffAddr = (ride.dropoff?.address || "").trim();
-  if (!pickupAddr || !dropoffAddr) throw new Error("Missing addresses");
-
-  pickupLatLng = await geocodeAddress(pickupAddr);
-  dropoffLatLng = await geocodeAddress(dropoffAddr);
-
-  // Place markers
-  if (pickupMarker) pickupMarker.setMap(null);
-  pickupMarker = new google.maps.Marker({
-    map,
-    position: pickupLatLng,
-    title: "Pickup",
-    icon: { url: "https://maps.google.com/mapfiles/ms/icons/green-dot.png" }
-  });
-
-  if (dropoffMarker) dropoffMarker.setMap(null);
-  dropoffMarker = new google.maps.Marker({
-    map,
-    position: dropoffLatLng,
-    title: "Dropoff",
-    icon: { url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png" }
-  });
+function showEtaBox(textHtml){
+  const etaBox = document.getElementById("etaBox");
+  etaBox.style.display = "block";
+  etaBox.innerHTML = textHtml;
 }
 
-function geocodeAddress(addr){
-  return new Promise((resolve, reject) => {
-    geocoder.geocode({ address: addr }, (res, status) => {
-      if (status === "OK" && res && res[0] && res[0].geometry && res[0].geometry.location) {
+async function geocodeAddress(addr){
+  return await new Promise((resolve, reject)=>{
+    geocoder.geocode({ address: addr }, (res, status)=>{
+      if(status === "OK" && res && res[0]){
         resolve(res[0].geometry.location);
       } else {
-        reject(new Error("Geocode failed: " + status));
+        reject(status);
       }
     });
   });
 }
 
-/* ============================================================
-   LIVE LOCATION (same source as Live Map)
-   ============================================================ */
 async function fetchDriverLocation(){
-  const u = LOCATION_READER + "?nocache=" + Date.now();
-  const res = await fetch(u, { cache:"no-store" });
-  if (!res.ok) throw new Error("Location fetch failed");
-  const j = await res.json();
+  // Expected format from your status worker: { location: { lat, lng } ... }
+  try{
+    const r = await fetch(API_STATUS, { cache:"no-store" });
+    const j = await r.json();
+    const loc = j.location || j.loc || null;
 
-  // Support multiple shapes safely
-  let lat = null;
-  let lng = null;
-  let ts = null;
+    if(loc && typeof loc.lat === "number" && typeof loc.lng === "number"){
+      return new google.maps.LatLng(loc.lat, loc.lng);
+    }
 
-  if (j && j.location && typeof j.location.lat === "number" && typeof j.location.lng === "number") {
-    lat = j.location.lat;
-    lng = j.location.lng;
-    ts = j.location.timestamp || j.timestamp || null;
-  } else {
-    // Live.html style: { latitude:"35.x", longitude:"-97.x", timestamp:"..." }
-    const rawLat = (j.latitude ?? j.lat);
-    const rawLng = (j.longitude ?? j.lng);
-    lat = rawLat != null ? parseFloat(rawLat) : null;
-    lng = rawLng != null ? parseFloat(rawLng) : null;
-    ts = j.timestamp || null;
-  }
+    // Some workers return {latitude, longitude}
+    if(typeof j.latitude === "number" && typeof j.longitude === "number"){
+      return new google.maps.LatLng(j.latitude, j.longitude);
+    }
 
-  if (typeof lat !== "number" || typeof lng !== "number" || isNaN(lat) || isNaN(lng)) {
-    throw new Error("Invalid lat/lng");
-  }
-
-  const timestamp = ts ? new Date(ts) : null;
-  return { lat, lng, timestamp };
-}
-
-function startPolling(){
-  stopPolling();
-
-  // only poll during active statuses where rider expects movement
-  pollTimer = setInterval(() => {
-    updateFromLiveLocation(false);
-  }, POLL_MS_ACTIVE);
-}
-
-function stopPolling(){
-  if (pollTimer) {
-    clearInterval(pollTimer);
-    pollTimer = null;
+    return null;
+  } catch {
+    return null;
   }
 }
 
-/* ============================================================
-   ROUTE + ETA RENDERING
-   ============================================================ */
-async function updateFromLiveLocation(firstRun){
-  if (!activeRide || !pickupLatLng || !dropoffLatLng || !directionsService) return;
+async function drawRouteAndEta(){
+  if(!activeRide || !pickupLatLng || !dropoffLatLng) return;
 
-  let loc;
-  try {
-    loc = await fetchDriverLocation();
-  } catch (e) {
-    console.warn("Driver location unavailable:", e);
-    if (firstRun) showToast("Live driver location not available yet");
+  // Pull latest driver position
+  const drv = await fetchDriverLocation();
+  if(drv) driverLatLng = drv;
+
+  // If no driver location yet, tell the rider clearly
+  if(!driverLatLng){
+    showEtaBox(`
+      <div class="status"><strong>Live Driver:</strong> unavailable right now</div>
+      <div class="muted">If this persists while you're ENROUTE, it usually means the driver device isn’t publishing live location.</div>
+    `);
     return;
   }
 
-  lastDriverFix = loc;
+  // Markers
+  driverMarker = setMarker(driverMarker, driverLatLng, "https://maps.google.com/mapfiles/ms/icons/red-dot.png");
+  pickupMarker = setMarker(pickupMarker, pickupLatLng, "https://maps.google.com/mapfiles/ms/icons/green-dot.png");
+  dropoffMarker = setMarker(dropoffMarker, dropoffLatLng, "https://maps.google.com/mapfiles/ms/icons/blue-dot.png");
 
-  const driverPos = new google.maps.LatLng(loc.lat, loc.lng);
+  // Decide route target
+  const st = String(activeRide.status||"").toUpperCase();
+  const goingTo = (st === "PICKED_UP") ? "DROPOFF" : "PICKUP";
+  const dest = (goingTo === "DROPOFF") ? dropoffLatLng : pickupLatLng;
 
-  // Update / create driver marker
-  if (!driverMarker) {
-    driverMarker = new google.maps.Marker({
-      map,
-      position: driverPos,
-      title: "Big Red",
-      icon: { url: "https://maps.google.com/mapfiles/ms/icons/red-dot.png" }
-    });
-  } else {
-    driverMarker.setPosition(driverPos);
-  }
-
-  // Decide what route to draw based on status
-  const status = String(activeRide.status || "").toUpperCase();
-  const etaBox = document.getElementById("etaBox");
-
-  // Default: show driver->pickup until picked up; after picked up show driver->dropoff
-  let origin = driverPos;
-  let destination = pickupLatLng;
-  let routeLabel = "Driver → Pickup";
-
-  if (status === "PICKED_UP") {
-    destination = dropoffLatLng;
-    routeLabel = "Driver → Dropoff";
-  }
-
-  // Hide routing for REQUESTED (optional), but still show markers
-  if (status === "REQUESTED") {
-    directionsRenderer.set("directions", null);
-    etaBox.style.display = "block";
-    etaBox.innerHTML = `
-      <div class="status">Waiting for acceptance…</div>
-      <div class="status" style="color:#888;">Pickup and dropoff pinned. Live driver ETA starts once accepted.</div>
-    `;
-    fitBounds(driverPos);
-    return;
-  }
-
-  // Request directions
-  let route;
-  try {
-    route = await new Promise((resolve, reject) => {
+  // Route
+  try{
+    const route = await new Promise((resolve, reject)=>{
       directionsService.route(
-        { origin, destination, travelMode: "DRIVING" },
-        (r, s) => s === "OK" ? resolve(r) : reject(s)
+        { origin: driverLatLng, destination: dest, travelMode: "DRIVING" },
+        (r, s)=> (s === "OK" ? resolve(r) : reject(s))
       );
     });
-  } catch (e) {
-    console.warn("Directions failed:", e);
-    // Still center map so rider sees driver + endpoints
-    directionsRenderer.set("directions", null);
-    etaBox.style.display = "block";
-    etaBox.innerHTML = `
-      <div class="status">${escapeHtml(routeLabel)}</div>
-      <div class="status" style="color:#888;">Route temporarily unavailable. Live position will keep updating.</div>
-    `;
-    fitBounds(driverPos);
-    return;
+
+    directionsRenderer.setDirections(route);
+
+    const leg = route.routes[0].legs[0];
+    const miles = leg.distance.value / 1609.34;
+    const mins  = Math.round(leg.duration.value / 60);
+
+    showEtaBox(`
+      <div class="status"><strong>Live ETA:</strong> ${mins} min • ${miles.toFixed(1)} mi</div>
+      <div class="muted">Routing: driver → ${goingTo === "DROPOFF" ? "dropoff" : "pickup"} • Updated ${new Date().toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})}</div>
+    `);
+
+    fitAll();
+  } catch(errStatus){
+    showEtaBox(`
+      <div class="status"><strong>Route:</strong> unavailable</div>
+      <div class="muted">Directions request failed (${String(errStatus)}). We still show markers.</div>
+    `);
+    fitAll();
+  }
+}
+
+async function startActiveRideMap(ride){
+  stopLiveLoops();
+  initMapIfNeeded();
+
+  // Clear previous
+  directionsRenderer && directionsRenderer.set("directions", null);
+
+  pickupLatLng = null;
+  dropoffLatLng = null;
+  driverLatLng = null;
+
+  // Geocode pickup/dropoff
+  try{
+    pickupLatLng = await geocodeAddress(ride.pickup?.address || "");
+  } catch (s){
+    showEtaBox(`<div class="status"><strong>Pickup:</strong> could not be mapped (${String(s)})</div>`);
   }
 
-  directionsRenderer.setDirections(route);
+  try{
+    dropoffLatLng = await geocodeAddress(ride.dropoff?.address || "");
+  } catch (s){
+    const etaBox = document.getElementById("etaBox");
+    etaBox.style.display = "block";
+    etaBox.innerHTML += `<div class="status"><strong>Dropoff:</strong> could not be mapped (${String(s)})</div>`;
+  }
 
-  const leg = route.routes?.[0]?.legs?.[0];
-  const miles = leg?.distance?.value ? (leg.distance.value / 1609.34) : null;
-  const mins = leg?.duration?.value ? Math.round(leg.duration.value / 60) : null;
+  // Immediate draw
+  await drawRouteAndEta();
 
-  const staleNote = (() => {
-    if (!loc.timestamp) return "";
-    const ageMin = (Date.now() - loc.timestamp.getTime()) / 60000;
-    if (ageMin > STALE_MINUTES) return ` · ⚠️ last update ${Math.round(ageMin)} min ago`;
-    return "";
-  })();
+  // Keep updating driver + route while active
+  // - Driver marker moves when status worker updates
+  // - Route recalculates periodically
+  statusLoop = setInterval(async ()=>{
+    const drv = await fetchDriverLocation();
+    if(drv){
+      driverLatLng = drv;
+      if(driverMarker) driverMarker.setPosition(driverLatLng);
+    }
+  }, 15000);
 
-  etaBox.style.display = "block";
-  etaBox.innerHTML = `
-    <div class="status"><strong>${escapeHtml(routeLabel)}</strong>${staleNote}</div>
-    ${mins != null ? `<div class="status">ETA ≈ ${mins} min</div>` : ``}
-    ${miles != null ? `<div class="status">Distance ≈ ${miles.toFixed(1)} mi</div>` : ``}
-    <div class="status" style="color:#888;">Updated ${new Date().toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})}</div>
-  `;
-
-  fitBounds(driverPos);
+  routeLoop = setInterval(drawRouteAndEta, 30000);
 }
 
-function fitBounds(driverPos){
-  if (!map) return;
-  const b = new google.maps.LatLngBounds();
-  b.extend(driverPos);
-  if (pickupLatLng) b.extend(pickupLatLng);
-  if (dropoffLatLng) b.extend(dropoffLatLng);
-  map.fitBounds(b);
+/* =========================
+   MAIN LOAD
+========================= */
+async function main(){
+  // Always show diag by default for now (since we’re stabilizing)
+  diagVisible = true;
+  diagCard.style.display = "block";
+  document.getElementById("btnToggleDiag").textContent = "🧰 Hide Diagnostics";
+
+  const { active, past } = await loadBookingsWithDiagnostics();
+
+  // Render
+  renderActive(active);
+  renderPast((past||[]).reverse());
+
+  // Map only if active ride exists
+  if(active){
+    // Load map + start live route/eta
+    // NOTE: Google Maps script loads async; callback fires initMapsCallback()
+    window.__activeRideForMap = active;
+    loadGoogleMapsIfNeeded();
+  } else {
+    stopLiveLoops();
+  }
 }
 
-/* ============================================================
-   SAFE ESCAPES
-   ============================================================ */
-function escapeHtml(str){
-  return String(str || "")
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
+/* =========================
+   GOOGLE MAPS LOADER (SAFE)
+========================= */
+let mapsLoading = false;
+function loadGoogleMapsIfNeeded(){
+  if(window.google && window.google.maps){
+    // Already loaded
+    startActiveRideMap(window.__activeRideForMap).catch(()=>{});
+    return;
+  }
+  if(mapsLoading) return;
+  mapsLoading = true;
+
+  // Visible diag
+  addDiag("WARN", "MAP", "Loading Google Maps…");
+
+  window.initMyRideMap = async function(){
+    addDiag("OK", "MAP", "Google Maps loaded.");
+    try{
+      await startActiveRideMap(window.__activeRideForMap);
+    } catch(e){
+      addDiag("BAD", "MAP", "Map initialized but could not start live tracking.");
+    }
+  };
+
+  const s = document.createElement("script");
+  s.async = true;
+  s.defer = true;
+  s.src = "https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=geometry&callback=initMyRideMap";
+  document.head.appendChild(s);
 }
-function escapeAttr(str){ return escapeHtml(str); }
 
-/* ============================================================
-   INIT
-   ============================================================ */
-loadRides();
-
-/* ============================================================
-   🔔 OneSignal: init + identity bind (NO prompt)
-   ============================================================ */
+/* =========================
+   ONESIGNAL: INIT + IDENTITY BIND (NO PROMPT)
+========================= */
 window.OneSignalDeferred = window.OneSignalDeferred || [];
 OneSignalDeferred.push(async function(OneSignal){
-  try {
+  try{
     await OneSignal.init({
       appId: "9b8bcc89-87d3-46e2-b2d0-042d1a267718",
       safari_web_id: "web.onesignal.auto.0c90051e-4735-447d-b203-75e3767d91b9",
-      notifyButton: { enable: false },
-      serviceWorkerPath: "/onesignalsdkworker.js?v=3",
+      notifyButton: { enable:false },
+      serviceWorkerPath: "/onesignalsdkworker.js",
       path: "/"
     });
 
     const raw = localStorage.getItem("bigred_rider_profile_v1");
-    if (!raw) return;
+    if(!raw) return;
 
     const profile = JSON.parse(raw);
-    if (!profile.riderId) return;
+    if(!profile.riderId) return;
 
-    // ✅ No permission prompt here
     await OneSignal.login(profile.riderId);
 
-  } catch (e) {
-    // silent
+    // Best-effort tags (does NOT prompt)
+    try{
+      await OneSignal.User.addTags({ role_rider: "true", env: "live" });
+    } catch {}
+
+  } catch(e){
+    // No console dependency; show in diagnostics only if open
+    if(diagVisible){
+      addDiag("WARN","PUSH","OneSignal init/bind skipped on this load.");
+    }
   }
 });
-</script>
 
-<!-- Google Maps API (loads last) -->
-<script async defer
-  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places,geometry&callback=initIfActiveRide">
+/* GO */
+main();
 </script>
 
 </body>
