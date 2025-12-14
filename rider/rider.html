@@ -10,7 +10,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/icon.PNG">
   <meta name="theme-color" content="#000"/>
 
-  <!-- OneSignal SDK -->
+  <!-- OneSignal SDK (identity bind ONLY, no prompt) -->
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 
   <style>
@@ -151,32 +151,42 @@ document.getElementById("welcomeName").textContent =
   n ? `Hi ${n}, let’s get you moving.` : `Let’s get you moving.`;
 </script>
 
-<!-- 🔔 OneSignal INIT + IDENTITY BIND -->
+<!-- 🔔 FINAL RIDER PUSH IDENTITY BIND (NO PROMPT) -->
 <script>
-window.OneSignalDeferred = window.OneSignalDeferred || [];
-OneSignalDeferred.push(async function(OneSignal){
-  try {
-    await OneSignal.init({
-      appId: "9b8bcc89-87d3-46e2-b2d0-042d1a267718",
-      safari_web_id: "web.onesignal.auto.0c90051e-4735-447d-b203-75e3767d91b9",
-      notifyButton: { enable:false },
-      serviceWorkerPath: "/onesignalsdkworker.js",
-      path: "/"
-    });
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  OneSignalDeferred.push(async function (OneSignal) {
+    try {
+      const raw = localStorage.getItem("bigred_rider_profile_v1");
+      if (!raw) {
+        console.warn("No rider profile found — skipping push bind");
+        return;
+      }
 
-    const raw = localStorage.getItem("bigred_rider_profile_v1");
-    if (!raw) return;
+      const profile = JSON.parse(raw);
+      if (!profile.riderId) {
+        console.warn("No riderId — skipping push bind");
+        return;
+      }
 
-    const profile = JSON.parse(raw);
-    if (!profile.riderId) return;
+      const permission = OneSignal.Notifications.permission;
+      if (permission !== "granted" && permission !== true) {
+        console.warn("Push permission not granted — cannot bind rider");
+        return;
+      }
 
-    await OneSignal.login(profile.riderId);
-    console.log("🔔 Rider identity bound:", profile.riderId);
+      await OneSignal.login(profile.riderId);
 
-  } catch(e){
-    console.warn("OneSignal init/bind skipped:", e);
-  }
-});
+      await OneSignal.User.addTags({
+        role_rider: "true",
+        env: "live"
+      });
+
+      console.log("✅ Rider push identity finalized:", profile.riderId);
+
+    } catch (err) {
+      console.error("❌ Rider push identity bind failed:", err);
+    }
+  });
 </script>
 
 </body>
