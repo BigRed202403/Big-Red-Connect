@@ -215,13 +215,21 @@ document.getElementById("btnLogin").addEventListener("click", async () => {
         // Bind rider identity
         await OneSignal.login(riderId);
 
-        // Tags used for broadcast segments
-        await OneSignal.User.addTags({
-          role_rider: "true",
-          env: "live"
-        });
+        // Wait until subscription is fully ready
+let attempts = 0;
+while (!OneSignal.User.PushSubscription?.optedIn && attempts < 10) {
+  await new Promise(r => setTimeout(r, 300));
+  attempts++;
+}
 
-        console.log("🔔 Rider push enabled + tagged:", riderId);
+// Now tags WILL stick
+await OneSignal.User.addTags({
+  role_rider: "true",
+  env: "live"
+});
+
+console.log("🏷️ Rider tags applied");
+
       } catch (e) {
         console.warn("Push setup failed:", e);
       }
