@@ -173,5 +173,26 @@ document.getElementById("welcomeName").textContent = n
 
 </script>
 
+<!-- 🔔 OneSignal identity re-bind (NO prompt) -->
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+<script>
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  OneSignalDeferred.push(async function(OneSignal){
+    try {
+      const raw = localStorage.getItem("bigred_rider_profile_v1");
+      if (!raw) return;
+
+      const profile = JSON.parse(raw);
+      if (!profile.riderId) return;
+
+      // ✅ No permission prompt here
+      await OneSignal.login(profile.riderId);
+      console.log("🔔 Rider push identity confirmed:", profile.riderId);
+    } catch (e) {
+      console.warn("Rider push identity skipped:", e);
+    }
+  });
+</script>
+
 </body>
 </html>
