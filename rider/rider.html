@@ -1,72 +1,103 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>My Ride – Big Red Connect</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Rider Hub – Big Red Connect</title>
 
-<link rel="apple-touch-icon" href="/icon.PNG">
-<link rel="icon" type="image/png" sizes="192x192" href="/icon.PNG">
-<meta name="theme-color" content="#000"/>
+  <!-- PWA / Icons -->
+  <link rel="apple-touch-icon" href="/icon.PNG">
+  <link rel="icon" type="image/png" sizes="192x192" href="/icon.PNG">
+  <meta name="theme-color" content="#000"/>
 
-<style>
-body{
-  margin:0;
-  background:#000;
-  color:#fff;
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-}
-header{
-  background:#000;
-  padding:12px;
-  border-bottom:2px solid #b30000;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
-.logo{height:42px}
-#menuBtn{font-size:1.6rem;background:none;border:none;color:#fff}
-#menuPanel{
-  display:none;
-  flex-direction:column;
-  background:#111;
-  border-bottom:2px solid #b30000;
-}
-#menuPanel a{
-  padding:16px;
-  color:#fff;
-  text-decoration:none;
-  border-bottom:1px solid #222;
-}
-.container{padding:20px;text-align:center}
-.card{
-  background:#111;
-  border:1px solid #333;
-  border-radius:10px;
-  padding:14px;
-  margin-bottom:14px;
-}
-.status{color:#ccc;font-size:.9rem}
-#map{
-  width:100%;
-  height:320px;
-  border-radius:12px;
-  border:1px solid #333;
-  margin-top:12px;
-}
-#etaBox{margin-top:10px}
-</style>
+  <!-- OneSignal SDK -->
+  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 
-<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=geometry"></script>
+  <style>
+    body {
+      margin:0;
+      background:#000;
+      color:#fff;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    }
+    header {
+      background:#000;
+      padding:12px;
+      border-bottom:2px solid #b30000;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      position:sticky;
+      top:0;
+      z-index:50;
+    }
+    .logo { height:42px; }
+    .header-left {
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .header-title {
+      font-weight:700;
+      font-size:1rem;
+    }
+    #menuBtn {
+      font-size:1.6rem;
+      background:none;
+      border:none;
+      color:white;
+      cursor:pointer;
+    }
+    #menuPanel {
+      display:none;
+      flex-direction:column;
+      background:#111;
+      border-bottom:2px solid #b30000;
+    }
+    #menuPanel a {
+      padding:16px;
+      color:#fff;
+      text-decoration:none;
+      border-bottom:1px solid #222;
+      font-size:1rem;
+    }
+    #menuPanel a:hover { background:#222; }
+    .container {
+      padding:20px;
+      text-align:center;
+    }
+    h1 { font-size:1.5rem; }
+    .welcome {
+      color:#bbb;
+      margin-bottom:26px;
+      font-size:.95rem;
+    }
+    .btn {
+      display:block;
+      width:100%;
+      max-width:340px;
+      margin:12px auto;
+      padding:18px;
+      background:#b30000;
+      color:#fff;
+      text-decoration:none;
+      font-size:1.15rem;
+      border-radius:12px;
+      font-weight:700;
+    }
+    .btn-secondary {
+      background:#111;
+      border:1px solid #333;
+    }
+  </style>
 </head>
 
 <body>
 
 <header>
-  <div style="display:flex;align-items:center;gap:10px">
+  <div class="header-left">
     <a href="/index.html"><img src="/icon.PNG" class="logo"></a>
-    <strong>My Ride</strong>
+    <div class="header-title">Rider Hub</div>
   </div>
   <button id="menuBtn">☰</button>
 </header>
@@ -74,156 +105,70 @@ header{
 <nav id="menuPanel">
   <a href="/rider/rider.html">Rider Hub</a>
   <a href="/rider/ride-request.html">Request a Ride</a>
+  <a href="/rider/myride.html">My Ride</a>
   <a href="/rider/profile.html">Profile</a>
   <a href="#" id="logoutBtn">Log Out</a>
 </nav>
 
 <div class="container">
-  <div id="activeContainer"></div>
-  <div id="map"></div>
-  <div id="etaBox" class="card" style="display:none"></div>
+  <h1>Welcome</h1>
+  <div id="welcomeName" class="welcome"></div>
+
+  <a class="btn" href="/rider/ride-request.html">Request a Ride</a>
+  <a class="btn" href="/rider/myride.html">My Ride</a>
+  <a class="btn btn-secondary" href="/rider/profile.html">Profile</a>
 </div>
 
 <script>
-const BOOKINGS_API = "https://bigred-bookings.bigredtransportation.workers.dev";
-const STATUS_API   = "https://bigred-status-updater.bigredtransportation.workers.dev/status";
-
-let map, directionsService, directionsRenderer;
-let driverMarker, pickupMarker, dropoffMarker;
-let etaTimer = null;
-
-/* ---------------- UTIL ---------------- */
-function resolveDriverLatLng(payload){
-  if(payload.location?.lat && payload.location?.lng){
-    return { lat:+payload.location.lat, lng:+payload.location.lng };
-  }
-  if(payload.latitude && payload.longitude){
-    return { lat:+payload.latitude, lng:+payload.longitude };
-  }
-  return null;
-}
-
-/* ---------------- MENU ---------------- */
-menuBtn.onclick = () => {
-  menuPanel.style.display = menuPanel.style.display==="flex"?"none":"flex";
+/* MENU */
+document.getElementById("menuBtn").onclick = () => {
+  const p = document.getElementById("menuPanel");
+  p.style.display = p.style.display === "flex" ? "none" : "flex";
 };
-logoutBtn.onclick = () => {
+
+/* LOGOUT */
+document.getElementById("logoutBtn").onclick = () => {
   localStorage.clear();
-  location.href="/index.html";
+  location.href = "/index.html";
 };
 
-/* ---------------- LOAD RIDE ---------------- */
-async function loadRide(){
-  const profile = JSON.parse(localStorage.getItem("bigred_rider_profile_v1")||"{}");
-  if(!profile.riderId) return;
+/* WELCOME */
+const n = localStorage.getItem("riderName");
+document.getElementById("welcomeName").textContent =
+  n ? `Hi ${n}, let’s get you moving.` : `Let’s get you moving.`;
+</script>
 
-  const res = await fetch(`${BOOKINGS_API}/api/driver/bookings?scope=active`);
-  const list = await res.json();
-  const ride = list.find(r=>r.rider?.riderId===profile.riderId);
-
-  if(!ride){
-    activeContainer.innerHTML=`<div class="card">No active ride.</div>`;
-    return;
-  }
-
-  activeContainer.innerHTML=`
-    <div class="card">
-      <div class="status">Status: ${ride.status}</div>
-      <div>Pickup: ${ride.pickup.address}</div>
-      <div>Dropoff: ${ride.dropoff.address}</div>
-    </div>
-  `;
-
-  initMap(ride);
-}
-
-/* ---------------- MAP ---------------- */
-async function initMap(ride){
-  map = new google.maps.Map(document.getElementById("map"),{
-    center:{lat:35.4676,lng:-97.5164},
-    zoom:12
-  });
-
-  directionsService = new google.maps.DirectionsService();
-  directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers:true });
-  directionsRenderer.setMap(map);
-
-  const geo = new google.maps.Geocoder();
-
-  geo.geocode({address:ride.pickup.address},(pRes)=>{
-    geo.geocode({address:ride.dropoff.address},(dRes)=>{
-      const pickup = pRes[0].geometry.location;
-      const dropoff = dRes[0].geometry.location;
-
-      pickupMarker = new google.maps.Marker({
-        map, position:pickup,
-        icon:"https://maps.google.com/mapfiles/ms/icons/green-dot.png"
-      });
-
-      dropoffMarker = new google.maps.Marker({
-        map, position:dropoff,
-        icon:"https://maps.google.com/mapfiles/ms/icons/blue-dot.png"
-      });
-
-      updateDriver(pickup, dropoff);
-      etaTimer = setInterval(()=>updateDriver(pickup,dropoff),15000);
+<!-- 🔔 OneSignal INIT + IDENTITY REBIND (REQUIRED) -->
+<script>
+window.OneSignalDeferred = window.OneSignalDeferred || [];
+OneSignalDeferred.push(async function(OneSignal){
+  try {
+    await OneSignal.init({
+      appId: "9b8bcc89-87d3-46e2-b2d0-042d1a267718",
+      safari_web_id: "web.onesignal.auto.0c90051e-4735-447d-b203-75e3767d91b9",
+      notifyButton: { enable:false },
+      serviceWorkerPath: "/onesignalsdkworker.js",
+      path: "/"
     });
-  });
-}
 
-/* ---------------- DRIVER + ROUTE ---------------- */
-async function updateDriver(pickup, dropoff){
-  const res = await fetch(STATUS_API+"?t="+Date.now(),{cache:"no-store"});
-  const data = await res.json();
+    const raw = localStorage.getItem("bigred_rider_profile_v1");
+    if (!raw) return;
 
-  const pos = resolveDriverLatLng(data);
-  if(!pos) return;
+    const profile = JSON.parse(raw);
+    if (!profile.riderId) return;
 
-  const driverPos = new google.maps.LatLng(pos.lat,pos.lng);
+    await OneSignal.login(profile.riderId);
 
-  if(!driverMarker){
-    driverMarker = new google.maps.Marker({
-      map, position:driverPos, label:"🚗"
+    await OneSignal.User.addTags({
+      role_rider: "true",
+      env: "live"
     });
-  } else {
-    driverMarker.setPosition(driverPos);
+
+    console.log("✅ Rider push identity ACTIVE:", profile.riderId);
+  } catch (e) {
+    console.warn("OneSignal rider init failed:", e);
   }
-
-  const route = await directionsService.route({
-    origin:driverPos,
-    destination:dropoff,
-    waypoints:[{location:pickup}],
-    travelMode:"DRIVING"
-  });
-
-  directionsRenderer.setDirections(route);
-
-  const leg = route.routes[0].legs[0];
-  etaBox.style.display="block";
-  etaBox.innerHTML=`
-    <div class="status">ETA ≈ ${Math.round(leg.duration.value/60)} min</div>
-    <div class="status">Distance ≈ ${(leg.distance.value/1609.34).toFixed(1)} mi</div>
-    <div class="status">Updated ${new Date().toLocaleTimeString()}</div>
-  `;
-
-  const bounds=new google.maps.LatLngBounds();
-  bounds.extend(driverPos);
-  bounds.extend(pickup);
-  bounds.extend(dropoff);
-  map.fitBounds(bounds);
-}
-
-/* ---------------- PUSH ID BIND ---------------- */
-window.OneSignalDeferred=window.OneSignalDeferred||[];
-OneSignalDeferred.push(async OneSignal=>{
-  const raw=localStorage.getItem("bigred_rider_profile_v1");
-  if(!raw)return;
-  const p=JSON.parse(raw);
-  if(p.riderId) await OneSignal.login(p.riderId);
 });
-
-/* INIT */
-loadRide();
 </script>
 
 </body>
