@@ -1,229 +1,671 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>My Ride – Big Red Connect</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Ride – Big Red Connect</title>
 
-<link rel="apple-touch-icon" href="/icon.PNG">
-<link rel="icon" type="image/png" sizes="192x192" href="/icon.PNG">
-<meta name="theme-color" content="#000"/>
+  <!-- PWA + Icons -->
+  <link rel="apple-touch-icon" href="/icon.PNG">
+  <link rel="icon" type="image/png" sizes="192x192" href="/icon.PNG">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#000"/>
 
-<style>
-body{
-  margin:0;
-  background:#000;
-  color:#fff;
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-}
-header{
-  background:#000;
-  padding:12px;
-  border-bottom:2px solid #b30000;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
-.logo{height:42px}
-#menuBtn{font-size:1.6rem;background:none;border:none;color:#fff}
-#menuPanel{
-  display:none;
-  flex-direction:column;
-  background:#111;
-  border-bottom:2px solid #b30000;
-}
-#menuPanel a{
-  padding:16px;
-  color:#fff;
-  text-decoration:none;
-  border-bottom:1px solid #222;
-}
-.container{padding:20px;text-align:center}
-.card{
-  background:#111;
-  border:1px solid #333;
-  border-radius:10px;
-  padding:14px;
-  margin-bottom:14px;
-}
-.status{color:#ccc;font-size:.9rem}
-#map{
-  width:100%;
-  height:320px;
-  border-radius:12px;
-  border:1px solid #333;
-  margin-top:12px;
-}
-#etaBox{margin-top:10px}
-</style>
+  <style>
+    body {
+      margin:0;
+      background:#000;
+      color:#fff;
+      font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      padding-bottom:50px;
+    }
 
-<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=geometry"></script>
+    /* HEADER + MENU */
+    header {
+      background:#000;
+      padding:12px;
+      border-bottom:2px solid #b30000;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      position:sticky;
+      top:0;
+      z-index:50;
+    }
+    .header-left {
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .logo { height:42px; }
+    #menuBtn {
+      font-size:1.6rem;
+      background:none;
+      border:none;
+      color:white;
+      cursor:pointer;
+    }
+    #menuPanel {
+      display:none;
+      flex-direction:column;
+      background:#111;
+      border-bottom:2px solid #b30000;
+      animation:drop .15s ease-out;
+    }
+    #menuPanel a {
+      padding:16px;
+      color:#fff;
+      text-decoration:none;
+      border-bottom:1px solid #222;
+      font-size:1rem;
+    }
+    #menuPanel a:hover { background:#222; }
+
+    @keyframes drop {
+      from { opacity:0; transform:translateY(-10px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+
+    h1 {
+      text-align:center;
+      font-size:1.4rem;
+      margin:18px 0;
+      font-weight:700;
+    }
+
+    .section-title {
+      font-size:1rem;
+      font-weight:700;
+      margin:10px 0 6px;
+      padding:0 12px;
+    }
+
+    .card {
+      background:#111;
+      border:1px solid #333;
+      border-radius:10px;
+      padding:14px;
+      margin:0 12px 14px;
+    }
+
+    .status {
+      font-size:.88rem;
+      margin-bottom:4px;
+      color:#ccc;
+    }
+
+    .loc-line {
+      margin:6px 0;
+      font-size:.9rem;
+    }
+
+    .vehicle-thumb {
+      width:80px;
+      border-radius:10px;
+      margin-top:10px;
+      border:1px solid #333;
+    }
+
+    .btn-primary, .btn-ghost {
+      display:block;
+      width:calc(100% - 24px);
+      margin:12px auto;
+      padding:15px;
+      text-align:center;
+      border-radius:10px;
+      text-decoration:none;
+      font-weight:700;
+      font-size:1.05rem;
+    }
+    .btn-primary { background:#b30000; color:#fff; }
+    .btn-ghost   { background:#111; color:#fff; border:1px solid #333; }
+
+    #map {
+      width:calc(100% - 24px);
+      height:320px;
+      margin:12px auto;
+      border-radius:12px;
+      border:1px solid #333;
+      display:none;
+    }
+
+    #etaBox {
+      display:none;
+      margin:-4px 12px 14px;
+      line-height:1.35;
+    }
+
+    #toast {
+      position:fixed;
+      bottom:22px;
+      left:50%;
+      transform:translateX(-50%);
+      background:#111;
+      border:1px solid #b30000;
+      padding:10px 18px;
+      border-radius:999px;
+      opacity:0;
+      transition:.25s;
+      z-index:999;
+    }
+    #toast.show { opacity:1; }
+  </style>
+
+  <!-- 🔔 OneSignal SDK (identity re-bind, no prompt here) -->
+  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 </head>
 
 <body>
 
+<!-- HEADER -->
 <header>
-  <div style="display:flex;align-items:center;gap:10px">
+  <div class="header-left">
     <a href="/index.html"><img src="/icon.PNG" class="logo"></a>
-    <strong>My Ride</strong>
+    <div style="font-weight:700;font-size:1rem;">My Ride</div>
   </div>
   <button id="menuBtn">☰</button>
 </header>
 
+<!-- MENU -->
 <nav id="menuPanel">
   <a href="/rider/rider.html">Rider Hub</a>
   <a href="/rider/ride-request.html">Request a Ride</a>
+  <a href="/rider/myride.html">My Ride</a>
   <a href="/rider/profile.html">Profile</a>
   <a href="#" id="logoutBtn">Log Out</a>
 </nav>
 
-<div class="container">
-  <div id="activeContainer"></div>
-  <div id="map"></div>
-  <div id="etaBox" class="card" style="display:none"></div>
-</div>
+<h1>Your Ride</h1>
+
+<!-- ACTIVE -->
+<div id="activeContainer"></div>
+
+<!-- MAP -->
+<div id="map"></div>
+
+<!-- ETA CARD -->
+<div id="etaBox" class="card"></div>
+
+<!-- PAST RIDES -->
+<h2 class="section-title">Past Rides</h2>
+<div id="pastContainer"></div>
+
+<a href="/rider/ride-request.html" class="btn-primary">Request Another Ride</a>
+<a href="/rider/rider.html" class="btn-ghost">Back to Rider Hub</a>
+
+<div id="toast"></div>
 
 <script>
-const BOOKINGS_API = "https://bigred-bookings.bigredtransportation.workers.dev";
-const STATUS_API   = "https://bigred-status-updater.bigredtransportation.workers.dev/status";
+/* ============================================================
+   CONFIG
+   ============================================================ */
+const API_BOOKINGS     = "https://bigred-bookings.bigredtransportation.workers.dev";
+const LOCATION_READER  = "https://update-location.bigredtransportation.workers.dev"; // ✅ Confirmed
+const STALE_MINUTES    = 30;        // for “stale” warning only
+const POLL_MS_ACTIVE   = 15000;     // updates while ride is active
+const OKC_FALLBACK     = { lat: 35.4676, lng: -97.5164 };
 
-let map, directionsService, directionsRenderer;
-let driverMarker, pickupMarker, dropoffMarker;
-let etaTimer = null;
+/* ============================================================
+   STATE
+   ============================================================ */
+let map = null;
+let geocoder = null;
+let directionsService = null;
+let directionsRenderer = null;
 
-/* ---------------- UTIL ---------------- */
-function resolveDriverLatLng(payload){
-  if(payload.location?.lat && payload.location?.lng){
-    return { lat:+payload.location.lat, lng:+payload.location.lng };
-  }
-  if(payload.latitude && payload.longitude){
-    return { lat:+payload.latitude, lng:+payload.longitude };
-  }
-  return null;
+let driverMarker = null;
+let pickupMarker = null;
+let dropoffMarker = null;
+
+let activeRide = null;
+let pickupLatLng = null;
+let dropoffLatLng = null;
+
+let pollTimer = null;
+let lastDriverFix = null;
+
+/* ============================================================
+   UI HELPERS
+   ============================================================ */
+function showToast(msg){
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(()=> t.classList.remove("show"), 1900);
 }
 
-/* ---------------- MENU ---------------- */
-menuBtn.onclick = () => {
-  menuPanel.style.display = menuPanel.style.display==="flex"?"none":"flex";
-};
-logoutBtn.onclick = () => {
-  localStorage.clear();
-  location.href="/index.html";
-};
+/* MENU */
+document.getElementById("menuBtn").addEventListener("click", ()=>{
+  const p = document.getElementById("menuPanel");
+  p.style.display = (p.style.display==="flex" ? "none" : "flex");
+});
 
-/* ---------------- LOAD RIDE ---------------- */
-async function loadRide(){
-  const profile = JSON.parse(localStorage.getItem("bigred_rider_profile_v1")||"{}");
-  if(!profile.riderId) return;
+document.getElementById("logoutBtn").addEventListener("click", ()=>{
+  // Keep it targeted so we don’t nuke unrelated app storage
+  localStorage.removeItem("bigred_rider_profile_v1");
+  localStorage.removeItem("riderId");
+  localStorage.removeItem("riderName");
+  localStorage.removeItem("riderPhone");
+  localStorage.removeItem("riderHome");
+  localStorage.removeItem("riderGate");
+  window.location.href="/index.html";
+});
 
-  const res = await fetch(`${BOOKINGS_API}/api/driver/bookings?scope=active`);
-  const list = await res.json();
-  const ride = list.find(r=>r.rider?.riderId===profile.riderId);
+/* ============================================================
+   RIDER ID (canonical first)
+   ============================================================ */
+function getCanonicalRiderId(){
+  try {
+    const raw = localStorage.getItem("bigred_rider_profile_v1");
+    if (raw) {
+      const p = JSON.parse(raw);
+      if (p && p.riderId) return String(p.riderId);
+    }
+  } catch {}
+  // fallback legacy
+  const legacy = localStorage.getItem("riderId");
+  return legacy ? String(legacy) : "";
+}
 
-  if(!ride){
-    activeContainer.innerHTML=`<div class="card">No active ride.</div>`;
+function getRiderPhone(){
+  try {
+    const raw = localStorage.getItem("bigred_rider_profile_v1");
+    if (raw) {
+      const p = JSON.parse(raw);
+      if (p && p.phone) return String(p.phone);
+    }
+  } catch {}
+  return String(localStorage.getItem("riderPhone") || "");
+}
+
+/* ============================================================
+   DATA LOAD
+   ============================================================ */
+async function loadRides(){
+  const riderId = getCanonicalRiderId();
+  const riderPhone = getRiderPhone().replace(/\D/g,"");
+
+  let all = [];
+  try {
+    const res = await fetch(`${API_BOOKINGS}/api/driver/bookings?scope=all`, { cache:"no-store" });
+    if (!res.ok) {
+      showToast("Error loading rides");
+      return;
+    }
+    all = await res.json();
+  } catch (e) {
+    console.error(e);
+    showToast("Network error loading rides");
     return;
   }
 
-  activeContainer.innerHTML=`
+  const myRides = all.filter(r => {
+    const rId = r?.rider?.riderId ? String(r.rider.riderId) : "";
+    const rPhone = (r?.rider?.phone || "").replace(/\D/g,"");
+    if (riderId && rId && rId === riderId) return true;
+    if (riderPhone && rPhone && rPhone === riderPhone) return true;
+    return false;
+  });
+
+  // treat PICKED_UP as active (rider wants to track)
+  const ACTIVE_STATUSES = ["REQUESTED","ACCEPTED","ENROUTE","ARRIVED","PICKED_UP"];
+  const DONE_STATUSES   = ["COMPLETED","CANCELLED","DECLINED"];
+
+  const active = myRides.find(r => ACTIVE_STATUSES.includes(String(r.status || "").toUpperCase()));
+  const done   = myRides.filter(r => DONE_STATUSES.includes(String(r.status || "").toUpperCase()));
+
+  renderActive(active || null);
+  renderPast(done.reverse());
+}
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+function renderActive(ride){
+  const box = document.getElementById("activeContainer");
+
+  // stop polling if no active ride
+  if (!ride){
+    box.innerHTML = `<div class="card">You have no active rides.</div>`;
+    document.getElementById("map").style.display="none";
+    document.getElementById("etaBox").style.display="none";
+    activeRide = null;
+    pickupLatLng = null;
+    dropoffLatLng = null;
+    stopPolling();
+    return;
+  }
+
+  activeRide = ride;
+
+  box.innerHTML = `
     <div class="card">
-      <div class="status">Status: ${ride.status}</div>
-      <div>Pickup: ${ride.pickup.address}</div>
-      <div>Dropoff: ${ride.dropoff.address}</div>
+      <div class="status">Status: ${escapeHtml(ride.status || "")}</div>
+      <div class="loc-line">Pickup: ${escapeHtml(ride.pickup?.address || "")}</div>
+      <div class="loc-line">Dropoff: ${escapeHtml(ride.dropoff?.address || "")}</div>
+      ${ride.vehicle?.image ? `
+         <img class="vehicle-thumb" src="${escapeAttr(ride.vehicle.image)}" alt="${escapeAttr(ride.vehicle.label || "Vehicle")}"/>
+      ` : ""}
+      <div class="status" style="margin-top:10px; color:#888;">
+        Live map updates while your ride is active.
+      </div>
     </div>
   `;
 
-  initMap(ride);
+  // Maps: only init when google is ready (callback will run initIfActiveRide)
+  initIfActiveRide();
 }
 
-/* ---------------- MAP ---------------- */
-async function initMap(ride){
-  map = new google.maps.Map(document.getElementById("map"),{
-    center:{lat:35.4676,lng:-97.5164},
-    zoom:12
+function renderPast(list){
+  const box = document.getElementById("pastContainer");
+  box.innerHTML = "";
+
+  if(!list.length){
+    box.innerHTML = `<div class="card">No past rides yet.</div>`;
+    return;
+  }
+
+  list.forEach(r=>{
+    box.innerHTML += `
+      <div class="card">
+        <div class="status">${escapeHtml(r.status || "")}</div>
+        <div class="loc-line">From: ${escapeHtml(r.pickup?.address || "")}</div>
+        <div class="loc-line">To: ${escapeHtml(r.dropoff?.address || "")}</div>
+      </div>
+    `;
+  });
+}
+
+/* ============================================================
+   MAP INIT + ROUTING
+   ============================================================ */
+function initIfActiveRide(){
+  if (!window.google || !google.maps) return; // API not loaded yet
+  if (!activeRide) return;
+
+  const mapDiv = document.getElementById("map");
+  mapDiv.style.display = "block";
+
+  if (!map) {
+    map = new google.maps.Map(mapDiv, {
+      zoom: 12,
+      center: OKC_FALLBACK,
+      mapTypeControl:false,
+      streetViewControl:false,
+      fullscreenControl:false
+    });
+
+    geocoder = new google.maps.Geocoder();
+    directionsService = new google.maps.DirectionsService();
+    directionsRenderer = new google.maps.DirectionsRenderer({
+      map,
+      suppressMarkers: true,
+      preserveViewport: false
+    });
+  }
+
+  // Geocode pickup + dropoff once per ride
+  geocodeRideEndpoints(activeRide).then(() => {
+    // Draw initial markers and route immediately
+    updateFromLiveLocation(true);
+    startPolling();
+  }).catch((e) => {
+    console.warn("Endpoint geocode failed:", e);
+    showToast("Map setup error");
+  });
+}
+
+async function geocodeRideEndpoints(ride){
+  const pickupAddr = (ride.pickup?.address || "").trim();
+  const dropoffAddr = (ride.dropoff?.address || "").trim();
+  if (!pickupAddr || !dropoffAddr) throw new Error("Missing addresses");
+
+  pickupLatLng = await geocodeAddress(pickupAddr);
+  dropoffLatLng = await geocodeAddress(dropoffAddr);
+
+  // Place markers
+  if (pickupMarker) pickupMarker.setMap(null);
+  pickupMarker = new google.maps.Marker({
+    map,
+    position: pickupLatLng,
+    title: "Pickup",
+    icon: { url: "https://maps.google.com/mapfiles/ms/icons/green-dot.png" }
   });
 
-  directionsService = new google.maps.DirectionsService();
-  directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers:true });
-  directionsRenderer.setMap(map);
+  if (dropoffMarker) dropoffMarker.setMap(null);
+  dropoffMarker = new google.maps.Marker({
+    map,
+    position: dropoffLatLng,
+    title: "Dropoff",
+    icon: { url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png" }
+  });
+}
 
-  const geo = new google.maps.Geocoder();
-
-  geo.geocode({address:ride.pickup.address},(pRes)=>{
-    geo.geocode({address:ride.dropoff.address},(dRes)=>{
-      const pickup = pRes[0].geometry.location;
-      const dropoff = dRes[0].geometry.location;
-
-      pickupMarker = new google.maps.Marker({
-        map, position:pickup,
-        icon:"https://maps.google.com/mapfiles/ms/icons/green-dot.png"
-      });
-
-      dropoffMarker = new google.maps.Marker({
-        map, position:dropoff,
-        icon:"https://maps.google.com/mapfiles/ms/icons/blue-dot.png"
-      });
-
-      updateDriver(pickup, dropoff);
-      etaTimer = setInterval(()=>updateDriver(pickup,dropoff),15000);
+function geocodeAddress(addr){
+  return new Promise((resolve, reject) => {
+    geocoder.geocode({ address: addr }, (res, status) => {
+      if (status === "OK" && res && res[0] && res[0].geometry && res[0].geometry.location) {
+        resolve(res[0].geometry.location);
+      } else {
+        reject(new Error("Geocode failed: " + status));
+      }
     });
   });
 }
 
-/* ---------------- DRIVER + ROUTE ---------------- */
-async function updateDriver(pickup, dropoff){
-  const res = await fetch(STATUS_API+"?t="+Date.now(),{cache:"no-store"});
-  const data = await res.json();
+/* ============================================================
+   LIVE LOCATION (same source as Live Map)
+   ============================================================ */
+async function fetchDriverLocation(){
+  const u = LOCATION_READER + "?nocache=" + Date.now();
+  const res = await fetch(u, { cache:"no-store" });
+  if (!res.ok) throw new Error("Location fetch failed");
+  const j = await res.json();
 
-  const pos = resolveDriverLatLng(data);
-  if(!pos) return;
+  // Support multiple shapes safely
+  let lat = null;
+  let lng = null;
+  let ts = null;
 
-  const driverPos = new google.maps.LatLng(pos.lat,pos.lng);
+  if (j && j.location && typeof j.location.lat === "number" && typeof j.location.lng === "number") {
+    lat = j.location.lat;
+    lng = j.location.lng;
+    ts = j.location.timestamp || j.timestamp || null;
+  } else {
+    // Live.html style: { latitude:"35.x", longitude:"-97.x", timestamp:"..." }
+    const rawLat = (j.latitude ?? j.lat);
+    const rawLng = (j.longitude ?? j.lng);
+    lat = rawLat != null ? parseFloat(rawLat) : null;
+    lng = rawLng != null ? parseFloat(rawLng) : null;
+    ts = j.timestamp || null;
+  }
 
-  if(!driverMarker){
+  if (typeof lat !== "number" || typeof lng !== "number" || isNaN(lat) || isNaN(lng)) {
+    throw new Error("Invalid lat/lng");
+  }
+
+  const timestamp = ts ? new Date(ts) : null;
+  return { lat, lng, timestamp };
+}
+
+function startPolling(){
+  stopPolling();
+
+  // only poll during active statuses where rider expects movement
+  pollTimer = setInterval(() => {
+    updateFromLiveLocation(false);
+  }, POLL_MS_ACTIVE);
+}
+
+function stopPolling(){
+  if (pollTimer) {
+    clearInterval(pollTimer);
+    pollTimer = null;
+  }
+}
+
+/* ============================================================
+   ROUTE + ETA RENDERING
+   ============================================================ */
+async function updateFromLiveLocation(firstRun){
+  if (!activeRide || !pickupLatLng || !dropoffLatLng || !directionsService) return;
+
+  let loc;
+  try {
+    loc = await fetchDriverLocation();
+  } catch (e) {
+    console.warn("Driver location unavailable:", e);
+    if (firstRun) showToast("Live driver location not available yet");
+    return;
+  }
+
+  lastDriverFix = loc;
+
+  const driverPos = new google.maps.LatLng(loc.lat, loc.lng);
+
+  // Update / create driver marker
+  if (!driverMarker) {
     driverMarker = new google.maps.Marker({
-      map, position:driverPos, label:"🚗"
+      map,
+      position: driverPos,
+      title: "Big Red",
+      icon: { url: "https://maps.google.com/mapfiles/ms/icons/red-dot.png" }
     });
   } else {
     driverMarker.setPosition(driverPos);
   }
 
-  const route = await directionsService.route({
-    origin:driverPos,
-    destination:dropoff,
-    waypoints:[{location:pickup}],
-    travelMode:"DRIVING"
-  });
+  // Decide what route to draw based on status
+  const status = String(activeRide.status || "").toUpperCase();
+  const etaBox = document.getElementById("etaBox");
+
+  // Default: show driver->pickup until picked up; after picked up show driver->dropoff
+  let origin = driverPos;
+  let destination = pickupLatLng;
+  let routeLabel = "Driver → Pickup";
+
+  if (status === "PICKED_UP") {
+    destination = dropoffLatLng;
+    routeLabel = "Driver → Dropoff";
+  }
+
+  // Hide routing for REQUESTED (optional), but still show markers
+  if (status === "REQUESTED") {
+    directionsRenderer.set("directions", null);
+    etaBox.style.display = "block";
+    etaBox.innerHTML = `
+      <div class="status">Waiting for acceptance…</div>
+      <div class="status" style="color:#888;">Pickup and dropoff pinned. Live driver ETA starts once accepted.</div>
+    `;
+    fitBounds(driverPos);
+    return;
+  }
+
+  // Request directions
+  let route;
+  try {
+    route = await new Promise((resolve, reject) => {
+      directionsService.route(
+        { origin, destination, travelMode: "DRIVING" },
+        (r, s) => s === "OK" ? resolve(r) : reject(s)
+      );
+    });
+  } catch (e) {
+    console.warn("Directions failed:", e);
+    // Still center map so rider sees driver + endpoints
+    directionsRenderer.set("directions", null);
+    etaBox.style.display = "block";
+    etaBox.innerHTML = `
+      <div class="status">${escapeHtml(routeLabel)}</div>
+      <div class="status" style="color:#888;">Route temporarily unavailable. Live position will keep updating.</div>
+    `;
+    fitBounds(driverPos);
+    return;
+  }
 
   directionsRenderer.setDirections(route);
 
-  const leg = route.routes[0].legs[0];
-  etaBox.style.display="block";
-  etaBox.innerHTML=`
-    <div class="status">ETA ≈ ${Math.round(leg.duration.value/60)} min</div>
-    <div class="status">Distance ≈ ${(leg.distance.value/1609.34).toFixed(1)} mi</div>
-    <div class="status">Updated ${new Date().toLocaleTimeString()}</div>
+  const leg = route.routes?.[0]?.legs?.[0];
+  const miles = leg?.distance?.value ? (leg.distance.value / 1609.34) : null;
+  const mins = leg?.duration?.value ? Math.round(leg.duration.value / 60) : null;
+
+  const staleNote = (() => {
+    if (!loc.timestamp) return "";
+    const ageMin = (Date.now() - loc.timestamp.getTime()) / 60000;
+    if (ageMin > STALE_MINUTES) return ` · ⚠️ last update ${Math.round(ageMin)} min ago`;
+    return "";
+  })();
+
+  etaBox.style.display = "block";
+  etaBox.innerHTML = `
+    <div class="status"><strong>${escapeHtml(routeLabel)}</strong>${staleNote}</div>
+    ${mins != null ? `<div class="status">ETA ≈ ${mins} min</div>` : ``}
+    ${miles != null ? `<div class="status">Distance ≈ ${miles.toFixed(1)} mi</div>` : ``}
+    <div class="status" style="color:#888;">Updated ${new Date().toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})}</div>
   `;
 
-  const bounds=new google.maps.LatLngBounds();
-  bounds.extend(driverPos);
-  bounds.extend(pickup);
-  bounds.extend(dropoff);
-  map.fitBounds(bounds);
+  fitBounds(driverPos);
 }
 
-/* ---------------- PUSH ID BIND ---------------- */
-window.OneSignalDeferred=window.OneSignalDeferred||[];
-OneSignalDeferred.push(async OneSignal=>{
-  const raw=localStorage.getItem("bigred_rider_profile_v1");
-  if(!raw)return;
-  const p=JSON.parse(raw);
-  if(p.riderId) await OneSignal.login(p.riderId);
-});
+function fitBounds(driverPos){
+  if (!map) return;
+  const b = new google.maps.LatLngBounds();
+  b.extend(driverPos);
+  if (pickupLatLng) b.extend(pickupLatLng);
+  if (dropoffLatLng) b.extend(dropoffLatLng);
+  map.fitBounds(b);
+}
 
-/* INIT */
-loadRide();
+/* ============================================================
+   SAFE ESCAPES
+   ============================================================ */
+function escapeHtml(str){
+  return String(str || "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+function escapeAttr(str){ return escapeHtml(str); }
+
+/* ============================================================
+   INIT
+   ============================================================ */
+loadRides();
+
+/* ============================================================
+   🔔 OneSignal: init + identity bind (NO prompt)
+   ============================================================ */
+window.OneSignalDeferred = window.OneSignalDeferred || [];
+OneSignalDeferred.push(async function(OneSignal){
+  try {
+    await OneSignal.init({
+      appId: "9b8bcc89-87d3-46e2-b2d0-042d1a267718",
+      safari_web_id: "web.onesignal.auto.0c90051e-4735-447d-b203-75e3767d91b9",
+      notifyButton: { enable: false },
+      serviceWorkerPath: "/onesignalsdkworker.js?v=3",
+      path: "/"
+    });
+
+    const raw = localStorage.getItem("bigred_rider_profile_v1");
+    if (!raw) return;
+
+    const profile = JSON.parse(raw);
+    if (!profile.riderId) return;
+
+    // ✅ No permission prompt here
+    await OneSignal.login(profile.riderId);
+
+  } catch (e) {
+    // silent
+  }
+});
+</script>
+
+<!-- Google Maps API (loads last) -->
+<script async defer
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places,geometry&callback=initIfActiveRide">
 </script>
 
 </body>
