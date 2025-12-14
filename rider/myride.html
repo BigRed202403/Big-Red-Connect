@@ -11,14 +11,13 @@
 <meta name="theme-color" content="#000"/>
 
 <style>
-body{
+body {
   margin:0;
   background:#000;
   color:#fff;
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-  padding-bottom:60px;
 }
-header{
+header {
   background:#000;
   padding:12px;
   border-bottom:2px solid #b30000;
@@ -27,185 +26,236 @@ header{
   align-items:center;
   position:sticky;
   top:0;
-  z-index:50;
 }
-.logo{height:42px}
-#menuBtn{font-size:1.6rem;background:none;border:none;color:white}
-#menuPanel{display:none;flex-direction:column;background:#111;border-bottom:2px solid #b30000}
-#menuPanel a{padding:16px;color:#fff;text-decoration:none;border-bottom:1px solid #222}
-h1{text-align:center;font-size:1.4rem;margin:18px 0}
-.card{background:#111;border:1px solid #333;border-radius:10px;padding:14px;margin:12px}
-.status{font-size:.9rem;color:#ccc}
-.loc{margin-top:6px;font-size:.95rem}
-.btn{display:block;width:calc(100% - 24px);margin:12px auto;padding:15px;text-align:center;border-radius:10px;font-weight:700;text-decoration:none}
-.btn-primary{background:#b30000;color:#fff}
-.btn-ghost{background:#111;border:1px solid #333;color:#fff}
-#map{width:calc(100% - 24px);height:320px;margin:12px auto;border-radius:12px;border:1px solid #333;display:none}
-#etaBox{display:none;margin:12px}
+.logo { height:42px; }
+#menuBtn { font-size:1.6rem;background:none;border:none;color:white;cursor:pointer; }
+#menuPanel {
+  display:none;
+  flex-direction:column;
+  background:#111;
+  border-bottom:2px solid #b30000;
+}
+#menuPanel a {
+  padding:16px;
+  color:#fff;
+  text-decoration:none;
+  border-bottom:1px solid #222;
+}
+.container { padding:20px;text-align:center; }
+.card {
+  background:#111;
+  border:1px solid #333;
+  border-radius:12px;
+  padding:14px;
+  margin:12px;
+}
+#map {
+  height:340px;
+  margin:12px;
+  border-radius:12px;
+  border:1px solid #333;
+  display:none;
+}
+.status { color:#ccc;font-size:.9rem; }
+#etaBox { display:none; }
+.btn {
+  display:block;
+  width:calc(100% - 24px);
+  margin:12px auto;
+  padding:14px;
+  background:#b30000;
+  color:#fff;
+  text-decoration:none;
+  border-radius:10px;
+  font-weight:700;
+}
+.btn.secondary {
+  background:#111;
+  border:1px solid #333;
+}
 </style>
 
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=geometry"></script>
-<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 </head>
 
 <body>
 
 <header>
-  <a href="/index.html"><img src="/icon.PNG" class="logo"></a>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <a href="/index.html"><img src="/icon.PNG" class="logo"></a>
+    <strong>My Ride</strong>
+  </div>
   <button id="menuBtn">☰</button>
 </header>
 
 <nav id="menuPanel">
   <a href="/rider/rider.html">Rider Hub</a>
-  <a href="/rider/ride-request.html">Request a Ride</a>
-  <a href="/rider/myride.html">My Ride</a>
+  <a href="/rider/ride-request.html">Request Ride</a>
   <a href="/rider/profile.html">Profile</a>
   <a href="#" id="logoutBtn">Log Out</a>
 </nav>
 
-<h1>Your Ride</h1>
+<div class="container">
+  <h1>Your Ride</h1>
+  <div id="activeRide"></div>
+</div>
 
-<div id="activeContainer"></div>
 <div id="map"></div>
+
 <div id="etaBox" class="card"></div>
 
-<a href="/rider/ride-request.html" class="btn btn-primary">Request Another Ride</a>
-<a href="/rider/rider.html" class="btn btn-ghost">Back to Rider Hub</a>
+<a href="/rider/ride-request.html" class="btn">Request Another Ride</a>
+<a href="/rider/rider.html" class="btn secondary">Back to Rider Hub</a>
 
 <script>
-const BOOKINGS_API="https://bigred-bookings.bigredtransportation.workers.dev";
-const STATUS_API="https://bigred-status-updater.bigredtransportation.workers.dev/status";
+const BOOKINGS_API = "https://bigred-bookings.bigredtransportation.workers.dev";
+const STATUS_API   = "https://bigred-status-updater.bigredtransportation.workers.dev/status";
 
-let map,pickupMarker,driverMarker,pickupLatLng=null,pollTimer=null,activeRide=null;
+let map, directionsService, directionsRenderer;
+let driverMarker, pickupMarker, dropoffMarker;
+let etaTimer = null;
+let activeRide = null;
 
-/* MENU */
-menuBtn.onclick=()=>menuPanel.style.display=menuPanel.style.display==="flex"?"none":"flex";
-logoutBtn.onclick=()=>{localStorage.clear();location.href="/index.html"};
+document.getElementById("menuBtn").onclick = () => {
+  const p = document.getElementById("menuPanel");
+  p.style.display = p.style.display==="flex"?"none":"flex";
+};
+document.getElementById("logoutBtn").onclick = () => {
+  localStorage.clear();
+  location.href="/index.html";
+};
 
-/* LOAD ACTIVE RIDE */
 async function loadRide(){
-  const profile=JSON.parse(localStorage.getItem("bigred_rider_profile_v1")||"{}");
-  if(!profile.riderId)return;
+  const riderId = localStorage.getItem("riderId");
+  if(!riderId) return;
 
-  const res=await fetch(`${BOOKINGS_API}/api/driver/bookings?scope=active`);
-  const rides=await res.json();
-  activeRide=rides.find(r=>r.rider?.riderId===profile.riderId)||null;
-  renderRide(activeRide);
-}
+  const res = await fetch(`${BOOKINGS_API}/api/driver/bookings?scope=active`);
+  const list = await res.json();
 
-function renderRide(ride){
-  const box=document.getElementById("activeContainer");
-
-  if(!ride){
-    box.innerHTML=`<div class="card">You have no active ride.</div>`;
-    hideMap();
+  activeRide = list.find(r => r.rider?.riderId === riderId);
+  if(!activeRide){
+    document.getElementById("activeRide").innerHTML =
+      `<div class="card">No active ride.</div>`;
     return;
   }
 
-  box.innerHTML=`
+  document.getElementById("activeRide").innerHTML = `
     <div class="card">
-      <div class="status">Status: ${ride.status}</div>
-      <div class="loc">Pickup: ${ride.pickup.address}</div>
-      <div class="loc">Dropoff: ${ride.dropoff.address}</div>
+      <div class="status">Status: ${activeRide.status}</div>
+      <div>Pickup: ${activeRide.pickup.address}</div>
+      <div>Dropoff: ${activeRide.dropoff.address}</div>
     </div>
   `;
 
-  if(["ENROUTE","ARRIVED","PICKED_UP"].includes(ride.status)){
-    initMapIfNeeded(ride.pickup.address);
-  }else{
-    hideMap();
-  }
+  initMap();
 }
 
-function initMapIfNeeded(address){
+function initMap(){
   document.getElementById("map").style.display="block";
 
-  if(!map){
-    map=new google.maps.Map(document.getElementById("map"),{
-      zoom:13,
-      center:{lat:35.4676,lng:-97.5164},
-      mapTypeControl:false,
-      streetViewControl:false
-    });
-  }
+  directionsService = new google.maps.DirectionsService();
+  directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers:true });
 
-  if(!pickupLatLng){
-    new google.maps.Geocoder().geocode({address},(res,status)=>{
-      if(status==="OK"){
-        pickupLatLng=res[0].geometry.location;
-        pickupMarker?.setMap(null);
-        pickupMarker=new google.maps.Marker({
-          map,
-          position:pickupLatLng,
-          icon:"https://maps.google.com/mapfiles/ms/icons/green-dot.png"
-        });
-        startPolling();
-      }
-    });
-  }else{
-    startPolling();
-  }
+  map = new google.maps.Map(document.getElementById("map"), {
+    zoom:12,
+    center:{ lat:35.4676,lng:-97.5164 }
+  });
+  directionsRenderer.setMap(map);
+
+  geocodeAndStart();
 }
 
-async function pollDriver(){
-  if(!pickupLatLng)return;
+async function geocodeAndStart(){
+  const geocoder = new google.maps.Geocoder();
 
-  const res=await fetch(STATUS_API);
-  const data=await res.json();
-  if(!data.location)return;
+  const pickup = await geocode(geocoder, activeRide.pickup.address);
+  const dropoff = await geocode(geocoder, activeRide.dropoff.address);
 
-  const driverPos=new google.maps.LatLng(data.location.lat,data.location.lng);
+  pickupMarker = new google.maps.Marker({
+    map, position:pickup, label:"P"
+  });
+  dropoffMarker = new google.maps.Marker({
+    map, position:dropoff, label:"D"
+  });
+
+  startTracking(pickup, dropoff);
+}
+
+function geocode(geocoder, addr){
+  return new Promise((resolve,reject)=>{
+    geocoder.geocode({ address:addr }, (res,status)=>{
+      if(status==="OK") resolve(res[0].geometry.location);
+      else reject(status);
+    });
+  });
+}
+
+async function startTracking(pickup, dropoff){
+  if(etaTimer) clearInterval(etaTimer);
+  await updateDriver(pickup, dropoff);
+  etaTimer = setInterval(()=>updateDriver(pickup,dropoff),15000);
+}
+
+async function updateDriver(pickup, dropoff){
+  const res = await fetch(STATUS_API+"?t="+Date.now());
+  const j = await res.json();
+
+  const lat = j.location?.lat;
+  const lng = j.location?.lng;
+  if(typeof lat!=="number"||typeof lng!=="number") return;
+
+  const driverPos = new google.maps.LatLng(lat,lng);
 
   if(!driverMarker){
-    driverMarker=new google.maps.Marker({
-      map,
-      position:driverPos,
-      icon:"https://maps.google.com/mapfiles/ms/icons/red-dot.png"
+    driverMarker = new google.maps.Marker({
+      map, position:driverPos, label:"🚗"
     });
-  }else{
+  } else {
     driverMarker.setPosition(driverPos);
   }
 
-  const distance=google.maps.geometry.spherical
-    .computeDistanceBetween(driverPos,pickupLatLng)/1609.34;
-  const eta=Math.max(1,Math.round(distance/30*60));
+  const route = await directionsService.route({
+    origin:driverPos,
+    destination:dropoff,
+    waypoints:[{ location:pickup }],
+    travelMode:"DRIVING"
+  });
 
-  etaBox.style.display="block";
-  etaBox.innerHTML=`
-    <div class="status">Driver ≈ ${eta} min away</div>
-    <div class="status">Distance ≈ ${distance.toFixed(1)} mi</div>
+  directionsRenderer.setDirections(route);
+
+  const leg = route.routes[0].legs[0];
+  const mins = Math.round(leg.duration.value/60);
+  const miles = (leg.distance.value/1609.34).toFixed(1);
+
+  document.getElementById("etaBox").style.display="block";
+  document.getElementById("etaBox").innerHTML = `
+    <div class="status">ETA ≈ ${mins} min</div>
+    <div class="status">Distance ≈ ${miles} mi</div>
+    <div class="status">Updated ${new Date().toLocaleTimeString()}</div>
   `;
 
-  const bounds=new google.maps.LatLngBounds();
+  const bounds = new google.maps.LatLngBounds();
   bounds.extend(driverPos);
-  bounds.extend(pickupLatLng);
+  bounds.extend(pickup);
+  bounds.extend(dropoff);
   map.fitBounds(bounds);
 }
 
-function startPolling(){
-  if(pollTimer)clearInterval(pollTimer);
-  pollDriver();
-  pollTimer=setInterval(pollDriver,15000);
-}
+loadRide();
+</script>
 
-function hideMap(){
-  document.getElementById("map").style.display="none";
-  document.getElementById("etaBox").style.display="none";
-  if(pollTimer){clearInterval(pollTimer);pollTimer=null}
-}
-
-/* PUSH IDENTITY */
-window.OneSignalDeferred=window.OneSignalDeferred||[];
+<!-- 🔔 OneSignal identity rebind -->
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+<script>
+window.OneSignalDeferred = window.OneSignalDeferred || [];
 OneSignalDeferred.push(async OneSignal=>{
   try{
-    const p=JSON.parse(localStorage.getItem("bigred_rider_profile_v1")||"{}");
-    if(p.riderId)await OneSignal.login(p.riderId);
+    const raw = localStorage.getItem("bigred_rider_profile_v1");
+    if(!raw) return;
+    const p = JSON.parse(raw);
+    if(p.riderId) await OneSignal.login(p.riderId);
   }catch{}
 });
-
-/* INIT */
-loadRide();
-setInterval(loadRide,20000);
 </script>
 
 </body>
