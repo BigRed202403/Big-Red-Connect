@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Rider Login – Big Red Connect</title>
 
-  <!-- 📱 Icons / PWA -->
+  <!-- PWA / Icons -->
   <link rel="apple-touch-icon" href="/icon.PNG">
   <link rel="icon" type="image/png" sizes="192x192" href="/icon.PNG">
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#000000">
 
-  <!-- 🎨 Styles -->
+  <!-- Styles -->
   <style>
     body {
       margin:0;
@@ -96,14 +96,14 @@
     #toast.show { opacity:1; }
   </style>
 
-  <!-- 🔔 OneSignal SDK -->
+  <!-- OneSignal SDK -->
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 </head>
 
 <body>
 
 <header>
-  <img src="/icon.PNG" id="logoHome" alt="Big Red Connect">
+  <img src="/icon.PNG" id="logoHome">
   <div>
     <div style="font-weight:700;">Big Red Connect</div>
     <div style="color:#888;font-size:.8rem;">Rider Login</div>
@@ -125,77 +125,72 @@
 <div id="toast"></div>
 
 <script>
-  /* ======================================================
-     Utilities
-     ====================================================== */
-  function showToast(msg){
-    const t = document.getElementById("toast");
-    t.textContent = msg;
-    t.classList.add("show");
-    setTimeout(() => t.classList.remove("show"), 1800);
-  }
-
-  document.getElementById("logoHome").onclick = () =>
-    location.href = "/index.html";
-
-  const PROFILE_API =
-    "https://bigred-rider-profile.bigredtransportation.workers.dev";
-
+  const PROFILE_API = "https://bigred-rider-profile.bigredtransportation.workers.dev";
   window.OneSignalDeferred = window.OneSignalDeferred || [];
 
-  /* ======================================================
-     LOGIN HANDLER (Single, Clean, iOS-Safe)
-     ====================================================== */
+  function showToast(msg){
+    const t=document.getElementById("toast");
+    t.textContent=msg;
+    t.classList.add("show");
+    setTimeout(()=>t.classList.remove("show"),1800);
+  }
+
+  document.getElementById("logoHome").onclick = () => {
+    location.href = "/index.html";
+  };
+
   document.getElementById("btnLogin").addEventListener("click", async () => {
-    const name  = document.getElementById("name").value.trim();
+    const name = document.getElementById("name").value.trim();
     const phone = document.getElementById("phone").value.trim().replace(/\D/g,"");
 
-    if (!name || !phone) {
+    if(!name || !phone){
       showToast("Name & phone required");
       return;
     }
 
-    if (phone.length < 10) {
+    if(phone.length < 10){
       showToast("Invalid phone number");
       return;
     }
 
     try {
       /* 1️⃣ Login → get riderId */
-      const loginRes = await fetch(`${PROFILE_API}/api/rider/login`, {
+      const res = await fetch(`${PROFILE_API}/api/rider/login`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type":"application/json" },
         body: JSON.stringify({ phone })
       });
 
-      const loginData = await loginRes.json();
-      if (!loginRes.ok || !loginData.riderId) {
+      if(!res.ok){
         showToast("Login failed");
         return;
       }
 
-      const riderId = loginData.riderId;
+      const { riderId } = await res.json();
 
-      /* 2️⃣ Persist profile (new + legacy compatibility) */
+      /* 2️⃣ Persist profile (canonical) */
       const profile = { riderId, name, phone };
       localStorage.setItem("bigred_rider_profile_v1", JSON.stringify(profile));
+
+      // Backward compatibility (older pages)
       localStorage.setItem("riderId", riderId);
       localStorage.setItem("riderName", name);
       localStorage.setItem("riderPhone", phone);
 
-      /* 3️⃣ Update rider profile */
+      /* 3️⃣ Save profile server-side */
       await fetch(`${PROFILE_API}/api/rider/profile`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ riderId, name, phone })
+        method:"PUT",
+        headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify(profile)
       });
 
-      /* 4️⃣ Push permission + OneSignal identity bind
-            (must occur inside user gesture for iOS)
-      */
+      /* 4️⃣ PUSH PERMISSION + IDENTITY BIND (CRITICAL) */
       window.OneSignalDeferred.push(async function(OneSignal){
         try {
+          // 🚨 MUST be user-initiated
           await OneSignal.Notifications.requestPermission();
+
+          // Bind rider identity
           await OneSignal.login(riderId);
 
           await OneSignal.User.addTags({
@@ -203,8 +198,8 @@
             env: "live"
           });
 
-          console.log("🔔 Rider push enabled + bound:", riderId);
-        } catch (err) {
+          console.log("🔔 Push enabled + rider bound:", riderId);
+        } catch(err){
           console.warn("Push setup skipped:", err);
         }
       });
@@ -212,7 +207,7 @@
       /* 5️⃣ Redirect */
       window.location.href = "/rider/rider.html";
 
-    } catch (err) {
+    } catch(err){
       console.error(err);
       showToast("Connection error");
     }
