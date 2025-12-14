@@ -5,9 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Rider Hub – Big Red Connect</title>
 
+  <!-- PWA / Icons -->
   <link rel="apple-touch-icon" href="/icon.PNG">
   <link rel="icon" type="image/png" sizes="192x192" href="/icon.PNG">
   <meta name="theme-color" content="#000"/>
+
+  <!-- OneSignal SDK -->
+  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 
   <style>
     body {
@@ -17,7 +21,6 @@
       font-family:-apple-system, BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
     }
 
-    /* HEADER */
     header {
       background:#000;
       padding:12px;
@@ -30,9 +33,7 @@
       z-index:50;
     }
 
-    .logo {
-      height:42px;
-    }
+    .logo { height:42px; }
 
     .header-left {
       display:flex;
@@ -53,13 +54,11 @@
       cursor:pointer;
     }
 
-    /* MENU */
     #menuPanel {
       display:none;
       flex-direction:column;
       background:#111;
       border-bottom:2px solid #b30000;
-      animation:drop .15s ease-out;
     }
 
     #menuPanel a {
@@ -69,25 +68,15 @@
       border-bottom:1px solid #222;
       font-size:1rem;
     }
-    #menuPanel a:hover {
-      background:#222;
-    }
 
-    @keyframes drop {
-      from { opacity:0; transform:translateY(-10px); }
-      to   { opacity:1; transform:translateY(0); }
-    }
+    #menuPanel a:hover { background:#222; }
 
-    /* CONTENT */
     .container {
       padding:20px;
       text-align:center;
     }
 
-    h1 {
-      font-size:1.5rem;
-      margin-bottom:10px;
-    }
+    h1 { font-size:1.5rem; }
 
     .welcome {
       color:#bbb;
@@ -113,13 +102,11 @@
       background:#111;
       border:1px solid #333;
     }
-
   </style>
 </head>
 
 <body>
 
-<!-- HEADER -->
 <header>
   <div class="header-left">
     <a href="/index.html"><img src="/icon.PNG" class="logo"></a>
@@ -128,7 +115,6 @@
   <button id="menuBtn">☰</button>
 </header>
 
-<!-- MENU -->
 <nav id="menuPanel">
   <a href="/rider/rider.html">Rider Hub</a>
   <a href="/rider/ride-request.html">Request a Ride</a>
@@ -137,7 +123,6 @@
   <a href="#" id="logoutBtn">Log Out</a>
 </nav>
 
-<!-- MAIN CONTENT -->
 <div class="container">
   <h1>Welcome</h1>
   <div id="welcomeName" class="welcome"></div>
@@ -148,50 +133,50 @@
 </div>
 
 <script>
-/* MENU TOGGLE */
-document.getElementById("menuBtn").addEventListener("click", () => {
-  const panel = document.getElementById("menuPanel");
-  panel.style.display = panel.style.display === "flex" ? "none" : "flex";
-});
+/* MENU */
+document.getElementById("menuBtn").onclick = () => {
+  const p = document.getElementById("menuPanel");
+  p.style.display = p.style.display === "flex" ? "none" : "flex";
+};
 
 /* LOGOUT */
-document.getElementById("logoutBtn").addEventListener("click", () => {
-  localStorage.removeItem("riderId");
-  localStorage.removeItem("riderName");
-  localStorage.removeItem("riderPhone");
-  localStorage.removeItem("riderHome");
-  localStorage.removeItem("riderGate");
+document.getElementById("logoutBtn").onclick = () => {
+  localStorage.clear();
+  location.href = "/index.html";
+};
 
-  window.location.href = "/index.html";
-});
-
-/* PERSONALIZED WELCOME */
+/* WELCOME */
 const n = localStorage.getItem("riderName");
-document.getElementById("welcomeName").textContent = n
-  ? `Hi ${n}, let’s get you moving.`
-  : `Let’s get you moving.`;
-
+document.getElementById("welcomeName").textContent =
+  n ? `Hi ${n}, let’s get you moving.` : `Let’s get you moving.`;
 </script>
 
-<!-- 🔔 OneSignal identity re-bind (NO prompt) -->
-<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+<!-- 🔔 OneSignal INIT + IDENTITY BIND -->
 <script>
-  window.OneSignalDeferred = window.OneSignalDeferred || [];
-  OneSignalDeferred.push(async function(OneSignal){
-    try {
-      const raw = localStorage.getItem("bigred_rider_profile_v1");
-      if (!raw) return;
+window.OneSignalDeferred = window.OneSignalDeferred || [];
+OneSignalDeferred.push(async function(OneSignal){
+  try {
+    await OneSignal.init({
+      appId: "9b8bcc89-87d3-46e2-b2d0-042d1a267718",
+      safari_web_id: "web.onesignal.auto.0c90051e-4735-447d-b203-75e3767d91b9",
+      notifyButton: { enable:false },
+      serviceWorkerPath: "/onesignalsdkworker.js",
+      path: "/"
+    });
 
-      const profile = JSON.parse(raw);
-      if (!profile.riderId) return;
+    const raw = localStorage.getItem("bigred_rider_profile_v1");
+    if (!raw) return;
 
-      // ✅ No permission prompt here
-      await OneSignal.login(profile.riderId);
-      console.log("🔔 Rider push identity confirmed:", profile.riderId);
-    } catch (e) {
-      console.warn("Rider push identity skipped:", e);
-    }
-  });
+    const profile = JSON.parse(raw);
+    if (!profile.riderId) return;
+
+    await OneSignal.login(profile.riderId);
+    console.log("🔔 Rider identity bound:", profile.riderId);
+
+  } catch(e){
+    console.warn("OneSignal init/bind skipped:", e);
+  }
+});
 </script>
 
 </body>
