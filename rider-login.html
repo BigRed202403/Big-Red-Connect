@@ -5,12 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Rider Login – Big Red Connect</title>
 
-  <!-- Icons -->
+  <!-- 📱 Icons / PWA -->
   <link rel="apple-touch-icon" href="/icon.PNG">
   <link rel="icon" type="image/png" sizes="192x192" href="/icon.PNG">
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#000000">
 
+  <!-- 🎨 Styles -->
   <style>
     body {
       margin:0;
@@ -94,12 +95,15 @@
     }
     #toast.show { opacity:1; }
   </style>
+
+  <!-- 🔔 OneSignal SDK -->
+  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 </head>
 
 <body>
 
 <header>
-  <img src="/icon.PNG" id="logoHome">
+  <img src="/icon.PNG" id="logoHome" alt="Big Red Connect">
   <div>
     <div style="font-weight:700;">Big Red Connect</div>
     <div style="color:#888;font-size:.8rem;">Rider Login</div>
@@ -120,96 +124,99 @@
 
 <div id="toast"></div>
 
-<!-- 🔔 OneSignal SDK -->
-<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <script>
-  window.OneSignalDeferred = window.OneSignalDeferred || [];
-
+  /* ======================================================
+     Utilities
+     ====================================================== */
   function showToast(msg){
-    const t=document.getElementById("toast");
-    t.textContent=msg;
+    const t = document.getElementById("toast");
+    t.textContent = msg;
     t.classList.add("show");
-    setTimeout(()=>t.classList.remove("show"),1800);
+    setTimeout(() => t.classList.remove("show"), 1800);
   }
 
-  document.getElementById("logoHome").onclick=()=>location.href="/index.html";
+  document.getElementById("logoHome").onclick = () =>
+    location.href = "/index.html";
 
-  const PROFILE_API="https://bigred-rider-profile.bigredtransportation.workers.dev";
+  const PROFILE_API =
+    "https://bigred-rider-profile.bigredtransportation.workers.dev";
 
-  /* -------------------------------------------------------
-     LOGIN HANDLER
-  ------------------------------------------------------- */
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+
+  /* ======================================================
+     LOGIN HANDLER (Single, Clean, iOS-Safe)
+     ====================================================== */
   document.getElementById("btnLogin").addEventListener("click", async () => {
-    const name=document.getElementById("name").value.trim();
-    const phone=document.getElementById("phone").value.trim().replace(/\D/g,"");
+    const name  = document.getElementById("name").value.trim();
+    const phone = document.getElementById("phone").value.trim().replace(/\D/g,"");
 
-    if(!name || !phone){
+    if (!name || !phone) {
       showToast("Name & phone required");
       return;
     }
 
-    if(phone.length < 10){
+    if (phone.length < 10) {
       showToast("Invalid phone number");
       return;
     }
 
     try {
-      // 1️⃣ Login → receive riderId (UUID)
+      /* 1️⃣ Login → get riderId */
       const loginRes = await fetch(`${PROFILE_API}/api/rider/login`, {
-        method:"POST",
-        headers:{ "Content-Type":"application/json" },
-        body:JSON.stringify({ phone })
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone })
       });
 
       const loginData = await loginRes.json();
-      if(!loginRes.ok){
-        showToast("Error logging in");
+      if (!loginRes.ok || !loginData.riderId) {
+        showToast("Login failed");
         return;
       }
 
       const riderId = loginData.riderId;
 
-      // Store locally
-      const profile = {
-        riderId,
-        name,
-        phone
-      };
+      /* 2️⃣ Persist profile (new + legacy compatibility) */
+      const profile = { riderId, name, phone };
       localStorage.setItem("bigred_rider_profile_v1", JSON.stringify(profile));
+      localStorage.setItem("riderId", riderId);
+      localStorage.setItem("riderName", name);
+      localStorage.setItem("riderPhone", phone);
 
-      // 2️⃣ Update profile with name
+      /* 3️⃣ Update rider profile */
       await fetch(`${PROFILE_API}/api/rider/profile`, {
-        method:"PUT",
-        headers:{ "Content-Type":"application/json" },
-        body:JSON.stringify({ riderId, name, phone })
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ riderId, name, phone })
       });
 
-      // 3️⃣ OneSignal login + tags
-      OneSignalDeferred.push(async function(OneSignal){
+      /* 4️⃣ Push permission + OneSignal identity bind
+            (must occur inside user gesture for iOS)
+      */
+      window.OneSignalDeferred.push(async function(OneSignal){
         try {
           await OneSignal.Notifications.requestPermission();
           await OneSignal.login(riderId);
 
           await OneSignal.User.addTags({
             role_rider: "true",
-            rider_phone: phone,
             env: "live"
           });
 
-        } catch(err){
-          console.warn("OneSignal rider login failed:", err);
+          console.log("🔔 Rider push enabled + bound:", riderId);
+        } catch (err) {
+          console.warn("Push setup skipped:", err);
         }
       });
 
-      // 4️⃣ Redirect to hub
-      window.location.href="/rider/rider.html";
+      /* 5️⃣ Redirect */
+      window.location.href = "/rider/rider.html";
 
-    } catch(err){
+    } catch (err) {
       console.error(err);
       showToast("Connection error");
     }
   });
-
 </script>
 
 </body>
