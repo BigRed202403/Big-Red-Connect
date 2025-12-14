@@ -187,6 +187,7 @@
       // 3️⃣ OneSignal login + tags
       OneSignalDeferred.push(async function(OneSignal){
         try {
+          await OneSignal.Notifications.requestPermission();
           await OneSignal.login(riderId);
 
           await OneSignal.User.addTags({
