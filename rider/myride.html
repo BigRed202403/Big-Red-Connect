@@ -1,181 +1,101 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>My Ride – Big Red Connect</title>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>My Ride – Big Red Connect</title>
 
-  <!-- PWA + Icons -->
-  <link rel="apple-touch-icon" href="/icon.PNG">
-  <link rel="icon" type="image/png" sizes="192x192" href="/icon.PNG">
-  <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#000"/>
+<link rel="apple-touch-icon" href="/icon.PNG">
+<link rel="icon" type="image/png" sizes="192x192" href="/icon.PNG">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#000"/>
 
-  <style>
-    body {
-      margin:0;
-      background:#000;
-      color:#fff;
-      font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      padding-bottom:50px;
-    }
+<style>
+body {
+  margin:0;
+  background:#000;
+  color:#fff;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  padding-bottom:60px;
+}
+header {
+  background:#000;
+  padding:12px;
+  border-bottom:2px solid #b30000;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  position:sticky;
+  top:0;
+  z-index:50;
+}
+.logo { height:42px; }
+#menuBtn {
+  font-size:1.6rem;
+  background:none;
+  border:none;
+  color:white;
+}
+#menuPanel {
+  display:none;
+  flex-direction:column;
+  background:#111;
+  border-bottom:2px solid #b30000;
+}
+#menuPanel a {
+  padding:16px;
+  color:#fff;
+  text-decoration:none;
+  border-bottom:1px solid #222;
+}
+h1 {
+  text-align:center;
+  font-size:1.4rem;
+  margin:18px 0;
+}
+.card {
+  background:#111;
+  border:1px solid #333;
+  border-radius:10px;
+  padding:14px;
+  margin:12px;
+}
+.status { font-size:.9rem; color:#ccc; }
+.loc { margin-top:6px; font-size:.95rem; }
+.btn {
+  display:block;
+  width:calc(100% - 24px);
+  margin:12px auto;
+  padding:15px;
+  text-align:center;
+  border-radius:10px;
+  font-weight:700;
+  text-decoration:none;
+}
+.btn-primary { background:#b30000; color:#fff; }
+.btn-ghost { background:#111; border:1px solid #333; color:#fff; }
+#map {
+  width:calc(100% - 24px);
+  height:320px;
+  margin:12px auto;
+  border-radius:12px;
+  border:1px solid #333;
+  display:none;
+}
+#etaBox { display:none; margin:12px; }
+</style>
 
-    /* HEADER + MENU */
-    header {
-      background:#000;
-      padding:12px;
-      border-bottom:2px solid #b30000;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      position:sticky;
-      top:0;
-      z-index:50;
-    }
-    .header-left {
-      display:flex;
-      align-items:center;
-      gap:10px;
-    }
-    .logo {
-      height:42px;
-    }
-    #menuBtn {
-      font-size:1.6rem;
-      background:none;
-      border:none;
-      color:white;
-      cursor:pointer;
-    }
-    #menuPanel {
-      display:none;
-      flex-direction:column;
-      background:#111;
-      border-bottom:2px solid #b30000;
-      animation:drop .15s ease-out;
-    }
-    #menuPanel a {
-      padding:16px;
-      color:#fff;
-      text-decoration:none;
-      border-bottom:1px solid #222;
-      font-size:1rem;
-    }
-    #menuPanel a:hover { background:#222; }
-
-    @keyframes drop {
-      from { opacity:0; transform:translateY(-10px); }
-      to   { opacity:1; transform:translateY(0); }
-    }
-
-    h1 {
-      text-align:center;
-      font-size:1.4rem;
-      margin:18px 0;
-      font-weight:700;
-    }
-
-    .section-title {
-      font-size:1rem;
-      font-weight:700;
-      margin:10px 0 6px;
-      padding:0 12px;
-    }
-
-    .card {
-      background:#111;
-      border:1px solid #333;
-      border-radius:10px;
-      padding:14px;
-      margin:0 12px 14px;
-    }
-
-    .status {
-      font-size:.88rem;
-      margin-bottom:4px;
-      color:#ccc;
-    }
-
-    .loc-line {
-      margin:6px 0;
-      font-size:.9rem;
-    }
-
-    .vehicle-thumb {
-      width:80px;
-      border-radius:10px;
-      margin-top:10px;
-      border:1px solid #333;
-    }
-
-    .btn-primary, .btn-ghost {
-      display:block;
-      width:calc(100% - 24px);
-      margin:12px auto;
-      padding:15px;
-      text-align:center;
-      border-radius:10px;
-      text-decoration:none;
-      font-weight:700;
-      font-size:1.05rem;
-    }
-    .btn-primary {
-      background:#b30000;
-      color:#fff;
-    }
-    .btn-ghost {
-      background:#111;
-      color:#fff;
-      border:1px solid #333;
-    }
-
-    #map {
-      width:calc(100% - 24px);
-      height:300px;
-      margin:12px auto;
-      border-radius:12px;
-      border:1px solid #333;
-      display:none;
-    }
-
-    #etaBox {
-      display:none;
-      margin:-4px 12px 14px;
-    }
-
-    #toast {
-      position:fixed;
-      bottom:22px;
-      left:50%;
-      transform:translateX(-50%);
-      background:#111;
-      border:1px solid #b30000;
-      padding:10px 18px;
-      border-radius:999px;
-      opacity:0;
-      transition:.25s;
-      z-index:999;
-    }
-    #toast.show { opacity:1; }
-
-  </style>
-
-  <!-- Google Maps JS API -->
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=geometry"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=geometry"></script>
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 </head>
 
 <body>
 
-<!-- HEADER -->
 <header>
-  <div class="header-left">
-    <a href="/index.html"><img src="/icon.PNG" class="logo"></a>
-    <div style="font-weight:700;font-size:1rem;">My Ride</div>
-  </div>
+  <a href="/index.html"><img src="/icon.PNG" class="logo"></a>
   <button id="menuBtn">☰</button>
 </header>
 
-<!-- MENU -->
 <nav id="menuPanel">
   <a href="/rider/rider.html">Rider Hub</a>
   <a href="/rider/ride-request.html">Request a Ride</a>
@@ -186,300 +106,154 @@
 
 <h1>Your Ride</h1>
 
-<!-- ACTIVE -->
 <div id="activeContainer"></div>
-
-<!-- MAP -->
 <div id="map"></div>
-
-<!-- ETA CARD -->
 <div id="etaBox" class="card"></div>
 
-<!-- PAST RIDES -->
-<h2 class="section-title">Past Rides</h2>
-<div id="pastContainer"></div>
-
-<a href="/rider/ride-request.html" class="btn-primary">Request Another Ride</a>
-<a href="/rider/rider.html" class="btn-ghost">Back to Rider Hub</a>
-
-<div id="toast"></div>
+<a href="/rider/ride-request.html" class="btn btn-primary">Request Another Ride</a>
+<a href="/rider/rider.html" class="btn btn-ghost">Back to Rider Hub</a>
 
 <script>
-const API_BOOKINGS = "https://bigred-bookings.bigredtransportation.workers.dev";
-const API_STATUS   = "https://bigred-status-updater.bigredtransportation.workers.dev/status";
+const BOOKINGS_API = "https://bigred-bookings.bigredtransportation.workers.dev";
+const STATUS_API   = "https://bigred-status-updater.bigredtransportation.workers.dev/status";
 
 let map, driverMarker, pickupMarker;
-let geocoder, directionsService;
-let activeRide = null;
 let pickupLatLng = null;
-let etaInterval = null;
+let pollTimer = null;
+let activeRide = null;
 
 /* MENU */
-document.getElementById("menuBtn").addEventListener("click", ()=>{
-  const p = document.getElementById("menuPanel");
-  p.style.display = (p.style.display==="flex"?"none":"flex");
-});
-document.getElementById("logoutBtn").addEventListener("click", ()=>{
+menuBtn.onclick = () => {
+  menuPanel.style.display = menuPanel.style.display==="flex"?"none":"flex";
+};
+logoutBtn.onclick = () => {
   localStorage.clear();
-  window.location.href="/index.html";
-});
-
-function showToast(msg){
-  const t = document.getElementById("toast");
-  t.textContent = msg;
-  t.classList.add("show");
-  setTimeout(()=> t.classList.remove("show"), 1900);
-}
-
-/* Ensure riderId exists (fallback like ride-request) */
-function ensureRiderId() {
-  let rid = localStorage.getItem("riderId");
-  if (!rid) {
-    try {
-      if (window.crypto && crypto.getRandomValues) {
-        const buf = new Uint8Array(8);
-        crypto.getRandomValues(buf);
-        rid = "r_" + Array.from(buf).map(b => b.toString(16).padStart(2,"0")).join("");
-      } else {
-        rid = "r_" + Date.now().toString(36);
-      }
-    } catch(e) {
-      rid = "r_" + Date.now().toString(36);
-    }
-    localStorage.setItem("riderId", rid);
-  }
-  return rid;
-}
+  location.href="/index.html";
+};
 
 /* LOAD RIDES */
-async function loadRides(){
-  const riderId   = ensureRiderId();
-  const riderPhone = localStorage.getItem("riderPhone") || "";
+async function loadRide(){
+  const riderId = JSON.parse(localStorage.getItem("bigred_rider_profile_v1")||"{}").riderId;
+  if(!riderId) return;
 
-  let all = [];
-  try {
-    const res = await fetch(`${API_BOOKINGS}/api/driver/bookings?scope=all`);
-    if (!res.ok) {
-      showToast("Error loading rides");
-      return;
-    }
-    all = await res.json();
-  } catch (e) {
-    console.error(e);
-    showToast("Network error loading rides");
-    return;
-  }
+  const res = await fetch(`${BOOKINGS_API}/api/driver/bookings?scope=active`);
+  const rides = await res.json();
+  activeRide = rides.find(r=>r.rider?.riderId===riderId) || null;
 
-  const phoneClean = riderPhone.replace(/\D/g,"");
-
-  const myRides = all.filter(r => {
-    const rId = r.rider?.riderId || null;
-    const rPhone = (r.rider?.phone || "").replace(/\D/g,"");
-    if (rId && rId === riderId) return true;
-    if (phoneClean && rPhone && rPhone === phoneClean) return true;
-    return false;
-  });
-
-  const active = myRides.find(r => ["REQUESTED","ACCEPTED","ENROUTE","ARRIVED"].includes(r.status));
-  const done   = myRides.filter(r => ["COMPLETED","CANCELLED"].includes(r.status));
-
-  renderActive(active);
-  renderPast(done.reverse());
+  renderRide(activeRide);
 }
 
-function renderActive(ride){
+function renderRide(ride){
   const box = document.getElementById("activeContainer");
-
-  // stop ETA loop when no active ride
-  if (!ride){
-    box.innerHTML = `<div class="card">You have no active rides.</div>`;
-    document.getElementById("map").style.display="none";
-    document.getElementById("etaBox").style.display="none";
-    activeRide = null;
-    if (etaInterval) {
-      clearInterval(etaInterval);
-      etaInterval = null;
-    }
+  if(!ride){
+    box.innerHTML = `<div class="card">You have no active ride.</div>`;
+    hideMap();
     return;
   }
-
-  activeRide = ride;
 
   box.innerHTML = `
     <div class="card">
       <div class="status">Status: ${ride.status}</div>
-      <div class="loc-line">Pickup: ${ride.pickup.address}</div>
-      <div class="loc-line">Dropoff: ${ride.dropoff.address}</div>
-      ${ride.vehicle ? `
-         <img class="vehicle-thumb" src="${ride.vehicle.image}" alt="${ride.vehicle.label || "Vehicle"}"/>
-      ` : ""}
+      <div class="loc">Pickup: ${ride.pickup.address}</div>
+      <div class="loc">Dropoff: ${ride.dropoff.address}</div>
     </div>
   `;
 
-  initMapForRide(ride);
-}
-
-function renderPast(list){
-  const box = document.getElementById("pastContainer");
-  box.innerHTML = "";
-
-  if(!list.length){
-    box.innerHTML = `<div class="card">No past rides yet.</div>`;
-    return;
+  if(["ENROUTE","ARRIVED","PICKED_UP"].includes(ride.status)){
+    initMap(ride.pickup.address);
+  } else {
+    hideMap();
   }
-
-  list.forEach(r=>{
-    box.innerHTML += `
-      <div class="card">
-        <div class="status">${r.status}</div>
-        <div class="loc-line">From: ${r.pickup.address}</div>
-        <div class="loc-line">To: ${r.dropoff.address}</div>
-      </div>
-    `;
-  });
 }
 
-/* MAP + ETA */
-function initMapForRide(ride){
-  const mapDiv = document.getElementById("map");
-  mapDiv.style.display="block";
-
-  if (!map) {
-    map = new google.maps.Map(mapDiv, {
-      zoom: 12,
-      center: {lat:35.4676, lng:-97.5164}, // OKC fallback
+/* MAP + DRIVER TRACKING */
+function initMap(address){
+  if(!map){
+    map = new google.maps.Map(document.getElementById("map"),{
+      zoom:13,
+      center:{lat:35.4676,lng:-97.5164},
       mapTypeControl:false,
-      streetViewControl:false,
-      fullscreenControl:false
+      streetViewControl:false
     });
   }
 
-  if (!geocoder) {
-    geocoder = new google.maps.Geocoder();
-  }
-  if (!directionsService) {
-    directionsService = new google.maps.DirectionsService();
-  }
+  document.getElementById("map").style.display="block";
 
-  // Geocode pickup address to get LatLng
-  geocoder.geocode({ address: ride.pickup.address }, function(res, status){
-    if(status === "OK" && res && res[0]){
+  const geocoder = new google.maps.Geocoder();
+  geocoder.geocode({address}, (res,status)=>{
+    if(status==="OK"){
       pickupLatLng = res[0].geometry.location;
-
-      if (pickupMarker) pickupMarker.setMap(null);
+      pickupMarker?.setMap(null);
       pickupMarker = new google.maps.Marker({
         map,
         position: pickupLatLng,
-        icon:{ url:"https://maps.google.com/mapfiles/ms/icons/green-dot.png" }
+        icon:"https://maps.google.com/mapfiles/ms/icons/green-dot.png"
       });
-
       map.setCenter(pickupLatLng);
-      startEtaLoop();
-    } else {
-      console.warn("Geocode failed for pickup:", status);
+      startPolling();
     }
   });
 }
 
-async function pollDriverAndUpdateETA(){
-  if (!activeRide || !pickupLatLng) return;
+function hideMap(){
+  document.getElementById("map").style.display="none";
+  document.getElementById("etaBox").style.display="none";
+  if(pollTimer){ clearInterval(pollTimer); pollTimer=null; }
+}
 
-  let data;
-  try {
-    const res = await fetch(API_STATUS);
-    if (!res.ok) return;
-    data = await res.json();
-  } catch (e) {
-    console.warn("Status fetch failed:", e);
-    return;
-  }
+async function pollDriver(){
+  if(!pickupLatLng) return;
+  const res = await fetch(STATUS_API);
+  const data = await res.json();
+  if(!data.location) return;
 
-  if (!data.location || typeof data.location.lat !== "number" || typeof data.location.lng !== "number") {
-    return;
-  }
+  const pos = new google.maps.LatLng(data.location.lat,data.location.lng);
 
-  const driverPos = new google.maps.LatLng(data.location.lat, data.location.lng);
-
-  if (!driverMarker) {
+  if(!driverMarker){
     driverMarker = new google.maps.Marker({
       map,
-      position: driverPos,
-      icon:{ url:"https://maps.google.com/mapfiles/ms/icons/red-dot.png" }
+      position: pos,
+      icon:"https://maps.google.com/mapfiles/ms/icons/red-dot.png"
     });
   } else {
-    driverMarker.setPosition(driverPos);
+    driverMarker.setPosition(pos);
   }
 
-  // Route from driver → pickup
-  let route;
-  try {
-    route = await new Promise((resolve, reject) => {
-      directionsService.route(
-        {
-          origin: driverPos,
-          destination: pickupLatLng,
-          travelMode: "DRIVING"
-        },
-        (r, status) => status === "OK" ? resolve(r) : reject(status)
-      );
-    });
-  } catch (errStatus) {
-    console.warn("Directions failed:", errStatus);
-    return;
-  }
+  const distance = google.maps.geometry.spherical.computeDistanceBetween(pos,pickupLatLng)/1609.34;
+  const eta = Math.round((distance/30)*60);
 
-  const leg = route.routes[0].legs[0];
-  const miles = leg.distance.value / 1609.34;
-  const mins  = Math.round(leg.duration.value / 60);
+  etaBox.style.display="block";
+  etaBox.innerHTML = `
+    <div class="status">Driver ≈ ${eta} min away</div>
+    <div class="status">Distance ≈ ${distance.toFixed(1)} mi</div>
+  `;
 
-  // Fit bounds around driver + pickup
   const bounds = new google.maps.LatLngBounds();
-  bounds.extend(driverPos);
+  bounds.extend(pos);
   bounds.extend(pickupLatLng);
   map.fitBounds(bounds);
-
-  // Update ETA box
-  const etaBox = document.getElementById("etaBox");
-  etaBox.style.display = "block";
-  etaBox.innerHTML = `
-    <div class="status">ETA from driver ≈ ${mins} min</div>
-    <div class="status">Distance ≈ ${miles.toFixed(1)} mi</div>
-    <div class="status">Updated ${new Date().toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})}</div>
-  `;
 }
 
-function startEtaLoop(){
-  if (etaInterval) {
-    clearInterval(etaInterval);
-  }
-  // Immediate update, then every 15s
-  pollDriverAndUpdateETA();
-  etaInterval = setInterval(pollDriverAndUpdateETA, 15000);
+function startPolling(){
+  if(pollTimer) clearInterval(pollTimer);
+  pollDriver();
+  pollTimer = setInterval(pollDriver,15000);
 }
+
+/* PUSH IDENTITY RE-BIND */
+window.OneSignalDeferred = window.OneSignalDeferred || [];
+OneSignalDeferred.push(async OneSignal=>{
+  try{
+    const raw = localStorage.getItem("bigred_rider_profile_v1");
+    if(!raw) return;
+    const p = JSON.parse(raw);
+    if(p.riderId) await OneSignal.login(p.riderId);
+  }catch{}
+});
 
 /* INIT */
-loadRides();
-</script>
-
-<!-- 🔔 OneSignal identity re-bind (NO prompt) -->
-<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
-<script>
-  window.OneSignalDeferred = window.OneSignalDeferred || [];
-  OneSignalDeferred.push(async function(OneSignal){
-    try {
-      const raw = localStorage.getItem("bigred_rider_profile_v1");
-      if (!raw) return;
-
-      const profile = JSON.parse(raw);
-      if (!profile.riderId) return;
-
-      // ✅ No permission prompt here
-      await OneSignal.login(profile.riderId);
-      console.log("🔔 Rider push identity confirmed:", profile.riderId);
-    } catch (e) {
-      console.warn("Rider push identity skipped:", e);
-    }
-  });
+loadRide();
+setInterval(loadRide,20000);
 </script>
 
 </body>
