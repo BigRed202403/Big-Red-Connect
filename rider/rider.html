@@ -10,7 +10,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/icon.PNG">
   <meta name="theme-color" content="#000"/>
 
-  <!-- OneSignal SDK (identity bind ONLY, no prompt) -->
+  <!-- OneSignal SDK -->
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 
   <style>
@@ -18,9 +18,8 @@
       margin:0;
       background:#000;
       color:#fff;
-      font-family:-apple-system, BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
     }
-
     header {
       background:#000;
       padding:12px;
@@ -32,20 +31,16 @@
       top:0;
       z-index:50;
     }
-
     .logo { height:42px; }
-
     .header-left {
       display:flex;
       align-items:center;
       gap:10px;
     }
-
     .header-title {
       font-weight:700;
       font-size:1rem;
     }
-
     #menuBtn {
       font-size:1.6rem;
       background:none;
@@ -53,14 +48,12 @@
       color:white;
       cursor:pointer;
     }
-
     #menuPanel {
       display:none;
       flex-direction:column;
       background:#111;
       border-bottom:2px solid #b30000;
     }
-
     #menuPanel a {
       padding:16px;
       color:#fff;
@@ -68,22 +61,17 @@
       border-bottom:1px solid #222;
       font-size:1rem;
     }
-
     #menuPanel a:hover { background:#222; }
-
     .container {
       padding:20px;
       text-align:center;
     }
-
     h1 { font-size:1.5rem; }
-
     .welcome {
       color:#bbb;
       margin-bottom:26px;
       font-size:.95rem;
     }
-
     .btn {
       display:block;
       width:100%;
@@ -97,7 +85,6 @@
       border-radius:12px;
       font-weight:700;
     }
-
     .btn-secondary {
       background:#111;
       border:1px solid #333;
@@ -151,42 +138,37 @@ document.getElementById("welcomeName").textContent =
   n ? `Hi ${n}, let’s get you moving.` : `Let’s get you moving.`;
 </script>
 
-<!-- 🔔 FINAL RIDER PUSH IDENTITY BIND (NO PROMPT) -->
+<!-- 🔔 OneSignal INIT + IDENTITY REBIND (REQUIRED) -->
 <script>
-  window.OneSignalDeferred = window.OneSignalDeferred || [];
-  OneSignalDeferred.push(async function (OneSignal) {
-    try {
-      const raw = localStorage.getItem("bigred_rider_profile_v1");
-      if (!raw) {
-        console.warn("No rider profile found — skipping push bind");
-        return;
-      }
+window.OneSignalDeferred = window.OneSignalDeferred || [];
+OneSignalDeferred.push(async function(OneSignal){
+  try {
+    await OneSignal.init({
+      appId: "9b8bcc89-87d3-46e2-b2d0-042d1a267718",
+      safari_web_id: "web.onesignal.auto.0c90051e-4735-447d-b203-75e3767d91b9",
+      notifyButton: { enable:false },
+      serviceWorkerPath: "/onesignalsdkworker.js",
+      path: "/"
+    });
 
-      const profile = JSON.parse(raw);
-      if (!profile.riderId) {
-        console.warn("No riderId — skipping push bind");
-        return;
-      }
+    const raw = localStorage.getItem("bigred_rider_profile_v1");
+    if (!raw) return;
 
-      const permission = OneSignal.Notifications.permission;
-      if (permission !== "granted" && permission !== true) {
-        console.warn("Push permission not granted — cannot bind rider");
-        return;
-      }
+    const profile = JSON.parse(raw);
+    if (!profile.riderId) return;
 
-      await OneSignal.login(profile.riderId);
+    await OneSignal.login(profile.riderId);
 
-      await OneSignal.User.addTags({
-        role_rider: "true",
-        env: "live"
-      });
+    await OneSignal.User.addTags({
+      role_rider: "true",
+      env: "live"
+    });
 
-      console.log("✅ Rider push identity finalized:", profile.riderId);
-
-    } catch (err) {
-      console.error("❌ Rider push identity bind failed:", err);
-    }
-  });
+    console.log("✅ Rider push identity ACTIVE:", profile.riderId);
+  } catch (e) {
+    console.warn("OneSignal rider init failed:", e);
+  }
+});
 </script>
 
 </body>
