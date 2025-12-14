@@ -11,14 +11,14 @@
 <meta name="theme-color" content="#000"/>
 
 <style>
-body {
+body{
   margin:0;
   background:#000;
   color:#fff;
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
   padding-bottom:60px;
 }
-header {
+header{
   background:#000;
   padding:12px;
   border-bottom:2px solid #b30000;
@@ -29,60 +29,19 @@ header {
   top:0;
   z-index:50;
 }
-.logo { height:42px; }
-#menuBtn {
-  font-size:1.6rem;
-  background:none;
-  border:none;
-  color:white;
-}
-#menuPanel {
-  display:none;
-  flex-direction:column;
-  background:#111;
-  border-bottom:2px solid #b30000;
-}
-#menuPanel a {
-  padding:16px;
-  color:#fff;
-  text-decoration:none;
-  border-bottom:1px solid #222;
-}
-h1 {
-  text-align:center;
-  font-size:1.4rem;
-  margin:18px 0;
-}
-.card {
-  background:#111;
-  border:1px solid #333;
-  border-radius:10px;
-  padding:14px;
-  margin:12px;
-}
-.status { font-size:.9rem; color:#ccc; }
-.loc { margin-top:6px; font-size:.95rem; }
-.btn {
-  display:block;
-  width:calc(100% - 24px);
-  margin:12px auto;
-  padding:15px;
-  text-align:center;
-  border-radius:10px;
-  font-weight:700;
-  text-decoration:none;
-}
-.btn-primary { background:#b30000; color:#fff; }
-.btn-ghost { background:#111; border:1px solid #333; color:#fff; }
-#map {
-  width:calc(100% - 24px);
-  height:320px;
-  margin:12px auto;
-  border-radius:12px;
-  border:1px solid #333;
-  display:none;
-}
-#etaBox { display:none; margin:12px; }
+.logo{height:42px}
+#menuBtn{font-size:1.6rem;background:none;border:none;color:white}
+#menuPanel{display:none;flex-direction:column;background:#111;border-bottom:2px solid #b30000}
+#menuPanel a{padding:16px;color:#fff;text-decoration:none;border-bottom:1px solid #222}
+h1{text-align:center;font-size:1.4rem;margin:18px 0}
+.card{background:#111;border:1px solid #333;border-radius:10px;padding:14px;margin:12px}
+.status{font-size:.9rem;color:#ccc}
+.loc{margin-top:6px;font-size:.95rem}
+.btn{display:block;width:calc(100% - 24px);margin:12px auto;padding:15px;text-align:center;border-radius:10px;font-weight:700;text-decoration:none}
+.btn-primary{background:#b30000;color:#fff}
+.btn-ghost{background:#111;border:1px solid #333;color:#fff}
+#map{width:calc(100% - 24px);height:320px;margin:12px auto;border-radius:12px;border:1px solid #333;display:none}
+#etaBox{display:none;margin:12px}
 </style>
 
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=geometry"></script>
@@ -114,44 +73,36 @@ h1 {
 <a href="/rider/rider.html" class="btn btn-ghost">Back to Rider Hub</a>
 
 <script>
-const BOOKINGS_API = "https://bigred-bookings.bigredtransportation.workers.dev";
-const STATUS_API   = "https://bigred-status-updater.bigredtransportation.workers.dev/status";
+const BOOKINGS_API="https://bigred-bookings.bigredtransportation.workers.dev";
+const STATUS_API="https://bigred-status-updater.bigredtransportation.workers.dev/status";
 
-let map, driverMarker, pickupMarker;
-let pickupLatLng = null;
-let pollTimer = null;
-let activeRide = null;
+let map,pickupMarker,driverMarker,pickupLatLng=null,pollTimer=null,activeRide=null;
 
 /* MENU */
-menuBtn.onclick = () => {
-  menuPanel.style.display = menuPanel.style.display==="flex"?"none":"flex";
-};
-logoutBtn.onclick = () => {
-  localStorage.clear();
-  location.href="/index.html";
-};
+menuBtn.onclick=()=>menuPanel.style.display=menuPanel.style.display==="flex"?"none":"flex";
+logoutBtn.onclick=()=>{localStorage.clear();location.href="/index.html"};
 
-/* LOAD RIDES */
+/* LOAD ACTIVE RIDE */
 async function loadRide(){
-  const riderId = JSON.parse(localStorage.getItem("bigred_rider_profile_v1")||"{}").riderId;
-  if(!riderId) return;
+  const profile=JSON.parse(localStorage.getItem("bigred_rider_profile_v1")||"{}");
+  if(!profile.riderId)return;
 
-  const res = await fetch(`${BOOKINGS_API}/api/driver/bookings?scope=active`);
-  const rides = await res.json();
-  activeRide = rides.find(r=>r.rider?.riderId===riderId) || null;
-
+  const res=await fetch(`${BOOKINGS_API}/api/driver/bookings?scope=active`);
+  const rides=await res.json();
+  activeRide=rides.find(r=>r.rider?.riderId===profile.riderId)||null;
   renderRide(activeRide);
 }
 
 function renderRide(ride){
-  const box = document.getElementById("activeContainer");
+  const box=document.getElementById("activeContainer");
+
   if(!ride){
-    box.innerHTML = `<div class="card">You have no active ride.</div>`;
+    box.innerHTML=`<div class="card">You have no active ride.</div>`;
     hideMap();
     return;
   }
 
-  box.innerHTML = `
+  box.innerHTML=`
     <div class="card">
       <div class="status">Status: ${ride.status}</div>
       <div class="loc">Pickup: ${ride.pickup.address}</div>
@@ -160,16 +111,17 @@ function renderRide(ride){
   `;
 
   if(["ENROUTE","ARRIVED","PICKED_UP"].includes(ride.status)){
-    initMap(ride.pickup.address);
-  } else {
+    initMapIfNeeded(ride.pickup.address);
+  }else{
     hideMap();
   }
 }
 
-/* MAP + DRIVER TRACKING */
-function initMap(address){
+function initMapIfNeeded(address){
+  document.getElementById("map").style.display="block";
+
   if(!map){
-    map = new google.maps.Map(document.getElementById("map"),{
+    map=new google.maps.Map(document.getElementById("map"),{
       zoom:13,
       center:{lat:35.4676,lng:-97.5164},
       mapTypeControl:false,
@@ -177,77 +129,77 @@ function initMap(address){
     });
   }
 
-  document.getElementById("map").style.display="block";
-
-  const geocoder = new google.maps.Geocoder();
-  geocoder.geocode({address}, (res,status)=>{
-    if(status==="OK"){
-      pickupLatLng = res[0].geometry.location;
-      pickupMarker?.setMap(null);
-      pickupMarker = new google.maps.Marker({
-        map,
-        position: pickupLatLng,
-        icon:"https://maps.google.com/mapfiles/ms/icons/green-dot.png"
-      });
-      map.setCenter(pickupLatLng);
-      startPolling();
-    }
-  });
-}
-
-function hideMap(){
-  document.getElementById("map").style.display="none";
-  document.getElementById("etaBox").style.display="none";
-  if(pollTimer){ clearInterval(pollTimer); pollTimer=null; }
+  if(!pickupLatLng){
+    new google.maps.Geocoder().geocode({address},(res,status)=>{
+      if(status==="OK"){
+        pickupLatLng=res[0].geometry.location;
+        pickupMarker?.setMap(null);
+        pickupMarker=new google.maps.Marker({
+          map,
+          position:pickupLatLng,
+          icon:"https://maps.google.com/mapfiles/ms/icons/green-dot.png"
+        });
+        startPolling();
+      }
+    });
+  }else{
+    startPolling();
+  }
 }
 
 async function pollDriver(){
-  if(!pickupLatLng) return;
-  const res = await fetch(STATUS_API);
-  const data = await res.json();
-  if(!data.location) return;
+  if(!pickupLatLng)return;
 
-  const pos = new google.maps.LatLng(data.location.lat,data.location.lng);
+  const res=await fetch(STATUS_API);
+  const data=await res.json();
+  if(!data.location)return;
+
+  const driverPos=new google.maps.LatLng(data.location.lat,data.location.lng);
 
   if(!driverMarker){
-    driverMarker = new google.maps.Marker({
+    driverMarker=new google.maps.Marker({
       map,
-      position: pos,
+      position:driverPos,
       icon:"https://maps.google.com/mapfiles/ms/icons/red-dot.png"
     });
-  } else {
-    driverMarker.setPosition(pos);
+  }else{
+    driverMarker.setPosition(driverPos);
   }
 
-  const distance = google.maps.geometry.spherical.computeDistanceBetween(pos,pickupLatLng)/1609.34;
-  const eta = Math.round((distance/30)*60);
+  const distance=google.maps.geometry.spherical
+    .computeDistanceBetween(driverPos,pickupLatLng)/1609.34;
+  const eta=Math.max(1,Math.round(distance/30*60));
 
   etaBox.style.display="block";
-  etaBox.innerHTML = `
+  etaBox.innerHTML=`
     <div class="status">Driver ≈ ${eta} min away</div>
     <div class="status">Distance ≈ ${distance.toFixed(1)} mi</div>
   `;
 
-  const bounds = new google.maps.LatLngBounds();
-  bounds.extend(pos);
+  const bounds=new google.maps.LatLngBounds();
+  bounds.extend(driverPos);
   bounds.extend(pickupLatLng);
   map.fitBounds(bounds);
 }
 
 function startPolling(){
-  if(pollTimer) clearInterval(pollTimer);
+  if(pollTimer)clearInterval(pollTimer);
   pollDriver();
-  pollTimer = setInterval(pollDriver,15000);
+  pollTimer=setInterval(pollDriver,15000);
 }
 
-/* PUSH IDENTITY RE-BIND */
-window.OneSignalDeferred = window.OneSignalDeferred || [];
+function hideMap(){
+  document.getElementById("map").style.display="none";
+  document.getElementById("etaBox").style.display="none";
+  if(pollTimer){clearInterval(pollTimer);pollTimer=null}
+}
+
+/* PUSH IDENTITY */
+window.OneSignalDeferred=window.OneSignalDeferred||[];
 OneSignalDeferred.push(async OneSignal=>{
   try{
-    const raw = localStorage.getItem("bigred_rider_profile_v1");
-    if(!raw) return;
-    const p = JSON.parse(raw);
-    if(p.riderId) await OneSignal.login(p.riderId);
+    const p=JSON.parse(localStorage.getItem("bigred_rider_profile_v1")||"{}");
+    if(p.riderId)await OneSignal.login(p.riderId);
   }catch{}
 });
 
