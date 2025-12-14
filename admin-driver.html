@@ -800,23 +800,23 @@ function renderColumn(id,arr){
     box.appendChild(div);
   });
 }
-
-/* DISPATCH EVENTS */
+/* DISPATCH EVENTS — FIXED */
 document.body.addEventListener("change", async (e) => {
   if (!e.target.classList.contains("status-dropdown")) return;
 
   const select = e.target.closest("select");
   if (!select) return;
 
-  const id = select.dataset.id;
-  const newState = select.value;
+  // 🔒 Capture synchronously BEFORE await / re-render
+  const rideId = select.dataset.id;
   const riderId = select.dataset.riderId || null;
+  const newState = select.value;
 
-  log("Resolved rideId → " + id);
+  log("Resolved rideId → " + rideId);
   log("Resolved riderId → " + riderId);
 
   try {
-    const r = await fetch(`${BOOKINGS_API}/api/driver/bookings/${id}`, {
+    const r = await fetch(`${BOOKINGS_API}/api/driver/bookings/${rideId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status: newState })
@@ -824,15 +824,18 @@ document.body.addEventListener("change", async (e) => {
 
     showToast(r.ok ? `Status → ${newState}` : "Update failed");
 
+    // 🔔 Push BEFORE fetchBookings() re-renders DOM
     if (r.ok && riderId) {
       sendRiderStatusPush({
         riderId,
-        rideId: id,
+        rideId,
         status: newState
       });
     }
 
+    // 🔁 Re-render AFTER push
     fetchBookings();
+
   } catch (err) {
     showToast("Failed");
     log("Status update error: " + err.message);
