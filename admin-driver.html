@@ -805,16 +805,17 @@ function renderColumn(id,arr){
 document.body.addEventListener("change", async (e) => {
   if (!e.target.classList.contains("status-dropdown")) return;
 
-  const id = e.target.dataset.id;
-  const newState = e.target.value;
+  const select = e.target.closest("select");
+  if (!select) return;
+
+  const id = select.dataset.id;
+  const newState = select.value;
+  const riderId = select.dataset.riderId || null;
+
+  log("Resolved rideId → " + id);
+  log("Resolved riderId → " + riderId);
 
   try {
-    // Fetch booking first to get riderId
-    const select = e.target.closest("select");
-    const riderId = select?.dataset?.riderId || null;
-    log("Resolved riderId (DOM fixed) → " + riderId);
-
-    // Update ride status
     const r = await fetch(`${BOOKINGS_API}/api/driver/bookings/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -823,8 +824,7 @@ document.body.addEventListener("change", async (e) => {
 
     showToast(r.ok ? `Status → ${newState}` : "Update failed");
 
-    // 🔔 Rider status push
-    if (r.ok) {
+    if (r.ok && riderId) {
       sendRiderStatusPush({
         riderId,
         rideId: id,
