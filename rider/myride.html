@@ -5,22 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>My Ride – Big Red Connect</title>
 
-  <!-- PWA + Icons -->
+  <!-- PWA / Icons -->
   <link rel="apple-touch-icon" href="/icon.PNG">
   <link rel="icon" type="image/png" sizes="192x192" href="/icon.PNG">
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#000"/>
+
+  <!-- Google Maps -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=geometry"></script>
 
   <style>
     body {
       margin:0;
       background:#000;
       color:#fff;
-      font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      padding-bottom:50px;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+      padding-bottom:60px;
     }
 
-    /* HEADER + MENU */
     header {
       background:#000;
       padding:12px;
@@ -32,52 +34,41 @@
       top:0;
       z-index:50;
     }
+
     .header-left {
       display:flex;
       align-items:center;
       gap:10px;
     }
+
     .logo { height:42px; }
+
     #menuBtn {
       font-size:1.6rem;
       background:none;
       border:none;
-      color:white;
+      color:#fff;
       cursor:pointer;
     }
+
     #menuPanel {
       display:none;
       flex-direction:column;
       background:#111;
       border-bottom:2px solid #b30000;
-      animation:drop .15s ease-out;
     }
+
     #menuPanel a {
       padding:16px;
       color:#fff;
       text-decoration:none;
       border-bottom:1px solid #222;
-      font-size:1rem;
-    }
-    #menuPanel a:hover { background:#222; }
-
-    @keyframes drop {
-      from { opacity:0; transform:translateY(-10px); }
-      to   { opacity:1; transform:translateY(0); }
     }
 
     h1 {
       text-align:center;
-      font-size:1.4rem;
       margin:18px 0;
-      font-weight:700;
-    }
-
-    .section-title {
-      font-size:1rem;
-      font-weight:700;
-      margin:10px 0 6px;
-      padding:0 12px;
+      font-size:1.4rem;
     }
 
     .card {
@@ -89,39 +80,40 @@
     }
 
     .status {
-      font-size:.88rem;
-      margin-bottom:4px;
-      color:#ccc;
-    }
-
-    .loc-line {
-      margin:6px 0;
       font-size:.9rem;
+      color:#ccc;
+      margin-bottom:6px;
     }
 
-    .vehicle-thumb {
-      width:80px;
-      border-radius:10px;
-      margin-top:10px;
-      border:1px solid #333;
+    .loc {
+      font-size:.95rem;
+      margin:4px 0;
     }
 
-    .btn-primary, .btn-ghost {
+    .btn {
       display:block;
       width:calc(100% - 24px);
-      margin:12px auto;
+      margin:10px auto;
       padding:15px;
-      text-align:center;
       border-radius:10px;
-      text-decoration:none;
       font-weight:700;
-      font-size:1.05rem;
+      text-align:center;
+      text-decoration:none;
     }
+
     .btn-primary { background:#b30000; color:#fff; }
-    .btn-ghost {
+    .btn-secondary { background:#111; border:1px solid #333; color:#fff; }
+    .btn-danger { background:#400; border:1px solid #b30000; color:#fff; }
+
+    .locked-msg {
       background:#111;
-      color:#fff;
-      border:1px solid #333;
+      border:1px solid #555;
+      border-radius:10px;
+      padding:14px;
+      margin:0 12px 14px;
+      font-size:.9rem;
+      color:#aaa;
+      text-align:center;
     }
 
     #map {
@@ -133,47 +125,46 @@
       display:none;
     }
 
-    #etaBox {
+    /* MODAL */
+    #confirmModal {
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.75);
       display:none;
-      margin:-4px 12px 14px;
+      align-items:center;
+      justify-content:center;
+      z-index:999;
     }
 
-    #toast {
-      position:fixed;
-      bottom:22px;
-      left:50%;
-      transform:translateX(-50%);
+    .modal-box {
       background:#111;
       border:1px solid #b30000;
-      padding:10px 18px;
-      border-radius:999px;
-      opacity:0;
-      transition:.25s;
-      z-index:999;
-      pointer-events:none;
+      border-radius:12px;
+      padding:20px;
+      max-width:320px;
+      text-align:center;
     }
-    #toast.show { opacity:1; }
 
-    .mini {
-      font-size:.8rem;
-      color:#aaa;
-      margin-top:6px;
+    .modal-box p { margin-bottom:16px; }
+
+    .modal-actions {
+      display:flex;
+      gap:10px;
+      justify-content:center;
     }
   </style>
 </head>
 
 <body>
 
-<!-- HEADER -->
 <header>
   <div class="header-left">
     <a href="/index.html"><img src="/icon.PNG" class="logo"></a>
-    <div style="font-weight:700;font-size:1rem;">My Ride</div>
+    <div style="font-weight:700;">My Ride</div>
   </div>
   <button id="menuBtn">☰</button>
 </header>
 
-<!-- MENU -->
 <nav id="menuPanel">
   <a href="/rider/rider.html">Rider Hub</a>
   <a href="/rider/ride-request.html">Request a Ride</a>
@@ -184,601 +175,113 @@
 
 <h1>Your Ride</h1>
 
-<!-- ACTIVE -->
-<div id="activeContainer"></div>
-
-<!-- MAP -->
+<div id="activeRide"></div>
 <div id="map"></div>
 
-<!-- ETA CARD -->
-<div id="etaBox" class="card"></div>
+<a href="/rider/ride-request.html" class="btn btn-primary">Request Another Ride</a>
+<a href="/rider/rider.html" class="btn btn-secondary">Back to Rider Hub</a>
 
-<!-- PAST RIDES -->
-<h2 class="section-title">Past Rides</h2>
-<div id="pastContainer"></div>
-
-<a href="/rider/ride-request.html" class="btn-primary">Request Another Ride</a>
-<a href="/rider/rider.html" class="btn-ghost">Back to Rider Hub</a>
-
-<div id="toast"></div>
+<!-- CANCEL CONFIRMATION MODAL -->
+<div id="confirmModal">
+  <div class="modal-box">
+    <p>Are you sure you want to cancel this ride?</p>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">No</button>
+      <button class="btn btn-danger" onclick="confirmCancel()">Yes, Cancel</button>
+    </div>
+  </div>
+</div>
 
 <script>
-/* =========================================================
-   CONFIG
-   ========================================================= */
-const API_BOOKINGS = "https://bigred-bookings.bigredtransportation.workers.dev";
-
-/* Driver live location sources (we try both) */
-const DRIVER_STATUS_API = "https://bigred-status-updater.bigredtransportation.workers.dev/status";
-/* If you still use update-location worker somewhere, keep this as fallback */
-const DRIVER_LOCATION_READER = "https://update-location.bigredtransportation.workers.dev";
-
-/* Poll rate */
-const LIVE_POLL_MS = 15000;
-
-/* Active statuses (rider can still see map) */
-const ACTIVE_STATUSES = ["REQUESTED","ACCEPTED","ENROUTE","ARRIVED","PICKED_UP"];
-
-/* =========================================================
-   UI helpers
-   ========================================================= */
-document.getElementById("menuBtn").addEventListener("click", ()=>{
-  const p = document.getElementById("menuPanel");
-  p.style.display = (p.style.display==="flex"?"none":"flex");
-});
-document.getElementById("logoutBtn").addEventListener("click", ()=>{
-  localStorage.clear();
-  window.location.href="/index.html";
-});
-
-function showToast(msg){
-  const t = document.getElementById("toast");
-  t.textContent = msg;
-  t.classList.add("show");
-  setTimeout(()=> t.classList.remove("show"), 1900);
-}
-
-/* =========================================================
-   Rider identity (existing behavior)
-   ========================================================= */
-function ensureRiderId() {
-  let rid = localStorage.getItem("riderId");
-  if (!rid) {
-    try {
-      if (window.crypto && crypto.getRandomValues) {
-        const buf = new Uint8Array(8);
-        crypto.getRandomValues(buf);
-        rid = "r_" + Array.from(buf).map(b => b.toString(16).padStart(2,"0")).join("");
-      } else {
-        rid = "r_" + Date.now().toString(36);
-      }
-    } catch(e) {
-      rid = "r_" + Date.now().toString(36);
-    }
-    localStorage.setItem("riderId", rid);
-  }
-  return rid;
-}
-
-/* =========================================================
-   MAP state
-   ========================================================= */
-let map = null;
-let geocoder = null;
-let directionsService = null;
-
-let pickupMarker = null;
-let dropoffMarker = null;
-let driverMarker = null;
-
-let tripPolyline = null;    // pickup -> dropoff
-let driverPolyline = null;  // driver -> target (pickup or dropoff)
+const BOOKINGS_API = "https://bigred-bookings.bigredtransportation.workers.dev";
+const STATUS_API   = "https://bigred-status-updater.bigredtransportation.workers.dev/status";
 
 let activeRide = null;
-let pickupLL = null;   // google.maps.LatLng
-let dropoffLL = null;  // google.maps.LatLng
 
-let liveTimer = null;
-
-/* Google loads this after script callback */
-window.initMyRideMap = function() {
-  try {
-    geocoder = new google.maps.Geocoder();
-    directionsService = new google.maps.DirectionsService();
-
-    const mapDiv = document.getElementById("map");
-    map = new google.maps.Map(mapDiv, {
-      center: {lat:35.4676, lng:-97.5164}, // OKC fallback
-      zoom: 12,
-      mapTypeControl:false,
-      streetViewControl:false,
-      fullscreenControl:false
-    });
-
-    // If we already found an active ride before Maps finished loading, render it now.
-    if (activeRide) {
-      renderMapForActiveRide(activeRide).catch(()=>{});
-    }
-  } catch (e) {
-    console.warn("Map init failed:", e);
-  }
+/* MENU */
+menuBtn.onclick = () => {
+  menuPanel.style.display = menuPanel.style.display === "flex" ? "none" : "flex";
 };
 
-/* =========================================================
-   Load rides
-   ========================================================= */
-async function loadRides(){
-  const riderId = ensureRiderId();
-  const riderPhone = (localStorage.getItem("riderPhone") || "").replace(/\D/g,"");
+logoutBtn.onclick = () => {
+  localStorage.clear();
+  location.href="/index.html";
+};
 
-  let all = [];
-  try {
-    // NOTE: This is currently the easiest read endpoint you already have.
-    const res = await fetch(`${API_BOOKINGS}/api/driver/bookings?scope=all`, { cache:"no-store" });
-    if (!res.ok) {
-      showToast("Error loading rides");
-      return;
-    }
-    all = await res.json();
-  } catch (e) {
-    console.warn(e);
-    showToast("Network error loading rides");
-    return;
-  }
-
-  const myRides = all.filter(r => {
-    const rId = r.rider?.riderId || null;
-    const rPhone = (r.rider?.phone || "").replace(/\D/g,"");
-    if (rId && rId === riderId) return true;
-    if (riderPhone && rPhone && rPhone === riderPhone) return true;
-    return false;
-  });
-
-  // Active ride = newest active status
-  const active = myRides
-    .filter(r => ACTIVE_STATUSES.includes(String(r.status||"").toUpperCase()))
-    .sort((a,b)=> (b.createdAt||"").localeCompare(a.createdAt||""))[0] || null;
-
-  const done = myRides
-    .filter(r => ["COMPLETED","CANCELLED","DECLINED"].includes(String(r.status||"").toUpperCase()))
-    .sort((a,b)=> (b.createdAt||"").localeCompare(a.createdAt||""));
-
-  renderActive(active);
-  renderPast(done);
-
-  // If map already loaded, render route/markers now
-  if (active && map) {
-    renderMapForActiveRide(active).catch(()=>{});
-  }
+/* LOCK RULE */
+function canModifyRide(status){
+  return !["PICKED_UP","COMPLETED","CANCELLED"].includes(status);
 }
 
-function renderActive(ride){
-  const box = document.getElementById("activeContainer");
+/* LOAD RIDE */
+async function loadRide(){
+  const riderId = localStorage.getItem("riderId");
+  if(!riderId) return;
 
-  stopLiveLoop();
+  const res = await fetch(`${BOOKINGS_API}/api/driver/bookings?scope=all`);
+  const all = await res.json();
 
-  if (!ride){
+  activeRide = all.find(r =>
+    r.rider?.riderId === riderId &&
+    ["REQUESTED","ACCEPTED","ENROUTE","ARRIVED","PICKED_UP"].includes(r.status)
+  );
+
+  renderRide();
+}
+
+function renderRide(){
+  const box = document.getElementById("activeRide");
+  if(!activeRide){
     box.innerHTML = `<div class="card">You have no active rides.</div>`;
-    document.getElementById("map").style.display="none";
-    document.getElementById("etaBox").style.display="none";
-    activeRide = null;
     return;
   }
 
-  activeRide = ride;
-
-  const status = String(ride.status || "").toUpperCase();
+  const editable = canModifyRide(activeRide.status);
 
   box.innerHTML = `
     <div class="card">
-      <div class="status">Status: <strong>${status}</strong></div>
-      <div class="loc-line"><strong>Pickup:</strong> ${ride.pickup?.address || "—"}</div>
-      <div class="loc-line"><strong>Dropoff:</strong> ${ride.dropoff?.address || "—"}</div>
-      <div class="mini">Ride ID: ${ride.id || "—"}</div>
-
-      ${ride.vehicle?.image ? `
-         <img class="vehicle-thumb" src="${ride.vehicle.image}" alt="${ride.vehicle.label || "Vehicle"}"/>
-      ` : ""}
+      <div class="status">Status: ${activeRide.status}</div>
+      <div class="loc">Pickup: ${activeRide.pickup.address}</div>
+      <div class="loc">Dropoff: ${activeRide.dropoff.address}</div>
     </div>
+
+    ${
+      editable ? `
+        <a class="btn btn-secondary" href="/rider/ride-request.html?edit=${activeRide.id}">
+          ✏️ Edit Ride
+        </a>
+        <button class="btn btn-danger" onclick="openCancelModal()">
+          ❌ Cancel Ride
+        </button>
+      ` : `
+        <div class="locked-msg">
+          This ride is already in progress and can no longer be edited or canceled.
+        </div>
+      `
+    }
   `;
-
-  // show map placeholder now (actual markers/routes after map + coords)
-  document.getElementById("map").style.display = "block";
-  document.getElementById("etaBox").style.display = "block";
-  document.getElementById("etaBox").innerHTML = `<div class="status">Loading map details…</div>`;
-
-  // If map is ready, render now
-  if (map) {
-    renderMapForActiveRide(ride).catch(()=>{});
-  }
 }
 
-function renderPast(list){
-  const box = document.getElementById("pastContainer");
-  box.innerHTML = "";
+/* CANCEL FLOW */
+function openCancelModal(){
+  confirmModal.style.display="flex";
+}
 
-  if(!list.length){
-    box.innerHTML = `<div class="card">No past rides yet.</div>`;
-    return;
-  }
+function closeModal(){
+  confirmModal.style.display="none";
+}
 
-  list.forEach(r=>{
-    const s = String(r.status||"").toUpperCase();
-    box.innerHTML += `
-      <div class="card">
-        <div class="status">${s}</div>
-        <div class="loc-line"><strong>From:</strong> ${r.pickup?.address || "—"}</div>
-        <div class="loc-line"><strong>To:</strong> ${r.dropoff?.address || "—"}</div>
-        <div class="mini">Ride ID: ${r.id || "—"}</div>
-      </div>
-    `;
+async function confirmCancel(){
+  closeModal();
+  await fetch(`${BOOKINGS_API}/api/rider/cancel`,{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({ bookingId: activeRide.id })
   });
+  location.reload();
 }
 
-/* =========================================================
-   Coordinate extraction + caching (critical for iOS PWA)
-   ========================================================= */
-function getCachedLatLng(ride, which) {
-  // 1) direct fields (if you ever start saving them)
-  const obj = (which === "pickup") ? (ride.pickup || {}) : (ride.dropoff || {});
-  if (typeof obj.lat === "number" && typeof obj.lng === "number") {
-    return { lat: obj.lat, lng: obj.lng };
-  }
-
-  // 2) cached in metadata (this page will write these)
-  const m = ride.metadata || {};
-  const latKey = which === "pickup" ? "pickupLat" : "dropoffLat";
-  const lngKey = which === "pickup" ? "pickupLng" : "dropoffLng";
-  const lat = Number(m[latKey]);
-  const lng = Number(m[lngKey]);
-  if (!isNaN(lat) && !isNaN(lng) && Math.abs(lat) > 0.1 && Math.abs(lng) > 0.1) {
-    return { lat, lng };
-  }
-
-  return null;
-}
-
-function geocodeAddressOnce(address) {
-  return new Promise((resolve, reject) => {
-    if (!geocoder) return reject("no_geocoder");
-    if (!address) return reject("no_address");
-
-    geocoder.geocode({ address }, (results, status) => {
-      if (status === "OK" && results && results[0] && results[0].geometry && results[0].geometry.location) {
-        const loc = results[0].geometry.location;
-        resolve({ lat: loc.lat(), lng: loc.lng() });
-      } else {
-        reject(status || "geocode_failed");
-      }
-    });
-  });
-}
-
-async function cacheCoordsToBooking(rideId, patchMeta) {
-  // Your bookings worker merges metadata for PUT /api/driver/bookings/:id (no auth check currently).
-  try {
-    await fetch(`${API_BOOKINGS}/api/driver/bookings/${encodeURIComponent(rideId)}`, {
-      method: "PUT",
-      headers: { "Content-Type":"application/json" },
-      body: JSON.stringify({ metadata: patchMeta })
-    });
-  } catch (e) {
-    // caching failure is non-fatal
-    console.warn("cacheCoordsToBooking failed:", e);
-  }
-}
-
-/* Ensure we have pickupLL + dropoffLL as LatLng */
-async function ensureRideLatLngs(ride) {
-  // try cached/known first
-  const p = getCachedLatLng(ride, "pickup");
-  const d = getCachedLatLng(ride, "dropoff");
-
-  if (p && d) {
-    pickupLL = new google.maps.LatLng(p.lat, p.lng);
-    dropoffLL = new google.maps.LatLng(d.lat, d.lng);
-    return true;
-  }
-
-  // geocode missing pieces (one-time), then cache into metadata so we never rely on geocode again
-  const pickupAddr = ride.pickup?.address || "";
-  const dropoffAddr = ride.dropoff?.address || "";
-
-  let p2 = p;
-  let d2 = d;
-
-  try {
-    if (!p2) p2 = await geocodeAddressOnce(pickupAddr);
-  } catch (e) {
-    console.warn("pickup geocode failed:", e);
-  }
-
-  try {
-    if (!d2) d2 = await geocodeAddressOnce(dropoffAddr);
-  } catch (e) {
-    console.warn("dropoff geocode failed:", e);
-  }
-
-  if (p2 && d2) {
-    pickupLL = new google.maps.LatLng(p2.lat, p2.lng);
-    dropoffLL = new google.maps.LatLng(d2.lat, d2.lng);
-
-    // cache into booking metadata for future iOS-stable rendering
-    await cacheCoordsToBooking(ride.id, {
-      pickupLat: p2.lat,
-      pickupLng: p2.lng,
-      dropoffLat: d2.lat,
-      dropoffLng: d2.lng
-    });
-
-    return true;
-  }
-
-  return false;
-}
-
-/* =========================================================
-   Drawing helpers
-   ========================================================= */
-function clearPolylines() {
-  if (tripPolyline) { tripPolyline.setMap(null); tripPolyline = null; }
-  if (driverPolyline) { driverPolyline.setMap(null); driverPolyline = null; }
-}
-
-function clearMarkers() {
-  if (pickupMarker) { pickupMarker.setMap(null); pickupMarker = null; }
-  if (dropoffMarker) { dropoffMarker.setMap(null); dropoffMarker = null; }
-  if (driverMarker) { driverMarker.setMap(null); driverMarker = null; }
-}
-
-function fitToPoints(points) {
-  if (!map || !points || !points.length) return;
-  const b = new google.maps.LatLngBounds();
-  points.forEach(p => b.extend(p));
-  map.fitBounds(b);
-}
-
-function drawPickupDropoffMarkers() {
-  if (!map || !pickupLL || !dropoffLL) return;
-
-  if (pickupMarker) pickupMarker.setMap(null);
-  if (dropoffMarker) dropoffMarker.setMap(null);
-
-  pickupMarker = new google.maps.Marker({
-    map,
-    position: pickupLL,
-    title: "Pickup",
-    icon: { url:"https://maps.google.com/mapfiles/ms/icons/green-dot.png" }
-  });
-
-  dropoffMarker = new google.maps.Marker({
-    map,
-    position: dropoffLL,
-    title: "Dropoff",
-    icon: { url:"https://maps.google.com/mapfiles/ms/icons/blue-dot.png" }
-  });
-}
-
-async function routeBetween(aLL, bLL) {
-  return new Promise((resolve, reject) => {
-    if (!directionsService) return reject("no_directions");
-    directionsService.route(
-      {
-        origin: aLL,
-        destination: bLL,
-        travelMode: "DRIVING"
-      },
-      (result, status) => {
-        if (status === "OK" && result?.routes?.[0]) resolve(result);
-        else reject(status || "route_failed");
-      }
-    );
-  });
-}
-
-function polylineFromDirections(result, opts = {}) {
-  const path = [];
-  const legs = result.routes[0].legs || [];
-  for (const leg of legs) {
-    const steps = leg.steps || [];
-    for (const step of steps) {
-      const p = step.path || [];
-      p.forEach(pt => path.push(pt));
-    }
-  }
-  return new google.maps.Polyline({
-    path,
-    geodesic: true,
-    strokeOpacity: opts.strokeOpacity ?? 0.9,
-    strokeWeight: opts.strokeWeight ?? 5,
-    // No explicit strokeColor to honor your “don’t change styling” preference too aggressively,
-    // but Google defaults can be faint. We *do* set color subtly for visibility.
-    strokeColor: opts.strokeColor ?? "#2b7cff"
-  });
-}
-
-/* =========================================================
-   Live driver location (try both endpoints)
-   ========================================================= */
-async function getDriverLatLng() {
-  // 1) Status worker style: { location: { lat, lng } }
-  try {
-    const r1 = await fetch(DRIVER_STATUS_API + "?t=" + Date.now(), { cache:"no-store" });
-    if (r1.ok) {
-      const j1 = await r1.json();
-      const lat = j1?.location?.lat;
-      const lng = j1?.location?.lng;
-      if (typeof lat === "number" && typeof lng === "number") {
-        return new google.maps.LatLng(lat, lng);
-      }
-    }
-  } catch {}
-
-  // 2) update-location style: { latitude, longitude } (strings)
-  try {
-    const r2 = await fetch(DRIVER_LOCATION_READER + "?nocache=" + Date.now(), { cache:"no-store" });
-    if (r2.ok) {
-      const j2 = await r2.json();
-      const lat = parseFloat(j2.latitude);
-      const lng = parseFloat(j2.longitude);
-      if (!isNaN(lat) && !isNaN(lng)) {
-        return new google.maps.LatLng(lat, lng);
-      }
-    }
-  } catch {}
-
-  return null;
-}
-
-/* =========================================================
-   Map rendering for active ride
-   ========================================================= */
-async function renderMapForActiveRide(ride) {
-  if (!map) return;
-
-  const etaBox = document.getElementById("etaBox");
-  etaBox.style.display = "block";
-  etaBox.innerHTML = `<div class="status">Loading map details…</div>`;
-
-  // 1) Ensure we have stable pickup/dropoff coordinates
-  const ok = await ensureRideLatLngs(ride);
-  if (!ok) {
-    etaBox.innerHTML = `
-      <div class="status">Pickup/Dropoff map unavailable</div>
-      <div class="mini">Could not resolve ride locations yet.</div>
-    `;
-    return;
-  }
-
-  // 2) Always show pickup + dropoff markers
-  drawPickupDropoffMarkers();
-
-  // 3) Always draw the trip route (pickup -> dropoff)
-  clearPolylines();
-  try {
-    const tripRoute = await routeBetween(pickupLL, dropoffLL);
-    tripPolyline = polylineFromDirections(tripRoute, { strokeColor:"#2b7cff", strokeWeight:5, strokeOpacity:0.9 });
-    tripPolyline.setMap(map);
-  } catch (e) {
-    console.warn("Trip route failed:", e);
-  }
-
-  // 4) Start live driver loop (for ENROUTE/ARRIVED/PICKED_UP, but we’ll also show if available)
-  startLiveLoop();
-  await updateDriverLayerNow(); // immediate paint
-
-  // Fit bounds at least to pickup + dropoff initially
-  fitToPoints([pickupLL, dropoffLL]);
-}
-
-async function updateDriverLayerNow() {
-  if (!activeRide || !map || !pickupLL || !dropoffLL) return;
-
-  const status = String(activeRide.status || "").toUpperCase();
-
-  const etaBox = document.getElementById("etaBox");
-  etaBox.style.display = "block";
-
-  // Pull driver location
-  const driverLL = await getDriverLatLng();
-
-  // If no driver location, show helpful message but keep pickup/dropoff + trip route visible
-  if (!driverLL) {
-    if (driverMarker) { driverMarker.setMap(null); driverMarker = null; }
-    if (driverPolyline) { driverPolyline.setMap(null); driverPolyline = null; }
-
-    etaBox.innerHTML = `
-      <div class="status"><strong>Live Driver:</strong> unavailable right now</div>
-      <div class="mini">
-        Pickup/Dropoff and trip route should still display.
-        If this persists while you're <strong>ENROUTE</strong>, it usually means the driver device isn’t publishing live location.
-      </div>
-    `;
-    return;
-  }
-
-  // Draw driver marker
-  if (!driverMarker) {
-    driverMarker = new google.maps.Marker({
-      map,
-      position: driverLL,
-      title: "Big Red",
-      icon: { url:"https://maps.google.com/mapfiles/ms/icons/red-dot.png" }
-    });
-  } else {
-    driverMarker.setPosition(driverLL);
-  }
-
-  // Determine target for driver ETA:
-  // - If PICKED_UP (or later), ETA to dropoff
-  // - Else ETA to pickup
-  const targetLL = (status === "PICKED_UP" || status === "COMPLETED") ? dropoffLL : pickupLL;
-
-  // Draw driver -> target route and compute ETA
-  if (driverPolyline) { driverPolyline.setMap(null); driverPolyline = null; }
-
-  let mins = null;
-  let miles = null;
-
-  try {
-    const driverRoute = await routeBetween(driverLL, targetLL);
-    const leg = driverRoute.routes[0].legs[0];
-    miles = (leg.distance.value / 1609.34);
-    mins  = Math.round(leg.duration.value / 60);
-
-    driverPolyline = polylineFromDirections(driverRoute, { strokeColor:"#ff3b30", strokeWeight:6, strokeOpacity:0.85 });
-    driverPolyline.setMap(map);
-  } catch (e) {
-    console.warn("Driver route failed:", e);
-  }
-
-  const nowStr = new Date().toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"});
-  const phaseLabel =
-    (status === "PICKED_UP") ? "to dropoff" :
-    (status === "ARRIVED") ? "at pickup" :
-    (status === "ENROUTE") ? "to pickup" :
-    "to pickup";
-
-  etaBox.innerHTML = `
-    <div class="status"><strong>Live Driver:</strong> visible</div>
-    <div class="status"><strong>Status:</strong> ${status}</div>
-    <div class="status">
-      ${mins !== null ? `<strong>ETA ${phaseLabel}:</strong> ~${mins} min` : `<strong>ETA:</strong> calculating…`}
-    </div>
-    <div class="status">
-      ${miles !== null ? `<strong>Distance:</strong> ~${miles.toFixed(1)} mi` : ``}
-    </div>
-    <div class="mini">Updated ${nowStr}</div>
-  `;
-
-  // Fit map to driver + pickup + dropoff when driver visible
-  fitToPoints([driverLL, pickupLL, dropoffLL]);
-}
-
-function startLiveLoop() {
-  stopLiveLoop();
-  liveTimer = setInterval(updateDriverLayerNow, LIVE_POLL_MS);
-}
-
-function stopLiveLoop() {
-  if (liveTimer) {
-    clearInterval(liveTimer);
-    liveTimer = null;
-  }
-}
-
-/* =========================================================
-   Kickoff
-   ========================================================= */
-loadRides();
-
-/* Refresh rides every 20s so status changes show up even without push */
-setInterval(loadRides, 20000);
-</script>
-
-<!-- Google Maps API (CALLBACK) -->
-<script async defer
-  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places,geometry&callback=initMyRideMap">
+loadRide();
 </script>
 
 </body>
