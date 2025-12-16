@@ -1,288 +1,195 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>My Ride – Big Red Connect</title>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>My Ride – Big Red Connect</title>
 
-  <!-- PWA / Icons -->
-  <link rel="apple-touch-icon" href="/icon.PNG">
-  <link rel="icon" type="image/png" sizes="192x192" href="/icon.PNG">
-  <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#000"/>
+<link rel="apple-touch-icon" href="/icon.PNG">
+<link rel="icon" type="image/png" sizes="192x192" href="/icon.PNG">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#000"/>
 
-  <!-- Google Maps -->
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=geometry"></script>
+<style>
+body{margin:0;background:#000;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding-bottom:60px}
+header{background:#000;padding:12px;border-bottom:2px solid #b30000;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:50}
+.logo{height:42px}
+#menuBtn{font-size:1.6rem;background:none;border:none;color:white}
+#menuPanel{display:none;flex-direction:column;background:#111;border-bottom:2px solid #b30000}
+#menuPanel a{padding:16px;color:#fff;text-decoration:none;border-bottom:1px solid #222}
+h1{text-align:center;margin:16px 0;font-size:1.4rem}
+.card{background:#111;border:1px solid #333;border-radius:12px;padding:14px;margin:12px}
+.status{color:#ccc;font-size:.9rem;margin-bottom:6px}
+.btn{display:block;margin:10px auto;padding:14px;border-radius:10px;font-weight:700;text-align:center;text-decoration:none}
+.btn-primary{background:#b30000;color:#fff}
+.btn-secondary{background:#111;border:1px solid #333;color:#fff}
+.btn-disabled{opacity:.45;pointer-events:none}
+#map{height:320px;margin:12px;border-radius:12px;border:1px solid #333;display:none}
+.locked{color:#ffcc66;font-size:.85rem;text-align:center;margin-top:6px}
+</style>
 
-  <style>
-    body {
-      margin:0;
-      background:#000;
-      color:#fff;
-      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-      padding-bottom:60px;
-    }
-
-    header {
-      background:#000;
-      padding:12px;
-      border-bottom:2px solid #b30000;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      position:sticky;
-      top:0;
-      z-index:50;
-    }
-
-    .header-left {
-      display:flex;
-      align-items:center;
-      gap:10px;
-    }
-
-    .logo { height:42px; }
-
-    #menuBtn {
-      font-size:1.6rem;
-      background:none;
-      border:none;
-      color:#fff;
-      cursor:pointer;
-    }
-
-    #menuPanel {
-      display:none;
-      flex-direction:column;
-      background:#111;
-      border-bottom:2px solid #b30000;
-    }
-
-    #menuPanel a {
-      padding:16px;
-      color:#fff;
-      text-decoration:none;
-      border-bottom:1px solid #222;
-    }
-
-    h1 {
-      text-align:center;
-      margin:18px 0;
-      font-size:1.4rem;
-    }
-
-    .card {
-      background:#111;
-      border:1px solid #333;
-      border-radius:10px;
-      padding:14px;
-      margin:0 12px 14px;
-    }
-
-    .status {
-      font-size:.9rem;
-      color:#ccc;
-      margin-bottom:6px;
-    }
-
-    .loc {
-      font-size:.95rem;
-      margin:4px 0;
-    }
-
-    .btn {
-      display:block;
-      width:calc(100% - 24px);
-      margin:10px auto;
-      padding:15px;
-      border-radius:10px;
-      font-weight:700;
-      text-align:center;
-      text-decoration:none;
-    }
-
-    .btn-primary { background:#b30000; color:#fff; }
-    .btn-secondary { background:#111; border:1px solid #333; color:#fff; }
-    .btn-danger { background:#400; border:1px solid #b30000; color:#fff; }
-
-    .locked-msg {
-      background:#111;
-      border:1px solid #555;
-      border-radius:10px;
-      padding:14px;
-      margin:0 12px 14px;
-      font-size:.9rem;
-      color:#aaa;
-      text-align:center;
-    }
-
-    #map {
-      width:calc(100% - 24px);
-      height:300px;
-      margin:12px auto;
-      border-radius:12px;
-      border:1px solid #333;
-      display:none;
-    }
-
-    /* MODAL */
-    #confirmModal {
-      position:fixed;
-      inset:0;
-      background:rgba(0,0,0,.75);
-      display:none;
-      align-items:center;
-      justify-content:center;
-      z-index:999;
-    }
-
-    .modal-box {
-      background:#111;
-      border:1px solid #b30000;
-      border-radius:12px;
-      padding:20px;
-      max-width:320px;
-      text-align:center;
-    }
-
-    .modal-box p { margin-bottom:16px; }
-
-    .modal-actions {
-      display:flex;
-      gap:10px;
-      justify-content:center;
-    }
-  </style>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=geometry"></script>
 </head>
 
 <body>
 
 <header>
-  <div class="header-left">
-    <a href="/index.html"><img src="/icon.PNG" class="logo"></a>
-    <div style="font-weight:700;">My Ride</div>
-  </div>
+  <a href="/index.html"><img src="/icon.PNG" class="logo"></a>
   <button id="menuBtn">☰</button>
 </header>
 
 <nav id="menuPanel">
   <a href="/rider/rider.html">Rider Hub</a>
-  <a href="/rider/ride-request.html">Request a Ride</a>
+  <a href="/rider/ride-request.html">Request Ride</a>
   <a href="/rider/myride.html">My Ride</a>
-  <a href="/rider/profile.html">Profile</a>
   <a href="#" id="logoutBtn">Log Out</a>
 </nav>
 
-<h1>Your Ride</h1>
+<h1>My Ride</h1>
 
 <div id="activeRide"></div>
 <div id="map"></div>
 
-<a href="/rider/ride-request.html" class="btn btn-primary">Request Another Ride</a>
-<a href="/rider/rider.html" class="btn btn-secondary">Back to Rider Hub</a>
+<h1 style="font-size:1.1rem;margin-top:24px;">Ride History</h1>
+<div id="history"></div>
 
-<!-- CANCEL CONFIRMATION MODAL -->
-<div id="confirmModal">
-  <div class="modal-box">
-    <p>Are you sure you want to cancel this ride?</p>
-    <div class="modal-actions">
-      <button class="btn btn-secondary" onclick="closeModal()">No</button>
-      <button class="btn btn-danger" onclick="confirmCancel()">Yes, Cancel</button>
-    </div>
-  </div>
-</div>
+<a href="/rider/ride-request.html" class="btn btn-primary">Request New Ride</a>
 
 <script>
-const BOOKINGS_API = "https://bigred-bookings.bigredtransportation.workers.dev";
-const STATUS_API   = "https://bigred-status-updater.bigredtransportation.workers.dev/status";
+const API="https://bigred-bookings.bigredtransportation.workers.dev";
+const STATUS_API="https://bigred-status-updater.bigredtransportation.workers.dev/status";
 
-let activeRide = null;
-
-/* MENU */
-menuBtn.onclick = () => {
-  menuPanel.style.display = menuPanel.style.display === "flex" ? "none" : "flex";
+document.getElementById("menuBtn").onclick=()=>{
+  const m=document.getElementById("menuPanel");
+  m.style.display=m.style.display==="flex"?"none":"flex";
 };
-
-logoutBtn.onclick = () => {
+document.getElementById("logoutBtn").onclick=()=>{
   localStorage.clear();
   location.href="/index.html";
 };
 
-/* LOCK RULE */
-function canModifyRide(status){
-  return !["PICKED_UP","COMPLETED","CANCELLED"].includes(status);
+const riderId=localStorage.getItem("riderId");
+let map,driverMarker,pickupMarker,dropoffMarker,routeSvc,routeLine;
+
+function canModify(status){
+  return ["REQUESTED","ACCEPTED","ENROUTE","ARRIVED"].includes(status);
 }
 
-/* LOAD RIDE */
-async function loadRide(){
-  const riderId = localStorage.getItem("riderId");
-  if(!riderId) return;
-
-  const res = await fetch(`${BOOKINGS_API}/api/driver/bookings?scope=all`);
-  const all = await res.json();
-
-  activeRide = all.find(r =>
-    r.rider?.riderId === riderId &&
-    ["REQUESTED","ACCEPTED","ENROUTE","ARRIVED","PICKED_UP"].includes(r.status)
-  );
-
-  renderRide();
+async function loadRides(){
+  const res=await fetch(`${API}/api/driver/bookings?scope=all`);
+  const all=await res.json();
+  const mine=all.filter(r=>r.rider?.riderId===riderId);
+  const active=mine.find(r=>!["COMPLETED","CANCELLED"].includes(r.status));
+  renderActive(active);
+  renderHistory(mine.filter(r=>["COMPLETED","CANCELLED"].includes(r.status)));
 }
 
-function renderRide(){
-  const box = document.getElementById("activeRide");
-  if(!activeRide){
-    box.innerHTML = `<div class="card">You have no active rides.</div>`;
+function renderActive(r){
+  const box=document.getElementById("activeRide");
+  if(!r){
+    box.innerHTML=`<div class="card">No active ride.</div>`;
     return;
   }
 
-  const editable = canModifyRide(activeRide.status);
+  const locked=!canModify(r.status);
 
-  box.innerHTML = `
+  box.innerHTML=`
     <div class="card">
-      <div class="status">Status: ${activeRide.status}</div>
-      <div class="loc">Pickup: ${activeRide.pickup.address}</div>
-      <div class="loc">Dropoff: ${activeRide.dropoff.address}</div>
+      <div class="status">Status: ${r.status}</div>
+      <div>Pickup: ${r.pickup.address}</div>
+      <div>Dropoff: ${r.dropoff.address}</div>
+
+      <a class="btn btn-secondary ${locked?"btn-disabled":""}" href="/rider/ride-request.html?id=${r.id}">
+        Edit Ride
+      </a>
+
+      <a class="btn btn-secondary ${locked?"btn-disabled":""}" onclick="cancelRide('${r.id}')">
+        Cancel Ride
+      </a>
+
+      ${locked?`<div class="locked">🔒 Ride locked once pickup begins</div>`:""}
     </div>
-
-    ${
-      editable ? `
-        <a class="btn btn-secondary" href="/rider/ride-request.html?edit=${activeRide.id}">
-          ✏️ Edit Ride
-        </a>
-        <button class="btn btn-danger" onclick="openCancelModal()">
-          ❌ Cancel Ride
-        </button>
-      ` : `
-        <div class="locked-msg">
-          This ride is already in progress and can no longer be edited or canceled.
-        </div>
-      `
-    }
   `;
+
+  drawMap(r);
 }
 
-/* CANCEL FLOW */
-function openCancelModal(){
-  confirmModal.style.display="flex";
-}
-
-function closeModal(){
-  confirmModal.style.display="none";
-}
-
-async function confirmCancel(){
-  closeModal();
-  await fetch(`${BOOKINGS_API}/api/rider/cancel`,{
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({ bookingId: activeRide.id })
+async function cancelRide(id){
+  if(!confirm("Cancel this ride?")) return;
+  await fetch(`${API}/api/driver/bookings/${id}`,{
+    method:"PUT",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({status:"CANCELLED"})
   });
-  location.reload();
+  loadRides();
 }
 
-loadRide();
-</script>
+function renderHistory(list){
+  const h=document.getElementById("history");
+  if(!list.length){
+    h.innerHTML=`<div class="card">No past rides.</div>`;
+    return;
+  }
+  h.innerHTML=list.reverse().map(r=>`
+    <div class="card">
+      <div class="status">${r.status}</div>
+      <div>${r.pickup.address} → ${r.dropoff.address}</div>
+      <a class="btn btn-secondary" href="/rider/ride-request.html?repeat=${r.id}">
+        Re-Request Ride
+      </a>
+    </div>
+  `).join("");
+}
 
+async function drawMap(r){
+  document.getElementById("map").style.display="block";
+  if(!map){
+    map=new google.maps.Map(document.getElementById("map"),{zoom:12});
+    routeSvc=new google.maps.DirectionsService();
+    routeLine=new google.maps.DirectionsRenderer({suppressMarkers:true});
+    routeLine.setMap(map);
+  }
+
+  const geo=new google.maps.Geocoder();
+  const p1=await geo.geocode({address:r.pickup.address});
+  const p2=await geo.geocode({address:r.dropoff.address});
+  const pickup=p1.results[0].geometry.location;
+  const dropoff=p2.results[0].geometry.location;
+
+  pickupMarker=new google.maps.Marker({map,position:pickup,label:"📍"});
+  dropoffMarker=new google.maps.Marker({map,position:dropoff,label:"🏁"});
+
+  routeSvc.route({
+    origin:pickup,
+    destination:dropoff,
+    travelMode:"DRIVING"
+  },(res,s)=>{
+    if(s==="OK") routeLine.setDirections(res);
+  });
+
+  pollDriver();
+}
+
+async function pollDriver(){
+  try{
+    const r=await fetch(STATUS_API);
+    const j=await r.json();
+    const pos={lat:j.location.lat,lng:j.location.lng};
+
+    if(!driverMarker){
+      driverMarker=new google.maps.Marker({
+        map,
+        position:pos,
+        icon:"https://maps.google.com/mapfiles/kml/shapes/cabs.png"
+      });
+    }else{
+      driverMarker.setPosition(pos);
+    }
+  }catch{}
+  setTimeout(pollDriver,15000);
+}
+
+loadRides();
+</script>
 </body>
 </html>
