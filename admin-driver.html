@@ -337,6 +337,7 @@ let captionIndex=0;
    STATE
    ======================= */
 let gpsTimer=null;
+let gpsLastTs=null;
 let dispatchScope="active";
 let currentStatusVal="offline";
 
@@ -393,88 +394,143 @@ function setImage(idx){
 }
 
 /* =======================
-   STATUS + GPS (FINAL)
+   STATUS + GPS
    ======================= */
+async function loadStatus(){
+  try{
+    const res=await fetch(STATUS_WORKER+"/status");
+    if(!res.ok)return;
+    const data=await res.json();
+    log("Status GET OK: "+JSON.stringify(data));
+    let statusVal=data.status||"offline";
+    currentStatusVal = statusVal;
 
-let gpsTimer = null;
-let gpsIntervalMs = null;
+    const pill=document.getElementById("status-pill");
+    const headerPill=document.getElementById("livePill");
+    pill.classList.remove("online","away","offline");
+    headerPill.classList.remove("online","away","offline");
 
-/* Detect active ride from dispatch board */
-function hasActiveTrip(){
-  const selects = document.querySelectorAll(".status-dropdown");
-  for(const sel of selects){
-    if(["ACCEPTED","ENROUTE","ARRIVED","PICKED_UP"].includes(sel.value)){
-      return true;
+    let label="";
+    if(statusVal==="online"){
+      label="ONLINE";
+      pill.classList.add("online");
+      headerPill.classList.add("online");
+      headerPill.textContent="📡 Tracking: ON";
+    }else if(statusVal==="away"){
+      label="LIMITED";
+      pill.classList.add("away");
+      headerPill.classList.add("away");
+      headerPill.textContent="📡 Tracking: LIMITED";
+    }else{
+      label="OFFLINE";
+      pill.classList.add("offline");
+      headerPill.classList.add("offline");
+      headerPill.textContent="📡 Tracking: OFF";
     }
+
+    const when=formatDateTime(data.lastUpdated);
+    pill.textContent=`Status: ${label} • as of ${when}`;
+    document.getElementById("statusStamp").textContent=when;
+    document.getElementById("statusSelect").value=statusVal;
+
+    const globalVeh=document.getElementById("globalVehicleSelect");
+    if(globalVeh){
+      if(data.vehicle && data.vehicle.code) globalVeh.value=data.vehicle.code;
+      else globalVeh.value="BLACK_ACADIA";
+    }
+
+    handleGpsForStatus(statusVal);
+  }catch(e){
+    log("Status error: "+e.message);
   }
-  return false;
 }
 
-function handleGpsForStatus(status){
-  if(status === "offline" || status === "away"){
-    stopGpsPings();
-    return;
-  }
+async function updateStatus(){
+  const val=document.getElementById("statusSelect").value;
+  const normalized=val;
+  const message=val==="online"?"On the Road":val==="away"?"Limited Availability":"Offline";
+  const wasOnline = (currentStatusVal === "online");
 
-  // ONLINE
-  if(hasActiveTrip()){
-    startGpsPings(15000); // active ride
-  } else {
-    startGpsPings(600000); // idle online (10 min)
-  }
-}
+  const globalVeh=document.getElementById("globalVehicleSelect");
+  const vehicleCode = globalVeh ? globalVeh.value : undefined;
 
-function startGpsPings(interval){
-  if(gpsTimer && gpsIntervalMs === interval) return;
+  try{
+    log("Status PUT…");
+    const payload = { status:normalized, online:(normalized==="online"), message };
+    if(vehicleCode) payload.vehicleCode = vehicleCode;
 
-  stopGpsPings();
-  gpsIntervalMs = interval;
-
-  if(!navigator.geolocation){
-    log("Geolocation not available.");
-    return;
-  }
-
-  gpsTimer = setInterval(sendGpsPing, interval);
-  sendGpsPing(); // immediate
-}
-
-function sendGpsPing(){
-  navigator.geolocation.getCurrentPosition(pos=>{
-    document.getElementById("gpsStamp").textContent =
-      new Date().toLocaleString("en-US",{timeZone:TZ});
-    document.getElementById("gpsRate").textContent =
-      Math.round(gpsIntervalMs/1000) + "s";
-
-    fetch(LOCATION_WORKER,{
+    const res=await fetch(STATUS_WORKER+"/status",{
       method:"PUT",
       headers:{
         "Content-Type":"application/json",
         "X-Auth-Token":AUTH_SECRET
       },
-      body:JSON.stringify({
-        lat:pos.coords.latitude,
-        lng:pos.coords.longitude,
-        accuracy:pos.coords.accuracy,
-        updated:new Date().toISOString(),
-        source:"admin-driver"
+      body:JSON.stringify(payload)
+    });
+
+    const bodyText = await res.text();
+    log("Status PUT response: "+bodyText);
+    showToast(res.ok?"Status updated":"Status update failed");
+
+    if(res.ok){
+      currentStatusVal = normalized;
+      if(!wasOnline && normalized==="online"){
+        log("Auto-online push trigger fired.");
+        autoOnlinePush();
+      }
+    }
+
+    loadStatus();
+  }catch(e){
+    log("PUT error:"+e.message);
+    showToast("Status error");
+  }
+}
+
+function handleGpsForStatus(val){
+  if(val==="online")startGpsPings();
+  else stopGpsPings();
+}
+
+function startGpsPings(){
+  if(gpsTimer){clearInterval(gpsTimer);gpsTimer=null;}
+  if(!("geolocation" in navigator)){
+    log("No geolocation.");
+    return;
+  }
+  gpsTimer=setInterval(()=>{
+    navigator.geolocation.getCurrentPosition(pos=>{
+      const now=Date.now();
+      document.getElementById("gpsStamp").textContent=new Date().toLocaleString("en-US",{timeZone:TZ});
+      document.getElementById("gpsRate").textContent=gpsLastTs ? Math.round((now-gpsLastTs)/1000)+"s" : "~15s";
+      gpsLastTs=now;
+
+      fetch(LOCATION_WORKER,{
+        method:"PUT",
+        headers:{
+          "Content-Type":"application/json",
+          "X-Auth-Token":AUTH_SECRET
+        },
+        body:JSON.stringify({
+          lat:pos.coords.latitude,
+          lng:pos.coords.longitude,
+          accuracy:pos.coords.accuracy,
+          updated:new Date().toISOString()
+        })
       })
-    }).catch(()=>{});
-  }, err=>{
-    log("GPS error: " + err.message);
-  },{
-    enableHighAccuracy:true,
-    maximumAge:5000,
-    timeout:10000
-  });
+      .then(r=>r.text())
+      .then(t=>log("GPS PUT: "+t))
+      .catch(e=>log("GPS error:"+e.message));
+    },err=>log("GPS error:"+err.message),{
+      enableHighAccuracy:true,
+      maximumAge:5000,
+      timeout:10000
+    });
+  },15000);
 }
 
 function stopGpsPings(){
-  if(gpsTimer){
-    clearInterval(gpsTimer);
-    gpsTimer = null;
-  }
-  gpsIntervalMs = null;
+  if(gpsTimer){clearInterval(gpsTimer);gpsTimer=null;}
   document.getElementById("gpsRate").textContent="—";
 }
 
