@@ -534,8 +534,12 @@ function startGpsPings(){
       document.getElementById("gpsStamp").textContent =
         new Date().toLocaleString("en-US", { timeZone: TZ });
 
-      document.getElementById("gpsRate").textContent =
-        gpsLastTs ? Math.round((now - gpsLastTs) / 1000) + "s" : interval / 1000 + "s";
+document.getElementById("gpsRate").textContent =
+  gpsLastTs
+    ? Math.round((now - gpsLastTs) / 1000) + "s"
+    : interval >= 60000
+        ? Math.round(interval / 60000) + "m"
+        : Math.round(interval / 1000) + "s";
 
       gpsLastTs = now;
 
