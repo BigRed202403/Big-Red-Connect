@@ -172,21 +172,38 @@ async function drawMap(r){
 
 async function pollDriver(){
   try{
-    const r=await fetch(STATUS_API);
-    const j=await r.json();
-    const pos={lat:j.location.lat,lng:j.location.lng};
+    const r = await fetch(STATUS_API);
+    if(!r.ok) throw new Error("status fetch failed");
+
+    const j = await r.json();
+
+    // 🔒 Guard: location may not exist yet
+    if(!j.location || typeof j.location.lat !== "number"){
+      console.log("Driver location not available yet");
+      setTimeout(pollDriver, 15000);
+      return;
+    }
+
+    const pos = {
+      lat: j.location.lat,
+      lng: j.location.lng
+    };
 
     if(!driverMarker){
-      driverMarker=new google.maps.Marker({
+      driverMarker = new google.maps.Marker({
         map,
-        position:pos,
-        icon:"https://maps.google.com/mapfiles/kml/shapes/cabs.png"
+        position: pos,
+        icon: "https://maps.google.com/mapfiles/kml/shapes/cabs.png"
       });
-    }else{
+    } else {
       driverMarker.setPosition(pos);
     }
-  }catch{}
-  setTimeout(pollDriver,15000);
+
+  } catch(e){
+    console.warn("Driver poll error:", e.message);
+  }
+
+  setTimeout(pollDriver, 15000);
 }
 
 loadRides();
