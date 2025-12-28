@@ -10,12 +10,12 @@
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/icon.PNG",
+      "src": "/BRCNYE2026.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/icon.PNG",
+      "src": "/BRCNYE2026.png",
       "sizes": "512x512",
       "type": "image/png"
     }
