@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Big Red Admin / Driver Console</title>
 
-<link rel="apple-touch-icon" href="icon.PNG">
-<link rel="icon" type="image/png" sizes="192x192" href="icon.png">
-<link rel="shortcut icon" href="icon.PNG">
+<link rel="apple-touch-icon" href="BRCNYE2026.png">
+<link rel="icon" type="image/png" sizes="192x192" href="BRCNYE2026.png">
+<link rel="shortcut icon" href="BRCNYE2026.png">
 <link rel="manifest" href="manifest-admin.json">
 <meta name="apple-mobile-web-app-title" content="Big Red Admin">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -181,11 +181,6 @@ body.mode-admin .driver-only{display:block;}
           <option value="AIRPORT">✈️ Airport Runs</option>
           <option value="WEEKEND">🍻 Weekend Night Run</option>
           <option value="CAMPUS">🅿️ Campus Corner Late Night</option>
-          <option value="XMAS1">🎄 Christmas – Lights & Events</option>
-          <option value="XMAS2">🎄 Christmas – Nights Out</option>
-          <option value="XMAS3">🎄 Christmas – Family & Errands</option>
-          <option value="XMAS4">🎄 Christmas – Zoo Lights & Dates</option>
-          <option value="XMAS5">🎄 Christmas – Late Night Pickups</option>
           <option value="OFFLINE">🔴 Going Offline</option>
           <option value="CUSTOM">✏️ Custom Only</option>
         </select>
@@ -294,7 +289,7 @@ const HOME_URL="https://bigredconnectokc.com/";
    MEDIA
    ======================= */
 const LIVE_IMAGES=[
-  "icon.png","icon.PNG",
+  "icon.png","BRCNYE2026.png",
   "0081086F-89FA-41B2-85EB-E4EE97E9E8EF.png",
   "059AAE7C-E31D-4780-B0FD-00535D28F120.png",
   "148D1A08-D537-4A0C-B141-2336DBF68A15.png",
@@ -311,7 +306,6 @@ const LIVE_IMAGES=[
   "Big Red Live Christmas.png",
   "Big Red Live Holiday 1.png",
   "Big Red Live Text Only.png",
-  "Big Red Live Thanksgiving.png",
   "Official Logo.png"
 ];
 
@@ -322,15 +316,10 @@ const TEMPLATES={
   AIRPORT:{title:"Airport Runs Available",message:"✈️ Flat-rate airport connections — text RED to 405-378-4024."},
   WEEKEND:{title:"Weekend Night Runs",message:"🍻 From last call to your front door — ride local, text RED."},
   CAMPUS:{title:"Campus Corner Nights",message:"🎓 OU events + late nights — text RED to 405-378-4024."},
-  XMAS1:{title:"Christmas Season Rides",message:"🎄 Zoo Lights, holiday parties — plan ahead with Big Red."},
-  XMAS2:{title:"Holiday Nights Out",message:"🎄 Late night holiday runs — text RED."},
-  XMAS3:{title:"Holiday Family & Errands",message:"🎄 Shopping + family — plan ahead with Big Red."},
-  XMAS4:{title:"Zoo Lights & Date Nights",message:"🎄 Date nights + events — ride local."},
-  XMAS5:{title:"Holiday Late Night Pickups",message:"🎄 Late-night holiday pickups — text RED."},
   OFFLINE:{title:"Big Red is Offline",message:"🔴 Big Red is offline — text RED for next run info."}
 };
 
-const CAPTION_KEYS=["LIVE","AIRPORT","WEEKEND","CAMPUS","XMAS1","XMAS2","XMAS3","XMAS4","XMAS5","OFFLINE"];
+const CAPTION_KEYS=["LIVE","AIRPORT","WEEKEND","CAMPUS","OFFLINE"];
 let captionIndex=0;
 
 /* =======================
