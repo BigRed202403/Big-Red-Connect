@@ -14,18 +14,20 @@
 body{margin:0;background:#000;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding-bottom:60px}
 header{background:#000;padding:12px;border-bottom:2px solid #b30000;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:50}
 .logo{height:42px}
-#menuBtn{font-size:1.6rem;background:none;border:none;color:white}
+#menuBtn{font-size:1.6rem;background:none;border:none;color:white;cursor:pointer}
 #menuPanel{display:none;flex-direction:column;background:#111;border-bottom:2px solid #b30000}
 #menuPanel a{padding:16px;color:#fff;text-decoration:none;border-bottom:1px solid #222}
 h1{text-align:center;margin:16px 0;font-size:1.4rem}
 .card{background:#111;border:1px solid #333;border-radius:12px;padding:14px;margin:12px}
 .status{color:#ccc;font-size:.9rem;margin-bottom:6px}
-.btn{display:block;margin:10px auto;padding:14px;border-radius:10px;font-weight:700;text-align:center;text-decoration:none}
-.btn-primary{background:#b30000;color:#fff}
+.btn{display:block;margin:10px auto;padding:14px;border-radius:10px;font-weight:700;text-align:center;text-decoration:none;cursor:pointer}
+.btn-primary{background:#b30000;color:#fff;border:none}
 .btn-secondary{background:#111;border:1px solid #333;color:#fff}
 .btn-disabled{opacity:.45;pointer-events:none}
 #map{height:320px;margin:12px;border-radius:12px;border:1px solid #333;display:none}
 .locked{color:#ffcc66;font-size:.85rem;text-align:center;margin-top:6px}
+.small-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:0 12px}
+.small-row .btn{margin:0;min-width:150px}
 </style>
 
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=geometry"></script>
@@ -46,6 +48,10 @@ h1{text-align:center;margin:16px 0;font-size:1.4rem}
 </nav>
 
 <h1>My Ride</h1>
+
+<div class="small-row">
+  <button class="btn btn-secondary" id="refreshBtn">Refresh</button>
+</div>
 
 <div id="activeRide"></div>
 <div id="map"></div>
@@ -68,44 +74,104 @@ document.getElementById("logoutBtn").onclick=()=>{
   location.href="/index.html";
 };
 
-const riderId=localStorage.getItem("riderId");
+const riderId=localStorage.getItem("riderId") || "";
 let map,driverMarker,pickupMarker,dropoffMarker,routeSvc,routeLine;
+let activeRideId = null;
+let autoTimer = null;
+let driverPollTimer = null;
 
 function canModify(status){
-  return ["REQUESTED","ACCEPTED","ENROUTE","ARRIVED"].includes(status);
+  return ["REQUESTED","ACCEPTED","ENROUTE","ARRIVED"].includes(String(status||"").toUpperCase());
+}
+function isClosed(status){
+  const s = String(status||"").toUpperCase();
+  return ["COMPLETED","CANCELLED","DECLINED"].includes(s);
+}
+
+function getRideIdFromUrl(){
+  const u = new URL(location.href);
+  const id = (u.searchParams.get("id") || "").trim();
+  return id || null;
+}
+
+async function fetchRideById(id){
+  const res = await fetch(`${API}/api/bookings/${encodeURIComponent(id)}`);
+  if(!res.ok) return null;
+  return await res.json();
+}
+
+async function fetchAllMine(){
+  if(!riderId) return [];
+  const res=await fetch(`${API}/api/driver/bookings?scope=all`);
+  if(!res.ok) return [];
+  const all=await res.json();
+  return all.filter(r=>r?.rider?.riderId===riderId);
+}
+
+function pickActiveRide(mine){
+  // newest open ride first
+  const open = mine
+    .filter(r => !isClosed(r.status))
+    .sort((a,b)=> (b.createdAt||"").localeCompare(a.createdAt||""));
+  return open[0] || null;
 }
 
 async function loadRides(){
-  const res=await fetch(`${API}/api/driver/bookings?scope=all`);
-  const all=await res.json();
-  const mine=all.filter(r=>r.rider?.riderId===riderId);
-  const active=mine.find(r=>!["COMPLETED","CANCELLED"].includes(r.status));
+  // 1) If ?id= exists, try to load that ride directly
+  const urlRideId = getRideIdFromUrl();
+  if(urlRideId){
+    const r = await fetchRideById(urlRideId);
+    if(r && r?.rider?.riderId === riderId){
+      activeRideId = r.id;
+      renderActive(r);
+      // Still show history
+      const mine = await fetchAllMine();
+      renderHistory(mine.filter(x=>isClosed(x.status)));
+      startAutoRefresh();
+      return;
+    }
+    // If id invalid or not this rider, fall back to normal flow
+  }
+
+  // 2) Otherwise load mine and choose active
+  const mine = await fetchAllMine();
+  const active = pickActiveRide(mine);
+  activeRideId = active ? active.id : null;
+
   renderActive(active);
-  renderHistory(mine.filter(r=>["COMPLETED","CANCELLED"].includes(r.status)));
+  renderHistory(mine.filter(r=>isClosed(r.status)));
+
+  if(active) startAutoRefresh();
+  else stopAutoRefresh();
 }
 
 function renderActive(r){
   const box=document.getElementById("activeRide");
+  const mapEl=document.getElementById("map");
+
   if(!r){
-    box.innerHTML=`<div class="card">No active ride.</div>`;
+    box.innerHTML=`<div class="card">No active ride found.</div>`;
+    mapEl.style.display="none";
+    stopDriverPolling();
     return;
   }
 
-  const locked=!canModify(r.status);
+  const status = String(r.status||"").toUpperCase();
+  const locked = !canModify(status);
 
   box.innerHTML=`
     <div class="card">
-      <div class="status">Status: ${r.status}</div>
-      <div>Pickup: ${r.pickup.address}</div>
-      <div>Dropoff: ${r.dropoff.address}</div>
+      <div class="status">Status: ${status}</div>
+      <div><strong>Pickup:</strong> ${r.pickup?.address || ""}</div>
+      <div style="margin-top:6px;"><strong>Dropoff:</strong> ${r.dropoff?.address || ""}</div>
 
-      <a class="btn btn-secondary ${locked?"btn-disabled":""}" href="/rider/ride-request.html?id=${r.id}">
+      <a class="btn btn-secondary ${locked?"btn-disabled":""}" href="/rider/ride-request.html?id=${encodeURIComponent(r.id)}">
         Edit Ride
       </a>
 
-      <a class="btn btn-secondary ${locked?"btn-disabled":""}" onclick="cancelRide('${r.id}')">
+      <button class="btn btn-secondary ${locked?"btn-disabled":""}" ${locked?"disabled":""} onclick="cancelRide('${String(r.id).replace(/'/g,"\\'")}')">
         Cancel Ride
-      </a>
+      </button>
 
       ${locked?`<div class="locked">🔒 Ride locked once pickup begins</div>`:""}
     </div>
@@ -116,12 +182,12 @@ function renderActive(r){
 
 async function cancelRide(id){
   if(!confirm("Cancel this ride?")) return;
-  await fetch(`${API}/api/driver/bookings/${id}`,{
+  await fetch(`${API}/api/driver/bookings/${encodeURIComponent(id)}`,{
     method:"PUT",
     headers:{"Content-Type":"application/json"},
     body:JSON.stringify({status:"CANCELLED"})
   });
-  loadRides();
+  await loadRides();
 }
 
 function renderHistory(list){
@@ -130,11 +196,11 @@ function renderHistory(list){
     h.innerHTML=`<div class="card">No past rides.</div>`;
     return;
   }
-  h.innerHTML=list.reverse().map(r=>`
+  h.innerHTML=list.slice().reverse().map(r=>`
     <div class="card">
-      <div class="status">${r.status}</div>
-      <div>${r.pickup.address} → ${r.dropoff.address}</div>
-      <a class="btn btn-secondary" href="/rider/ride-request.html?repeat=${r.id}">
+      <div class="status">${String(r.status||"").toUpperCase()}</div>
+      <div>${r.pickup?.address || ""} → ${r.dropoff?.address || ""}</div>
+      <a class="btn btn-secondary" href="/rider/ride-request.html?repeat=${encodeURIComponent(r.id)}">
         Re-Request Ride
       </a>
     </div>
@@ -142,22 +208,45 @@ function renderHistory(list){
 }
 
 async function drawMap(r){
-  document.getElementById("map").style.display="block";
+  const mapEl = document.getElementById("map");
+  mapEl.style.display="block";
+
   if(!map){
-    map=new google.maps.Map(document.getElementById("map"),{zoom:12});
+    map=new google.maps.Map(mapEl,{zoom:12});
     routeSvc=new google.maps.DirectionsService();
     routeLine=new google.maps.DirectionsRenderer({suppressMarkers:true});
     routeLine.setMap(map);
   }
 
+  // Geocode pickup/dropoff
   const geo=new google.maps.Geocoder();
-  const p1=await geo.geocode({address:r.pickup.address});
-  const p2=await geo.geocode({address:r.dropoff.address});
+  let p1, p2;
+  try{
+    p1=await geo.geocode({address:r.pickup.address});
+    p2=await geo.geocode({address:r.dropoff.address});
+  }catch(e){
+    console.warn("Geocode failed:", e);
+    return;
+  }
+  if(!p1?.results?.[0] || !p2?.results?.[0]) return;
+
   const pickup=p1.results[0].geometry.location;
   const dropoff=p2.results[0].geometry.location;
 
-  pickupMarker=new google.maps.Marker({map,position:pickup,label:"📍"});
-  dropoffMarker=new google.maps.Marker({map,position:dropoff,label:"🏁"});
+  // Reuse markers (prevents duplicates)
+  if(!pickupMarker){
+    pickupMarker=new google.maps.Marker({map,position:pickup,label:"📍"});
+  } else {
+    pickupMarker.setPosition(pickup);
+    pickupMarker.setMap(map);
+  }
+
+  if(!dropoffMarker){
+    dropoffMarker=new google.maps.Marker({map,position:dropoff,label:"🏁"});
+  } else {
+    dropoffMarker.setPosition(dropoff);
+    dropoffMarker.setMap(map);
+  }
 
   routeSvc.route({
     origin:pickup,
@@ -167,27 +256,34 @@ async function drawMap(r){
     if(s==="OK") routeLine.setDirections(res);
   });
 
-  pollDriver();
+  startDriverPolling();
+}
+
+function stopDriverPolling(){
+  if(driverPollTimer){
+    clearTimeout(driverPollTimer);
+    driverPollTimer=null;
+  }
 }
 
 async function pollDriver(){
   try{
     const r = await fetch(STATUS_API);
     if(!r.ok) throw new Error("status fetch failed");
-
     const j = await r.json();
 
-    // 🔒 Guard: location may not exist yet
     if(!j.location || typeof j.location.lat !== "number"){
       console.log("Driver location not available yet");
-      setTimeout(pollDriver, 15000);
+      driverPollTimer = setTimeout(pollDriver, 15000);
       return;
     }
 
-    const pos = {
-      lat: j.location.lat,
-      lng: j.location.lng
-    };
+    const pos = { lat: j.location.lat, lng: j.location.lng };
+
+    if(!map) {
+      driverPollTimer = setTimeout(pollDriver, 15000);
+      return;
+    }
 
     if(!driverMarker){
       driverMarker = new google.maps.Marker({
@@ -198,13 +294,52 @@ async function pollDriver(){
     } else {
       driverMarker.setPosition(pos);
     }
-
   } catch(e){
-    console.warn("Driver poll error:", e.message);
+    console.warn("Driver poll error:", e.message || e);
   }
 
-  setTimeout(pollDriver, 15000);
+  driverPollTimer = setTimeout(pollDriver, 15000);
 }
+
+function startDriverPolling(){
+  stopDriverPolling();
+  pollDriver();
+}
+
+function stopAutoRefresh(){
+  if(autoTimer){
+    clearInterval(autoTimer);
+    autoTimer=null;
+  }
+}
+
+function startAutoRefresh(){
+  stopAutoRefresh();
+  // Refresh active card/history every 15s
+  autoTimer = setInterval(async ()=>{
+    // If URL has id, refresh that ride directly
+    const urlRideId = getRideIdFromUrl();
+    if(urlRideId){
+      const r = await fetchRideById(urlRideId);
+      if(r && r?.rider?.riderId === riderId){
+        activeRideId = r.id;
+        renderActive(r);
+        // history still helpful
+        const mine = await fetchAllMine();
+        renderHistory(mine.filter(x=>isClosed(x.status)));
+        return;
+      }
+    }
+
+    // Otherwise refresh normal
+    await loadRides();
+  }, 15000);
+}
+
+/* Manual refresh */
+document.getElementById("refreshBtn").onclick = async ()=>{
+  await loadRides();
+};
 
 loadRides();
 </script>
