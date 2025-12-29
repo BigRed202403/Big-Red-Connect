@@ -123,8 +123,8 @@
       border-radius:10px;
     }
 
-    /* ✅ A.6 Baby Step 1: iPhone Add-to-Home-Screen helper */
-    .brc-a2hs-card{
+    /* ✅ A.6 Helpers (iPhone) */
+    .brc-helper-card{
       background:#111;
       border:1px solid #b30000;
       border-radius:12px;
@@ -134,13 +134,13 @@
       color:#fff;
       text-align:left;
     }
-    .brc-a2hs-top{
+    .brc-helper-top{
       display:flex;
       justify-content:space-between;
       align-items:center;
       margin-bottom:6px;
     }
-    .brc-a2hs-title{
+    .brc-helper-title{
       font-weight:800;
       color:#ffdddd;
       font-size:1rem;
@@ -148,7 +148,7 @@
       align-items:center;
       gap:8px;
     }
-    .brc-a2hs-close{
+    .brc-helper-close{
       background:transparent;
       border:1px solid #444;
       color:#fff;
@@ -157,16 +157,16 @@
       cursor:pointer;
       font-weight:800;
     }
-    .brc-a2hs-body{
+    .brc-helper-body{
       font-size:.9rem;
       color:#ddd;
       line-height:1.25rem;
     }
-    .brc-a2hs-steps{
+    .brc-helper-steps{
       margin:8px 0 0 18px;
       padding:0;
     }
-    .brc-a2hs-steps li{
+    .brc-helper-steps li{
       margin:4px 0;
     }
   </style>
@@ -194,20 +194,41 @@
   <h1>Welcome</h1>
   <div id="welcomeName" class="welcome"></div>
 
-  <!-- ✅ A.6 Baby Step 1: iPhone A2HS Helper (hidden unless eligible) -->
+  <!-- ✅ A.6 Baby Step 1: iPhone A2HS Helper (not installed yet) -->
   <div id="brcA2HS" style="display:none;">
-    <div class="brc-a2hs-card">
-      <div class="brc-a2hs-top">
-        <div class="brc-a2hs-title">📲 iPhone tip</div>
-        <button type="button" id="brcA2HSClose" class="brc-a2hs-close" aria-label="Dismiss">✕</button>
+    <div class="brc-helper-card">
+      <div class="brc-helper-top">
+        <div class="brc-helper-title">📲 iPhone tip</div>
+        <button type="button" id="brcA2HSClose" class="brc-helper-close" aria-label="Dismiss">✕</button>
       </div>
-      <div class="brc-a2hs-body">
+      <div class="brc-helper-body">
         Add <strong>Big Red Connect</strong> to your Home Screen for faster access and more reliable alerts.
-        <ol class="brc-a2hs-steps">
+        <ol class="brc-helper-steps">
           <li>Open this page in <strong>Safari</strong></li>
           <li>Tap <strong>Share</strong> (⬆️)</li>
           <li>Select <strong>Add to Home Screen</strong></li>
         </ol>
+      </div>
+    </div>
+  </div>
+
+  <!-- ✅ A.6 Baby Step 2: Enable Alerts Helper (installed / standalone only) -->
+  <div id="brcAlertsHelp" style="display:none;">
+    <div class="brc-helper-card">
+      <div class="brc-helper-top">
+        <div class="brc-helper-title">🔔 Enable Alerts</div>
+        <button type="button" id="brcAlertsHelpClose" class="brc-helper-close" aria-label="Dismiss">✕</button>
+      </div>
+      <div class="brc-helper-body">
+        To get ride updates on iPhone:
+        <ol class="brc-helper-steps">
+          <li>Open <strong>Settings</strong> → <strong>Notifications</strong></li>
+          <li>Find <strong>Big Red Connect</strong></li>
+          <li>Turn on <strong>Allow Notifications</strong> + <strong>Time Sensitive</strong> (optional)</li>
+        </ol>
+        <div style="margin-top:8px;color:#bbb;font-size:.85rem;">
+          Tip: If you don’t see “Big Red Connect” in the list yet, open the app again and allow prompts when asked.
+        </div>
       </div>
     </div>
   </div>
@@ -306,9 +327,10 @@ function showActiveRideCard(booking){
   if (b) showActiveRideCard(b);
 })();
 
-/* ✅ A.6 Baby Step 1: iPhone A2HS Helper (adds only; does not change existing flows) */
+/* ✅ A.6 Baby Step 1 + 2 Helpers (adds only; does not change existing flows) */
 (function(){
-  const KEY = "brcA2HS_dismissed_v1";
+  const KEY_A2HS = "brcA2HS_dismissed_v1";
+  const KEY_ALERTS = "brcAlertsHelp_dismissed_v1";
 
   function isIOS(){
     return /iP(hone|ad|od)/.test(navigator.userAgent);
@@ -328,29 +350,45 @@ function showActiveRideCard(booking){
            (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches);
   }
 
-  function shouldShow(){
-    if(!isIOS()) return false;
-    if(!isSafari()) return false;
-    if(isStandalone()) return false;
-    if(localStorage.getItem(KEY) === "1") return false;
-    return true;
-  }
-
-  function show(){
+  function showA2HS(){
     const wrap = document.getElementById("brcA2HS");
     const close = document.getElementById("brcA2HSClose");
     if(!wrap || !close) return;
 
     wrap.style.display = "block";
-
     close.addEventListener("click", () => {
-      try{ localStorage.setItem(KEY, "1"); }catch(_){}
+      try{ localStorage.setItem(KEY_A2HS, "1"); }catch(_){}
+      wrap.style.display = "none";
+    });
+  }
+
+  function showAlertsHelp(){
+    const wrap = document.getElementById("brcAlertsHelp");
+    const close = document.getElementById("brcAlertsHelpClose");
+    if(!wrap || !close) return;
+
+    wrap.style.display = "block";
+    close.addEventListener("click", () => {
+      try{ localStorage.setItem(KEY_ALERTS, "1"); }catch(_){}
       wrap.style.display = "none";
     });
   }
 
   window.addEventListener("load", () => {
-    if(shouldShow()) show();
+    // Only target iPhone Safari (same scope as Baby Step 1)
+    if(!isIOS() || !isSafari()) return;
+
+    const standalone = isStandalone();
+
+    // Baby Step 1: not installed yet
+    if(!standalone && localStorage.getItem(KEY_A2HS) !== "1"){
+      showA2HS();
+    }
+
+    // Baby Step 2: installed only
+    if(standalone && localStorage.getItem(KEY_ALERTS) !== "1"){
+      showAlertsHelp();
+    }
   });
 })();
 </script>
