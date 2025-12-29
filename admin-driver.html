@@ -15,6 +15,10 @@
 <meta name="theme-color" content="#000">
 <meta http-equiv="Cache-Control" content="no-store"/>
 
+<script
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places&callback=initManualPlaces"
+  async defer></script>
+
 <!-- OneSignal v16 -->
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <script>
@@ -670,6 +674,62 @@ function stopGpsPings(){
   if(gpsTimer){clearInterval(gpsTimer);gpsTimer=null;}
   document.getElementById("gpsRate").textContent="—";
 }
+
+/* =======================
+   MANUAL PLACE AUTOCOMPLETE (7.1 UX)
+   ======================= */
+function setupManualAutocomplete(inputId){
+  try{
+    const input = document.getElementById(inputId);
+    if(!input || !window.google || !google.maps || !google.maps.places) return;
+
+    // OKC metro-ish bounding box (same spirit as ride-request.html)
+    const okcBounds = new google.maps.LatLngBounds(
+      { lat: 34.9000, lng: -98.2000 }, // SW
+      { lat: 36.0000, lng: -96.0000 }  // NE
+    );
+
+    const ac = new google.maps.places.Autocomplete(input, {
+      bounds: okcBounds,
+      strictBounds: false,
+      componentRestrictions: { country: "us" },
+      fields: ["formatted_address", "name", "place_id", "geometry.location"]
+    });
+
+    // Bias to current device location if available
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          try{
+            const loc = new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude);
+            const biasBounds = new google.maps.LatLngBounds(loc, loc);
+            ac.setBounds(biasBounds);
+          }catch(e){}
+        },
+        () => {},
+        { enableHighAccuracy:true, maximumAge:15000, timeout:8000 }
+      );
+    }
+
+    // When a place is selected, prefer formatted_address (or name fallback)
+    ac.addListener("place_changed", () => {
+      const p = ac.getPlace();
+      if(!p) return;
+      const addr = p.formatted_address || p.name;
+      if(addr) input.value = addr;
+    });
+
+    log("Manual autocomplete enabled for: " + inputId);
+  }catch(e){
+    log("Manual autocomplete setup error ("+inputId+"): " + e.message);
+  }
+}
+
+// Google callback (script tag calls this)
+window.initManualPlaces = function(){
+  setupManualAutocomplete("manualPickup");
+  setupManualAutocomplete("manualDropoff");
+};
 
 /* =======================
    LIVE MAP CAPTIONS
