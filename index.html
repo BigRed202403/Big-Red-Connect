@@ -112,13 +112,12 @@
     }
 
     function goRequestRide() {
-      if (!isRiderLoggedIn()) {
-        window.location.href = "/rider-login.html?next=request";
-      } else {
-        // ✅ go straight to ride request page (hub can still link elsewhere)
-        window.location.href = "/rider/ride-request.html";
-      }
-    }
+  if (!isRiderLoggedIn()) {
+    window.location.href = "/rider-login.html?next=ride-request";
+  } else {
+    window.location.href = "/rider/ride-request.html";
+  }
+}
 
     function goToFare(e) {
       e.preventDefault();
