@@ -101,6 +101,21 @@
       }
     }
 
+    /* ------------------------------------------------------
+       DESTINATION HANDOFF (Index → Ride Request)
+       ------------------------------------------------------ */
+    function stashDropoffHandoff(dest) {
+      try {
+        // sessionStorage is ideal for one-time handoff between pages
+        sessionStorage.setItem("brc_dropoff_handoff", dest);
+      } catch (e) {}
+
+      try {
+        // fallback for browsers that might block sessionStorage in edge cases
+        localStorage.setItem("brc_dropoff_handoff", dest);
+      } catch (e) {}
+    }
+
     function goRequestRide() {
       if (!isRiderLoggedIn()) {
         window.location.href = "/rider-login.html?next=request";
@@ -114,11 +129,16 @@
       const dest = document.getElementById("quickWhere").value.trim();
       if (!dest) return;
 
+      // ✅ Store for reliable carryover into /rider/ride-request.html
+      stashDropoffHandoff(dest);
+
       if (!isRiderLoggedIn()) {
+        // Keep your existing behavior (login redirect includes the address)
         window.location.href =
           "/rider-login.html?next=ride-from-search&address=" +
           encodeURIComponent(dest);
       } else {
+        // ✅ Also pass via querystring as a fallback
         window.location.href =
           "/rider/ride-request.html?dropoff=" +
           encodeURIComponent(dest);
