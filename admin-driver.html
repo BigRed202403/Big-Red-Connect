@@ -150,6 +150,7 @@ body.mode-admin .driver-only{display:block;}
   <div>
     <section>
       <h2>Driving Status & GPS</h2>
+
       <div class="row">
         <select id="statusSelect">
           <option value="online">🟢 On the Road</option>
@@ -157,37 +158,38 @@ body.mode-admin .driver-only{display:block;}
           <option value="offline" selected>🔴 Offline</option>
         </select>
         <button class="btn btn-primary" id="updateStatusBtn">💾 Save</button>
-        <section class="admin-only">
+      </div>
+
+      <section class="admin-only">
         <h2>Create Ride (Manual)</h2>
-      
+
         <div class="row">
           <input id="manualRiderName" type="text" placeholder="Rider name (optional)" style="flex:1;">
           <input id="manualRiderPhone" type="text" placeholder="Rider phone (required)" style="flex:1;">
         </div>
-      
+
         <label style="font-size:.8rem;color:#ccc;">Pickup</label>
         <input id="manualPickup" type="text" placeholder="Pickup address or place">
-      
+
         <label style="font-size:.8rem;color:#ccc;">Dropoff</label>
         <input id="manualDropoff" type="text" placeholder="Dropoff address or place">
-      
+
         <div class="row">
           <input id="manualTime" type="text" placeholder="Time (optional) e.g., 12/31 10:15 PM" style="flex:1;">
         </div>
-      
+
         <label style="font-size:.8rem;color:#ccc;">Notes (optional)</label>
         <textarea id="manualNotes" placeholder="Gate code, apartment, extra context…"></textarea>
-      
+
         <div class="row" style="margin-top:8px;">
           <button class="btn btn-primary" id="btnCreateManualRide">➕ Create Manual Ride</button>
           <button class="btn btn-secondary" id="btnClearManualRide">🧹 Clear</button>
         </div>
-      
+
         <p class="meta">
           Creates a REQUESTED booking with <code>created_via = "manual"</code>. Rider push will only work after a riderId exists (7.2).
         </p>
       </section>
-      </div>
 
       <div class="row">
         <label for="globalVehicleSelect" style="font-size:.8rem;color:#ccc;">Active Vehicle</label>
@@ -319,6 +321,9 @@ const AUTH_SECRET="BigRedPrivateKey2025";
 const TZ="America/Chicago";
 const HOME_URL="https://bigredconnectokc.com/";
 
+/* Rider login page is ROOT (main branch), MyRide page is /rider */
+const RIDER_LOGIN_URL = `${HOME_URL}/rider-login.html`;
+
 /* =======================
    MEDIA
    ======================= */
@@ -392,6 +397,26 @@ function formatDateTime(iso){
   }catch(e){return iso;}
 }
 function captionBox(){return document.getElementById("captionBox");}
+
+function digitsOnly(v){
+  return String(v||"").replace(/\D/g,"");
+}
+
+async function copyTextToClipboard(text){
+  try{
+    await navigator.clipboard.writeText(text);
+    showToast("Copied SMS");
+  }catch(e){
+    // Fallback
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    try{ document.execCommand("copy"); showToast("Copied SMS"); }
+    catch(_){ showToast("Copy failed"); }
+    ta.remove();
+  }
+}
 
 function applyMode(mode){
   currentMode = (mode === "driver") ? "driver" : "admin";
@@ -470,7 +495,6 @@ async function createManualRide(){
     }
 
     showToast("Manual ride created");
-    // refresh dispatch
     fetchBookings();
   }catch(e){
     log("Manual create error: " + e.message);
@@ -586,30 +610,16 @@ function handleGpsForStatus(val){
 }
 
 function determineGpsInterval() {
-  // Default: idle online
-  let interval = 600000; // 10 minutes
-
-  // Check active bookings
-  const active = document.querySelectorAll(
-    "#listActive .card"
-  );
-
-  if (active.length > 0) {
-    // Active ride states
-    interval = 20000; // 20 seconds default
-  }
-
-  // Optional: tighten when very close to pickup (future-safe)
-  if (window.__nearPickup === true) {
-    interval = 5000; // 5 seconds
-  }
-
+  let interval = 600000; // 10 minutes idle online
+  const active = document.querySelectorAll("#listActive .card");
+  if (active.length > 0) interval = 20000; // 20 seconds
+  if (window.__nearPickup === true) interval = 5000; // 5 seconds
   return interval;
 }
 
 function startGpsPings(){
   if (gpsTimer) {
-    clearInterval(gpsTimer);
+    clearTimeout(gpsTimer);
     gpsTimer = null;
   }
 
@@ -627,12 +637,12 @@ function startGpsPings(){
       document.getElementById("gpsStamp").textContent =
         new Date().toLocaleString("en-US", { timeZone: TZ });
 
-document.getElementById("gpsRate").textContent =
-  gpsLastTs
-    ? Math.round((now - gpsLastTs) / 1000) + "s"
-    : interval >= 60000
-        ? Math.round(interval / 60000) + "m"
-        : Math.round(interval / 1000) + "s";
+      document.getElementById("gpsRate").textContent =
+        gpsLastTs
+          ? Math.round((now - gpsLastTs) / 1000) + "s"
+          : interval >= 60000
+              ? Math.round(interval / 60000) + "m"
+              : Math.round(interval / 1000) + "s";
 
       gpsLastTs = now;
 
@@ -653,12 +663,11 @@ document.getElementById("gpsRate").textContent =
       .then(t => log("GPS PUT: " + t))
       .catch(e => log("GPS error: " + e.message));
 
-      // Reschedule next ping dynamically
       gpsTimer = setTimeout(pingOnce, interval);
 
     }, err => {
       log("GPS error: " + err.message);
-      gpsTimer = setTimeout(pingOnce, 60000); // retry in 1 min on error
+      gpsTimer = setTimeout(pingOnce, 60000);
     }, {
       enableHighAccuracy: true,
       maximumAge: 5000,
@@ -666,12 +675,11 @@ document.getElementById("gpsRate").textContent =
     });
   }
 
-  // start immediately
   pingOnce();
 }
 
 function stopGpsPings(){
-  if(gpsTimer){clearInterval(gpsTimer);gpsTimer=null;}
+  if(gpsTimer){clearTimeout(gpsTimer);gpsTimer=null;}
   document.getElementById("gpsRate").textContent="—";
 }
 
@@ -683,10 +691,9 @@ function setupManualAutocomplete(inputId){
     const input = document.getElementById(inputId);
     if(!input || !window.google || !google.maps || !google.maps.places) return;
 
-    // OKC metro-ish bounding box (same spirit as ride-request.html)
     const okcBounds = new google.maps.LatLngBounds(
-      { lat: 34.9000, lng: -98.2000 }, // SW
-      { lat: 36.0000, lng: -96.0000 }  // NE
+      { lat: 34.9000, lng: -98.2000 },
+      { lat: 36.0000, lng: -96.0000 }
     );
 
     const ac = new google.maps.places.Autocomplete(input, {
@@ -696,7 +703,6 @@ function setupManualAutocomplete(inputId){
       fields: ["formatted_address", "name", "place_id", "geometry.location"]
     });
 
-    // Bias to current device location if available
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         pos => {
@@ -711,7 +717,6 @@ function setupManualAutocomplete(inputId){
       );
     }
 
-    // When a place is selected, prefer formatted_address (or name fallback)
     ac.addListener("place_changed", () => {
       const p = ac.getPlace();
       if(!p) return;
@@ -725,7 +730,6 @@ function setupManualAutocomplete(inputId){
   }
 }
 
-// Google callback (script tag calls this)
 window.initManualPlaces = function(){
   setupManualAutocomplete("manualPickup");
   setupManualAutocomplete("manualDropoff");
@@ -889,7 +893,7 @@ function sendRiderStatusPush({ riderId, rideId, status }) {
 }
 
 /* =======================
-   CLIPBOARD
+   CLIPBOARD (caption)
    ======================= */
 function copyCaption(){
   navigator.clipboard.writeText(captionBox().value)
@@ -912,25 +916,22 @@ async function fetchBookings(){
 
 /* robust riderId resolution from any known shape */
 function resolveRiderIdFromBooking(b){
-  // primary known
-  const a = b?.rider?.riderId;
-  if(a) return a;
-
-  // possible alternates if worker returns different schema
-  const b1 = b?.riderId;
-  if(b1) return b1;
-
-  const c = b?.rider?.id;
-  if(c) return c;
-
-  const d = b?.rider?.external_id;
-  if(d) return d;
-
-  const e = b?.rider?.externalId;
-  if(e) return e;
-
-  // nothing
+  const a = b?.rider?.riderId; if(a) return a;
+  const b1 = b?.riderId; if(b1) return b1;
+  const c = b?.rider?.id; if(c) return c;
+  const d = b?.rider?.external_id; if(d) return d;
+  const e = b?.rider?.externalId; if(e) return e;
   return "";
+}
+
+function isManualOrUnclaimed(b){
+  const hasRiderId = !!resolveRiderIdFromBooking(b);
+  const createdVia =
+    (String(b?.created_via||"").toLowerCase()==="manual") ||
+    (String(b?.source||"").toLowerCase()==="manual") ||
+    (String(b?.metadata?.created_via||"").toLowerCase()==="manual") ||
+    (String(b?.metadata?.createdVia||"").toLowerCase()==="manual");
+  return createdVia || !hasRiderId;
 }
 
 function renderAllBookings(list){
@@ -960,15 +961,20 @@ function renderColumn(id,arr){
     const isEnroute=["ENROUTE","ARRIVED","PICKED_UP"].includes(b.status);
 
     const riderIdResolved = resolveRiderIdFromBooking(b);
+    const needsBridge = isManualOrUnclaimed(b);
 
     const div=document.createElement("div");
     div.className="card";
+
+    const phoneDigits = digitsOnly(b?.rider?.phone||"");
+    const smsHref = phoneDigits ? `sms:+1${phoneDigits}` : "";
 
     div.innerHTML=`
       <div class="card-label-row">
         <span><strong>${b.type||"Ride"}</strong></span>
         <span class="badge">${b.status||"—"}</span>
       </div>
+
       <div class="loc-line">FROM: ${b.pickup?.address||"—"}</div>
       ${b.stops?.length?`<div class="loc-line">STOPS: ${b.stops.map(s=>s.address).join(" → ")}</div>`:""}
       <div class="loc-line">TO: ${b.dropoff?.address||"—"}</div>
@@ -1014,15 +1020,54 @@ function renderColumn(id,arr){
 
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
           <div style="font-size:.75rem;color:#bbb;">Rider: ${b.rider?.name||"—"}</div>
-          <div style="display:flex;gap:4px;flex-wrap:wrap;">
-            ${b.rider?.phone?`<a class="chip" href="sms:${b.rider.phone}">Text Rider</a>`:""}
+
+          <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;">
+            ${phoneDigits ? `<a class="chip" href="${smsHref}">Text Rider</a>` : ""}
+
+            ${needsBridge ? `
+              <button class="chip sms-copy"
+                data-kind="RIDE_ADDED_LOGIN"
+                data-booking='${encodeURIComponent(JSON.stringify(b))}'>
+                Copy SMS: Ride Added + Login Link
+              </button>
+            ` : ""}
+
+            <button class="chip sms-copy"
+              data-kind="ACCEPTED"
+              data-booking='${encodeURIComponent(JSON.stringify(b))}'>
+              Copy SMS: Accepted
+            </button>
+
+            <button class="chip sms-copy"
+              data-kind="ENROUTE"
+              data-booking='${encodeURIComponent(JSON.stringify(b))}'>
+              Copy SMS: On the way
+            </button>
+
+            <button class="chip sms-copy"
+              data-kind="ARRIVED"
+              data-booking='${encodeURIComponent(JSON.stringify(b))}'>
+              Copy SMS: Arrived
+            </button>
+
+            <button class="chip sms-copy"
+              data-kind="CHANGE"
+              data-booking='${encodeURIComponent(JSON.stringify(b))}'>
+              Copy SMS: Change
+            </button>
+
+            <button class="chip sms-copy"
+              data-kind="CANCELLED"
+              data-booking='${encodeURIComponent(JSON.stringify(b))}'>
+              Copy SMS: Cancelled
+            </button>
+
             ${isEnroute?`<a class="chip primary" href="https://location-reader.bigredtransportation.workers.dev/?id=${rideId}" target="_blank">Live Map</a>`:""}
           </div>
         </div>
       </div>
     `;
 
-    // DEBUG: show what we rendered + the resolved riderId we stamped into DOM
     log("Rendered booking rider object → " + JSON.stringify(b.rider||{}));
     if(!riderIdResolved){
       log("⚠️ riderId missing in payload for rideId " + rideId + " (will use fallback GET on change)");
@@ -1053,23 +1098,84 @@ async function fetchBookingById(rideId){
 }
 
 /* =======================
-   DISPATCH EVENTS (FIXED)
+   SMS TEMPLATES (Copy Chips)
+   ======================= */
+function safeName(b){
+  return (b?.rider?.name || "there").trim() || "there";
+}
+function safePickup(b){
+  return (b?.pickup?.address || "").trim();
+}
+function safeDropoff(b){
+  return (b?.dropoff?.address || "").trim();
+}
+function safeWhen(b){
+  // "time" is the manual field, may exist elsewhere too
+  return (b?.time || b?.scheduledTime || b?.scheduled_time || "").trim();
+}
+function safeRideId(b){
+  return (b?.id || "").trim();
+}
+
+/**
+ * Root rider login page (main branch):
+ *  - rider-login.html
+ * MyRide:
+ *  - /rider/myride.html?id=...
+ *
+ * We send riders to login for manual/unclaimed rides so they can claim/link.
+ */
+function buildSmsText(kind, booking){
+  const name = safeName(booking);
+  const rideId = safeRideId(booking);
+  const pickup = safePickup(booking);
+  const dropoff = safeDropoff(booking);
+  const when = safeWhen(booking);
+
+  const myRideLink = rideId ? `${HOME_URL}/rider/myride.html?id=${encodeURIComponent(rideId)}` : `${HOME_URL}/rider/myride.html`;
+  const loginLink = rideId ? `${RIDER_LOGIN_URL}?ride=${encodeURIComponent(rideId)}` : RIDER_LOGIN_URL;
+
+  const header = `Big Red Connect — ${name}`;
+
+  const lines = {
+    RIDE_ADDED_LOGIN:
+      `${header}\n✅ I’ve got your ride request.\n${when ? `⏰ Time: ${when}\n` : ""}${pickup ? `📍 Pickup: ${pickup}\n` : ""}${dropoff ? `🎯 Dropoff: ${dropoff}\n` : ""}\nTo confirm + track updates, tap to log in:\n${loginLink}`,
+
+    ACCEPTED:
+      `${header}\n✅ Your ride is accepted.\nTrack here:\n${myRideLink}`,
+
+    ENROUTE:
+      `${header}\n🚗 I’m on the way.\nTrack here:\n${myRideLink}`,
+
+    ARRIVED:
+      `${header}\n📍 I’m here at pickup.\nTrack here:\n${myRideLink}`,
+
+    CHANGE:
+      `${header}\nQuick update — what changed for your pickup/dropoff/time?\nReply here and I’ll adjust it.`,
+
+    CANCELLED:
+      `${header}\n⚠️ Your ride request was cancelled.\nIf you still need a connection tonight, reply here and we’ll regroup.`
+  };
+
+  return lines[kind] || `${header}\n(Template not found)`;
+}
+
+/* =======================
+   DISPATCH EVENTS (status + vehicle + sms chips)
    ======================= */
 document.body.addEventListener("change", async (e) => {
   if (!e.target.classList.contains("status-dropdown")) return;
 
-  const select = e.target; // status-dropdown is the select itself
+  const select = e.target;
   const rideId = select.dataset.id;
   const newState = select.value;
 
-  // capture riderId from DOM
   let riderId = select.dataset.riderId || "";
 
   log("Resolved rideId → " + rideId);
   log("Resolved riderId → " + (riderId || "null"));
 
   try {
-    // update status first
     const r = await fetch(`${BOOKINGS_API}/api/driver/bookings/${rideId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -1081,14 +1187,12 @@ document.body.addEventListener("change", async (e) => {
     showToast(r.ok ? `Status → ${newState}` : "Update failed");
 
     if (r.ok) {
-      // if riderId missing, fallback GET to resolve it
       if (!riderId) {
         log("riderId missing at change-time → attempting fallback GET…");
         riderId = await fetchBookingById(rideId) || "";
         log("Fallback resolved riderId → " + (riderId || "null"));
       }
 
-      // send push if we have riderId
       if (riderId) {
         sendRiderStatusPush({ riderId, rideId, status: newState });
       } else {
@@ -1096,7 +1200,6 @@ document.body.addEventListener("change", async (e) => {
       }
     }
 
-    // refresh board after everything
     fetchBookings();
 
   } catch (err) {
@@ -1128,6 +1231,27 @@ document.body.addEventListener("change",async(e)=>{
   }
 });
 
+/* ✅ Copy SMS chips */
+document.body.addEventListener("click", async (e) => {
+  const btn = e.target.closest(".sms-copy");
+  if(!btn) return;
+
+  const kind = btn.dataset.kind || "";
+  const enc = btn.dataset.booking || "";
+  if(!kind || !enc) return;
+
+  let booking = null;
+  try{
+    booking = JSON.parse(decodeURIComponent(enc));
+  }catch(_){
+    showToast("Template error");
+    return;
+  }
+
+  const sms = buildSmsText(kind, booking);
+  await copyTextToClipboard(sms);
+});
+
 /* =======================
    SCOPE TOGGLE
    ======================= */
@@ -1153,6 +1277,7 @@ document.getElementById("postToLive").onclick=postToLive;
 document.getElementById("pushApplyTemplate").onclick=applyPushTemplate;
 document.getElementById("clearPush").onclick=clearPush;
 document.getElementById("sendBroadcastPush").onclick=handlePushBroadcast;
+
 document.getElementById("btnCreateManualRide").onclick=createManualRide;
 document.getElementById("btnClearManualRide").onclick=clearManualRideForm;
 
