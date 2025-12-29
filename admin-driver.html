@@ -15,10 +15,6 @@
 <meta name="theme-color" content="#000">
 <meta http-equiv="Cache-Control" content="no-store"/>
 
-<script
-  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places&callback=initManualPlaces"
-  async defer></script>
-
 <!-- OneSignal v16 -->
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <script>
@@ -112,6 +108,9 @@ textarea{width:100%;min-height:90px;background:#111;color:#fff;border:1px solid 
 .status-dropdown{background:#111;color:#fff;border:1px solid #333;padding:4px;border-radius:6px;font-size:.75rem;}
 .chip{padding:3px 7px;border-radius:999px;border:1px solid #444;background:#111;color:#eee;font-size:.7rem;cursor:pointer;text-decoration:none;display:inline-block;}
 .chip.primary{border-color:var(--red);color:#ffdada;}
+.chip.sms{border-color:#2a6; color:#caffdf;}
+.chip.sms2{border-color:#4a7; color:#d8ffe6;}
+.chip.sms3{border-color:#5a9; color:#eafff2;}
 #toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#111;color:#fff;border:1px solid var(--red);padding:8px 16px;border-radius:16px;opacity:0;pointer-events:none;transition:opacity .35s;z-index:50;font-size:.8rem;}
 #toast.show{opacity:1;}
 #debugLog{font-family:monospace;font-size:.72rem;color:#0f0;background:#000;padding:6px;max-height:220px;overflow:auto;border-top:1px solid #222;}
@@ -157,36 +156,6 @@ body.mode-admin .driver-only{display:block;}
           <option value="offline" selected>🔴 Offline</option>
         </select>
         <button class="btn btn-primary" id="updateStatusBtn">💾 Save</button>
-        <section class="admin-only">
-        <h2>Create Ride (Manual)</h2>
-      
-        <div class="row">
-          <input id="manualRiderName" type="text" placeholder="Rider name (optional)" style="flex:1;">
-          <input id="manualRiderPhone" type="text" placeholder="Rider phone (required)" style="flex:1;">
-        </div>
-      
-        <label style="font-size:.8rem;color:#ccc;">Pickup</label>
-        <input id="manualPickup" type="text" placeholder="Pickup address or place">
-      
-        <label style="font-size:.8rem;color:#ccc;">Dropoff</label>
-        <input id="manualDropoff" type="text" placeholder="Dropoff address or place">
-      
-        <div class="row">
-          <input id="manualTime" type="text" placeholder="Time (optional) e.g., 12/31 10:15 PM" style="flex:1;">
-        </div>
-      
-        <label style="font-size:.8rem;color:#ccc;">Notes (optional)</label>
-        <textarea id="manualNotes" placeholder="Gate code, apartment, extra context…"></textarea>
-      
-        <div class="row" style="margin-top:8px;">
-          <button class="btn btn-primary" id="btnCreateManualRide">➕ Create Manual Ride</button>
-          <button class="btn btn-secondary" id="btnClearManualRide">🧹 Clear</button>
-        </div>
-      
-        <p class="meta">
-          Creates a REQUESTED booking with <code>created_via = "manual"</code>. Rider push will only work after a riderId exists (7.2).
-        </p>
-      </section>
       </div>
 
       <div class="row">
@@ -298,6 +267,12 @@ body.mode-admin .driver-only{display:block;}
       </div>
 
       <p class="meta">Change status to move rides. Rider push is sent on each status update (if riderId can be resolved).</p>
+
+      <!-- ✅ 7.5 Copy/Paste SMS Templates (no API) -->
+      <p class="meta" style="margin-top:10px;">
+        📲 <strong>SMS Templates:</strong> Each ride card includes “Copy SMS” chips (manual paste into OpenPhone).
+        “Ride Added + Login Link” appears when a ride has no riderId yet (manual/texted rides).
+      </p>
     </section>
   </div>
 </div>
@@ -406,6 +381,103 @@ function applyMode(mode){
 }
 
 /* =======================
+   7.5 — COPY/PASTE SMS TEMPLATES (NO API)
+   ======================= */
+function digitsOnly(p){ return String(p||"").replace(/\D/g,""); }
+function fmtWhen(b){
+  if(b?.scheduledFor) return `Scheduled: ${formatDateTime(b.scheduledFor)}`;
+  return "When: ASAP";
+}
+function riderName(b){
+  return (b?.rider?.name || "there").trim() || "there";
+}
+function loginLink(){
+  // Use your existing login page path
+  return `${HOME_URL}/rider-login.html`;
+}
+function myRideLink(){
+  return `${HOME_URL}/rider/myride.html`;
+}
+function buildSmsText(kind, b){
+  const name = riderName(b);
+  const rideId = b?.id || "";
+  const pickup = b?.pickup?.address || "—";
+  const dropoff = b?.dropoff?.address || "—";
+  const when = fmtWhen(b);
+
+  // short + copy/paste friendly (OpenPhone)
+  const lines = [];
+  const header = `Big Red Connect`;
+  const rideline = rideId ? `Ride ID: ${rideId}` : "";
+
+  if(kind === "RIDE_ADDED_LOGIN"){
+    lines.push(`${header}: Hey ${name} — your ride is set.`);
+    lines.push(`${when}`);
+    lines.push(`Pickup: ${pickup}`);
+    lines.push(`Dropoff: ${dropoff}`);
+    if(rideline) lines.push(rideline);
+    lines.push("");
+    lines.push(`To track updates, open: ${loginLink()}`);
+    lines.push(`Log in with THIS phone number you're texting from.`);
+    lines.push(`Then open My Ride: ${myRideLink()}`);
+    return lines.join("\n");
+  }
+
+  if(kind === "ACCEPTED"){
+    lines.push(`${header}: Hey ${name} — I’ve accepted your ride ✅`);
+    lines.push(`${when}`);
+    if(rideline) lines.push(rideline);
+    return lines.join("\n");
+  }
+
+  if(kind === "ENROUTE"){
+    lines.push(`${header}: Hey ${name} — I’m on the way 🚗`);
+    lines.push(`Pickup: ${pickup}`);
+    if(rideline) lines.push(rideline);
+    return lines.join("\n");
+  }
+
+  if(kind === "ARRIVED"){
+    lines.push(`${header}: Hey ${name} — I’m here 📍`);
+    lines.push(`Pickup: ${pickup}`);
+    if(rideline) lines.push(rideline);
+    return lines.join("\n");
+  }
+
+  if(kind === "CHANGE"){
+    lines.push(`${header}: Hey ${name} — quick update on your ride.`);
+    lines.push(`Reply with any changes needed (pickup/dropoff/time).`);
+    if(rideline) lines.push(rideline);
+    return lines.join("\n");
+  }
+
+  if(kind === "CANCELLED"){
+    lines.push(`${header}: Hey ${name} — your ride has been cancelled ⚠️`);
+    if(rideline) lines.push(rideline);
+    lines.push(`If you still need a connection, reply here and I’ll help.`);
+    return lines.join("\n");
+  }
+
+  // fallback
+  lines.push(`${header}: Hey ${name}`);
+  if(rideline) lines.push(rideline);
+  return lines.join("\n");
+}
+
+async function copyTextToClipboard(text){
+  try{
+    await navigator.clipboard.writeText(text);
+    showToast("SMS copied");
+  }catch(e){
+    // fallback prompt for older iOS webviews
+    try{
+      window.prompt("Copy SMS:", text);
+    }catch(_){}
+    showToast("Copy ready");
+  }
+}
+
+/* =======================
    IMAGES
    ======================= */
 function loadImages(){setImage(0);}
@@ -414,76 +486,6 @@ function setImage(idx){
   imgIndex=(idx+LIVE_IMAGES.length)%LIVE_IMAGES.length;
   document.getElementById("statusImage").src=LIVE_IMAGES[imgIndex];
   log("Image set: "+LIVE_IMAGES[imgIndex]);
-}
-
-/* =======================
-   MANUAL RIDE CREATE (7.1)
-   ======================= */
-function normPhone(p){
-  return String(p||"").replace(/[^\d+]/g,"").trim();
-}
-
-async function createManualRide(){
-  const name  = (document.getElementById("manualRiderName").value || "").trim();
-  const phone = normPhone(document.getElementById("manualRiderPhone").value);
-  const pickup = (document.getElementById("manualPickup").value || "").trim();
-  const dropoff = (document.getElementById("manualDropoff").value || "").trim();
-  const time = (document.getElementById("manualTime").value || "").trim();
-  const notes = (document.getElementById("manualNotes").value || "").trim();
-
-  if(!phone){
-    showToast("Rider phone required");
-    return;
-  }
-  if(!pickup || !dropoff){
-    showToast("Pickup + dropoff required");
-    return;
-  }
-
-  const payload = {
-    rider_name: name,
-    rider_phone: phone,
-    pickup,
-    dropoff,
-    time,
-    notes
-  };
-
-  try{
-    log("Manual ride POST… " + JSON.stringify(payload));
-
-    const r = await fetch(`${BOOKINGS_API}/api/admin/bookings/manual`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Admin-Secret": AUTH_SECRET
-      },
-      body: JSON.stringify(payload)
-    });
-
-    const txt = await r.text();
-    log(`Manual ride response → ${r.status} ${txt}`);
-
-    if(!r.ok){
-      showToast("Manual create failed");
-      return;
-    }
-
-    showToast("Manual ride created");
-    // refresh dispatch
-    fetchBookings();
-  }catch(e){
-    log("Manual create error: " + e.message);
-    showToast("Manual create error");
-  }
-}
-
-function clearManualRideForm(){
-  ["manualRiderName","manualRiderPhone","manualPickup","manualDropoff","manualTime","manualNotes"]
-    .forEach(id => {
-      const el = document.getElementById(id);
-      if(el) el.value = "";
-    });
 }
 
 /* =======================
@@ -590,26 +592,18 @@ function determineGpsInterval() {
   let interval = 600000; // 10 minutes
 
   // Check active bookings
-  const active = document.querySelectorAll(
-    "#listActive .card"
-  );
-
-  if (active.length > 0) {
-    // Active ride states
-    interval = 20000; // 20 seconds default
-  }
+  const active = document.querySelectorAll("#listActive .card");
+  if (active.length > 0) interval = 20000; // 20 seconds default
 
   // Optional: tighten when very close to pickup (future-safe)
-  if (window.__nearPickup === true) {
-    interval = 5000; // 5 seconds
-  }
+  if (window.__nearPickup === true) interval = 5000; // 5 seconds
 
   return interval;
 }
 
 function startGpsPings(){
   if (gpsTimer) {
-    clearInterval(gpsTimer);
+    clearTimeout(gpsTimer);
     gpsTimer = null;
   }
 
@@ -627,12 +621,12 @@ function startGpsPings(){
       document.getElementById("gpsStamp").textContent =
         new Date().toLocaleString("en-US", { timeZone: TZ });
 
-document.getElementById("gpsRate").textContent =
-  gpsLastTs
-    ? Math.round((now - gpsLastTs) / 1000) + "s"
-    : interval >= 60000
-        ? Math.round(interval / 60000) + "m"
-        : Math.round(interval / 1000) + "s";
+      document.getElementById("gpsRate").textContent =
+        gpsLastTs
+          ? Math.round((now - gpsLastTs) / 1000) + "s"
+          : interval >= 60000
+              ? Math.round(interval / 60000) + "m"
+              : Math.round(interval / 1000) + "s";
 
       gpsLastTs = now;
 
@@ -671,65 +665,9 @@ document.getElementById("gpsRate").textContent =
 }
 
 function stopGpsPings(){
-  if(gpsTimer){clearInterval(gpsTimer);gpsTimer=null;}
+  if(gpsTimer){clearTimeout(gpsTimer);gpsTimer=null;}
   document.getElementById("gpsRate").textContent="—";
 }
-
-/* =======================
-   MANUAL PLACE AUTOCOMPLETE (7.1 UX)
-   ======================= */
-function setupManualAutocomplete(inputId){
-  try{
-    const input = document.getElementById(inputId);
-    if(!input || !window.google || !google.maps || !google.maps.places) return;
-
-    // OKC metro-ish bounding box (same spirit as ride-request.html)
-    const okcBounds = new google.maps.LatLngBounds(
-      { lat: 34.9000, lng: -98.2000 }, // SW
-      { lat: 36.0000, lng: -96.0000 }  // NE
-    );
-
-    const ac = new google.maps.places.Autocomplete(input, {
-      bounds: okcBounds,
-      strictBounds: false,
-      componentRestrictions: { country: "us" },
-      fields: ["formatted_address", "name", "place_id", "geometry.location"]
-    });
-
-    // Bias to current device location if available
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        pos => {
-          try{
-            const loc = new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude);
-            const biasBounds = new google.maps.LatLngBounds(loc, loc);
-            ac.setBounds(biasBounds);
-          }catch(e){}
-        },
-        () => {},
-        { enableHighAccuracy:true, maximumAge:15000, timeout:8000 }
-      );
-    }
-
-    // When a place is selected, prefer formatted_address (or name fallback)
-    ac.addListener("place_changed", () => {
-      const p = ac.getPlace();
-      if(!p) return;
-      const addr = p.formatted_address || p.name;
-      if(addr) input.value = addr;
-    });
-
-    log("Manual autocomplete enabled for: " + inputId);
-  }catch(e){
-    log("Manual autocomplete setup error ("+inputId+"): " + e.message);
-  }
-}
-
-// Google callback (script tag calls this)
-window.initManualPlaces = function(){
-  setupManualAutocomplete("manualPickup");
-  setupManualAutocomplete("manualDropoff");
-};
 
 /* =======================
    LIVE MAP CAPTIONS
@@ -945,6 +883,17 @@ function renderAllBookings(list){
   document.getElementById("countDone").textContent=doneArr.length;
 }
 
+function isManualOrUnclaimed(b){
+  const hasRiderId = !!resolveRiderIdFromBooking(b);
+  const createdVia =
+    (String(b?.created_via||"").toLowerCase()==="manual") ||
+    (String(b?.source||"").toLowerCase()==="manual") ||
+    (String(b?.metadata?.created_via||"").toLowerCase()==="manual") ||
+    (String(b?.metadata?.createdVia||"").toLowerCase()==="manual");
+  // if no riderId yet, treat as “needs login bridge”
+  return createdVia || !hasRiderId;
+}
+
 function renderColumn(id,arr){
   const box=document.getElementById(id);
   box.innerHTML="";
@@ -960,15 +909,21 @@ function renderColumn(id,arr){
     const isEnroute=["ENROUTE","ARRIVED","PICKED_UP"].includes(b.status);
 
     const riderIdResolved = resolveRiderIdFromBooking(b);
+    const needsBridge = isManualOrUnclaimed(b);
 
     const div=document.createElement("div");
     div.className="card";
+
+    // phone link (normalized but keep original if already good)
+    const phoneDigits = digitsOnly(b?.rider?.phone||"");
+    const smsHref = phoneDigits ? `sms:+1${phoneDigits}` : "";
 
     div.innerHTML=`
       <div class="card-label-row">
         <span><strong>${b.type||"Ride"}</strong></span>
         <span class="badge">${b.status||"—"}</span>
       </div>
+
       <div class="loc-line">FROM: ${b.pickup?.address||"—"}</div>
       ${b.stops?.length?`<div class="loc-line">STOPS: ${b.stops.map(s=>s.address).join(" → ")}</div>`:""}
       <div class="loc-line">TO: ${b.dropoff?.address||"—"}</div>
@@ -1014,8 +969,48 @@ function renderColumn(id,arr){
 
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
           <div style="font-size:.75rem;color:#bbb;">Rider: ${b.rider?.name||"—"}</div>
-          <div style="display:flex;gap:4px;flex-wrap:wrap;">
-            ${b.rider?.phone?`<a class="chip" href="sms:${b.rider.phone}">Text Rider</a>`:""}
+
+          <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;">
+            ${phoneDigits ? `<a class="chip" href="${smsHref}">Text Rider</a>` : ""}
+
+            ${needsBridge ? `
+              <button class="chip sms sms-copy"
+                data-kind="RIDE_ADDED_LOGIN"
+                data-booking='${encodeURIComponent(JSON.stringify(b))}'>
+                Copy SMS: Ride Added + Login Link
+              </button>
+            ` : ""}
+
+            <button class="chip sms2 sms-copy"
+              data-kind="ACCEPTED"
+              data-booking='${encodeURIComponent(JSON.stringify(b))}'>
+              Copy SMS: Accepted
+            </button>
+
+            <button class="chip sms2 sms-copy"
+              data-kind="ENROUTE"
+              data-booking='${encodeURIComponent(JSON.stringify(b))}'>
+              Copy SMS: On the way
+            </button>
+
+            <button class="chip sms3 sms-copy"
+              data-kind="ARRIVED"
+              data-booking='${encodeURIComponent(JSON.stringify(b))}'>
+              Copy SMS: Arrived
+            </button>
+
+            <button class="chip sms-copy"
+              data-kind="CHANGE"
+              data-booking='${encodeURIComponent(JSON.stringify(b))}'>
+              Copy SMS: Change
+            </button>
+
+            <button class="chip sms-copy"
+              data-kind="CANCELLED"
+              data-booking='${encodeURIComponent(JSON.stringify(b))}'>
+              Copy SMS: Cancelled
+            </button>
+
             ${isEnroute?`<a class="chip primary" href="https://location-reader.bigredtransportation.workers.dev/?id=${rideId}" target="_blank">Live Map</a>`:""}
           </div>
         </div>
@@ -1128,6 +1123,27 @@ document.body.addEventListener("change",async(e)=>{
   }
 });
 
+/* ✅ 7.5 click handler: Copy SMS chips */
+document.body.addEventListener("click", async (e) => {
+  const btn = e.target.closest(".sms-copy");
+  if(!btn) return;
+
+  const kind = btn.dataset.kind || "";
+  const enc = btn.dataset.booking || "";
+  if(!kind || !enc) return;
+
+  let booking = null;
+  try{
+    booking = JSON.parse(decodeURIComponent(enc));
+  }catch(_){
+    showToast("Template error");
+    return;
+  }
+
+  const sms = buildSmsText(kind, booking);
+  await copyTextToClipboard(sms);
+});
+
 /* =======================
    SCOPE TOGGLE
    ======================= */
@@ -1153,8 +1169,6 @@ document.getElementById("postToLive").onclick=postToLive;
 document.getElementById("pushApplyTemplate").onclick=applyPushTemplate;
 document.getElementById("clearPush").onclick=clearPush;
 document.getElementById("sendBroadcastPush").onclick=handlePushBroadcast;
-document.getElementById("btnCreateManualRide").onclick=createManualRide;
-document.getElementById("btnClearManualRide").onclick=clearManualRideForm;
 
 ["pushTitle","pushMessage","pushUrl"].forEach(id=>{
   document.getElementById(id).oninput=updPrev;
