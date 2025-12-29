@@ -103,24 +103,20 @@
 
     /* ------------------------------------------------------
        DESTINATION HANDOFF (Index → Ride Request)
+       - sessionStorage primary
+       - localStorage fallback
        ------------------------------------------------------ */
     function stashDropoffHandoff(dest) {
-      try {
-        // sessionStorage is ideal for one-time handoff between pages
-        sessionStorage.setItem("brc_dropoff_handoff", dest);
-      } catch (e) {}
-
-      try {
-        // fallback for browsers that might block sessionStorage in edge cases
-        localStorage.setItem("brc_dropoff_handoff", dest);
-      } catch (e) {}
+      try { sessionStorage.setItem("brc_dropoff_handoff", dest); } catch (e) {}
+      try { localStorage.setItem("brc_dropoff_handoff", dest); } catch (e) {}
     }
 
     function goRequestRide() {
       if (!isRiderLoggedIn()) {
         window.location.href = "/rider-login.html?next=request";
       } else {
-        window.location.href = "/rider/rider.html";
+        // ✅ go straight to ride request page (hub can still link elsewhere)
+        window.location.href = "/rider/ride-request.html";
       }
     }
 
@@ -133,9 +129,9 @@
       stashDropoffHandoff(dest);
 
       if (!isRiderLoggedIn()) {
-        // Keep your existing behavior (login redirect includes the address)
+        // ✅ Login will read these and then forward to ride-request with dropoff
         window.location.href =
-          "/rider-login.html?next=ride-from-search&address=" +
+          "/rider-login.html?next=ride-request&dropoff=" +
           encodeURIComponent(dest);
       } else {
         // ✅ Also pass via querystring as a fallback
@@ -148,12 +144,10 @@
     function goMyProfile() {
       try {
         const raw = localStorage.getItem("bigred_rider_profile_v1");
-
         if (!raw) {
           window.location.href = "/rider-login.html?next=profile";
           return;
         }
-
         window.location.href = "/rider/rider.html";
       } catch (err) {
         console.error(err);
@@ -289,7 +283,7 @@
         { fields: ["formatted_address", "name"] }
       );
     }
-    window.onload = initQuickSearch;
+    window.addEventListener("load", initQuickSearch);
   </script>
 
   <!-- Status Pill -->
