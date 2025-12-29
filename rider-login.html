@@ -53,6 +53,14 @@
   const PROFILE_API  = "https://bigred-rider-profile.bigredtransportation.workers.dev";
   const BOOKINGS_API = "https://bigred-bookings.bigredtransportation.workers.dev";
 
+  // -------------------------------------------------------
+  // Read redirect intent from querystring
+  //   /rider-login.html?next=ride-from-search&address=...
+  // -------------------------------------------------------
+  const qs = new URLSearchParams(location.search);
+  const NEXT = (qs.get("next") || "").trim();
+  const NEXT_ADDRESS = (qs.get("address") || "").trim();
+
   function showToast(msg){
     const t=document.getElementById("toast");
     t.textContent=msg;
@@ -62,7 +70,18 @@
 
   document.getElementById("logoHome").onclick = () => location.href="/index.html";
 
+  // -------------------------------------------------------
+  // Destination handoff store (Index/Login → Ride Request)
+  // -------------------------------------------------------
+  function stashDropoffHandoff(dest){
+    if(!dest) return;
+    try { sessionStorage.setItem("brc_dropoff_handoff", dest); } catch(e){}
+    try { localStorage.setItem("brc_dropoff_handoff", dest); } catch(e){}
+  }
+
+  // -------------------------------------------------------
   // ✅ Claim any phone-only manual rides and attach this riderId
+  // -------------------------------------------------------
   async function claimManualRidesForThisPhone(){
     try{
       const riderId  = localStorage.getItem("riderId") || "";
@@ -83,6 +102,25 @@
     }
   }
 
+  // -------------------------------------------------------
+  // Decide where to go AFTER login
+  // -------------------------------------------------------
+  function redirectAfterLogin(){
+    // Highest priority: login came from Index quick-destination
+    if (NEXT === "ride-from-search" && NEXT_ADDRESS) {
+      stashDropoffHandoff(NEXT_ADDRESS);
+      window.location.href = "/rider/ride-request.html?dropoff=" + encodeURIComponent(NEXT_ADDRESS);
+      return;
+    }
+
+    // Optional: if you later add other next routes, handle here.
+    // For now, default behavior:
+    window.location.href = "/rider/rider.html";
+  }
+
+  // -------------------------------------------------------
+  // LOGIN CLICK
+  // -------------------------------------------------------
   document.getElementById("btnLogin").addEventListener("click", async () => {
     const btn = document.getElementById("btnLogin");
     btn.disabled = true;
@@ -143,8 +181,8 @@
         body:JSON.stringify(profile)
       }).catch(()=>{});
 
-      // 5) Go to hub
-      window.location.href = "/rider/rider.html";
+      // 5) Redirect based on intent
+      redirectAfterLogin();
 
     } catch(err){
       console.error(err);
