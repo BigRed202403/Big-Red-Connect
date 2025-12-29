@@ -122,6 +122,53 @@
       font-size:1rem;
       border-radius:10px;
     }
+
+    /* ✅ A.6 Baby Step 1: iPhone Add-to-Home-Screen helper */
+    .brc-a2hs-card{
+      background:#111;
+      border:1px solid #b30000;
+      border-radius:12px;
+      padding:12px;
+      margin:0 auto 16px;
+      max-width:340px;
+      color:#fff;
+      text-align:left;
+    }
+    .brc-a2hs-top{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:6px;
+    }
+    .brc-a2hs-title{
+      font-weight:800;
+      color:#ffdddd;
+      font-size:1rem;
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .brc-a2hs-close{
+      background:transparent;
+      border:1px solid #444;
+      color:#fff;
+      border-radius:10px;
+      padding:4px 10px;
+      cursor:pointer;
+      font-weight:800;
+    }
+    .brc-a2hs-body{
+      font-size:.9rem;
+      color:#ddd;
+      line-height:1.25rem;
+    }
+    .brc-a2hs-steps{
+      margin:8px 0 0 18px;
+      padding:0;
+    }
+    .brc-a2hs-steps li{
+      margin:4px 0;
+    }
   </style>
 </head>
 
@@ -146,6 +193,24 @@
 <div class="container">
   <h1>Welcome</h1>
   <div id="welcomeName" class="welcome"></div>
+
+  <!-- ✅ A.6 Baby Step 1: iPhone A2HS Helper (hidden unless eligible) -->
+  <div id="brcA2HS" style="display:none;">
+    <div class="brc-a2hs-card">
+      <div class="brc-a2hs-top">
+        <div class="brc-a2hs-title">📲 iPhone tip</div>
+        <button type="button" id="brcA2HSClose" class="brc-a2hs-close" aria-label="Dismiss">✕</button>
+      </div>
+      <div class="brc-a2hs-body">
+        Add <strong>Big Red Connect</strong> to your Home Screen for faster access and more reliable alerts.
+        <ol class="brc-a2hs-steps">
+          <li>Open this page in <strong>Safari</strong></li>
+          <li>Tap <strong>Share</strong> (⬆️)</li>
+          <li>Select <strong>Add to Home Screen</strong></li>
+        </ol>
+      </div>
+    </div>
+  </div>
 
   <!-- ✅ Active Ride Found Card (hidden unless an open ride is found) -->
   <div id="activeRideCard" class="card" style="display:none;">
@@ -239,6 +304,54 @@ function showActiveRideCard(booking){
 (async function initActiveRideCard(){
   const b = await findActiveRideForRider();
   if (b) showActiveRideCard(b);
+})();
+
+/* ✅ A.6 Baby Step 1: iPhone A2HS Helper (adds only; does not change existing flows) */
+(function(){
+  const KEY = "brcA2HS_dismissed_v1";
+
+  function isIOS(){
+    return /iP(hone|ad|od)/.test(navigator.userAgent);
+  }
+
+  function isSafari(){
+    const ua = navigator.userAgent;
+    const isChrome = /CriOS/.test(ua);
+    const isFirefox = /FxiOS/.test(ua);
+    const isEdge = /EdgiOS/.test(ua);
+    const isSafari = /Safari/.test(ua) && !isChrome && !isFirefox && !isEdge;
+    return isSafari;
+  }
+
+  function isStandalone(){
+    return (window.navigator.standalone === true) ||
+           (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches);
+  }
+
+  function shouldShow(){
+    if(!isIOS()) return false;
+    if(!isSafari()) return false;
+    if(isStandalone()) return false;
+    if(localStorage.getItem(KEY) === "1") return false;
+    return true;
+  }
+
+  function show(){
+    const wrap = document.getElementById("brcA2HS");
+    const close = document.getElementById("brcA2HSClose");
+    if(!wrap || !close) return;
+
+    wrap.style.display = "block";
+
+    close.addEventListener("click", () => {
+      try{ localStorage.setItem(KEY, "1"); }catch(_){}
+      wrap.style.display = "none";
+    });
+  }
+
+  window.addEventListener("load", () => {
+    if(shouldShow()) show();
+  });
 })();
 </script>
 
