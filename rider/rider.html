@@ -69,7 +69,7 @@
     h1 { font-size:1.5rem; }
     .welcome {
       color:#bbb;
-      margin-bottom:26px;
+      margin-bottom:18px;
       font-size:.95rem;
     }
     .btn {
@@ -88,6 +88,39 @@
     .btn-secondary {
       background:#111;
       border:1px solid #333;
+    }
+
+    /* ✅ Active Ride Found Card */
+    .card {
+      max-width:340px;
+      margin:0 auto 16px;
+      background:#111;
+      border:1px solid #333;
+      border-radius:12px;
+      padding:14px;
+      text-align:left;
+    }
+    .card-title {
+      font-weight:800;
+      font-size:1.05rem;
+      margin-bottom:6px;
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .card-sub {
+      color:#bbb;
+      font-size:.9rem;
+      margin-bottom:10px;
+      line-height:1.25rem;
+    }
+    .card .btn {
+      margin:0;
+      max-width:none;
+      text-align:center;
+      padding:14px;
+      font-size:1rem;
+      border-radius:10px;
     }
   </style>
 </head>
@@ -114,6 +147,13 @@
   <h1>Welcome</h1>
   <div id="welcomeName" class="welcome"></div>
 
+  <!-- ✅ Active Ride Found Card (hidden unless an open ride is found) -->
+  <div id="activeRideCard" class="card" style="display:none;">
+    <div class="card-title">🚗 Active Ride Found</div>
+    <div id="activeRideDetails" class="card-sub">Loading…</div>
+    <a id="openMyRideBtn" class="btn" href="/rider/myride.html">Open My Ride</a>
+  </div>
+
   <a class="btn" href="/rider/ride-request.html">Request a Ride</a>
   <a class="btn" href="/rider/myride.html">My Ride</a>
   <a class="btn btn-secondary" href="/rider/profile.html">Profile</a>
@@ -136,6 +176,70 @@ document.getElementById("logoutBtn").onclick = () => {
 const n = localStorage.getItem("riderName");
 document.getElementById("welcomeName").textContent =
   n ? `Hi ${n}, let’s get you moving.` : `Let’s get you moving.`;
+
+/* ✅ 7.3 Active Ride Found Card */
+const BOOKINGS_API = "https://bigred-bookings.bigredtransportation.workers.dev";
+
+function getCanonicalRiderId(){
+  // Prefer canonical profile object
+  const raw = localStorage.getItem("bigred_rider_profile_v1");
+  if (raw) {
+    try {
+      const p = JSON.parse(raw);
+      if (p && p.riderId) return String(p.riderId);
+    } catch {}
+  }
+  // Backward compatibility
+  const legacy = localStorage.getItem("riderId");
+  return legacy ? String(legacy) : "";
+}
+
+function isOpenStatus(s){
+  const st = String(s || "").toUpperCase();
+  return ["REQUESTED","ACCEPTED","ENROUTE","ARRIVED","PICKED_UP"].includes(st);
+}
+
+async function findActiveRideForRider(){
+  const riderId = getCanonicalRiderId();
+  if (!riderId) return null;
+
+  try{
+    const resp = await fetch(`${BOOKINGS_API}/api/driver/bookings?scope=active&t=${Date.now()}`);
+    if(!resp.ok) return null;
+
+    const list = await resp.json();
+    if(!Array.isArray(list)) return null;
+
+    // Find first open ride matching riderId
+    const match = list.find(b => (b?.rider?.riderId === riderId) && isOpenStatus(b?.status));
+    return match || null;
+  }catch(e){
+    return null;
+  }
+}
+
+function showActiveRideCard(booking){
+  const card = document.getElementById("activeRideCard");
+  const details = document.getElementById("activeRideDetails");
+  const btn = document.getElementById("openMyRideBtn");
+
+  const status = String(booking?.status || "").toUpperCase() || "—";
+  const pickup = booking?.pickup?.address || "—";
+  const dropoff = booking?.dropoff?.address || "—";
+  const rideId = booking?.id || "";
+
+  details.textContent = `Status: ${status} • From: ${pickup} • To: ${dropoff}`;
+
+  // Pass rideId for extra reliability (myride.html can ignore if it doesn't use it)
+  btn.href = rideId ? `/rider/myride.html?id=${encodeURIComponent(rideId)}` : "/rider/myride.html";
+
+  card.style.display = "block";
+}
+
+(async function initActiveRideCard(){
+  const b = await findActiveRideForRider();
+  if (b) showActiveRideCard(b);
+})();
 </script>
 
 <!-- 🔔 OneSignal INIT + IDENTITY REBIND (REQUIRED) -->
