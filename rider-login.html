@@ -55,11 +55,17 @@
 
   // -------------------------------------------------------
   // Read redirect intent from querystring
-  //   /rider-login.html?next=ride-from-search&address=...
+  // Supports:
+  //   next=ride-request&dropoff=...
+  //   next=ride-from-search&address=...
+  //   next=profile
+  //   next=request
   // -------------------------------------------------------
   const qs = new URLSearchParams(location.search);
   const NEXT = (qs.get("next") || "").trim();
-  const NEXT_ADDRESS = (qs.get("address") || "").trim();
+
+  const NEXT_DROPOFF  = (qs.get("dropoff") || "").trim();  // NEW for ride-request
+  const NEXT_ADDRESS  = (qs.get("address") || "").trim();  // legacy for ride-from-search
 
   function showToast(msg){
     const t=document.getElementById("toast");
@@ -106,15 +112,36 @@
   // Decide where to go AFTER login
   // -------------------------------------------------------
   function redirectAfterLogin(){
-    // Highest priority: login came from Index quick-destination
+    // ✅ NEW: Index can send next=ride-request&dropoff=...
+    if (NEXT === "ride-request") {
+      if (NEXT_DROPOFF) stashDropoffHandoff(NEXT_DROPOFF);
+      const url = NEXT_DROPOFF
+        ? ("/rider/ride-request.html?dropoff=" + encodeURIComponent(NEXT_DROPOFF))
+        : "/rider/ride-request.html";
+      window.location.href = url;
+      return;
+    }
+
+    // ✅ Backward compatible: next=ride-from-search&address=...
     if (NEXT === "ride-from-search" && NEXT_ADDRESS) {
       stashDropoffHandoff(NEXT_ADDRESS);
       window.location.href = "/rider/ride-request.html?dropoff=" + encodeURIComponent(NEXT_ADDRESS);
       return;
     }
 
-    // Optional: if you later add other next routes, handle here.
-    // For now, default behavior:
+    // ✅ Profile
+    if (NEXT === "profile") {
+      window.location.href = "/rider/profile.html";
+      return;
+    }
+
+    // ✅ Request (tile flow older behavior)
+    if (NEXT === "request") {
+      window.location.href = "/rider/ride-request.html";
+      return;
+    }
+
+    // Default: Rider hub
     window.location.href = "/rider/rider.html";
   }
 
