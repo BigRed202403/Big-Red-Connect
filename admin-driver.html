@@ -153,6 +153,36 @@ body.mode-admin .driver-only{display:block;}
           <option value="offline" selected>🔴 Offline</option>
         </select>
         <button class="btn btn-primary" id="updateStatusBtn">💾 Save</button>
+        <section class="admin-only">
+        <h2>Create Ride (Manual)</h2>
+      
+        <div class="row">
+          <input id="manualRiderName" type="text" placeholder="Rider name (optional)" style="flex:1;">
+          <input id="manualRiderPhone" type="text" placeholder="Rider phone (required)" style="flex:1;">
+        </div>
+      
+        <label style="font-size:.8rem;color:#ccc;">Pickup</label>
+        <input id="manualPickup" type="text" placeholder="Pickup address or place">
+      
+        <label style="font-size:.8rem;color:#ccc;">Dropoff</label>
+        <input id="manualDropoff" type="text" placeholder="Dropoff address or place">
+      
+        <div class="row">
+          <input id="manualTime" type="text" placeholder="Time (optional) e.g., 12/31 10:15 PM" style="flex:1;">
+        </div>
+      
+        <label style="font-size:.8rem;color:#ccc;">Notes (optional)</label>
+        <textarea id="manualNotes" placeholder="Gate code, apartment, extra context…"></textarea>
+      
+        <div class="row" style="margin-top:8px;">
+          <button class="btn btn-primary" id="btnCreateManualRide">➕ Create Manual Ride</button>
+          <button class="btn btn-secondary" id="btnClearManualRide">🧹 Clear</button>
+        </div>
+      
+        <p class="meta">
+          Creates a REQUESTED booking with <code>created_via = "manual"</code>. Rider push will only work after a riderId exists (7.2).
+        </p>
+      </section>
       </div>
 
       <div class="row">
@@ -380,6 +410,76 @@ function setImage(idx){
   imgIndex=(idx+LIVE_IMAGES.length)%LIVE_IMAGES.length;
   document.getElementById("statusImage").src=LIVE_IMAGES[imgIndex];
   log("Image set: "+LIVE_IMAGES[imgIndex]);
+}
+
+/* =======================
+   MANUAL RIDE CREATE (7.1)
+   ======================= */
+function normPhone(p){
+  return String(p||"").replace(/[^\d+]/g,"").trim();
+}
+
+async function createManualRide(){
+  const name  = (document.getElementById("manualRiderName").value || "").trim();
+  const phone = normPhone(document.getElementById("manualRiderPhone").value);
+  const pickup = (document.getElementById("manualPickup").value || "").trim();
+  const dropoff = (document.getElementById("manualDropoff").value || "").trim();
+  const time = (document.getElementById("manualTime").value || "").trim();
+  const notes = (document.getElementById("manualNotes").value || "").trim();
+
+  if(!phone){
+    showToast("Rider phone required");
+    return;
+  }
+  if(!pickup || !dropoff){
+    showToast("Pickup + dropoff required");
+    return;
+  }
+
+  const payload = {
+    rider_name: name,
+    rider_phone: phone,
+    pickup,
+    dropoff,
+    time,
+    notes
+  };
+
+  try{
+    log("Manual ride POST… " + JSON.stringify(payload));
+
+    const r = await fetch(`${BOOKINGS_API}/api/admin/bookings/manual`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Admin-Secret": AUTH_SECRET
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const txt = await r.text();
+    log(`Manual ride response → ${r.status} ${txt}`);
+
+    if(!r.ok){
+      showToast("Manual create failed");
+      return;
+    }
+
+    showToast("Manual ride created");
+    // refresh dispatch
+    fetchBookings();
+  }catch(e){
+    log("Manual create error: " + e.message);
+    showToast("Manual create error");
+  }
+}
+
+function clearManualRideForm(){
+  ["manualRiderName","manualRiderPhone","manualPickup","manualDropoff","manualTime","manualNotes"]
+    .forEach(id => {
+      const el = document.getElementById(id);
+      if(el) el.value = "";
+    });
 }
 
 /* =======================
@@ -993,6 +1093,8 @@ document.getElementById("postToLive").onclick=postToLive;
 document.getElementById("pushApplyTemplate").onclick=applyPushTemplate;
 document.getElementById("clearPush").onclick=clearPush;
 document.getElementById("sendBroadcastPush").onclick=handlePushBroadcast;
+document.getElementById("btnCreateManualRide").onclick=createManualRide;
+document.getElementById("btnClearManualRide").onclick=clearManualRideForm;
 
 ["pushTitle","pushMessage","pushUrl"].forEach(id=>{
   document.getElementById(id).oninput=updPrev;
