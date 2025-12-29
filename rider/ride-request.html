@@ -525,27 +525,28 @@
       const u = new URL(window.location.href);
       u.searchParams.delete("dropoff");
       u.searchParams.delete("destination");
-      window.history.replaceState({}, "", u.pathname + (u.search ? u.search : ""));
+      window.history.replaceState({}, "", u.pathname + (u.search || "") + (u.hash || ""));
     } catch (e) {}
   }
 
   function applyHandoffDropoffIfAny() {
-    const handoff = readHandoffDropoff();
-    if (!handoff || !handoff.value) return;
+  const handoff = readHandoffDropoff();
+  if (!handoff || !handoff.value) return;
 
-    const dropEl = document.getElementById("dropoff");
-    if (!dropEl) return;
+  // Clear immediately so Safari/iOS reload quirks don’t reapply
+  clearHandoffDropoff();
 
-    // Only set if empty (don’t stomp edits/repeat loads)
-    if (!String(dropEl.value || "").trim()) {
-      dropEl.value = handoff.value;
-      // Clear any previous structured place for dropoff (since this is plain text until user selects)
-      sessionStorage.removeItem("brc_place_dropoff_v1");
-      showToast("Drop-off carried over ✅");
-    }
+  const dropEl = document.getElementById("dropoff");
+  if (!dropEl) return;
 
-    clearHandoffDropoff();
+  // Only set if empty (don’t stomp edits/repeat loads)
+  if (!String(dropEl.value || "").trim()) {
+    dropEl.value = handoff.value;
+    // Clear any previous structured place for dropoff (since this is plain text until user selects)
+    sessionStorage.removeItem("brc_place_dropoff_v1");
+    showToast("Drop-off carried over ✅");
   }
+}
 
   // =====================================================
   // PROFILE SUMMARY + PREFILL
