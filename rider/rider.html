@@ -169,6 +169,28 @@
     .brc-helper-steps li{
       margin:4px 0;
     }
+
+    /* ✅ Baby Step 3: small button + status line */
+    .brc-mini-btn{
+      display:inline-block;
+      margin-top:10px;
+      padding:10px 12px;
+      border-radius:10px;
+      border:1px solid #444;
+      background:#000;
+      color:#fff;
+      cursor:pointer;
+      font-weight:800;
+      font-size:.9rem;
+    }
+    .brc-mini-btn:active{ transform: translateY(1px); }
+    .brc-status-line{
+      margin-top:10px;
+      font-size:.85rem;
+      color:#bbb;
+      line-height:1.2rem;
+    }
+    .brc-status-line strong{ color:#fff; }
   </style>
 </head>
 
@@ -226,9 +248,14 @@
           <li>Find <strong>Big Red Connect</strong></li>
           <li>Turn on <strong>Allow Notifications</strong> + <strong>Time Sensitive</strong> (optional)</li>
         </ol>
+
         <div style="margin-top:8px;color:#bbb;font-size:.85rem;">
           Tip: If you don’t see “Big Red Connect” in the list yet, open the app again and allow prompts when asked.
         </div>
+
+        <!-- ✅ Baby Step 3: Check Alerts Status -->
+        <button type="button" id="btnCheckAlerts" class="brc-mini-btn">Check Alerts Status</button>
+        <div id="alertsStatusText" class="brc-status-line" style="display:none;"></div>
       </div>
     </div>
   </div>
@@ -389,6 +416,85 @@ function showActiveRideCard(booking){
     if(standalone && localStorage.getItem(KEY_ALERTS) !== "1"){
       showAlertsHelp();
     }
+  });
+})();
+
+/* ✅ Baby Step 3: Check Alerts Status (additive only) */
+(function(){
+  const btn = document.getElementById("btnCheckAlerts");
+  const line = document.getElementById("alertsStatusText");
+  if(!btn || !line) return;
+
+  function showStatus(html){
+    line.innerHTML = html;
+    line.style.display = "block";
+  }
+
+  async function checkViaOneSignal(){
+    return new Promise((resolve) => {
+      try{
+        window.OneSignalDeferred = window.OneSignalDeferred || [];
+        OneSignalDeferred.push(async function(OneSignal){
+          try{
+            const supported = OneSignal.Notifications.isPushSupported();
+            // permission can be boolean or string depending on platform
+            const perm = OneSignal.Notifications.permission;
+
+            resolve({ supported, perm, source: "onesignal" });
+          }catch(e){
+            resolve(null);
+          }
+        });
+
+        // If OneSignal never runs, timeout to browser fallback
+        setTimeout(()=>resolve(null), 1200);
+      }catch(e){
+        resolve(null);
+      }
+    });
+  }
+
+  function checkViaBrowser(){
+    const supported = ("Notification" in window);
+    const perm = supported ? Notification.permission : "unsupported";
+    return { supported, perm, source: "browser" };
+  }
+
+  function normalizePermission(perm){
+    if(perm === true) return "granted";
+    if(perm === false) return "denied";
+    const p = String(perm || "").toLowerCase();
+    if(p === "granted" || p === "denied" || p === "default") return p;
+    return "unknown";
+  }
+
+  function renderResult(res){
+    if(!res || !res.supported){
+      showStatus(`Status: <strong>Not Supported</strong><br><span style="color:#bbb;">This device/browser can’t receive push alerts.</span>`);
+      return;
+    }
+
+    const p = normalizePermission(res.perm);
+
+    if(p === "granted"){
+      showStatus(`Status: <strong>Enabled ✅</strong><br><span style="color:#bbb;">Alerts are allowed. You should receive ride updates.</span>`);
+      return;
+    }
+
+    if(p === "denied"){
+      showStatus(`Status: <strong>Blocked ⛔</strong><br><span style="color:#bbb;">Go to iPhone <strong>Settings → Notifications → Big Red Connect</strong> and enable alerts.</span>`);
+      return;
+    }
+
+    // default/unknown
+    showStatus(`Status: <strong>Not Enabled Yet</strong><br><span style="color:#bbb;">If prompted, tap <strong>Allow</strong>. If you never see a prompt, reopen the app and try again.</span>`);
+  }
+
+  btn.addEventListener("click", async () => {
+    showStatus(`<span style="color:#bbb;">Checking…</span>`);
+    const os = await checkViaOneSignal();
+    const res = os || checkViaBrowser();
+    renderResult(res);
   });
 })();
 </script>
