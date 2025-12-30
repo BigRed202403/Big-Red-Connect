@@ -62,6 +62,7 @@
       font-size:1rem;
     }
     #menuPanel a:hover { background:#222; }
+
     .container {
       padding:20px;
       text-align:center;
@@ -69,9 +70,10 @@
     h1 { font-size:1.5rem; }
     .welcome {
       color:#bbb;
-      margin-bottom:18px;
+      margin-bottom:12px;
       font-size:.95rem;
     }
+
     .btn {
       display:block;
       width:100%;
@@ -84,6 +86,8 @@
       font-size:1.15rem;
       border-radius:12px;
       font-weight:700;
+      border:none;
+      cursor:pointer;
     }
     .btn-secondary {
       background:#111;
@@ -123,74 +127,57 @@
       border-radius:10px;
     }
 
-    /* ✅ A.6 Helpers (iPhone) */
-    .brc-helper-card{
-      background:#111;
-      border:1px solid #b30000;
-      border-radius:12px;
-      padding:12px;
-      margin:0 auto 16px;
+    /* ✅ Helpers */
+    .helper {
       max-width:340px;
-      color:#fff;
+      margin:0 auto 16px;
+      background:#0b0b0b;
+      border:1px solid #222;
+      border-radius:12px;
+      padding:14px;
       text-align:left;
     }
-    .brc-helper-top{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      margin-bottom:6px;
-    }
-    .brc-helper-title{
-      font-weight:800;
-      color:#ffdddd;
+    .helper h2{
+      margin:0 0 6px;
       font-size:1rem;
-      display:flex;
-      align-items:center;
-      gap:8px;
-    }
-    .brc-helper-close{
-      background:transparent;
-      border:1px solid #444;
       color:#fff;
-      border-radius:10px;
-      padding:4px 10px;
-      cursor:pointer;
-      font-weight:800;
     }
-    .brc-helper-body{
+    .helper p{
+      margin:0 0 10px;
+      color:#bbb;
       font-size:.9rem;
-      color:#ddd;
       line-height:1.25rem;
     }
-    .brc-helper-steps{
-      margin:8px 0 0 18px;
-      padding:0;
-    }
-    .brc-helper-steps li{
-      margin:4px 0;
-    }
-
-    /* ✅ Baby Step 3: small button + status line */
-    .brc-mini-btn{
-      display:inline-block;
-      margin-top:10px;
-      padding:10px 12px;
-      border-radius:10px;
-      border:1px solid #444;
-      background:#000;
-      color:#fff;
-      cursor:pointer;
-      font-weight:800;
-      font-size:.9rem;
-    }
-    .brc-mini-btn:active{ transform: translateY(1px); }
-    .brc-status-line{
-      margin-top:10px;
+    .pillline{
+      max-width:340px;
+      margin:0 auto 12px;
       font-size:.85rem;
-      color:#bbb;
-      line-height:1.2rem;
+      color:#ddd;
+      padding:10px 12px;
+      border-radius:999px;
+      border:1px solid #222;
+      background:#090909;
+      text-align:center;
     }
-    .brc-status-line strong{ color:#fff; }
+    .pillline.ok{ border-color:#1f6; }
+    .pillline.warn{ border-color:#ffcc00; }
+    .pillline.bad{ border-color:#b30000; }
+    .mini{
+      font-size:.82rem;
+      color:#bbb;
+    }
+    .steps{
+      margin:8px 0 0;
+      padding-left:18px;
+      color:#ccc;
+      font-size:.9rem;
+      line-height:1.3rem;
+    }
+    .linkish{
+      color:#ffdada;
+      text-decoration:underline;
+      cursor:pointer;
+    }
   </style>
 </head>
 
@@ -198,7 +185,7 @@
 
 <header>
   <div class="header-left">
-    <a href="/index.html"><img src="/BRCNYE2026.png" class="logo"></a>
+    <a href="/index.html"><img src="/BRCNYE2026.png" class="logo" alt="Big Red Connect"></a>
     <div class="header-title">Rider Hub</div>
   </div>
   <button id="menuBtn">☰</button>
@@ -216,48 +203,45 @@
   <h1>Welcome</h1>
   <div id="welcomeName" class="welcome"></div>
 
-  <!-- ✅ A.6 Baby Step 1: iPhone A2HS Helper (not installed yet) -->
-  <div id="brcA2HS" style="display:none;">
-    <div class="brc-helper-card">
-      <div class="brc-helper-top">
-        <div class="brc-helper-title">📲 iPhone tip</div>
-        <button type="button" id="brcA2HSClose" class="brc-helper-close" aria-label="Dismiss">✕</button>
-      </div>
-      <div class="brc-helper-body">
-        Add <strong>Big Red Connect</strong> to your Home Screen for faster access and more reliable alerts.
-        <ol class="brc-helper-steps">
-          <li>Open this page in <strong>Safari</strong></li>
-          <li>Tap <strong>Share</strong> (⬆️)</li>
-          <li>Select <strong>Add to Home Screen</strong></li>
-        </ol>
-      </div>
-    </div>
+  <!-- ✅ Alerts Status Pill -->
+  <div id="alertsPill" class="pillline">🔔 Alerts: checking…</div>
+
+  <!-- ✅ Enable Alerts Helper (only shown when useful) -->
+  <div id="alertsHelper" class="helper" style="display:none;">
+    <h2>Get Ride Alerts</h2>
+    <p>
+      Turn on notifications so you get updates like <b>Accepted</b>, <b>On the way</b>, and <b>Arrived</b>.
+    </p>
+    <button id="enableAlertsBtn" class="btn">🔔 Enable Alerts</button>
+    <div class="mini" id="alertsNote" style="margin-top:8px;"></div>
   </div>
 
-  <!-- ✅ A.6 Baby Step 2: Enable Alerts Helper (installed / standalone only) -->
-  <div id="brcAlertsHelp" style="display:none;">
-    <div class="brc-helper-card">
-      <div class="brc-helper-top">
-        <div class="brc-helper-title">🔔 Enable Alerts</div>
-        <button type="button" id="brcAlertsHelpClose" class="brc-helper-close" aria-label="Dismiss">✕</button>
-      </div>
-      <div class="brc-helper-body">
-        To get ride updates on iPhone:
-        <ol class="brc-helper-steps">
-          <li>Open <strong>Settings</strong> → <strong>Notifications</strong></li>
-          <li>Find <strong>Big Red Connect</strong></li>
-          <li>Turn on <strong>Allow Notifications</strong> + <strong>Time Sensitive</strong> (optional)</li>
-        </ol>
+  <!-- ✅ Add to Home Screen helper (iPhone/iPad + general PWA guidance) -->
+  <div id="a2hsHelper" class="helper" style="display:none;">
+    <h2>Add to Home Screen</h2>
+    <p>
+      For the best iPhone experience (and to help alerts work reliably), save Big Red Connect as an app on your Home Screen.
+    </p>
+    <ol class="steps" id="a2hsSteps">
+      <li>Tap the <b>Share</b> button in Safari (square with arrow).</li>
+      <li>Scroll and tap <b>Add to Home Screen</b>.</li>
+      <li>Open it from your Home Screen like an app.</li>
+    </ol>
+    <p class="mini" style="margin-top:10px;">
+      Already installed? You can ignore this.
+    </p>
+  </div>
 
-        <div style="margin-top:8px;color:#bbb;font-size:.85rem;">
-          Tip: If you don’t see “Big Red Connect” in the list yet, open the app again and allow prompts when asked.
-        </div>
-
-        <!-- ✅ Baby Step 3: Check Alerts Status -->
-        <button type="button" id="btnCheckAlerts" class="brc-mini-btn">Check Alerts Status</button>
-        <div id="alertsStatusText" class="brc-status-line" style="display:none;"></div>
-      </div>
-    </div>
+  <!-- ✅ Android Install helper (only shows if beforeinstallprompt fires) -->
+  <div id="androidInstallHelper" class="helper" style="display:none;">
+    <h2>Install the App</h2>
+    <p>
+      Install Big Red Connect for faster access and better alerts.
+    </p>
+    <button id="androidInstallBtn" class="btn">➕ Install Big Red Connect</button>
+    <p class="mini" style="margin-top:10px;">
+      If Install doesn’t appear, use your browser menu → <b>Install app</b> / <b>Add to Home screen</b>.
+    </p>
   </div>
 
   <!-- ✅ Active Ride Found Card (hidden unless an open ride is found) -->
@@ -280,7 +264,8 @@ document.getElementById("menuBtn").onclick = () => {
 };
 
 /* LOGOUT */
-document.getElementById("logoutBtn").onclick = () => {
+document.getElementById("logoutBtn").onclick = (e) => {
+  e.preventDefault();
   localStorage.clear();
   location.href = "/index.html";
 };
@@ -353,150 +338,153 @@ function showActiveRideCard(booking){
   const b = await findActiveRideForRider();
   if (b) showActiveRideCard(b);
 })();
+</script>
 
-/* ✅ A.6 Baby Step 1 + 2 Helpers (adds only; does not change existing flows) */
-(function(){
-  const KEY_A2HS = "brcA2HS_dismissed_v1";
-  const KEY_ALERTS = "brcAlertsHelp_dismissed_v1";
+<script>
+/* ============================================================
+   ✅ A.6 Bundle (No Push Test)
+   - Enable Alerts UI + logic (gated)
+   - A2HS helpers (iOS + Android)
+   - Status pill updates
+   ============================================================ */
 
-  function isIOS(){
-    return /iP(hone|ad|od)/.test(navigator.userAgent);
+function isIOS(){
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+}
+function isStandalone(){
+  // iOS: navigator.standalone; Others: display-mode
+  return (window.navigator.standalone === true) ||
+         (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches);
+}
+
+const alertsPill = document.getElementById("alertsPill");
+const alertsHelper = document.getElementById("alertsHelper");
+const alertsNote = document.getElementById("alertsNote");
+const enableAlertsBtn = document.getElementById("enableAlertsBtn");
+
+const a2hsHelper = document.getElementById("a2hsHelper");
+const androidInstallHelper = document.getElementById("androidInstallHelper");
+const androidInstallBtn = document.getElementById("androidInstallBtn");
+
+let deferredInstallPrompt = null;
+
+/* Android install prompt capture */
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  // Only show if not already installed
+  if (!isStandalone()) {
+    androidInstallHelper.style.display = "block";
+  }
+});
+
+androidInstallBtn.addEventListener("click", async () => {
+  if (!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  try { await deferredInstallPrompt.userChoice; } catch {}
+  deferredInstallPrompt = null;
+  androidInstallHelper.style.display = "none";
+});
+
+/* iOS / general A2HS helper */
+function updateA2HSHelper(){
+  // Show for iOS Safari when not installed
+  if (isIOS() && !isStandalone()) {
+    a2hsHelper.style.display = "block";
+    return;
+  }
+  // For non-iOS, only show if not installed and we did not get an install prompt
+  // (keeps UX clean)
+  a2hsHelper.style.display = "none";
+}
+
+/* Alerts helper */
+function setAlertsPill(state, text){
+  alertsPill.classList.remove("ok","warn","bad");
+  if (state) alertsPill.classList.add(state);
+  alertsPill.textContent = text;
+}
+
+async function refreshAlertsUI(){
+  // Default: hide helper until we know we need it
+  alertsHelper.style.display = "none";
+  alertsNote.textContent = "";
+
+  // If OneSignal not loaded yet, do a simple browser-level check
+  if (!("Notification" in window)) {
+    setAlertsPill("bad","🔔 Alerts: not supported on this device");
+    return;
   }
 
-  function isSafari(){
-    const ua = navigator.userAgent;
-    const isChrome = /CriOS/.test(ua);
-    const isFirefox = /FxiOS/.test(ua);
-    const isEdge = /EdgiOS/.test(ua);
-    const isSafari = /Safari/.test(ua) && !isChrome && !isFirefox && !isEdge;
-    return isSafari;
+  const perm = Notification.permission; // "default" | "granted" | "denied"
+
+  // iOS note: Push prompts are best after A2HS (and supported iOS versions)
+  if (perm === "granted") {
+    setAlertsPill("ok","🔔 Alerts: ENABLED ✅");
+    return;
+  }
+  if (perm === "denied") {
+    setAlertsPill("bad","🔔 Alerts: blocked (needs settings)");
+    alertsHelper.style.display = "block";
+    alertsNote.innerHTML = isIOS()
+      ? `Notifications are blocked. On iPhone: Settings → Safari → Notifications (if available), or open Big Red Connect from Home Screen and try again.`
+      : `Notifications are blocked. Use your browser/site settings to allow notifications, then come back and tap Enable Alerts.`;
+    return;
   }
 
-  function isStandalone(){
-    return (window.navigator.standalone === true) ||
-           (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches);
+  // "default" → not granted yet
+  setAlertsPill("warn","🔔 Alerts: not enabled");
+  alertsHelper.style.display = "block";
+
+  // If iOS and not installed, strongly suggest A2HS first
+  if (isIOS() && !isStandalone()) {
+    alertsNote.innerHTML =
+      `Tip: On iPhone, add this site to your Home Screen first for the smoothest alert experience.`;
   }
+}
 
-  function showA2HS(){
-    const wrap = document.getElementById("brcA2HS");
-    const close = document.getElementById("brcA2HSClose");
-    if(!wrap || !close) return;
-
-    wrap.style.display = "block";
-    close.addEventListener("click", () => {
-      try{ localStorage.setItem(KEY_A2HS, "1"); }catch(_){}
-      wrap.style.display = "none";
-    });
-  }
-
-  function showAlertsHelp(){
-    const wrap = document.getElementById("brcAlertsHelp");
-    const close = document.getElementById("brcAlertsHelpClose");
-    if(!wrap || !close) return;
-
-    wrap.style.display = "block";
-    close.addEventListener("click", () => {
-      try{ localStorage.setItem(KEY_ALERTS, "1"); }catch(_){}
-      wrap.style.display = "none";
-    });
-  }
-
-  window.addEventListener("load", () => {
-    // Only target iPhone Safari (same scope as Baby Step 1)
-    if(!isIOS() || !isSafari()) return;
-
-    const standalone = isStandalone();
-
-    // Baby Step 1: not installed yet
-    if(!standalone && localStorage.getItem(KEY_A2HS) !== "1"){
-      showA2HS();
-    }
-
-    // Baby Step 2: installed only
-    if(standalone && localStorage.getItem(KEY_ALERTS) !== "1"){
-      showAlertsHelp();
-    }
-  });
-})();
-
-/* ✅ Baby Step 3: Check Alerts Status (additive only) */
-(function(){
-  const btn = document.getElementById("btnCheckAlerts");
-  const line = document.getElementById("alertsStatusText");
-  if(!btn || !line) return;
-
-  function showStatus(html){
-    line.innerHTML = html;
-    line.style.display = "block";
-  }
-
-  async function checkViaOneSignal(){
-    return new Promise((resolve) => {
-      try{
-        window.OneSignalDeferred = window.OneSignalDeferred || [];
-        OneSignalDeferred.push(async function(OneSignal){
-          try{
-            const supported = OneSignal.Notifications.isPushSupported();
-            // permission can be boolean or string depending on platform
-            const perm = OneSignal.Notifications.permission;
-
-            resolve({ supported, perm, source: "onesignal" });
-          }catch(e){
-            resolve(null);
-          }
-        });
-
-        // If OneSignal never runs, timeout to browser fallback
-        setTimeout(()=>resolve(null), 1200);
-      }catch(e){
-        resolve(null);
+enableAlertsBtn.addEventListener("click", async () => {
+  // Only do something on user gesture
+  try{
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    OneSignalDeferred.push(async function(OneSignal){
+      const supported = OneSignal.Notifications.isPushSupported();
+      if(!supported){
+        setAlertsPill("bad","🔔 Alerts: not supported on this device");
+        alertsHelper.style.display = "block";
+        alertsNote.textContent = "This device/browser doesn’t support push notifications.";
+        return;
       }
+
+      const perm = OneSignal.Notifications.permission;
+      if(perm === "granted" || perm === true){
+        setAlertsPill("ok","🔔 Alerts: ENABLED ✅");
+        alertsHelper.style.display = "none";
+        return;
+      }
+
+      // Prompt
+      await OneSignal.Slidedown.promptPush();
+      // Re-check after prompt
+      setTimeout(refreshAlertsUI, 600);
     });
+  }catch(e){
+    // Fallback: native browser prompt
+    try{
+      await Notification.requestPermission();
+    }catch(_){}
+    refreshAlertsUI();
   }
+});
 
-  function checkViaBrowser(){
-    const supported = ("Notification" in window);
-    const perm = supported ? Notification.permission : "unsupported";
-    return { supported, perm, source: "browser" };
-  }
+/* INIT */
+window.addEventListener("load", () => {
+  updateA2HSHelper();
+  refreshAlertsUI();
 
-  function normalizePermission(perm){
-    if(perm === true) return "granted";
-    if(perm === false) return "denied";
-    const p = String(perm || "").toLowerCase();
-    if(p === "granted" || p === "denied" || p === "default") return p;
-    return "unknown";
-  }
-
-  function renderResult(res){
-    if(!res || !res.supported){
-      showStatus(`Status: <strong>Not Supported</strong><br><span style="color:#bbb;">This device/browser can’t receive push alerts.</span>`);
-      return;
-    }
-
-    const p = normalizePermission(res.perm);
-
-    if(p === "granted"){
-      showStatus(`Status: <strong>Enabled ✅</strong><br><span style="color:#bbb;">Alerts are allowed. You should receive ride updates.</span>`);
-      return;
-    }
-
-    if(p === "denied"){
-      showStatus(`Status: <strong>Blocked ⛔</strong><br><span style="color:#bbb;">Go to iPhone <strong>Settings → Notifications → Big Red Connect</strong> and enable alerts.</span>`);
-      return;
-    }
-
-    // default/unknown
-    showStatus(`Status: <strong>Not Enabled Yet</strong><br><span style="color:#bbb;">If prompted, tap <strong>Allow</strong>. If you never see a prompt, reopen the app and try again.</span>`);
-  }
-
-  btn.addEventListener("click", async () => {
-    showStatus(`<span style="color:#bbb;">Checking…</span>`);
-    const os = await checkViaOneSignal();
-    const res = os || checkViaBrowser();
-    renderResult(res);
-  });
-})();
+  // If already installed, hide A2HS helper
+  if (isStandalone()) a2hsHelper.style.display = "none";
+});
 </script>
 
 <!-- 🔔 OneSignal INIT + IDENTITY REBIND (REQUIRED) -->
