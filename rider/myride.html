@@ -182,11 +182,16 @@ function renderActive(r){
 
 async function cancelRide(id){
   if(!confirm("Cancel this ride?")) return;
+
   await fetch(`${API}/api/driver/bookings/${encodeURIComponent(id)}`,{
     method:"PUT",
     headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({status:"CANCELLED"})
+    body:JSON.stringify({
+      status:"CANCELLED",
+      metadata: { cancelledBy: "rider" }
+    })
   });
+
   await loadRides();
 }
 
