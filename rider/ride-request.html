@@ -530,23 +530,73 @@
   }
 
   function applyHandoffDropoffIfAny() {
-  const handoff = readHandoffDropoff();
-  if (!handoff || !handoff.value) return;
+    const handoff = readHandoffDropoff();
+    if (!handoff || !handoff.value) return;
 
-  // Clear immediately so Safari/iOS reload quirks don’t reapply
-  clearHandoffDropoff();
+    // Clear immediately so Safari/iOS reload quirks don’t reapply
+    clearHandoffDropoff();
 
-  const dropEl = document.getElementById("dropoff");
-  if (!dropEl) return;
+    const dropEl = document.getElementById("dropoff");
+    if (!dropEl) return;
 
-  // Only set if empty (don’t stomp edits/repeat loads)
-  if (!String(dropEl.value || "").trim()) {
-    dropEl.value = handoff.value;
-    // Clear any previous structured place for dropoff (since this is plain text until user selects)
-    sessionStorage.removeItem("brc_place_dropoff_v1");
-    showToast("Drop-off carried over ✅");
+    // Only set if empty (don’t stomp edits/repeat loads)
+    if (!String(dropEl.value || "").trim()) {
+      dropEl.value = handoff.value;
+      // Clear any previous structured place for dropoff (since this is plain text until user selects)
+      sessionStorage.removeItem("brc_place_dropoff_v1");
+      showToast("Drop-off carried over ✅");
+    }
   }
-}
+
+  // =====================================================
+  // ✅ RE-REQUEST PREFILL (MyRide → Ride Request)
+  // Supports:
+  //   ?repeat=<rideId>   → load ride and prefill pickup/dropoff/stops/gate
+  // =====================================================
+  async function prefillFromRepeatRideIfAny() {
+    try {
+      const u = new URL(location.href);
+      const repeatId = (u.searchParams.get("repeat") || "").trim();
+      if (!repeatId) return;
+
+      const res = await fetch(`${API_BOOK}/api/bookings/${encodeURIComponent(repeatId)}`);
+      if (!res.ok) return;
+
+      const r = await res.json();
+      if (!r) return;
+
+      // Prefill pickup/dropoff only if empty (so user edits/handoff aren't stomped)
+      const pEl = document.getElementById("pickup");
+      const dEl = document.getElementById("dropoff");
+
+      if (pEl && !String(pEl.value || "").trim()) pEl.value = r.pickup?.address || "";
+      if (dEl && !String(dEl.value || "").trim()) dEl.value = r.dropoff?.address || "";
+
+      // Gate / access notes (optional)
+      const gEl = document.getElementById("gateCode");
+      const gateVal = (r.pickup?.gate || r.pickup?.access || r.pickup?.notes || "").toString();
+      if (gEl && gateVal && !String(gEl.value || "").trim()) gEl.value = gateVal;
+
+      // Stops
+      const stops = Array.isArray(r.stops) ? r.stops : [];
+      for (const s of stops) {
+        const addr = (s?.address || "").trim();
+        if (!addr) continue;
+        addStopField();
+        const lastId = stopInputs[stopInputs.length - 1];
+        const stopEl = document.getElementById(lastId);
+        if (stopEl) stopEl.value = addr;
+      }
+
+      showToast("Ride loaded ✅");
+
+      // Strip repeat= so refresh doesn't keep reapplying
+      u.searchParams.delete("repeat");
+      history.replaceState({}, "", u.pathname + (u.search || "") + (u.hash || ""));
+    } catch (e) {
+      console.warn("repeat prefill failed:", e);
+    }
+  }
 
   // =====================================================
   // PROFILE SUMMARY + PREFILL
@@ -1375,6 +1425,10 @@
 
     // Apply Index → Ride Request handoff (dropoff)
     applyHandoffDropoffIfAny();
+
+    // ✅ Re-request flow (MyRide → Ride Request)
+    // (does NOT overwrite if fields already filled)
+    prefillFromRepeatRideIfAny();
 
     ensureRiderId();
     loadProfileSummary();
