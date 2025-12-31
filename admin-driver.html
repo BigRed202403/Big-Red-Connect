@@ -448,6 +448,55 @@ code{background:#0b0b0b;border:1px solid #222;border-radius:8px;padding:2px 6px;
 /* Mode visibility */
 body.mode-driver .admin-only{display:none !important;}
 body.mode-admin .driver-only{display:block;}
+
+/* =======================
+   NEW: TRUE DRIVER MODE + iPhone/iPad layout
+   ======================= */
+
+/* Driver quick bar */
+.driver-bar{
+  display:none;
+  position:sticky;
+  top:62px; /* just under header */
+  z-index:40;
+  background:linear-gradient(180deg,#0a0a0a 0%, #050505 100%);
+  border:1px solid #1f1f1f;
+  border-radius:14px;
+  padding:10px;
+  margin:10px 0 12px;
+}
+body.mode-driver .driver-bar{display:block;}
+
+/* In driver mode, make dispatch full-width and hide left column entirely */
+body.mode-driver .grid{
+  grid-template-columns:1fr !important;
+}
+body.mode-driver .grid > div:first-child{
+  display:none !important;
+}
+
+/* iPhone: driver bar stacks more, less padding around shell */
+@media (max-width:430px){
+  body.mode-driver .shell{padding:8px 8px 16px;}
+  .driver-bar{top:58px; padding:10px;}
+}
+
+/* iPad-ish: spread driver bar row and allow wider shell */
+@media (min-width:768px){
+  .shell{max-width:1400px;}
+  body.mode-driver .driver-bar .row{flex-wrap:nowrap;}
+}
+
+/* SMS template button group */
+.sms-templates{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+}
+.sms-templates .chip{
+  padding:10px 12px;
+}
 </style>
 </head>
 
@@ -471,6 +520,23 @@ body.mode-admin .driver-only{display:block;}
 
 <div class="shell">
   <div id="status-pill" class="offline">Status: OFFLINE • loading…</div>
+
+  <!-- NEW: Driver Mode Quick Bar (only visible in Driver Mode) -->
+  <div class="driver-bar driver-only" id="driverBar">
+    <div class="row" style="margin:0;">
+      <select id="driverStatusSelect" style="flex:1;min-width:180px;">
+        <option value="online">🟢 On the Road</option>
+        <option value="away">🟡 Limited Availability</option>
+        <option value="offline">🔴 Offline</option>
+      </select>
+      <button class="btn btn-primary" id="driverSaveStatusBtn" title="Save Status">💾 <span class="lbl">Save</span></button>
+      <button class="btn btn-ghost" id="driverRefreshDispatchBtn" title="Refresh Dispatch">🔄 <span class="lbl">Dispatch</span></button>
+      <button class="btn btn-secondary" id="driverScopeBtn" title="Toggle Scope">📋 <span class="lbl">active</span></button>
+    </div>
+    <div class="meta" style="margin-top:8px;">
+      Driver Mode: quick status + dispatch controls.
+    </div>
+  </div>
 
   <div class="grid" style="margin-top:10px;">
     <!-- LEFT COLUMN -->
@@ -616,17 +682,17 @@ body.mode-admin .driver-only{display:block;}
         </div>
 
         <div class="dispatch-grid">
-          <details class="details-col" open>
+          <details class="details-col" id="colNew" open>
             <summary>🆕 New Requests <span id="countNew">0</span></summary>
             <div class="col-body" id="listNew"><div class="empty-text">None</div></div>
           </details>
 
-          <details class="details-col" open>
+          <details class="details-col" id="colActive" open>
             <summary>🚦 Active Trips <span id="countActive">0</span></summary>
             <div class="col-body" id="listActive"><div class="empty-text">None</div></div>
           </details>
 
-          <details class="details-col">
+          <details class="details-col" id="colDone">
             <summary>✅ Completed <span id="countDone">0</span></summary>
             <div class="col-body" id="listDone"><div class="empty-text">None</div></div>
           </details>
@@ -674,6 +740,27 @@ const LIVE_IMAGES=[
   "3673A967-4A2D-4F9C-8602-0C820D31D168.png",
   "8F06509B-317B-45C2-89CE-B2AD1E16D054.png",
   "Big Red Live Text Only.png",
+  "2675CB44-5C25-48F5-8185-D9B42A5D9BA1.png",
+  "2A5BF138-5AEC-4F26-80BC-BDA3D913C156.png",
+  "2CFFFFC3-72E2-4F92-946E-E135D1263442.png",
+  "3D17FB5A-0B9D-4DDD-A2EA-C408FB7E04B2.png",
+  "3FE45F11-C3B1-4EF2-B8B9-826F2A3B69FA.png",
+  "4F3CFD95-B9BB-44D4-B0FA-6192AFCF64CA.png",
+  "65F274B4-AB0B-4EA7-AB15-A0AF7FD53660.png",
+  "72D2D594-1687-406E-B3B7-24BFB9E1F845.png",
+  "74A13122-CF3D-4A7F-BB59-AB89C8B83122.png",
+  "84552267-843C-4BC9-9A28-7E5273407FC0.png",
+  "8DEA1C2C-A2D3-4FC9-AB9E-8AE5AD14C442.png",
+  "8EA345C3-ADC9-4703-9BB7-9788F6E20071.png",
+  "8EDE8455-2E49-455A-84CA-743597C0DA75.png",
+  "8F34B771-5C26-4CDC-B8C3-538A38278750.png",
+  "96403A00-9D6A-4EC3-B2BD-3E9BCE124D87.png",
+  "9E1D2D7B-C078-4EA0-941B-C8689F82044F.png",
+  "B06D89E3-ECFF-4B50-A687-99E096595B0F.png",
+  "CBB513B3-F72E-4657-B32B-256640A76D69.png",
+  "D860509D-733C-4C73-B529-891C73F46329.png",
+  "E6D81943-48D2-4F74-9B95-FFCD8421DD36.png",
+  "Untitled design.png"
 ];
 
 let imgIndex=0;
@@ -747,6 +834,39 @@ async function copyTextToClipboard(text){
   }
 }
 
+/* =======================
+   NEW: iPhone / iPad flags (CSS hooks)
+   ======================= */
+function setDeviceClass(){
+  const isPad = window.matchMedia && window.matchMedia("(min-width:768px)").matches;
+  document.body.classList.toggle("device-tablet", !!isPad);
+  document.body.classList.toggle("device-phone", !isPad);
+}
+window.addEventListener("resize", setDeviceClass);
+
+/* =======================
+   NEW: Driver mode behavior
+   ======================= */
+function focusDriverView(){
+  // In driver mode: prefer Active open; on phone collapse others for less scrolling
+  const isPhone = document.body.classList.contains("device-phone");
+  const colNew=document.getElementById("colNew");
+  const colActive=document.getElementById("colActive");
+  const colDone=document.getElementById("colDone");
+  if(isPhone){
+    if(colNew) colNew.open=false;
+    if(colDone) colDone.open=false;
+    if(colActive) colActive.open=true;
+  }
+  // sync driver bar controls with main controls
+  const statusSelect=document.getElementById("statusSelect");
+  const driverSelect=document.getElementById("driverStatusSelect");
+  if(statusSelect && driverSelect) driverSelect.value = statusSelect.value;
+
+  const driverScope=document.getElementById("driverScopeBtn");
+  if(driverScope) driverScope.innerHTML=`📋 <span class="lbl">${dispatchScope}</span>`;
+}
+
 function applyMode(mode){
   currentMode = (mode === "driver") ? "driver" : "admin";
   const body=document.body;
@@ -759,6 +879,10 @@ function applyMode(mode){
       : `🛠 <span class="lbl">Admin</span>`;
   }
   localStorage.setItem("adminDriverMode",currentMode);
+
+  if(currentMode==="driver"){
+    focusDriverView();
+  }
 }
 
 /* =======================
@@ -874,6 +998,10 @@ async function loadStatus(){
     document.getElementById("statusStamp").textContent=when;
     document.getElementById("statusSelect").value=statusVal;
 
+    // NEW: keep driver bar select in sync
+    const ds=document.getElementById("driverStatusSelect");
+    if(ds) ds.value=statusVal;
+
     const globalVeh=document.getElementById("globalVehicleSelect");
     if(globalVeh){
       if(data.vehicle && data.vehicle.code) globalVeh.value=data.vehicle.code;
@@ -881,6 +1009,9 @@ async function loadStatus(){
     }
 
     handleGpsForStatus(statusVal);
+
+    // If currently in driver mode, keep view optimized
+    if(currentMode==="driver") focusDriverView();
   }catch(e){
     log("Status error: "+e.message);
   }
@@ -1132,6 +1263,52 @@ function copyCaption(){
 }
 
 /* =======================
+   NEW: SMS templates for ride cards
+   ======================= */
+function vehicleLabelFromCode(code){
+  if(code==="BIG_RED") return "red Silverado";
+  return "black GMC Acadia";
+}
+
+function buildRideSms(templateKey, data){
+  const rider = (data.riderName || "there").trim() || "there";
+  const pickup = (data.pickup || "your pickup").trim();
+  const dropoff = (data.dropoff || "your destination").trim();
+  const vehicle = vehicleLabelFromCode(data.vehicleCode || "BLACK_ACADIA");
+
+  if(templateKey==="confirm"){
+    return `Hey ${rider} — got it. Pickup: ${pickup}. Dropoff: ${dropoff}. I’ll update you when I’m on the way.`;
+  }
+  if(templateKey==="omw"){
+    return `Hey ${rider} — I’m on my way now. I’ll be there shortly.`;
+  }
+  if(templateKey==="arrived"){
+    return `Hey ${rider} — I’m here at ${pickup}. I’m in the ${vehicle}. Reply when you’re coming out.`;
+  }
+  if(templateKey==="complete"){
+    return `Thanks again, ${rider}! If you need another connection later, just text RED.`;
+  }
+  return `Hey ${rider} — quick update from Big Red Connect.`;
+}
+
+/* Click delegation for SMS template chips */
+document.body.addEventListener("click", async (e) => {
+  const btn = e.target.closest && e.target.closest(".sms-template");
+  if(!btn) return;
+
+  const templateKey = btn.dataset.template || "";
+  const payload = {
+    riderName: btn.dataset.riderName || "",
+    pickup: btn.dataset.pickup || "",
+    dropoff: btn.dataset.dropoff || "",
+    vehicleCode: btn.dataset.vehicleCode || "BLACK_ACADIA"
+  };
+
+  const msg = buildRideSms(templateKey, payload);
+  await copyTextToClipboard(msg);
+});
+
+/* =======================
    DISPATCH
    ======================= */
 async function fetchBookings(){
@@ -1185,6 +1362,11 @@ function renderColumn(id,arr){
     const phoneDigits = digitsOnly(b?.rider?.phone||"");
     const smsHref = phoneDigits ? `sms:+1${phoneDigits}` : "";
 
+    const riderName = (b?.rider?.name||"").trim();
+    const pickupAddr = (b?.pickup?.address||"").trim();
+    const dropoffAddr = (b?.dropoff?.address||"").trim();
+    const vCode = b?.vehicle?.code || "BLACK_ACADIA";
+
     const div=document.createElement("div");
     div.className="card";
 
@@ -1236,6 +1418,40 @@ function renderColumn(id,arr){
 
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;max-width:100%;">
           <div style="font-size:.9rem;color:#bbb;">Rider: ${b.rider?.name||"—"}</div>
+
+          <div class="sms-templates">
+            <button class="chip sms-template"
+              data-template="confirm"
+              data-rider-name="${riderName}"
+              data-pickup="${pickupAddr}"
+              data-dropoff="${dropoffAddr}"
+              data-vehicle-code="${vCode}"
+              title="Copy: Confirmed / got it">✅ Confirm</button>
+
+            <button class="chip sms-template"
+              data-template="omw"
+              data-rider-name="${riderName}"
+              data-pickup="${pickupAddr}"
+              data-dropoff="${dropoffAddr}"
+              data-vehicle-code="${vCode}"
+              title="Copy: On my way">🚗 OMW</button>
+
+            <button class="chip sms-template"
+              data-template="arrived"
+              data-rider-name="${riderName}"
+              data-pickup="${pickupAddr}"
+              data-dropoff="${dropoffAddr}"
+              data-vehicle-code="${vCode}"
+              title="Copy: Arrived">📍 Arrived</button>
+
+            <button class="chip sms-template"
+              data-template="complete"
+              data-rider-name="${riderName}"
+              data-pickup="${pickupAddr}"
+              data-dropoff="${dropoffAddr}"
+              data-vehicle-code="${vCode}"
+              title="Copy: Complete / thanks">✅ Done</button>
+          </div>
 
           <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
             ${phoneDigits ? `<a class="chip" href="${smsHref}">💬 Text Rider</a>` : ""}
@@ -1308,13 +1524,16 @@ document.body.addEventListener("change",async(e)=>{
 /* =======================
    SCOPE TOGGLE
    ======================= */
-document.getElementById("btnScope").addEventListener("click",()=>{
+function toggleScope(){
   if(dispatchScope==="active")dispatchScope="upcoming";
   else if(dispatchScope==="upcoming")dispatchScope="all";
   else dispatchScope="active";
   document.getElementById("btnScope").innerHTML=`📋 <span class="lbl">${dispatchScope}</span>`;
+  const ds=document.getElementById("driverScopeBtn");
+  if(ds) ds.innerHTML=`📋 <span class="lbl">${dispatchScope}</span>`;
   fetchBookings();
-});
+}
+document.getElementById("btnScope").addEventListener("click",toggleScope);
 
 /* =======================
    BUTTON WIRING
@@ -1349,10 +1568,29 @@ document.getElementById("btnModeToggle").onclick=()=>{
   applyMode(currentMode==="admin"?"driver":"admin");
 };
 
+/* NEW: Driver Bar wiring (driver mode only) */
+document.getElementById("driverSaveStatusBtn").onclick=()=>{
+  // mirror driver status select into main select, then reuse existing updateStatus()
+  const ds=document.getElementById("driverStatusSelect").value;
+  document.getElementById("statusSelect").value=ds;
+  updateStatus();
+};
+document.getElementById("driverRefreshDispatchBtn").onclick=()=>{
+  fetchBookings();
+  showToast("Dispatch refreshed");
+};
+document.getElementById("driverScopeBtn").onclick=toggleScope;
+
+/* Keep selects in sync if user changes one */
+document.getElementById("driverStatusSelect").addEventListener("change",()=>{
+  document.getElementById("statusSelect").value = document.getElementById("driverStatusSelect").value;
+});
+
 /* =======================
    INIT
    ======================= */
 window.addEventListener("load",()=>{
+  setDeviceClass();
   applyMode(currentMode);
   updPrev();
   applyTemplateToCaption("LIVE");
