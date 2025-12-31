@@ -173,10 +173,16 @@
       font-size:.9rem;
       line-height:1.3rem;
     }
-    .linkish{
-      color:#ffdada;
-      text-decoration:underline;
-      cursor:pointer;
+
+    /* A2HS dismiss button styling uses existing .btn-secondary; keep it smaller */
+    .btn-smallish{
+      padding:12px 14px;
+      font-size:1rem;
+      border-radius:10px;
+      width:auto;
+      max-width:none;
+      margin:0;
+      display:inline-block;
     }
   </style>
 </head>
@@ -206,27 +212,20 @@
   <!-- ✅ Alerts Status Pill -->
   <div id="alertsPill" class="pillline">🔔 Alerts: checking…</div>
 
-  <!-- ✅ Enable Alerts Helper (only shown when useful) -->
-  <div id="alertsHelper" class="helper" style="display:none;">
-    <h2>Get Ride Alerts</h2>
-    <p>
-      Turn on notifications so you get updates like <b>Accepted</b>, <b>On the way</b>, and <b>Arrived</b>.
-    </p>
-    <button id="enableAlertsBtn" class="btn">🔔 Enable Alerts</button>
-    <div class="mini" id="alertsNote" style="margin-top:8px;"></div>
-  </div>
-
-  <!-- ✅ Add to Home Screen helper (iPhone/iPad + general PWA guidance) -->
+  <!-- ✅ Add to Home Screen helper (iPhone/iPad guidance) -->
   <div id="a2hsHelper" class="helper" style="display:none;">
-    <h2>Add to Home Screen</h2>
+    <h2>Save to Home Screen</h2>
     <p>
       For the best iPhone experience (and to help alerts work reliably), save Big Red Connect as an app on your Home Screen.
     </p>
-    <ol class="steps" id="a2hsSteps">
-      <li>Tap the <b>Share</b> button in Safari (square with arrow).</li>
-      <li>Scroll and tap <b>Add to Home Screen</b>.</li>
-      <li>Open it from your Home Screen like an app.</li>
+    <ol class="steps">
+      <li>Open this page in <b>Safari</b></li>
+      <li>Tap <b>Share</b> (square with arrow)</li>
+      <li>Tap <b>Add to Home Screen</b></li>
     </ol>
+    <div style="margin-top:10px;">
+      <button id="a2hsDismissBtn" class="btn btn-secondary btn-smallish" type="button">Got it</button>
+    </div>
     <p class="mini" style="margin-top:10px;">
       Already installed? You can ignore this.
     </p>
@@ -238,10 +237,20 @@
     <p>
       Install Big Red Connect for faster access and better alerts.
     </p>
-    <button id="androidInstallBtn" class="btn">➕ Install Big Red Connect</button>
+    <button id="androidInstallBtn" class="btn" type="button">➕ Install Big Red Connect</button>
     <p class="mini" style="margin-top:10px;">
       If Install doesn’t appear, use your browser menu → <b>Install app</b> / <b>Add to Home screen</b>.
     </p>
+  </div>
+
+  <!-- ✅ Enable Alerts Helper (only shown when useful) -->
+  <div id="alertsHelper" class="helper" style="display:none;">
+    <h2>Enable Alerts</h2>
+    <p>
+      Turn on notifications so you get updates like <b>Accepted</b>, <b>On the way</b>, and <b>Arrived</b>.
+    </p>
+    <button id="enableAlertsBtn" class="btn" type="button">🔔 Enable Alerts</button>
+    <div class="mini" id="alertsNote" style="margin-top:8px;"></div>
   </div>
 
   <!-- ✅ Active Ride Found Card (hidden unless an open ride is found) -->
@@ -274,8 +283,10 @@ document.getElementById("logoutBtn").onclick = (e) => {
 const n = localStorage.getItem("riderName");
 document.getElementById("welcomeName").textContent =
   n ? `Hi ${n}, let’s get you moving.` : `Let’s get you moving.`;
+</script>
 
-/* ✅ 7.3 Active Ride Found Card */
+<script>
+/* ✅ Active Ride Found Card */
 const BOOKINGS_API = "https://bigred-bookings.bigredtransportation.workers.dev";
 
 function getCanonicalRiderId(){
@@ -308,7 +319,6 @@ async function findActiveRideForRider(){
     const list = await resp.json();
     if(!Array.isArray(list)) return null;
 
-    // Find first open ride matching riderId
     const match = list.find(b => (b?.rider?.riderId === riderId) && isOpenStatus(b?.status));
     return match || null;
   }catch(e){
@@ -327,8 +337,6 @@ function showActiveRideCard(booking){
   const rideId = booking?.id || "";
 
   details.textContent = `Status: ${status} • From: ${pickup} • To: ${dropoff}`;
-
-  // Pass rideId for extra reliability (myride.html can ignore if it doesn't use it)
   btn.href = rideId ? `/rider/myride.html?id=${encodeURIComponent(rideId)}` : "/rider/myride.html";
 
   card.style.display = "block";
@@ -342,20 +350,21 @@ function showActiveRideCard(booking){
 
 <script>
 /* ============================================================
-   ✅ A.6 Bundle (No Push Test)
-   - Enable Alerts UI + logic (gated)
-   - A2HS helpers (iOS + Android)
-   - Status pill updates
+   Rider UX / PWA Enhancements (A)
+   - Save to Home Screen guidance (iOS Safari only, informational)
+   - A.6 Enable Alerts UX (uses existing OneSignal wiring)
+   - Alerts status pill updates
    ============================================================ */
 
 function isIOS(){
   return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 }
 function isStandalone(){
-  // iOS: navigator.standalone; Others: display-mode
   return (window.navigator.standalone === true) ||
          (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches);
 }
+
+const LS_A2HS_DISMISSED = "brc_a2hs_dismissed_v1";
 
 const alertsPill = document.getElementById("alertsPill");
 const alertsHelper = document.getElementById("alertsHelper");
@@ -363,19 +372,24 @@ const alertsNote = document.getElementById("alertsNote");
 const enableAlertsBtn = document.getElementById("enableAlertsBtn");
 
 const a2hsHelper = document.getElementById("a2hsHelper");
+const a2hsDismissBtn = document.getElementById("a2hsDismissBtn");
+
 const androidInstallHelper = document.getElementById("androidInstallHelper");
 const androidInstallBtn = document.getElementById("androidInstallBtn");
 
 let deferredInstallPrompt = null;
 
+function setAlertsPill(state, text){
+  alertsPill.classList.remove("ok","warn","bad");
+  if (state) alertsPill.classList.add(state);
+  alertsPill.textContent = text;
+}
+
 /* Android install prompt capture */
 window.addEventListener("beforeinstallprompt", (e) => {
   e.preventDefault();
   deferredInstallPrompt = e;
-  // Only show if not already installed
-  if (!isStandalone()) {
-    androidInstallHelper.style.display = "block";
-  }
+  if (!isStandalone()) androidInstallHelper.style.display = "block";
 });
 
 androidInstallBtn.addEventListener("click", async () => {
@@ -386,31 +400,26 @@ androidInstallBtn.addEventListener("click", async () => {
   androidInstallHelper.style.display = "none";
 });
 
-/* iOS / general A2HS helper */
+/* iOS A2HS helper (Safari only guidance; we can’t detect Safari perfectly, so we keep it iOS+not-standalone) */
 function updateA2HSHelper(){
-  // Show for iOS Safari when not installed
   if (isIOS() && !isStandalone()) {
-    a2hsHelper.style.display = "block";
-    return;
+    const dismissed = (localStorage.getItem(LS_A2HS_DISMISSED) === "1");
+    a2hsHelper.style.display = dismissed ? "none" : "block";
+  } else {
+    a2hsHelper.style.display = "none";
   }
-  // For non-iOS, only show if not installed and we did not get an install prompt
-  // (keeps UX clean)
+}
+
+a2hsDismissBtn.addEventListener("click", () => {
+  try { localStorage.setItem(LS_A2HS_DISMISSED, "1"); } catch(e) {}
   a2hsHelper.style.display = "none";
-}
+});
 
-/* Alerts helper */
-function setAlertsPill(state, text){
-  alertsPill.classList.remove("ok","warn","bad");
-  if (state) alertsPill.classList.add(state);
-  alertsPill.textContent = text;
-}
-
+/* Alerts helper + pill */
 async function refreshAlertsUI(){
-  // Default: hide helper until we know we need it
   alertsHelper.style.display = "none";
   alertsNote.textContent = "";
 
-  // If OneSignal not loaded yet, do a simple browser-level check
   if (!("Notification" in window)) {
     setAlertsPill("bad","🔔 Alerts: not supported on this device");
     return;
@@ -418,34 +427,34 @@ async function refreshAlertsUI(){
 
   const perm = Notification.permission; // "default" | "granted" | "denied"
 
-  // iOS note: Push prompts are best after A2HS (and supported iOS versions)
   if (perm === "granted") {
     setAlertsPill("ok","🔔 Alerts: ENABLED ✅");
     return;
   }
+
   if (perm === "denied") {
     setAlertsPill("bad","🔔 Alerts: blocked (needs settings)");
     alertsHelper.style.display = "block";
     alertsNote.innerHTML = isIOS()
-      ? `Notifications are blocked. On iPhone: Settings → Safari → Notifications (if available), or open Big Red Connect from Home Screen and try again.`
+      ? `Notifications are blocked. Try: Settings → Notifications → Safari (if available), or open Big Red Connect from your Home Screen and try again.`
       : `Notifications are blocked. Use your browser/site settings to allow notifications, then come back and tap Enable Alerts.`;
     return;
   }
 
-  // "default" → not granted yet
+  // default
   setAlertsPill("warn","🔔 Alerts: not enabled");
   alertsHelper.style.display = "block";
 
-  // If iOS and not installed, strongly suggest A2HS first
   if (isIOS() && !isStandalone()) {
-    alertsNote.innerHTML =
-      `Tip: On iPhone, add this site to your Home Screen first for the smoothest alert experience.`;
+    alertsNote.textContent = "Tip: On iPhone, add Big Red Connect to your Home Screen first for the smoothest alert experience.";
+  } else {
+    alertsNote.textContent = "Tap Enable Alerts, then allow notifications when prompted.";
   }
 }
 
 enableAlertsBtn.addEventListener("click", async () => {
-  // Only do something on user gesture
-  try{
+  // Only runs on user gesture
+  try {
     window.OneSignalDeferred = window.OneSignalDeferred || [];
     OneSignalDeferred.push(async function(OneSignal){
       const supported = OneSignal.Notifications.isPushSupported();
@@ -457,22 +466,18 @@ enableAlertsBtn.addEventListener("click", async () => {
       }
 
       const perm = OneSignal.Notifications.permission;
-      if(perm === "granted" || perm === true){
+      if (perm === "granted" || perm === true) {
         setAlertsPill("ok","🔔 Alerts: ENABLED ✅");
         alertsHelper.style.display = "none";
         return;
       }
 
-      // Prompt
       await OneSignal.Slidedown.promptPush();
-      // Re-check after prompt
-      setTimeout(refreshAlertsUI, 600);
+      setTimeout(refreshAlertsUI, 650);
     });
-  }catch(e){
+  } catch (e) {
     // Fallback: native browser prompt
-    try{
-      await Notification.requestPermission();
-    }catch(_){}
+    try { await Notification.requestPermission(); } catch(_) {}
     refreshAlertsUI();
   }
 });
@@ -482,12 +487,11 @@ window.addEventListener("load", () => {
   updateA2HSHelper();
   refreshAlertsUI();
 
-  // If already installed, hide A2HS helper
   if (isStandalone()) a2hsHelper.style.display = "none";
 });
 </script>
 
-<!-- 🔔 OneSignal INIT + IDENTITY REBIND (REQUIRED) -->
+<!-- 🔔 OneSignal INIT + IDENTITY REBIND (uses existing wiring) -->
 <script>
 window.OneSignalDeferred = window.OneSignalDeferred || [];
 OneSignalDeferred.push(async function(OneSignal){
@@ -514,6 +518,24 @@ OneSignalDeferred.push(async function(OneSignal){
     });
 
     console.log("✅ Rider push identity ACTIVE:", profile.riderId);
+
+    // After init/login, refresh the pill again (in case permission state changed)
+    setTimeout(() => {
+      try {
+        if ("Notification" in window) {
+          const perm = Notification.permission;
+          if (perm === "granted") {
+            const pill = document.getElementById("alertsPill");
+            if (pill) {
+              pill.classList.remove("warn","bad");
+              pill.classList.add("ok");
+              pill.textContent = "🔔 Alerts: ENABLED ✅";
+            }
+          }
+        }
+      } catch(e){}
+    }, 800);
+
   } catch (e) {
     console.warn("OneSignal rider init failed:", e);
   }
