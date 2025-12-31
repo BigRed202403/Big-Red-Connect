@@ -17,268 +17,47 @@
   <meta http-equiv="Expires" content="0"/>
 
   <style>
-    :root {
-      --red: #b30000;
-      --panel: #111;
-      --border: #222;
-      --muted: #aaa;
-    }
-
-    body {
-      margin:0;
-      background:#000;
-      color:#fff;
-      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-      padding-bottom:60px;
-    }
-
-    header {
-      padding:12px 12px;
-      display:flex;
-      align-items:center;
-      gap:10px;
-      border-bottom:2px solid var(--red);
-      background:#000;
-      position:sticky;
-      top:0;
-      z-index:20;
-    }
-
-    .logo-tap {
-      display:flex;
-      align-items:center;
-      gap:8px;
-      cursor:pointer;
-    }
-
-    header img {
-      height:44px;
-      border-radius:4px;
-    }
-
-    .top-actions {
-      margin-left:auto;
-      display:flex;
-      gap:6px;
-    }
-
-    .btn-small {
-      padding:8px 10px;
-      font-size:0.8rem;
-    }
-
-    h1 {
-      text-align:center;
-      font-size:1.4rem;
-      margin:18px 0 4px;
-    }
-
-    .subhead {
-      text-align:center;
-      font-size:0.85rem;
-      color:var(--muted);
-      margin-bottom:8px;
-    }
-
-    .page {
-      width:calc(100% - 24px);
-      max-width:560px;
-      margin:0 auto;
-    }
-
-    .card {
-      background:var(--panel);
-      border:1px solid var(--border);
-      border-radius:12px;
-      padding:14px;
-      margin-top:10px;
-    }
-
-    .section-title {
-      font-size:0.9rem;
-      font-weight:700;
-      margin-bottom:8px;
-      border-bottom:1px solid #222;
-      padding-bottom:4px;
-    }
-
-    .input-group {
-      margin-bottom:12px;
-    }
-
-    label {
-      display:block;
-      font-size:0.8rem;
-      color:#ccc;
-      margin-bottom:4px;
-    }
-
-    input, select, textarea {
-      width:100%;
-      padding:10px;
-      background:#111;
-      border:1px solid #333;
-      border-radius:8px;
-      color:#fff;
-      font-size:0.95rem;
-    }
-
-    textarea {
-      min-height:60px;
-      resize:vertical;
-    }
-
-    .hint {
-      font-size:0.75rem;
-      color:var(--muted);
-      margin-top:2px;
-    }
-
-    .btn {
-      display:inline-block;
-      text-align:center;
-      padding:12px;
-      border-radius:10px;
-      font-weight:700;
-      font-size:0.95rem;
-      border:none;
-      cursor:pointer;
-      text-decoration:none;
-    }
-
-    .btn-primary {
-      background:var(--red);
-      color:#fff;
-    }
-
-    .btn-ghost {
-      background:#000;
-      color:#fff;
-      border:1px solid #444;
-    }
-
-    .btn-secondary {
-      background:#111;
-      color:#fff;
-      border:1px solid #333;
-    }
-
-    .btn-wide {
-      width:100%;
-      margin-top:12px;
-    }
-
-    .ride-mode-toggle {
-      display:flex;
-      gap:6px;
-      margin-bottom:10px;
-    }
-
-    .btn-toggle {
-      flex:1;
-      padding:10px;
-      font-size:0.9rem;
-      border-radius:999px;
-      border:1px solid #333;
-      background:#000;
-      color:#fff;
-    }
-
-    .btn-toggle.active {
-      background:var(--red);
-      border-color:var(--red);
-    }
-
-    #reserveControls {
-      margin-top:8px;
-    }
-
-    #map {
-      width:100%;
-      height:220px;
-      border-radius:10px;
-      margin-top:10px;
-      background:#050505;
-      border:1px solid #222;
-    }
-
-    .notes-block p {
-      margin:4px 0;
-      font-size:0.8rem;
-    }
-
-    #airport-note,
-    #event-note,
-    #rushhour-note,
-    #fairness-note {
-      font-size:0.8rem;
-    }
-
+    :root { --red:#b30000; --panel:#111; --border:#222; --muted:#aaa; }
+    body { margin:0; background:#000; color:#fff; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; padding-bottom:60px; }
+    header { padding:12px 12px; display:flex; align-items:center; gap:10px; border-bottom:2px solid var(--red); background:#000; position:sticky; top:0; z-index:20; }
+    .logo-tap { display:flex; align-items:center; gap:8px; cursor:pointer; }
+    header img { height:44px; border-radius:4px; }
+    .top-actions { margin-left:auto; display:flex; gap:6px; }
+    .btn-small { padding:8px 10px; font-size:0.8rem; }
+    h1 { text-align:center; font-size:1.4rem; margin:18px 0 4px; }
+    .subhead { text-align:center; font-size:0.85rem; color:var(--muted); margin-bottom:8px; }
+    .page { width:calc(100% - 24px); max-width:560px; margin:0 auto; }
+    .card { background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:14px; margin-top:10px; }
+    .section-title { font-size:0.9rem; font-weight:700; margin-bottom:8px; border-bottom:1px solid #222; padding-bottom:4px; }
+    .input-group { margin-bottom:12px; }
+    label { display:block; font-size:0.8rem; color:#ccc; margin-bottom:4px; }
+    input, select, textarea { width:100%; padding:10px; background:#111; border:1px solid #333; border-radius:8px; color:#fff; font-size:0.95rem; }
+    textarea { min-height:60px; resize:vertical; }
+    .hint { font-size:0.75rem; color:var(--muted); margin-top:2px; }
+    .btn { display:inline-block; text-align:center; padding:12px; border-radius:10px; font-weight:700; font-size:0.95rem; border:none; cursor:pointer; text-decoration:none; }
+    .btn-primary { background:var(--red); color:#fff; }
+    .btn-ghost { background:#000; color:#fff; border:1px solid #444; }
+    .btn-secondary { background:#111; color:#fff; border:1px solid #333; }
+    .btn-wide { width:100%; margin-top:12px; }
+    .ride-mode-toggle { display:flex; gap:6px; margin-bottom:10px; }
+    .btn-toggle { flex:1; padding:10px; font-size:0.9rem; border-radius:999px; border:1px solid #333; background:#000; color:#fff; }
+    .btn-toggle.active { background:var(--red); border-color:var(--red); }
+    #reserveControls { margin-top:8px; }
+    #map { width:100%; height:220px; border-radius:10px; margin-top:10px; background:#050505; border:1px solid #222; }
+    .notes-block p { margin:4px 0; font-size:0.8rem; }
+    #airport-note, #event-note, #rushhour-note, #fairness-note { font-size:0.8rem; }
     #airport-note { color:#9fd4ff; }
     #event-note { color:#ffd27f; }
     #rushhour-note { color:#ffb3b3; }
     #fairness-note { color:#d3b9ff; }
-
-    #result {
-      margin-top:10px;
-      padding:10px;
-      border-radius:10px;
-      background:#080808;
-      border:1px solid #333;
-      font-size:0.9rem;
-    }
-
-    .total {
-      font-size:1.3rem;
-      font-weight:700;
-      margin-bottom:6px;
-    }
-
-    .profile-chip {
-      font-size:0.8rem;
-      color:var(--muted);
-    }
-
-    .profile-chip strong {
-      color:#fff;
-    }
-
-    .btn-row {
-      margin-top:16px;
-      display:flex;
-      flex-direction:column;
-      gap:8px;
-    }
-
-    .smallnote {
-      font-size:0.78rem;
-      color:var(--muted);
-      margin-top:6px;
-      text-align:center;
-    }
-
-    .disclaimer {
-      font-size:0.75rem;
-      color:var(--muted);
-      margin-top:10px;
-      text-align:center;
-    }
-
-    #toast {
-      position:fixed;
-      bottom:22px;
-      left:50%;
-      transform:translateX(-50%);
-      background:#111;
-      border:1px solid var(--red);
-      padding:10px 18px;
-      border-radius:999px;
-      opacity:0;
-      pointer-events:none;
-      transition:opacity .25s;
-      z-index:99;
-      font-size:0.85rem;
-    }
+    #result { margin-top:10px; padding:10px; border-radius:10px; background:#080808; border:1px solid #333; font-size:0.9rem; }
+    .total { font-size:1.3rem; font-weight:700; margin-bottom:6px; }
+    .profile-chip { font-size:0.8rem; color:var(--muted); }
+    .profile-chip strong { color:#fff; }
+    .btn-row { margin-top:16px; display:flex; flex-direction:column; gap:8px; }
+    .smallnote { font-size:0.78rem; color:var(--muted); margin-top:6px; text-align:center; }
+    .disclaimer { font-size:0.75rem; color:var(--muted); margin-top:10px; text-align:center; }
+    #toast { position:fixed; bottom:22px; left:50%; transform:translateX(-50%); background:#111; border:1px solid var(--red); padding:10px 18px; border-radius:999px; opacity:0; pointer-events:none; transition:opacity .25s; z-index:99; font-size:0.85rem; }
     #toast.show { opacity:1; }
   </style>
 </head>
@@ -302,23 +81,19 @@
 
 <div class="page">
 
-  <!-- Profile summary -->
   <div class="card">
     <div class="section-title">You’re booking as</div>
-    <div class="profile-chip" id="profileSummary">
-      Loading profile…
-    </div>
+    <div class="profile-chip" id="profileSummary">Loading profile…</div>
     <div class="btn-row" style="margin-top:10px;">
       <button class="btn btn-secondary btn-small" id="btnEditProfile">Edit Profile</button>
     </div>
   </div>
 
-  <!-- Mode + Time -->
   <div class="card">
     <div class="section-title">When?</div>
 
     <div class="ride-mode-toggle" aria-label="Ride mode">
-      <button id="modeNow"     class="btn-toggle active" type="button">🚗 Ride Now</button>
+      <button id="modeNow" class="btn-toggle active" type="button">🚗 Ride Now</button>
       <button id="modeReserve" class="btn-toggle" type="button">🕒 Reserve Ride</button>
     </div>
 
@@ -344,7 +119,6 @@
     </div>
   </div>
 
-  <!-- Trip details -->
   <div class="card">
     <div class="section-title">Trip Details</div>
 
@@ -371,12 +145,8 @@
     <div class="input-group">
       <label for="passengers">Passengers</label>
       <select id="passengers">
-        <option value="1">1</option>
-        <option value="2">2</option>
-        <option value="3">3</option>
-        <option value="4">4</option>
-        <option value="5">5</option>
-        <option value="6">6</option>
+        <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+        <option value="4">4</option><option value="5">5</option><option value="6">6</option>
       </select>
       <div class="hint">Seatbelts for everyone. Max 6 depending on which vehicle is in service.</div>
     </div>
@@ -391,7 +161,6 @@
         <option value="3">3</option>
         <option value="4">4</option>
         <option value="5">5</option>
-        <!-- ✅ FIX: value must be numeric; label can be 6+ -->
         <option value="6">6+</option>
       </select>
       <div class="hint">How many bags total? Helps make sure the right vehicle shows up.</div>
@@ -407,7 +176,6 @@
     </div>
   </div>
 
-  <!-- Payment / Estimate -->
   <div class="card">
     <div class="section-title">Estimate</div>
 
@@ -441,20 +209,18 @@
 
 <div id="toast"></div>
 
-<!-- MAIN LOGIC -->
 <script>
   // =====================================================
   // CONFIG
   // =====================================================
   const API_BOOK   = "https://bigred-bookings.bigredtransportation.workers.dev";
   const STATUS_API = "https://bigred-status-updater.bigredtransportation.workers.dev/status";
-  // ✅ REMOVED: rider page should NOT send push (Bookings worker already does it)
-  // const PUSH_API   = "https://bigred-push.bigredtransportation.workers.dev/push/ride-request";
 
-  // HQ fallback (Moore)
+  // ✅ ADD BACK: Rider-side push relay (since you're not getting pushes from bookings env)
+  const PUSH_API   = "https://bigred-push.bigredtransportation.workers.dev/push/ride-request";
+
   const HQ = { lat: 35.3207, lng: -97.4929 };
-
-  let fairnessOrigin = { ...HQ }; // will be updated from status if possible
+  let fairnessOrigin = { ...HQ };
 
   // =====================================================
   // TOAST
@@ -467,7 +233,7 @@
   }
 
   // =====================================================
-  // RIDER ID HELPER
+  // RIDER ID
   // =====================================================
   function ensureRiderId() {
     let rid = localStorage.getItem("riderId");
@@ -487,27 +253,17 @@
     }
     return rid;
   }
-
-  // Ensure it exists as soon as this page loads
   ensureRiderId();
 
   // =====================================================
   // NAV
   // =====================================================
-  document.getElementById("logoHome").addEventListener("click", () => {
-    window.location.href = "/index.html";
-  });
-
-  document.getElementById("btnHub").addEventListener("click", () => {
-    window.location.href = "/rider/rider.html";
-  });
-
-  document.getElementById("btnEditProfile").addEventListener("click", () => {
-    window.location.href = "/rider/profile.html";
-  });
+  document.getElementById("logoHome").addEventListener("click", () => window.location.href = "/index.html");
+  document.getElementById("btnHub").addEventListener("click", () => window.location.href = "/rider/rider.html");
+  document.getElementById("btnEditProfile").addEventListener("click", () => window.location.href = "/rider/profile.html");
 
   // =====================================================
-  // DESTINATION HANDOFF (Index → Ride Request)
+  // HANDOFF DROP-OFF
   // =====================================================
   function readHandoffDropoff() {
     try {
@@ -525,9 +281,7 @@
       if (ls) return { value: ls, source: "localStorage" };
 
       return null;
-    } catch (e) {
-      return null;
-    }
+    } catch (e) { return null; }
   }
 
   function clearHandoffDropoff() {
@@ -556,12 +310,11 @@
       showToast("Drop-off carried over ✅");
     }
 
-    // ✅ ensure luggage reflects new text
     syncLuggageVisibility();
   }
 
   // =====================================================
-  // ✅ RE-REQUEST PREFILL (MyRide → Ride Request)
+  // REPEAT PREFILL
   // =====================================================
   async function prefillFromRepeatRideIfAny() {
     try {
@@ -595,7 +348,7 @@
         if (stopEl) stopEl.value = addr;
       }
 
-      const pax = Number(r?.rider?.partySize ?? r?.rider?.party_size ?? 1);
+      const pax = Number(r?.rider?.partySize ?? 1);
       const paxEl = document.getElementById("passengers");
       if (paxEl && Number.isFinite(pax) && pax > 0) paxEl.value = String(Math.min(6, pax));
 
@@ -605,7 +358,6 @@
 
       showToast("Ride loaded ✅");
 
-      // ✅ make luggage appear if airport
       syncLuggageVisibility();
 
       u.searchParams.delete("repeat");
@@ -616,7 +368,7 @@
   }
 
   // =====================================================
-  // PROFILE SUMMARY + PREFILL
+  // PROFILE SUMMARY
   // =====================================================
   function loadProfileSummary() {
     const name  = localStorage.getItem("riderName")  || "";
@@ -643,23 +395,19 @@
     const gateEl = document.getElementById("gateCode");
     if (gate && gateEl && !String(gateEl.value||"").trim()) gateEl.value = gate;
 
-    // ✅ reflect luggage after prefill
     syncLuggageVisibility();
   }
 
   function formatPhone(p) {
     const digits = String(p || "").replace(/\D/g, "");
-    if (digits.length === 10) {
-      return `(${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6)}`;
-    }
+    if (digits.length === 10) return `(${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6)}`;
     return p;
   }
 
   // =====================================================
-  // MODE (NOW vs RESERVE)
+  // MODE
   // =====================================================
   let mode = "now";
-
   function setMode(m) {
     mode = m;
     const nowBtn = document.getElementById("modeNow");
@@ -677,12 +425,11 @@
     }
     applyAutoRateLabels();
   }
-
   document.getElementById("modeNow").addEventListener("click", () => setMode("now"));
   document.getElementById("modeReserve").addEventListener("click", () => setMode("reserve"));
 
   // =====================================================
-  // GOOGLE MAPS / AUTOCOMPLETE + PLACE PERSIST
+  // MAPS + AUTOCOMPLETE
   // =====================================================
   let map, geocoder, directionsService, directionsRenderer;
   let pickupLatLng = null, dropoffLatLng = null;
@@ -695,19 +442,9 @@
     stopPrefix: "brc_place_stop_v1:"
   };
 
-  function savePlace(key, placeObj) {
-    try { sessionStorage.setItem(key, JSON.stringify(placeObj)); } catch(e) {}
-  }
-  function loadPlace(key) {
-    try {
-      const raw = sessionStorage.getItem(key);
-      if (!raw) return null;
-      return JSON.parse(raw);
-    } catch(e) { return null; }
-  }
-  function clearPlace(key) {
-    try { sessionStorage.removeItem(key); } catch(e) {}
-  }
+  function savePlace(key, placeObj) { try { sessionStorage.setItem(key, JSON.stringify(placeObj)); } catch(e) {} }
+  function loadPlace(key) { try { const raw = sessionStorage.getItem(key); return raw ? JSON.parse(raw) : null; } catch(e) { return null; } }
+  function clearPlace(key) { try { sessionStorage.removeItem(key); } catch(e) {} }
 
   function placeFromGoogle(p) {
     if (!p || !p.geometry || !p.geometry.location) return null;
@@ -718,33 +455,23 @@
     return {
       address: p.formatted_address || p.name || "",
       placeId: p.place_id || "",
-      lat,
-      lng,
-      name: p.name || ""
+      lat, lng,
+      name: p.name || "",
+      types: Array.isArray(p.types) ? p.types : []
     };
   }
 
   function setMarker(which, lat, lng) {
     const latlng = { lat, lng };
-
     if (which === "pickup") {
       pickupLatLng = new google.maps.LatLng(lat, lng);
       if (pickupMarker) pickupMarker.setMap(null);
-      pickupMarker = new google.maps.Marker({
-        position: latlng,
-        map,
-        icon: { url: "http://maps.google.com/mapfiles/ms/icons/green-dot.png" }
-      });
+      pickupMarker = new google.maps.Marker({ position: latlng, map, icon: { url: "http://maps.google.com/mapfiles/ms/icons/green-dot.png" } });
     } else if (which === "dropoff") {
       dropoffLatLng = new google.maps.LatLng(lat, lng);
       if (dropoffMarker) dropoffMarker.setMap(null);
-      dropoffMarker = new google.maps.Marker({
-        position: latlng,
-        map,
-        icon: { url: "http://maps.google.com/mapfiles/ms/icons/red-dot.png" }
-      });
+      dropoffMarker = new google.maps.Marker({ position: latlng, map, icon: { url: "http://maps.google.com/mapfiles/ms/icons/red-dot.png" } });
     }
-
     map.panTo(latlng);
   }
 
@@ -758,7 +485,6 @@
 
     if (stored.lat && stored.lng) setMarker(which, stored.lat, stored.lng);
 
-    // ✅ reflect luggage if airport text exists
     syncLuggageVisibility();
   }
 
@@ -767,18 +493,12 @@
     if (!el) return;
 
     const key = which === "pickup" ? PLACE_KEYS.pickup : PLACE_KEYS.dropoff;
-
     el.addEventListener("input", () => {
-      const exists = sessionStorage.getItem(key);
-      if (exists) clearPlace(key);
-
+      if (sessionStorage.getItem(key)) clearPlace(key);
       if (which === "pickup") pickupLatLng = null;
       if (which === "dropoff") dropoffLatLng = null;
-
       applyAutoRateLabels();
       updateFairnessPreview();
-
-      // ✅ luggage reacts while typing
       syncLuggageVisibility();
     });
   }
@@ -796,7 +516,8 @@
       bounds: okcBounds,
       strictBounds: false,
       componentRestrictions: { country: "us" },
-      fields: ["formatted_address", "geometry.location", "name", "place_id"]
+      // ✅ include types so we can detect airport even if address text doesn't say "airport"
+      fields: ["formatted_address", "geometry.location", "name", "place_id", "types"]
     };
 
     const ac = new google.maps.places.Autocomplete(input, options);
@@ -827,18 +548,15 @@
         if (packed.lat && packed.lng) setMarker("pickup", packed.lat, packed.lng);
         applyAutoRateLabels();
         updateFairnessPreview();
-        // ✅ FIX: autocomplete selection must trigger luggage check
         syncLuggageVisibility();
       } else if (role === "dropoff") {
         savePlace(PLACE_KEYS.dropoff, packed);
         if (packed.lat && packed.lng) setMarker("dropoff", packed.lat, packed.lng);
         applyAutoRateLabels();
         updateFairnessPreview();
-        // ✅ FIX: autocomplete selection must trigger luggage check
         syncLuggageVisibility();
       } else if (role === "stop") {
-        const k = PLACE_KEYS.stopPrefix + id;
-        savePlace(k, packed);
+        savePlace(PLACE_KEYS.stopPrefix + id, packed);
       }
     });
 
@@ -846,10 +564,7 @@
   }
 
   function addStopField() {
-    if (stopInputs.length >= 3) {
-      alert("Limit 3 stops.");
-      return;
-    }
+    if (stopInputs.length >= 3) { alert("Limit 3 stops."); return; }
     const id = "stop_" + Date.now();
     stopInputs.push(id);
 
@@ -869,9 +584,7 @@
     setupAutocomplete(id, "stop");
 
     const stopEl = document.getElementById(id);
-    stopEl.addEventListener("input", () => {
-      clearPlace(PLACE_KEYS.stopPrefix + id);
-    });
+    stopEl.addEventListener("input", () => clearPlace(PLACE_KEYS.stopPrefix + id));
   }
 
   function removeStop(id) {
@@ -883,10 +596,7 @@
   window.removeStop = removeStop;
 
   function useMyLocation(which) {
-    if (!navigator.geolocation) {
-      alert("Location services not supported.");
-      return;
-    }
+    if (!navigator.geolocation) { alert("Location services not supported."); return; }
 
     navigator.geolocation.getCurrentPosition(
       pos => {
@@ -895,40 +605,27 @@
         const latlng = { lat, lng };
 
         geocoder.geocode({ location: latlng }, (res, stat) => {
-          const addr = (stat === "OK" && res[0])
-            ? res[0].formatted_address
-            : `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-
+          const addr = (stat === "OK" && res[0]) ? res[0].formatted_address : `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
           const input = document.getElementById(which);
           input.value = addr;
 
-          const packed = { address: addr, placeId: "", lat, lng, name: "" };
+          const packed = { address: addr, placeId: "", lat, lng, name: "", types: [] };
 
           if (which === "pickup") {
             pickupLatLng = new google.maps.LatLng(lat, lng);
             savePlace(PLACE_KEYS.pickup, packed);
             if (pickupMarker) pickupMarker.setMap(null);
-            pickupMarker = new google.maps.Marker({
-              position: latlng,
-              map,
-              icon: { url: "http://maps.google.com/mapfiles/ms/icons/green-dot.png" }
-            });
+            pickupMarker = new google.maps.Marker({ position: latlng, map, icon: { url: "http://maps.google.com/mapfiles/ms/icons/green-dot.png" } });
           } else {
             dropoffLatLng = new google.maps.LatLng(lat, lng);
             savePlace(PLACE_KEYS.dropoff, packed);
             if (dropoffMarker) dropoffMarker.setMap(null);
-            dropoffMarker = new google.maps.Marker({
-              position: latlng,
-              map,
-              icon: { url: "http://maps.google.com/mapfiles/ms/icons/red-dot.png" }
-            });
+            dropoffMarker = new google.maps.Marker({ position: latlng, map, icon: { url: "http://maps.google.com/mapfiles/ms/icons/red-dot.png" } });
           }
 
           map.panTo(latlng);
           applyAutoRateLabels();
           updateFairnessPreview();
-
-          // ✅ FIX: use-my-location must trigger luggage check
           syncLuggageVisibility();
         });
       },
@@ -942,7 +639,7 @@
   document.getElementById("addStopBtn").addEventListener("click", addStopField);
 
   // =====================================================
-  // HOLIDAY / RUSH / EVENT / AIRPORT HELPERS
+  // HOLIDAY / RUSH / EVENT / AIRPORT
   // =====================================================
   function getHolidayInfo(d) {
     if (!(d instanceof Date) || isNaN(d)) return null;
@@ -952,9 +649,7 @@
 
     if (m === 10 && weekday === 4) {
       const nth = Math.floor((day - 1) / 7) + 1;
-      if (nth === 4) {
-        return { code: "thanksgiving", message: "🦃 Holiday base ($20) applies for Thanksgiving rides." };
-      }
+      if (nth === 4) return { code: "thanksgiving", message: "🦃 Holiday base ($20) applies for Thanksgiving rides." };
     }
 
     if (m === 11 && day === 24) return { code:"christmas_eve", message:"🎄 Christmas Eve – Holiday base ($20) applies." };
@@ -984,12 +679,6 @@
     "osu stadium"
   ];
 
-  function isAirportTrip(text) {
-    if (!text) return false;
-    const t = text.toLowerCase();
-    return t.includes("airport") || t.includes("will rogers");
-  }
-
   function getEffectiveDate() {
     if (mode === "reserve") {
       const dStr = document.getElementById("reserveDate").value;
@@ -999,13 +688,26 @@
     return new Date();
   }
 
-  // =====================================================
-  // LUGGAGE (AIRPORT ONLY)
-  // =====================================================
+  // ✅ Airport detection that works for BOTH typed text and Google Place data
+  function isAirportText(s) {
+    const t = String(s || "").toLowerCase();
+    return t.includes("airport") || t.includes("will rogers") || t.includes("okc");
+  }
+  function isAirportPlace(stored) {
+    if (!stored) return false;
+    const name = String(stored.name || "").toLowerCase();
+    const addr = String(stored.address || "").toLowerCase();
+    const types = Array.isArray(stored.types) ? stored.types.map(x => String(x).toLowerCase()) : [];
+    return types.includes("airport") || name.includes("airport") || name.includes("will rogers") || addr.includes("airport") || addr.includes("will rogers");
+  }
+
   function isAirportTripNow(){
-    const pickupText = (document.getElementById("pickup").value || "");
-    const dropText   = (document.getElementById("dropoff").value || "");
-    return isAirportTrip(pickupText) || isAirportTrip(dropText);
+    const pickupText = document.getElementById("pickup").value || "";
+    const dropText   = document.getElementById("dropoff").value || "";
+    const pStored = loadPlace(PLACE_KEYS.pickup);
+    const dStored = loadPlace(PLACE_KEYS.dropoff);
+
+    return isAirportText(pickupText) || isAirportText(dropText) || isAirportPlace(pStored) || isAirportPlace(dStored);
   }
 
   function readLuggageCount(){
@@ -1030,8 +732,8 @@
   ["pickup","dropoff"].forEach(id=>{
     const el = document.getElementById(id);
     if(el){
-      el.addEventListener("input", () => syncLuggageVisibility());
-      el.addEventListener("change", () => syncLuggageVisibility());
+      el.addEventListener("input", syncLuggageVisibility);
+      el.addEventListener("change", syncLuggageVisibility);
     }
   });
 
@@ -1041,7 +743,7 @@
     const effective  = getEffectiveDate();
 
     const rush    = isWeekdayRushHour(effective);
-    const airport = isAirportTrip(pickupText) || isAirportTrip(dropText);
+    const airport = isAirportTripNow();
     const event   = SPECIAL_EVENT_KEYWORDS.some(k => pickupText.includes(k) || dropText.includes(k));
     const holidayInfo = getHolidayInfo(effective);
 
@@ -1053,34 +755,29 @@
     airportNote.textContent = "";
     eventNote.textContent = "";
 
-    // keep luggage UI in sync
     syncLuggageVisibility();
 
     if (holidayInfo) {
       eventNote.textContent = holidayInfo.message;
       return { baseType: "holiday", base: 20 };
     }
-
     if (event) {
       eventNote.textContent = "📍 Special event area – Event base ($20) may apply.";
       return { baseType: "event", base: 20 };
     }
-
     if (airport) {
       airportNote.textContent = "✈️ Airport run – Airport base ($15) applies.";
       return { baseType: "airport", base: 15 };
     }
-
     if (rush) {
       rushNote.textContent = "🚦 Weekday Rush Hour (5–9 AM / 3–7 PM).";
       return { baseType: "rush", base: 15 };
     }
-
     return { baseType: "standard", base: 10 };
   }
 
   // =====================================================
-  // FAIRNESS FEE — USING DRIVER LOCATION WHEN AVAILABLE
+  // FAIRNESS FEE
   // =====================================================
   function distMi(a, b) {
     const p1 = new google.maps.LatLng(a.lat, a.lng);
@@ -1114,13 +811,8 @@
     const origin = fairnessOrigin || HQ;
     const d = distMi(origin, pickup);
 
-    if (d > 40) {
-      note.textContent =
-        "📍 Pickup is well outside the central metro / current driver area. A travel fairness fee may apply depending on total trip distance.";
-    } else if (d > 20) {
-      note.textContent =
-        "📍 Pickup is outside the central zone / current driver area. A small travel fairness fee may apply depending on trip distance.";
-    }
+    if (d > 40) note.textContent = "📍 Pickup is well outside the central metro / current driver area. A travel fairness fee may apply depending on total trip distance.";
+    else if (d > 20) note.textContent = "📍 Pickup is outside the central zone / current driver area. A small travel fairness fee may apply depending on trip distance.";
   }
 
   async function fetchDriverOrigin() {
@@ -1137,18 +829,12 @@
   }
 
   // =====================================================
-  // ROUTE URL BUILDER
+  // ROUTE URL
   // =====================================================
   function buildRouteUrl(pickup, dropoff, stops) {
     const base = "https://www.google.com/maps/dir/?api=1";
-    let url = base +
-      "&origin=" + encodeURIComponent(pickup) +
-      "&destination=" + encodeURIComponent(dropoff);
-
-    if (stops && stops.length > 0) {
-      const waypointsRaw = stops.join("|");
-      url += "&waypoints=" + encodeURIComponent(waypointsRaw);
-    }
+    let url = base + "&origin=" + encodeURIComponent(pickup) + "&destination=" + encodeURIComponent(dropoff);
+    if (stops && stops.length > 0) url += "&waypoints=" + encodeURIComponent(stops.join("|"));
     return url;
   }
 
@@ -1169,7 +855,6 @@
       .map(id => {
         const addr = (document.getElementById(id)?.value || "").trim();
         if (!addr) return null;
-
         const stored = loadPlace(PLACE_KEYS.stopPrefix + id);
         return {
           address: addr,
@@ -1201,12 +886,7 @@
     try {
       route = await new Promise((resolve, reject) => {
         directionsService.route(
-          {
-            origin: pickup,
-            destination: dropoff,
-            waypoints,
-            travelMode: "DRIVING"
-          },
+          { origin: pickup, destination: dropoff, waypoints, travelMode: "DRIVING" },
           (r, status) => status === "OK" ? resolve(r) : reject(status)
         );
       });
@@ -1238,13 +918,9 @@
 
     const pay = document.getElementById("payment").value;
     let fare = basePlusMiles + fairnessFee;
-
-    if (pay === "card") {
-      fare += fare * 0.033 + fare * 0.024;
-    }
+    if (pay === "card") fare += fare * 0.033 + fare * 0.024;
 
     const total = fare.toFixed(2);
-
     document.getElementById("estimateDisplay").value = "$" + total;
 
     const resDiv = document.getElementById("result");
@@ -1262,13 +938,7 @@
     `;
 
     lastFare = {
-      pickup,
-      dropoff,
-      miles,
-      minutes,
-      base,
-      mileageSub,
-      fairnessFee,
+      pickup, dropoff, miles, minutes, base, mileageSub, fairnessFee,
       total: Number(total),
       pay,
       mode,
@@ -1288,23 +958,16 @@
   document.getElementById("calcBtn").addEventListener("click", calculateFare);
 
   // =====================================================
-  // SEND REQUEST → BOOKINGS + SMS + REDIRECT
+  // SEND REQUEST → BOOKINGS + PUSH + SMS
   // =====================================================
   async function sendRequest() {
-    if (!lastFare) {
-      showToast("Get an estimate first.");
-      return;
-    }
-    if (requestInFlight) {
-      showToast("Request already sending…");
-      return;
-    }
+    if (!lastFare) { showToast("Get an estimate first."); return; }
+    if (requestInFlight) { showToast("Request already sending…"); return; }
     requestInFlight = true;
 
     const name  = localStorage.getItem("riderName")  || "Rider";
     const phone = localStorage.getItem("riderPhone") || "";
     const riderId = ensureRiderId();
-
     const q = lastFare;
 
     let scheduledISO = null;
@@ -1314,11 +977,9 @@
     }
 
     const routeUrl = buildRouteUrl(q.pickup, q.dropoff, q.stopsText || []);
-
     const pickupStored = loadPlace(PLACE_KEYS.pickup);
     const dropStored   = loadPlace(PLACE_KEYS.dropoff);
 
-    // ✅ FIX: Bookings worker expects type RESERVATION or INSTANT
     const bookingType = scheduledISO ? "RESERVATION" : "INSTANT";
 
     const payload = {
@@ -1343,8 +1004,7 @@
         lng: (typeof s.lng === "number") ? s.lng : null
       })),
       rider: {
-        name,
-        phone,
+        name, phone,
         partySize: q.passengers || 1,
         riderId
       },
@@ -1353,10 +1013,7 @@
         travelFee: q.fairnessFee || 0,
         ratePlan: scheduledISO ? "RESERVATION" : "STANDARD"
       },
-      metrics: {
-        miles: q.miles,
-        minutes: q.minutes
-      },
+      metrics: { miles: q.miles, minutes: q.minutes },
       scheduledFor: scheduledISO,
       source: "RIDE_REQUEST",
       metadata: {
@@ -1387,6 +1044,29 @@
     const booking = await res.json();
     const rideId = booking.id;
 
+    // ✅ ADD BACK PUSH (non-blocking)
+    try {
+      await fetch(PUSH_API, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Ride-Push-Key": "ride_request_ok"
+        },
+        body: JSON.stringify({
+          rideId,
+          riderName: name,
+          pickup: q.pickup,
+          dropoff: q.dropoff,
+          passengers: q.passengers || 1,
+          luggageCount: (q.luggageCount ?? 0),
+          estimate: q.total,
+          scheduledFor: scheduledISO
+        })
+      });
+    } catch (e) {
+      console.warn("Ride request push failed (non-blocking)", e);
+    }
+
     const btn = document.getElementById("btnRequest");
     if (btn) {
       btn.disabled = true;
@@ -1396,11 +1076,7 @@
     localStorage.setItem("lastRideId", rideId);
 
     const stopsText = (q.stopsText && q.stopsText.length) ? q.stopsText.join(" → ") : "None";
-
-    const whenText = (q.mode === "reserve" && q.reserveDate && q.reserveTime)
-      ? `${q.reserveDate} at ${q.reserveTime}`
-      : "ASAP (Ride Now)";
-
+    const whenText = (q.mode === "reserve" && q.reserveDate && q.reserveTime) ? `${q.reserveDate} at ${q.reserveTime}` : "ASAP (Ride Now)";
     const shortRoute = `https://bigredconnectokc.com/rider/route.html?id=${encodeURIComponent(rideId)}`;
 
     const smsBody =
@@ -1422,7 +1098,6 @@
     const trackUrl = "/rider/myride.html?id=" + encodeURIComponent(rideId);
 
     alert("Almost done! You’ll now be switched to Messages.\n\nPlease tap SEND in the text to finish submitting your ride request to Big Red.");
-
     window.location.href = smsUrl;
 
     setTimeout(() => {
@@ -1431,7 +1106,7 @@
   }
 
   // =====================================================
-  // GOOGLE INIT CALLBACK
+  // GOOGLE INIT
   // =====================================================
   window.initGoogle = function () {
     geocoder = new google.maps.Geocoder();
@@ -1468,7 +1143,6 @@
     loadProfileSummary();
     fetchDriverOrigin();
 
-    // ✅ ensure luggage UI correct on initial load
     syncLuggageVisibility();
     applyAutoRateLabels();
   };
@@ -1481,10 +1155,8 @@
   });
 </script>
 
-<!-- GOOGLE MAPS (Places + Geometry) -->
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places,geometry&callback=initGoogle" async defer></script>
 
-<!-- 🔔 OneSignal identity re-bind (NO prompt) -->
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <script>
   window.OneSignalDeferred = window.OneSignalDeferred || [];
@@ -1492,10 +1164,8 @@
     try {
       const raw = localStorage.getItem("bigred_rider_profile_v1");
       if (!raw) return;
-
       const profile = JSON.parse(raw);
       if (!profile.riderId) return;
-
       await OneSignal.login(profile.riderId);
       console.log("🔔 Rider push identity confirmed:", profile.riderId);
     } catch (e) {
