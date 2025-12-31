@@ -381,6 +381,21 @@
       <div class="hint">Seatbelts for everyone. Max 6 depending on which vehicle is in service.</div>
     </div>
 
+    <!-- Luggage (Airport only) -->
+    <div class="input-group" id="luggageWrap" style="display:none;">
+      <label for="luggageCount">Luggage (airport rides)</label>
+      <select id="luggageCount">
+        <option value="0">0</option>
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+        <option value="6">6+</option>
+      </select>
+      <div class="hint">How many bags total? Helps make sure the right vehicle shows up.</div>
+    </div>
+
     <div id="map"></div>
 
     <div class="notes-block" style="margin-top:10px;">
@@ -587,6 +602,16 @@
         const stopEl = document.getElementById(lastId);
         if (stopEl) stopEl.value = addr;
       }
+
+      // Passengers (if present)
+      const pax = Number(r?.rider?.partySize ?? r?.rider?.party_size ?? 1);
+      const paxEl = document.getElementById("passengers");
+      if (paxEl && Number.isFinite(pax) && pax > 0) paxEl.value = String(Math.min(6, pax));
+
+      // Luggage (if present, stored in metadata)
+      const lug = Number(r?.metadata?.luggageCount ?? 0);
+      const lugEl = document.getElementById("luggageCount");
+      if (lugEl && Number.isFinite(lug) && lug >= 0) lugEl.value = String(Math.min(6, lug));
 
       showToast("Ride loaded ✅");
 
@@ -986,6 +1011,37 @@
     return new Date();
   }
 
+  // =====================================================
+  // LUGGAGE (AIRPORT ONLY)
+  // =====================================================
+  function isAirportTripNow(){
+    const pickupText = (document.getElementById("pickup").value || "");
+    const dropText   = (document.getElementById("dropoff").value || "");
+    return isAirportTrip(pickupText) || isAirportTrip(dropText);
+  }
+
+  function syncLuggageVisibility(){
+    const wrap = document.getElementById("luggageWrap");
+    const luggageEl = document.getElementById("luggageCount");
+    if(!wrap || !luggageEl) return;
+
+    if(isAirportTripNow()){
+      wrap.style.display = "block";
+    } else {
+      wrap.style.display = "none";
+      luggageEl.value = "0"; // reset when not airport
+    }
+  }
+
+  // React quickly while typing
+  ["pickup","dropoff"].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el){
+      el.addEventListener("input", () => syncLuggageVisibility());
+      el.addEventListener("change", () => syncLuggageVisibility());
+    }
+  });
+
   function applyAutoRateLabels() {
     const pickupText = (document.getElementById("pickup").value || "").toLowerCase();
     const dropText   = (document.getElementById("dropoff").value || "").toLowerCase();
@@ -1003,6 +1059,9 @@
     rushNote.textContent = "";
     airportNote.textContent = "";
     eventNote.textContent = "";
+
+    // keep luggage UI in sync (non-blocking)
+    setTimeout(syncLuggageVisibility, 0);
 
     if (holidayInfo) {
       eventNote.textContent = holidayInfo.message;
@@ -1226,6 +1285,7 @@
       reserveTime: document.getElementById("reserveTime").value,
       planBy: document.getElementById("planBy").value,
       passengers: Number(document.getElementById("passengers").value || "1"),
+      luggageCount: Number(document.getElementById("luggageCount")?.value || "0"),
       gateCode: document.getElementById("gateCode").value.trim()
     };
 
@@ -1303,7 +1363,11 @@
         minutes: q.minutes
       },
       scheduledFor: scheduledISO,
-      source: "RIDE_REQUEST"
+      source: "RIDE_REQUEST",
+      metadata: {
+        luggageCount: (q.luggageCount ?? 0),
+        routeUrl
+      }
     };
 
     let res;
@@ -1342,6 +1406,7 @@
           pickup: q.pickup,
           dropoff: q.dropoff,
           passengers: q.passengers || 1,
+          luggageCount: (q.luggageCount ?? 0),
           estimate: q.total,
           scheduledFor: scheduledISO
         })
@@ -1374,6 +1439,7 @@
       `Estimated Fare: $${q.total}\n` +
       `When: ${whenText}\n` +
       `Passengers: ${q.passengers}\n` +
+      `Luggage: ${q.luggageCount ?? 0}\n` +
       `Gate / Access: ${q.gateCode || "None"}\n` +
       `Ride ID: ${rideId}\n` +
       `Google Maps Route: ${routeUrl}`;
@@ -1433,6 +1499,10 @@
     ensureRiderId();
     loadProfileSummary();
     fetchDriverOrigin();
+
+    // ensure luggage UI correct on initial load
+    syncLuggageVisibility();
+    applyAutoRateLabels();
   };
 
   window.addEventListener("error", (e) => {
