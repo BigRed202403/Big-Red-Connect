@@ -1243,21 +1243,12 @@ function resolveRiderIdFromBooking(b){
 /* NEW: passenger count resolver */
 function resolvePassengers(b){
   const v =
-    b?.passengers ??
-    b?.passenger_count ??
-    b?.passengerCount ??
-    b?.num_passengers ??
-    b?.numPassengers ??
-    b?.party_size ??
-    b?.partySize ??
-    b?.pax ??
-    b?.rider_count ??
-    b?.riderCount ??
     b?.rider?.passengers ??
     b?.rider?.party_size ??
+    b?.rider?.partySize ??     // ✅ ADD THIS
     b?.rider?.pax;
   const n = Number(v);
-  return Number.isFinite(n) && n > 0 ? n : null;
+  return Number.isFinite(n) && n > 0 ? n : 1;
 }
 
 function renderAllBookings(list){
