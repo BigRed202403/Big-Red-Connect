@@ -1429,24 +1429,23 @@
       ? `${q.reserveDate} at ${q.reserveTime}`
       : "ASAP (Ride Now)";
 
-    const smsBody =
-      `Hey Big Red — this is ${name}.\n` +
-      `I'd like to request this ride:\n\n` +
-      `Pickup: ${q.pickup}\n` +
-      `Dropoff: ${q.dropoff}\n` +
-      `Stops: ${stopsText}\n` +
-      `Miles: ${q.miles}\n` +
-      `Estimated Fare: $${q.total}\n` +
-      `When: ${whenText}\n` +
-      `Passengers: ${q.passengers}\n` +
-      `Luggage: ${q.luggageCount ?? 0}\n` +
-      `Gate / Access: ${q.gateCode || "None"}\n` +
-      `Ride ID: ${rideId}\n` +
-      const shortRoute = `https://bigredconnectokc.com/rider/route.html?id=${encodeURIComponent(rideId)}`;
-      
-      ...
-      `Route: ${shortRoute}`;
+    const shortRoute = `https://bigredconnectokc.com/rider/route.html?id=${encodeURIComponent(rideId)}`;
 
+const smsBody =
+  `Hey Big Red — this is ${name}.\n` +
+  `I'd like to request this ride:\n\n` +
+  `Pickup: ${q.pickup}\n` +
+  `Dropoff: ${q.dropoff}\n` +
+  `Stops: ${stopsText}\n` +
+  `Miles: ${q.miles}\n` +
+  `Estimated Fare: $${q.total}\n` +
+  `When: ${whenText}\n` +
+  `Passengers: ${q.passengers}\n` +
+  `Luggage: ${q.luggageCount ?? 0}\n` +
+  `Gate / Access: ${q.gateCode || "None"}\n` +
+  `Ride ID: ${rideId}\n` +
+  `Route: ${shortRoute}`;
+  
     const smsUrl = "sms:+14053784024?&body=" + encodeURIComponent(smsBody);
     const trackUrl = "/rider/myride.html?id=" + encodeURIComponent(rideId);
 
