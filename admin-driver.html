@@ -66,6 +66,9 @@
   --green:#0a5;
   --yellow:#b98500;
   --danger:#a33;
+
+  /* Tap target sizing (in-car friendly) */
+  --tap:44px;
 }
 *{box-sizing:border-box;}
 html,body{height:100%;}
@@ -83,7 +86,7 @@ header{
   z-index:50;
   background:linear-gradient(180deg,#0f0f0f 0%, #070707 100%);
   border-bottom:2px solid var(--red);
-  padding:8px 10px;
+  padding:10px 10px; /* slightly taller */
   display:flex;
   align-items:center;
   justify-content:space-between;
@@ -96,8 +99,8 @@ header{
   min-width:0;
 }
 .h-left img{
-  width:36px;
-  height:36px;
+  width:38px;
+  height:38px;
   border-radius:10px;
   border:1px solid #222;
 }
@@ -109,23 +112,23 @@ header{
 }
 .h-title .top{
   font-weight:900;
-  font-size:.92rem;
+  font-size:.95rem;
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
 }
 .h-title .sub{
-  font-size:.75rem;
+  font-size:.78rem;
   color:#9c9c9c;
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
 }
 .pill{
-  padding:5px 10px;
+  padding:7px 12px; /* bigger */
   border-radius:999px;
   font-weight:900;
-  font-size:.78rem;
+  font-size:.82rem;
   border:1px solid #2b2b2b;
   background:#0b0b0b;
   white-space:nowrap;
@@ -137,32 +140,49 @@ header{
 .h-right{
   display:flex;
   align-items:center;
-  gap:6px;
+  gap:8px;
 }
 
-/* ===== Buttons (uniform) ===== */
+/* ===== Buttons (uniform, larger tap targets) ===== */
 .btn{
-  padding:8px 10px;
-  border-radius:12px;
+  min-height:var(--tap);
+  min-width:var(--tap);
+  padding:10px 12px;
+  border-radius:14px;
   border:1px solid #2b2b2b;
   background:#0b0b0b;
   color:#fff;
   cursor:pointer;
   font-weight:900;
-  font-size:.82rem;
+  font-size:.92rem;
   display:inline-flex;
   align-items:center;
   justify-content:center;
-  gap:6px;
+  gap:8px;
   user-select:none;
+  -webkit-tap-highlight-color: transparent;
 }
 .btn:active{transform:scale(.99);}
 .btn-primary{background:var(--red); border-color:#7a0000;}
 .btn-secondary{border-color:var(--red);}
 .btn-ghost{background:#101010; border-color:#333;}
 .btn .lbl{display:inline;}
+
+/* Header buttons: keep them thumb-friendly */
+header .btn{
+  padding:10px 12px;
+  border-radius:16px;
+}
+
+/* On small phones: increase hit area and keep labels hidden to avoid header wrap */
 @media (max-width:430px){
-  .btn{padding:8px 9px;}
+  .btn{
+    padding:12px 12px;
+    font-size:1rem;
+  }
+  header .btn{
+    padding:12px 12px;
+  }
   .btn .lbl{display:none;}
 }
 
@@ -201,9 +221,9 @@ header{
 .row{
   display:flex;
   flex-wrap:wrap;
-  gap:8px;
+  gap:10px; /* more spacing */
   align-items:center;
-  margin:8px 0;
+  margin:10px 0;
 }
 
 label.small{
@@ -215,15 +235,16 @@ label.small{
 
 input[type=text],input[type=url],select,textarea{
   width:100%;
+  min-height:var(--tap); /* better for driving */
   background:#0b0b0b;
   color:#fff;
   border:1px solid #2a2a2a;
   border-radius:12px;
-  padding:10px 12px;
+  padding:12px 12px; /* larger */
   font-weight:800;
-  font-size:.9rem;
+  font-size:.96rem;
 }
-textarea{min-height:92px;resize:vertical;}
+textarea{min-height:110px;resize:vertical;}
 code{background:#0b0b0b;border:1px solid #222;border-radius:8px;padding:2px 6px;color:#ddd;}
 
 #status-pill{
@@ -231,9 +252,9 @@ code{background:#0b0b0b;border:1px solid #222;border-radius:8px;padding:2px 6px;
   background:#0a0a0a;
   border:1px solid #2a2a2a;
   border-radius:999px;
-  padding:10px 14px;
+  padding:12px 14px;
   font-weight:900;
-  font-size:.86rem;
+  font-size:.92rem;
   text-align:center;
 }
 #status-pill.online{border-color:rgba(0,255,120,.45);}
@@ -246,9 +267,9 @@ code{background:#0b0b0b;border:1px solid #222;border-radius:8px;padding:2px 6px;
   border-radius:12px;
   border:1px dashed #3a3a3a;
   background:#070707;
-  font-size:.85rem;
+  font-size:.88rem;
   color:#ddd;
-  line-height:1.15rem;
+  line-height:1.2rem;
 }
 
 .img-box{
@@ -281,14 +302,15 @@ code{background:#0b0b0b;border:1px solid #222;border-radius:8px;padding:2px 6px;
 .details-col summary{
   list-style:none;
   cursor:pointer;
-  padding:10px 12px;
+  padding:12px 12px; /* bigger */
   border-bottom:1px solid #1f1f1f;
   font-weight:900;
-  font-size:.86rem;
+  font-size:.92rem;
   display:flex;
   align-items:center;
   justify-content:space-between;
   gap:10px;
+  min-height:var(--tap);
 }
 .details-col summary::-webkit-details-marker{display:none;}
 .details-col[open] summary{background:#0b0b0b;}
@@ -297,7 +319,7 @@ code{background:#0b0b0b;border:1px solid #222;border-radius:8px;padding:2px 6px;
   overflow:auto;
   padding:10px;
 }
-.empty-text{text-align:center;color:#777;padding:18px 6px;font-size:.85rem;}
+.empty-text{text-align:center;color:#777;padding:18px 6px;font-size:.9rem;}
 
 .card{
   background:#101010;
@@ -305,7 +327,7 @@ code{background:#0b0b0b;border:1px solid #222;border-radius:8px;padding:2px 6px;
   border-radius:14px;
   padding:10px;
   margin-bottom:10px;
-  font-size:.85rem;
+  font-size:.88rem;
 }
 .card-head{
   display:flex;
@@ -315,9 +337,9 @@ code{background:#0b0b0b;border:1px solid #222;border-radius:8px;padding:2px 6px;
   margin-bottom:8px;
 }
 .badge{
-  padding:3px 9px;
+  padding:5px 10px; /* bigger */
   border-radius:999px;
-  font-size:.72rem;
+  font-size:.78rem;
   border:1px solid #555;
   background:#0b0b0b;
 }
@@ -331,8 +353,8 @@ code{background:#0b0b0b;border:1px solid #222;border-radius:8px;padding:2px 6px;
   margin:10px 0 6px;
 }
 .vehicle-thumb{
-  width:46px;
-  height:46px;
+  width:50px;
+  height:50px;
   object-fit:cover;
   border-radius:12px;
   border:1px solid #333;
@@ -352,17 +374,19 @@ code{background:#0b0b0b;border:1px solid #222;border-radius:8px;padding:2px 6px;
 .status-dd{min-width:160px;}
 
 .chip{
-  padding:7px 10px;
+  min-height:var(--tap);
+  padding:10px 12px; /* bigger */
   border-radius:999px;
   border:1px solid #333;
   background:#121212;
   color:#eee;
-  font-size:.78rem;
+  font-size:.9rem;
   cursor:pointer;
   text-decoration:none;
   display:inline-flex;
   align-items:center;
-  gap:6px;
+  gap:8px;
+  -webkit-tap-highlight-color: transparent;
 }
 .chip.primary{border-color:var(--red);color:#ffdada;}
 .chip:active{transform:scale(.99);}
@@ -376,13 +400,13 @@ code{background:#0b0b0b;border:1px solid #222;border-radius:8px;padding:2px 6px;
   background:#0f0f0f;
   color:#fff;
   border:1px solid var(--red);
-  padding:10px 14px;
+  padding:12px 16px;
   border-radius:999px;
   opacity:0;
   pointer-events:none;
   transition:opacity .35s;
   z-index:999;
-  font-size:.85rem;
+  font-size:.92rem;
   max-width:92vw;
   text-align:center;
 }
@@ -401,13 +425,14 @@ code{background:#0b0b0b;border:1px solid #222;border-radius:8px;padding:2px 6px;
   overflow:hidden;
 }
 .debug-wrap summary{
-  padding:10px 12px;
+  padding:12px 12px;
   cursor:pointer;
   font-weight:900;
   display:flex;
   align-items:center;
   justify-content:space-between;
   gap:8px;
+  min-height:var(--tap);
 }
 #debugLog{
   font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
@@ -438,9 +463,9 @@ body.mode-admin .driver-only{display:block;}
   </div>
 
   <div class="h-right">
-    <button class="btn btn-secondary" id="btnModeToggle">🛠 <span class="lbl">Admin</span></button>
-    <button class="btn btn-ghost" id="btnRefreshPage">🔄 <span class="lbl">Refresh</span></button>
-    <button class="btn btn-secondary" onclick="enableAdminAlerts()">🔔 <span class="lbl">Alerts</span></button>
+    <button class="btn btn-secondary" id="btnModeToggle" title="Toggle Admin/Driver">🛠 <span class="lbl">Admin</span></button>
+    <button class="btn btn-ghost" id="btnRefreshPage" title="Refresh Page">🔄 <span class="lbl">Refresh</span></button>
+    <button class="btn btn-secondary" onclick="enableAdminAlerts()" title="Enable Alerts">🔔 <span class="lbl">Alerts</span></button>
   </div>
 </header>
 
@@ -459,7 +484,7 @@ body.mode-admin .driver-only{display:block;}
             <option value="away">🟡 Limited Availability</option>
             <option value="offline" selected>🔴 Offline</option>
           </select>
-          <button class="btn btn-primary" id="updateStatusBtn">💾 <span class="lbl">Save</span></button>
+          <button class="btn btn-primary" id="updateStatusBtn" title="Save Status">💾 <span class="lbl">Save</span></button>
         </div>
 
         <div class="row">
@@ -500,8 +525,8 @@ body.mode-admin .driver-only{display:block;}
           <textarea id="manualNotes" placeholder="Gate code, apartment, extra context…"></textarea>
 
           <div class="row" style="margin-top:10px;">
-            <button class="btn btn-primary" id="btnCreateManualRide">➕ <span class="lbl">Create</span></button>
-            <button class="btn btn-secondary" id="btnClearManualRide">🧹 <span class="lbl">Clear</span></button>
+            <button class="btn btn-primary" id="btnCreateManualRide" title="Create Ride">➕ <span class="lbl">Create</span></button>
+            <button class="btn btn-secondary" id="btnClearManualRide" title="Clear Form">🧹 <span class="lbl">Clear</span></button>
           </div>
 
           <p class="meta">
@@ -523,7 +548,7 @@ body.mode-admin .driver-only{display:block;}
             <option value="OFFLINE">🔴 Going Offline</option>
             <option value="CUSTOM">✏️ Custom Only</option>
           </select>
-          <button class="btn btn-ghost" id="pushApplyTemplate">✨ <span class="lbl">Apply</span></button>
+          <button class="btn btn-ghost" id="pushApplyTemplate" title="Apply Template">✨ <span class="lbl">Apply</span></button>
         </div>
 
         <label class="small">Title</label>
@@ -543,8 +568,8 @@ body.mode-admin .driver-only{display:block;}
         </div>
 
         <div class="row" style="margin-top:10px;">
-          <button class="btn btn-primary" id="sendBroadcastPush">📢 <span class="lbl">Send</span></button>
-          <button class="btn btn-secondary" id="clearPush">🧹 <span class="lbl">Clear</span></button>
+          <button class="btn btn-primary" id="sendBroadcastPush" title="Send Broadcast">📢 <span class="lbl">Send</span></button>
+          <button class="btn btn-secondary" id="clearPush" title="Clear Push Fields">🧹 <span class="lbl">Clear</span></button>
         </div>
 
         <p class="meta">Sends a push notification to all riders tagged <code>env = "live"</code>.</p>
@@ -558,22 +583,22 @@ body.mode-admin .driver-only{display:block;}
         </div>
 
         <div class="row">
-          <button id="prevImage" class="btn btn-ghost">⬅ <span class="lbl">Image</span></button>
-          <button id="nextImage" class="btn btn-ghost"><span class="lbl">Image</span> ➡</button>
+          <button id="prevImage" class="btn btn-ghost" title="Previous Image">⬅ <span class="lbl">Image</span></button>
+          <button id="nextImage" class="btn btn-ghost" title="Next Image"><span class="lbl">Image</span> ➡</button>
         </div>
 
         <div class="row">
-          <button id="prevCaption" class="btn btn-ghost">⬅ <span class="lbl">Caption</span></button>
-          <button id="nextCaption" class="btn btn-ghost"><span class="lbl">Caption</span> ➡</button>
-          <button id="resetCaption" class="btn btn-secondary">↺ <span class="lbl">Reset</span></button>
+          <button id="prevCaption" class="btn btn-ghost" title="Previous Caption">⬅ <span class="lbl">Caption</span></button>
+          <button id="nextCaption" class="btn btn-ghost" title="Next Caption"><span class="lbl">Caption</span> ➡</button>
+          <button id="resetCaption" class="btn btn-secondary" title="Reset Caption">↺ <span class="lbl">Reset</span></button>
         </div>
 
         <label class="small">Caption</label>
         <textarea id="captionBox">Loading…</textarea>
 
         <div class="row" style="margin-top:10px;">
-          <button class="btn btn-secondary" id="copyBtn">📋 <span class="lbl">Copy</span></button>
-          <button class="btn btn-primary" id="postToLive">📢 <span class="lbl">Post</span></button>
+          <button class="btn btn-secondary" id="copyBtn" title="Copy Caption">📋 <span class="lbl">Copy</span></button>
+          <button class="btn btn-primary" id="postToLive" title="Post To Live Map">📢 <span class="lbl">Post</span></button>
         </div>
 
         <p class="meta">Updates the live map worker.</p>
@@ -586,8 +611,8 @@ body.mode-admin .driver-only{display:block;}
         <h2>Driver Dispatch Board</h2>
 
         <div class="row" style="justify-content:space-between;">
-          <button class="btn btn-ghost" id="btnDispatchRefresh">🔄 <span class="lbl">Refresh</span></button>
-          <button class="btn btn-secondary" id="btnScope">📋 <span class="lbl">active</span></button>
+          <button class="btn btn-ghost" id="btnDispatchRefresh" title="Refresh Dispatch">🔄 <span class="lbl">Refresh</span></button>
+          <button class="btn btn-secondary" id="btnScope" title="Toggle Scope">📋 <span class="lbl">active</span></button>
         </div>
 
         <div class="dispatch-grid">
@@ -1210,9 +1235,9 @@ function renderColumn(id,arr){
         </div>
 
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;max-width:100%;">
-          <div style="font-size:.82rem;color:#bbb;">Rider: ${b.rider?.name||"—"}</div>
+          <div style="font-size:.9rem;color:#bbb;">Rider: ${b.rider?.name||"—"}</div>
 
-          <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
             ${phoneDigits ? `<a class="chip" href="${smsHref}">💬 Text Rider</a>` : ""}
             ${isEnroute?`<a class="chip primary" href="https://location-reader.bigredtransportation.workers.dev/?id=${rideId}" target="_blank">📍 Live Map</a>`:""}
           </div>
