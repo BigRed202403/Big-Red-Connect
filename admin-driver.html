@@ -1179,20 +1179,29 @@ function vehicleLabelFromCode(code){
   return "black GMC Acadia";
 }
 
+function isAirportLike(pickup, dropoff){
+  const t = (pickup + " " + dropoff).toLowerCase();
+  return t.includes("airport") || t.includes("will rogers") || t.includes("okc airport");
+}
+
 function buildRideSms(templateKey, data){
   const rider = (data.riderName || "there").trim() || "there";
   const pickup = (data.pickup || "your pickup").trim();
   const dropoff = (data.dropoff || "your destination").trim();
   const vehicle = vehicleLabelFromCode(data.vehicleCode || "BLACK_ACADIA");
 
+  const luggageLine = isAirportLike(pickup, dropoff)
+    ? `\nAlso — how many bags are you traveling with?`
+    : "";
+
   if(templateKey==="confirm"){
-    return `Hey ${rider} — got it. Pickup: ${pickup}. Dropoff: ${dropoff}. I’ll update you when I’m on the way.`;
+    return `Hey ${rider} — got it. Pickup: ${pickup}. Dropoff: ${dropoff}. I’ll update you when I’m on the way.` + luggageLine;
   }
   if(templateKey==="omw"){
     return `Hey ${rider} — I’m on my way now. I’ll be there shortly.`;
   }
   if(templateKey==="arrived"){
-    return `Hey ${rider} — I’m here at ${pickup}. I’m in the ${vehicle}. Reply when you’re coming out.`;
+    return `Hey ${rider} — I’m here at ${pickup}. I’m in the ${vehicle}. Reply when you’re coming out.` + luggageLine;
   }
   if(templateKey==="complete"){
     return `Thanks again, ${rider}! If you need another connection later, just text RED.`;
