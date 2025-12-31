@@ -75,6 +75,7 @@ document.getElementById("logoutBtn").onclick=()=>{
 };
 
 const riderId=localStorage.getItem("riderId") || "";
+const riderPhone=localStorage.getItem("riderPhone") || ""; // ✅ used for secure rider cancel
 let map,driverMarker,pickupMarker,dropoffMarker,routeSvc,routeLine;
 let activeRideId = null;
 let autoTimer = null;
@@ -183,14 +184,38 @@ function renderActive(r){
 async function cancelRide(id){
   if(!confirm("Cancel this ride?")) return;
 
-  await fetch(`${API}/api/driver/bookings/${encodeURIComponent(id)}`,{
-    method:"PUT",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({
-      status:"CANCELLED",
-      metadata: { cancelledBy: "rider" }
-    })
-  });
+  // ✅ Prefer rider cancel endpoint (triggers rider→admin push reliably)
+  try{
+    const res = await fetch(`${API}/api/bookings/${encodeURIComponent(id)}/cancel`,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        riderPhone: riderPhone || ""
+      })
+    });
+
+    if(!res.ok){
+      // Fallback: keep your old behavior if endpoint not deployed yet
+      await fetch(`${API}/api/driver/bookings/${encodeURIComponent(id)}`,{
+        method:"PUT",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({
+          status:"CANCELLED",
+          metadata: { cancelledBy: "rider" }
+        })
+      });
+    }
+  } catch(e){
+    // Network fallback (same as previous)
+    await fetch(`${API}/api/driver/bookings/${encodeURIComponent(id)}`,{
+      method:"PUT",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        status:"CANCELLED",
+        metadata: { cancelledBy: "rider" }
+      })
+    });
+  }
 
   await loadRides();
 }
