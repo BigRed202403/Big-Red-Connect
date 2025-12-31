@@ -391,6 +391,7 @@
         <option value="3">3</option>
         <option value="4">4</option>
         <option value="5">5</option>
+        <!-- ✅ FIX: value must be numeric; label can be 6+ -->
         <option value="6">6+</option>
       </select>
       <div class="hint">How many bags total? Helps make sure the right vehicle shows up.</div>
@@ -447,7 +448,8 @@
   // =====================================================
   const API_BOOK   = "https://bigred-bookings.bigredtransportation.workers.dev";
   const STATUS_API = "https://bigred-status-updater.bigredtransportation.workers.dev/status";
-  const PUSH_API   = "https://bigred-push.bigredtransportation.workers.dev/push/ride-request";
+  // ✅ REMOVED: rider page should NOT send push (Bookings worker already does it)
+  // const PUSH_API   = "https://bigred-push.bigredtransportation.workers.dev/push/ride-request";
 
   // HQ fallback (Moore)
   const HQ = { lat: 35.3207, lng: -97.4929 };
@@ -506,10 +508,6 @@
 
   // =====================================================
   // DESTINATION HANDOFF (Index → Ride Request)
-  // Supports:
-  //   1) Querystring: ?dropoff=... or ?destination=...
-  //   2) sessionStorage: brc_dropoff_handoff
-  //   3) localStorage:   brc_dropoff_handoff (fallback)
   // =====================================================
   function readHandoffDropoff() {
     try {
@@ -536,7 +534,6 @@
     try {
       sessionStorage.removeItem("brc_dropoff_handoff");
       localStorage.removeItem("brc_dropoff_handoff");
-      // also strip querystring so refresh won’t keep reapplying it
       const u = new URL(window.location.href);
       u.searchParams.delete("dropoff");
       u.searchParams.delete("destination");
@@ -548,25 +545,23 @@
     const handoff = readHandoffDropoff();
     if (!handoff || !handoff.value) return;
 
-    // Clear immediately so Safari/iOS reload quirks don’t reapply
     clearHandoffDropoff();
 
     const dropEl = document.getElementById("dropoff");
     if (!dropEl) return;
 
-    // Only set if empty (don’t stomp edits/repeat loads)
     if (!String(dropEl.value || "").trim()) {
       dropEl.value = handoff.value;
-      // Clear any previous structured place for dropoff (since this is plain text until user selects)
       sessionStorage.removeItem("brc_place_dropoff_v1");
       showToast("Drop-off carried over ✅");
     }
+
+    // ✅ ensure luggage reflects new text
+    syncLuggageVisibility();
   }
 
   // =====================================================
   // ✅ RE-REQUEST PREFILL (MyRide → Ride Request)
-  // Supports:
-  //   ?repeat=<rideId>   → load ride and prefill pickup/dropoff/stops/gate
   // =====================================================
   async function prefillFromRepeatRideIfAny() {
     try {
@@ -580,19 +575,16 @@
       const r = await res.json();
       if (!r) return;
 
-      // Prefill pickup/dropoff only if empty (so user edits/handoff aren't stomped)
       const pEl = document.getElementById("pickup");
       const dEl = document.getElementById("dropoff");
 
       if (pEl && !String(pEl.value || "").trim()) pEl.value = r.pickup?.address || "";
       if (dEl && !String(dEl.value || "").trim()) dEl.value = r.dropoff?.address || "";
 
-      // Gate / access notes (optional)
       const gEl = document.getElementById("gateCode");
       const gateVal = (r.pickup?.gate || r.pickup?.access || r.pickup?.notes || "").toString();
       if (gEl && gateVal && !String(gEl.value || "").trim()) gEl.value = gateVal;
 
-      // Stops
       const stops = Array.isArray(r.stops) ? r.stops : [];
       for (const s of stops) {
         const addr = (s?.address || "").trim();
@@ -603,19 +595,19 @@
         if (stopEl) stopEl.value = addr;
       }
 
-      // Passengers (if present)
       const pax = Number(r?.rider?.partySize ?? r?.rider?.party_size ?? 1);
       const paxEl = document.getElementById("passengers");
       if (paxEl && Number.isFinite(pax) && pax > 0) paxEl.value = String(Math.min(6, pax));
 
-      // Luggage (if present, stored in metadata)
       const lug = Number(r?.metadata?.luggageCount ?? 0);
       const lugEl = document.getElementById("luggageCount");
       if (lugEl && Number.isFinite(lug) && lug >= 0) lugEl.value = String(Math.min(6, lug));
 
       showToast("Ride loaded ✅");
 
-      // Strip repeat= so refresh doesn't keep reapplying
+      // ✅ make luggage appear if airport
+      syncLuggageVisibility();
+
       u.searchParams.delete("repeat");
       history.replaceState({}, "", u.pathname + (u.search || "") + (u.hash || ""));
     } catch (e) {
@@ -632,9 +624,7 @@
     const home  = localStorage.getItem("riderHome")  || "";
     const gate  = localStorage.getItem("riderGate")  || "";
 
-    // make sure riderId exists and is stable
     const rid = ensureRiderId();
-
     const summary = document.getElementById("profileSummary");
 
     if (!name && !phone) {
@@ -647,12 +637,14 @@
         `<br><span style="font-size:0.7rem;color:#666;">Profile ID: ${rid}</span>`;
     }
 
-    // Prefill trip fields where helpful (only if empty)
     const pickEl = document.getElementById("pickup");
     if (home && pickEl && !String(pickEl.value||"").trim()) pickEl.value = home;
 
     const gateEl = document.getElementById("gateCode");
     if (gate && gateEl && !String(gateEl.value||"").trim()) gateEl.value = gate;
+
+    // ✅ reflect luggage after prefill
+    syncLuggageVisibility();
   }
 
   function formatPhone(p) {
@@ -697,29 +689,22 @@
   let pickupMarker = null, dropoffMarker = null;
   let stopInputs = [];
 
-  // sessionStorage keys for structured places
   const PLACE_KEYS = {
     pickup: "brc_place_pickup_v1",
     dropoff: "brc_place_dropoff_v1",
-    stopPrefix: "brc_place_stop_v1:" // + inputId
+    stopPrefix: "brc_place_stop_v1:"
   };
 
   function savePlace(key, placeObj) {
-    try {
-      sessionStorage.setItem(key, JSON.stringify(placeObj));
-    } catch(e) {}
+    try { sessionStorage.setItem(key, JSON.stringify(placeObj)); } catch(e) {}
   }
-
   function loadPlace(key) {
     try {
       const raw = sessionStorage.getItem(key);
       if (!raw) return null;
       return JSON.parse(raw);
-    } catch(e) {
-      return null;
-    }
+    } catch(e) { return null; }
   }
-
   function clearPlace(key) {
     try { sessionStorage.removeItem(key); } catch(e) {}
   }
@@ -769,37 +754,36 @@
     if (!stored || !stored.address) return;
 
     const el = document.getElementById(which);
-    if (el && !String(el.value||"").trim()) {
-      el.value = stored.address;
-    }
+    if (el && !String(el.value||"").trim()) el.value = stored.address;
 
-    if (stored.lat && stored.lng) {
-      setMarker(which, stored.lat, stored.lng);
-    }
+    if (stored.lat && stored.lng) setMarker(which, stored.lat, stored.lng);
+
+    // ✅ reflect luggage if airport text exists
+    syncLuggageVisibility();
   }
 
   function attachManualTypingWatcher(which) {
-    // If user types (not selecting a place), we clear structured place so we don’t send stale placeId/latlng.
     const el = document.getElementById(which);
     if (!el) return;
 
     const key = which === "pickup" ? PLACE_KEYS.pickup : PLACE_KEYS.dropoff;
 
     el.addEventListener("input", () => {
-      // Only clear if there WAS a stored place; this avoids extra writes.
       const exists = sessionStorage.getItem(key);
-      if (exists) {
-        clearPlace(key);
-      }
+      if (exists) clearPlace(key);
+
       if (which === "pickup") pickupLatLng = null;
       if (which === "dropoff") dropoffLatLng = null;
+
       applyAutoRateLabels();
       updateFairnessPreview();
+
+      // ✅ luggage reacts while typing
+      syncLuggageVisibility();
     });
   }
 
   function setupAutocomplete(id, role) {
-    // role can be: "pickup" | "dropoff" | "stop"
     const input = document.getElementById(id);
     if (!input) return null;
 
@@ -817,7 +801,6 @@
 
     const ac = new google.maps.places.Autocomplete(input, options);
 
-    // Bias to user location when available
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         pos => {
@@ -837,7 +820,6 @@
       const packed = placeFromGoogle(p);
       if (!packed) return;
 
-      // Always write normalized text to the input
       input.value = packed.address;
 
       if (role === "pickup") {
@@ -845,11 +827,15 @@
         if (packed.lat && packed.lng) setMarker("pickup", packed.lat, packed.lng);
         applyAutoRateLabels();
         updateFairnessPreview();
+        // ✅ FIX: autocomplete selection must trigger luggage check
+        syncLuggageVisibility();
       } else if (role === "dropoff") {
         savePlace(PLACE_KEYS.dropoff, packed);
         if (packed.lat && packed.lng) setMarker("dropoff", packed.lat, packed.lng);
         applyAutoRateLabels();
         updateFairnessPreview();
+        // ✅ FIX: autocomplete selection must trigger luggage check
+        syncLuggageVisibility();
       } else if (role === "stop") {
         const k = PLACE_KEYS.stopPrefix + id;
         savePlace(k, packed);
@@ -882,7 +868,6 @@
 
     setupAutocomplete(id, "stop");
 
-    // clear stored stop place if user types manually
     const stopEl = document.getElementById(id);
     stopEl.addEventListener("input", () => {
       clearPlace(PLACE_KEYS.stopPrefix + id);
@@ -942,6 +927,9 @@
           map.panTo(latlng);
           applyAutoRateLabels();
           updateFairnessPreview();
+
+          // ✅ FIX: use-my-location must trigger luggage check
+          syncLuggageVisibility();
         });
       },
       err => alert("Unable to get location: " + err.message),
@@ -1020,6 +1008,12 @@
     return isAirportTrip(pickupText) || isAirportTrip(dropText);
   }
 
+  function readLuggageCount(){
+    const el = document.getElementById("luggageCount");
+    const v = Number(el?.value ?? 0);
+    return Number.isFinite(v) ? v : 0;
+  }
+
   function syncLuggageVisibility(){
     const wrap = document.getElementById("luggageWrap");
     const luggageEl = document.getElementById("luggageCount");
@@ -1029,11 +1023,10 @@
       wrap.style.display = "block";
     } else {
       wrap.style.display = "none";
-      luggageEl.value = "0"; // reset when not airport
+      luggageEl.value = "0";
     }
   }
 
-  // React quickly while typing
   ["pickup","dropoff"].forEach(id=>{
     const el = document.getElementById(id);
     if(el){
@@ -1060,8 +1053,8 @@
     airportNote.textContent = "";
     eventNote.textContent = "";
 
-    // keep luggage UI in sync (non-blocking)
-    setTimeout(syncLuggageVisibility, 0);
+    // keep luggage UI in sync
+    syncLuggageVisibility();
 
     if (holidayInfo) {
       eventNote.textContent = holidayInfo.message;
@@ -1285,7 +1278,7 @@
       reserveTime: document.getElementById("reserveTime").value,
       planBy: document.getElementById("planBy").value,
       passengers: Number(document.getElementById("passengers").value || "1"),
-      luggageCount: Number(document.getElementById("luggageCount")?.value || "0"),
+      luggageCount: readLuggageCount(),
       gateCode: document.getElementById("gateCode").value.trim()
     };
 
@@ -1295,7 +1288,7 @@
   document.getElementById("calcBtn").addEventListener("click", calculateFare);
 
   // =====================================================
-  // SEND REQUEST → BOOKINGS + PUSH + SMS + REDIRECT
+  // SEND REQUEST → BOOKINGS + SMS + REDIRECT
   // =====================================================
   async function sendRequest() {
     if (!lastFare) {
@@ -1322,12 +1315,14 @@
 
     const routeUrl = buildRouteUrl(q.pickup, q.dropoff, q.stopsText || []);
 
-    // Structured pickup/dropoff (if available)
     const pickupStored = loadPlace(PLACE_KEYS.pickup);
     const dropStored   = loadPlace(PLACE_KEYS.dropoff);
 
+    // ✅ FIX: Bookings worker expects type RESERVATION or INSTANT
+    const bookingType = scheduledISO ? "RESERVATION" : "INSTANT";
+
     const payload = {
-      type: scheduledISO ? "SCHEDULED" : "INSTANT",
+      type: bookingType,
       pickup: {
         address: q.pickup,
         gate: q.gateCode || "",
@@ -1392,29 +1387,6 @@
     const booking = await res.json();
     const rideId = booking.id;
 
-    // 🔔 Push (non-blocking)
-    try {
-      await fetch(PUSH_API, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Ride-Push-Key": "ride_request_ok"
-        },
-        body: JSON.stringify({
-          rideId,
-          riderName: name,
-          pickup: q.pickup,
-          dropoff: q.dropoff,
-          passengers: q.passengers || 1,
-          luggageCount: (q.luggageCount ?? 0),
-          estimate: q.total,
-          scheduledFor: scheduledISO
-        })
-      });
-    } catch (e) {
-      console.warn("Ride request push failed (non-blocking)", e);
-    }
-
     const btn = document.getElementById("btnRequest");
     if (btn) {
       btn.disabled = true;
@@ -1431,21 +1403,21 @@
 
     const shortRoute = `https://bigredconnectokc.com/rider/route.html?id=${encodeURIComponent(rideId)}`;
 
-const smsBody =
-  `Hey Big Red — this is ${name}.\n` +
-  `I'd like to request this ride:\n\n` +
-  `Pickup: ${q.pickup}\n` +
-  `Dropoff: ${q.dropoff}\n` +
-  `Stops: ${stopsText}\n` +
-  `Miles: ${q.miles}\n` +
-  `Estimated Fare: $${q.total}\n` +
-  `When: ${whenText}\n` +
-  `Passengers: ${q.passengers}\n` +
-  `Luggage: ${q.luggageCount ?? 0}\n` +
-  `Gate / Access: ${q.gateCode || "None"}\n` +
-  `Ride ID: ${rideId}\n` +
-  `Route: ${shortRoute}`;
-  
+    const smsBody =
+      `Hey Big Red — this is ${name}.\n` +
+      `I'd like to request this ride:\n\n` +
+      `Pickup: ${q.pickup}\n` +
+      `Dropoff: ${q.dropoff}\n` +
+      `Stops: ${stopsText}\n` +
+      `Miles: ${q.miles}\n` +
+      `Estimated Fare: $${q.total}\n` +
+      `When: ${whenText}\n` +
+      `Passengers: ${q.passengers}\n` +
+      `Luggage: ${q.luggageCount ?? 0}\n` +
+      `Gate / Access: ${q.gateCode || "None"}\n` +
+      `Ride ID: ${rideId}\n` +
+      `Route: ${shortRoute}`;
+
     const smsUrl = "sms:+14053784024?&body=" + encodeURIComponent(smsBody);
     const trackUrl = "/rider/myride.html?id=" + encodeURIComponent(rideId);
 
@@ -1481,28 +1453,22 @@ const smsBody =
 
     directionsRenderer.setMap(map);
 
-    // Autocomplete + manual typing guards
     setupAutocomplete("pickup", "pickup");
     setupAutocomplete("dropoff", "dropoff");
     attachManualTypingWatcher("pickup");
     attachManualTypingWatcher("dropoff");
 
-    // Hydrate from stored structured places if present (optional)
     hydrateFromStoredPlace("pickup");
     hydrateFromStoredPlace("dropoff");
 
-    // Apply Index → Ride Request handoff (dropoff)
     applyHandoffDropoffIfAny();
-
-    // ✅ Re-request flow (MyRide → Ride Request)
-    // (does NOT overwrite if fields already filled)
     prefillFromRepeatRideIfAny();
 
     ensureRiderId();
     loadProfileSummary();
     fetchDriverOrigin();
 
-    // ensure luggage UI correct on initial load
+    // ✅ ensure luggage UI correct on initial load
     syncLuggageVisibility();
     applyAutoRateLabels();
   };
