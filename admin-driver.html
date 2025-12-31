@@ -1251,6 +1251,18 @@ function resolvePassengers(b){
   return Number.isFinite(n) && n > 0 ? n : 1;
 }
 
+/* NEW: luggage count resolver */
+function resolveLuggageCount(b){
+  const v =
+    b?.metadata?.luggageCount ??
+    b?.metadata?.luggage_count ??
+    b?.luggageCount ??
+    b?.luggage_count;
+
+  const n = Number(v);
+  return Number.isFinite(n) && n >= 0 ? n : 0;
+}
+
 function renderAllBookings(list){
   const newArr=list.filter(b=>b.status==="REQUESTED");
   const activeArr=list.filter(b=>["ACCEPTED","ENROUTE","ARRIVED","PICKED_UP"].includes(b.status));
@@ -1288,6 +1300,7 @@ function renderColumn(id,arr){
     const vCode = b?.vehicle?.code || "BLACK_ACADIA";
 
     const pax = resolvePassengers(b);
+    const bags = resolveLuggageCount(b);
 
     const div=document.createElement("div");
     div.className="card";
@@ -1324,6 +1337,7 @@ function renderColumn(id,arr){
 
       <div>Est Fare: ${estFare}</div>
       ${pax ? `<div class="eta-line">PAX: ${pax}</div>` : ``}
+      ${bags > 0 ? `<div class="eta-line">BAGS: ${bags}</div>` : ``}
       ${estMinutes?`<div class="eta-line">Est. ride time: ${estMinutes}</div>`:""}
 
       <div class="card-footer">
