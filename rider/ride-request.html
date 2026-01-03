@@ -331,9 +331,38 @@
   }
 
   // =====================================================
-  // REPEAT PREFILL
+  // ✅ EARLY REPEAT PREFILL (not dependent on Google Maps)
   // =====================================================
-  async function prefillFromRepeatRideIfAny() {
+  let didEarlyRepeatPrefill = false;
+  let pendingStopsToHydrate = []; // stop input ids created before Google loads
+
+  function addStopField_NoAutocomplete(initialValue = "") {
+    if (stopInputs.length >= 3) return;
+    const id = "stop_" + Date.now() + "_" + Math.floor(Math.random()*1000);
+    stopInputs.push(id);
+
+    const wrap = document.getElementById("stopsWrap");
+    const div = document.createElement("div");
+    div.className = "input-group";
+    div.id = "row_" + id;
+    div.innerHTML = `
+      <label>Stop ${stopInputs.length}</label>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <input id="${id}" type="text" placeholder="Enter stop address or place" style="flex:1;">
+        <button type="button" class="btn btn-secondary btn-small" onclick="removeStop('${id}')">✖</button>
+      </div>
+    `;
+    wrap.appendChild(div);
+
+    const stopEl = document.getElementById(id);
+    if (stopEl) stopEl.value = initialValue;
+
+    pendingStopsToHydrate.push(id);
+
+    stopEl?.addEventListener("input", () => clearPlace(PLACE_KEYS.stopPrefix + id));
+  }
+
+  async function prefillFromRepeatRideIfAny_EARLY() {
     try {
       const u = new URL(location.href);
       const repeatId = (u.searchParams.get("repeat") || "").trim();
@@ -345,7 +374,134 @@
       const r = await res.json();
       if (!r) return;
 
-      // ✅ tolerate different booking shapes
+      const pickupObj  = (r.pickup && typeof r.pickup === "object") ? r.pickup : {};
+      const dropoffObj = (r.dropoff && typeof r.dropoff === "object") ? r.dropoff : {};
+
+      const pickupAddr = pickFirstString(
+        pickupObj.address,
+        r.pickupAddress,
+        r.pickup_address,
+        r.pickupAddr,
+        r.pickup
+      );
+
+      const dropoffAddr = pickFirstString(
+        dropoffObj.address,
+        r.dropoffAddress,
+        r.dropoff_address,
+        r.dropoffAddr,
+        r.dropoff
+      );
+
+      const pickupName = pickFirstString(pickupObj.name, r.pickupName, r.pickup_name);
+      const dropoffName = pickFirstString(dropoffObj.name, r.dropoffName, r.dropoff_name);
+
+      const pEl = document.getElementById("pickup");
+      const dEl = document.getElementById("dropoff");
+
+      if (pEl && !String(pEl.value||"").trim() && pickupAddr) {
+        pEl.value = formatPlaceLine(pickupName, pickupAddr);
+      }
+      if (dEl && !String(dEl.value||"").trim() && dropoffAddr) {
+        dEl.value = formatPlaceLine(dropoffName, dropoffAddr);
+      }
+
+      // restore gate/access
+      const gEl = document.getElementById("gateCode");
+      const gateVal = String(pickupObj?.gate || pickupObj?.access || pickupObj?.notes || r.pickupGate || r.gateCode || "").trim();
+      if (gEl && gateVal && !String(gEl.value||"").trim()) gEl.value = gateVal;
+
+      // pax/luggage
+      const pax = Number(r?.rider?.partySize ?? r?.passengers ?? 1);
+      const paxEl = document.getElementById("passengers");
+      if (paxEl && Number.isFinite(pax) && pax > 0) paxEl.value = String(Math.min(6, pax));
+
+      const lug = Number(r?.metadata?.luggageCount ?? 0);
+      const lugEl = document.getElementById("luggageCount");
+      if (lugEl && Number.isFinite(lug) && lug >= 0) lugEl.value = String(Math.min(6, lug));
+
+      // store pickup/dropoff place objects (so initGoogle can place markers later if lat/lng exist)
+      try {
+        if (pickupAddr) {
+          sessionStorage.setItem(PLACE_KEYS.pickup, JSON.stringify({
+            address: pickupAddr,
+            placeId: pickupObj.placeId || pickupObj.placeID || "",
+            lat: (typeof pickupObj.lat === "number") ? pickupObj.lat : null,
+            lng: (typeof pickupObj.lng === "number") ? pickupObj.lng : null,
+            name: pickupName || "",
+            types: Array.isArray(pickupObj.types) ? pickupObj.types : []
+          }));
+        }
+        if (dropoffAddr) {
+          sessionStorage.setItem(PLACE_KEYS.dropoff, JSON.stringify({
+            address: dropoffAddr,
+            placeId: dropoffObj.placeId || dropoffObj.placeID || "",
+            lat: (typeof dropoffObj.lat === "number") ? dropoffObj.lat : null,
+            lng: (typeof dropoffObj.lng === "number") ? dropoffObj.lng : null,
+            name: dropoffName || "",
+            types: Array.isArray(dropoffObj.types) ? dropoffObj.types : []
+          }));
+        }
+      } catch(e) {}
+
+      // stops (create now; hydrate autocomplete later)
+      const stops = Array.isArray(r.stops) ? r.stops : [];
+      for (const s of stops) {
+        const addr = pickFirstString(s?.address, s?.addr, s?.location);
+        if (!addr) continue;
+
+        const name = pickFirstString(s?.name, s?.stopName);
+        addStopField_NoAutocomplete(formatPlaceLine(name, addr));
+
+        // also restore stop place object if present (key uses the newly created id)
+        const lastId = pendingStopsToHydrate[pendingStopsToHydrate.length - 1];
+        try {
+          sessionStorage.setItem(PLACE_KEYS.stopPrefix + lastId, JSON.stringify({
+            address: addr,
+            placeId: s?.placeId || s?.placeID || "",
+            lat: (typeof s?.lat === "number") ? s.lat : null,
+            lng: (typeof s?.lng === "number") ? s.lng : null,
+            name: name || "",
+            types: Array.isArray(s?.types) ? s.types : []
+          }));
+        } catch(e) {}
+      }
+
+      didEarlyRepeatPrefill = true;
+
+      // clean URL
+      u.searchParams.delete("repeat");
+      history.replaceState({}, "", u.pathname + (u.search || "") + (u.hash || ""));
+
+      showToast("Ride loaded ✅");
+      syncLuggageVisibility();
+    } catch (e) {
+      console.warn("early repeat prefill failed:", e);
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    prefillFromRepeatRideIfAny_EARLY();
+  });
+
+  // =====================================================
+  // REPEAT PREFILL (Google-dependent version kept for compatibility)
+  // =====================================================
+  async function prefillFromRepeatRideIfAny() {
+    // If early prefill already happened, skip (prevents double-add stops / overrides)
+    if (didEarlyRepeatPrefill) return;
+
+    try {
+      const u = new URL(location.href);
+      const repeatId = (u.searchParams.get("repeat") || "").trim();
+      if (!repeatId) return;
+
+      const res = await fetch(`${API_BOOK}/api/bookings/${encodeURIComponent(repeatId)}`);
+      if (!res.ok) return;
+
+      const r = await res.json();
+      if (!r) return;
+
       const pickupObj  = r.pickup || {};
       const dropoffObj = r.dropoff || {};
 
@@ -374,7 +530,6 @@
       if (pEl && !String(pEl.value || "").trim()) pEl.value = formatPlaceLine(pickupName, pickupAddr);
       if (dEl && !String(dEl.value || "").trim()) dEl.value = formatPlaceLine(dropoffName, dropoffAddr);
 
-      // ✅ restore stored place objects (so markers/fairness can work if lat/lng exist)
       try {
         if (pickupAddr) {
           const packedP = {
@@ -385,7 +540,7 @@
             name: pickupName || "",
             types: Array.isArray(pickupObj.types) ? pickupObj.types : []
           };
-          sessionStorage.setItem("brc_place_pickup_v1", JSON.stringify(packedP));
+          sessionStorage.setItem(PLACE_KEYS.pickup, JSON.stringify(packedP));
         }
         if (dropoffAddr) {
           const packedD = {
@@ -396,7 +551,7 @@
             name: dropoffName || "",
             types: Array.isArray(dropoffObj.types) ? dropoffObj.types : []
           };
-          sessionStorage.setItem("brc_place_dropoff_v1", JSON.stringify(packedD));
+          sessionStorage.setItem(PLACE_KEYS.dropoff, JSON.stringify(packedD));
         }
       } catch(e) {}
 
@@ -413,7 +568,6 @@
         const stopEl = document.getElementById(lastId);
         if (stopEl) stopEl.value = formatPlaceLine(s?.name, addr);
 
-        // also restore stop place object if present
         try{
           const packedS = {
             address: addr,
@@ -423,7 +577,7 @@
             name: (s?.name || ""),
             types: Array.isArray(s?.types) ? s.types : []
           };
-          sessionStorage.setItem("brc_place_stop_v1:" + lastId, JSON.stringify(packedS));
+          sessionStorage.setItem(PLACE_KEYS.stopPrefix + lastId, JSON.stringify(packedS));
         }catch(e){}
       }
 
@@ -437,7 +591,6 @@
 
       showToast("Ride loaded ✅");
 
-      // ✅ re-hydrate markers now that we restored storage
       hydrateFromStoredPlace("pickup");
       hydrateFromStoredPlace("dropoff");
 
@@ -566,7 +719,9 @@
     const el = document.getElementById(which);
     if (el && !String(el.value||"").trim()) el.value = formatPlaceLine(stored.name, stored.address);
 
-    if (stored.lat && stored.lng) setMarker(which, stored.lat, stored.lng);
+    if (stored.lat && stored.lng && typeof google !== "undefined" && google.maps) {
+      setMarker(which, stored.lat, stored.lng);
+    }
 
     syncLuggageVisibility();
   }
@@ -599,7 +754,6 @@
       bounds: okcBounds,
       strictBounds: false,
       componentRestrictions: { country: "us" },
-      // ✅ include types so we can detect airport even if address text doesn't say "airport"
       fields: ["formatted_address", "geometry.location", "name", "place_id", "types"]
     };
 
@@ -771,7 +925,6 @@
     return new Date();
   }
 
-  // ✅ Airport detection that works for BOTH typed text and Google Place data
   function isAirportText(s) {
     const t = String(s || "").toLowerCase();
     return t.includes("airport") || t.includes("will rogers") || t.includes("okc");
@@ -1132,7 +1285,6 @@
     const booking = await res.json();
     const rideId = booking.id;
 
-    // ✅ ADD BACK PUSH (non-blocking)
     try {
       await fetch(PUSH_API, {
         method: "POST",
@@ -1221,11 +1373,23 @@
     attachManualTypingWatcher("pickup");
     attachManualTypingWatcher("dropoff");
 
+    // ✅ hydrate any stops created before Google loaded
+    if (Array.isArray(pendingStopsToHydrate) && pendingStopsToHydrate.length) {
+      pendingStopsToHydrate.forEach(id => {
+        try { setupAutocomplete(id, "stop"); } catch(e) {}
+      });
+      pendingStopsToHydrate = [];
+    }
+
     hydrateFromStoredPlace("pickup");
     hydrateFromStoredPlace("dropoff");
 
     applyHandoffDropoffIfAny();
-    prefillFromRepeatRideIfAny();
+
+    // ✅ keep as fallback only (early prefill is primary)
+    if (!didEarlyRepeatPrefill) {
+      prefillFromRepeatRideIfAny();
+    }
 
     ensureRiderId();
     loadProfileSummary();
