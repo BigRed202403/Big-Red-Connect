@@ -151,7 +151,6 @@
       <div class="hint">Seatbelts for everyone. Max 6 depending on which vehicle is in service.</div>
     </div>
 
-    <!-- Luggage (Airport only) -->
     <div class="input-group" id="luggageWrap" style="display:none;">
       <label for="luggageCount">Luggage (airport rides)</label>
       <select id="luggageCount">
@@ -231,7 +230,7 @@
   }
 
   // =====================================================
-  // ✅ PLACE DISPLAY HELPERS (name + address)
+  // PLACE DISPLAY HELPERS
   // =====================================================
   function formatPlaceLine(name, address){
     const n = String(name || "").trim();
@@ -248,10 +247,54 @@
   }
 
   // =====================================================
-  // ✅ IMPORTANT: define these BEFORE early repeat-prefill runs
+  // URL REPEAT HELPERS (repeat/id/rideId/bookingId)
   // =====================================================
-  let stopInputs = []; // <-- moved up so early prefill can add stops safely
+  function getRepeatRideIdFromUrl() {
+    try {
+      const u = new URL(location.href);
+      return (
+        (u.searchParams.get("repeat") || "").trim() ||
+        (u.searchParams.get("id") || "").trim() ||
+        (u.searchParams.get("rideId") || "").trim() ||
+        (u.searchParams.get("bookingId") || "").trim()
+      );
+    } catch {
+      return "";
+    }
+  }
 
+  function clearRepeatParamsInUrl() {
+    try {
+      const u = new URL(location.href);
+      ["repeat","id","rideId","bookingId"].forEach(k => u.searchParams.delete(k));
+      history.replaceState({}, "", u.pathname + (u.search || "") + (u.hash || ""));
+    } catch {}
+  }
+
+  async function fetchBookingFlexible(rideId) {
+    const id = encodeURIComponent(rideId);
+    const tries = [
+      `${API_BOOK}/api/bookings/${id}?t=${Date.now()}`,
+      `${API_BOOK}/api/bookings?id=${id}&t=${Date.now()}`,
+    ];
+
+    for (const url of tries) {
+      try {
+        const res = await fetch(url, { cache: "no-store" });
+        if (!res.ok) continue;
+        const data = await res.json();
+        if (data?.booking) return data.booking;
+        if (data?.data) return data.data;
+        return data;
+      } catch (e) {}
+    }
+    return null;
+  }
+
+  // =====================================================
+  // PLACE STORAGE KEYS
+  // =====================================================
+  let stopInputs = [];
   const PLACE_KEYS = {
     pickup: "brc_place_pickup_v1",
     dropoff: "brc_place_dropoff_v1",
@@ -336,7 +379,7 @@
 
     if (!String(dropEl.value || "").trim()) {
       dropEl.value = handoff.value;
-      sessionStorage.removeItem("brc_place_dropoff_v1");
+      sessionStorage.removeItem(PLACE_KEYS.dropoff);
       showToast("Drop-off carried over ✅");
     }
 
@@ -344,11 +387,9 @@
   }
 
   // =====================================================
-  // ✅ EARLY REPEAT PREFILL (not dependent on Google Maps)
+  // STOPS (no-autocomplete until Google loads)
   // =====================================================
-  let didEarlyRepeatPrefill = false;
-  let pendingStopsToHydrate = []; // stop input ids created before Google loads
-
+  let pendingStopsToHydrate = [];
   function addStopField_NoAutocomplete(initialValue = "") {
     if (stopInputs.length >= 3) return;
     const id = "stop_" + Date.now() + "_" + Math.floor(Math.random()*1000);
@@ -371,20 +412,20 @@
     if (stopEl) stopEl.value = initialValue;
 
     pendingStopsToHydrate.push(id);
-
     stopEl?.addEventListener("input", () => clearPlace(PLACE_KEYS.stopPrefix + id));
   }
 
+  // =====================================================
+  // ✅ EARLY REPEAT PREFILL (works before Google loads)
+  // =====================================================
+  let didEarlyRepeatPrefill = false;
+
   async function prefillFromRepeatRideIfAny_EARLY() {
     try {
-      const u = new URL(location.href);
-      const repeatId = (u.searchParams.get("repeat") || "").trim();
+      const repeatId = getRepeatRideIdFromUrl();
       if (!repeatId) return;
 
-      const res = await fetch(`${API_BOOK}/api/bookings/${encodeURIComponent(repeatId)}`);
-      if (!res.ok) return;
-
-      const r = await res.json();
+      const r = await fetchBookingFlexible(repeatId);
       if (!r) return;
 
       const pickupObj  = (r.pickup && typeof r.pickup === "object") ? r.pickup : {};
@@ -392,21 +433,17 @@
 
       const pickupAddr = pickFirstString(
         pickupObj.address,
-        r.pickupAddress,
-        r.pickup_address,
-        r.pickupAddr,
-        r.pickup
+        r.pickupAddress, r.pickup_address, r.pickupAddr,
+        (typeof r.pickup === "string" ? r.pickup : "")
       );
 
       const dropoffAddr = pickFirstString(
         dropoffObj.address,
-        r.dropoffAddress,
-        r.dropoff_address,
-        r.dropoffAddr,
-        r.dropoff
+        r.dropoffAddress, r.dropoff_address, r.dropoffAddr,
+        (typeof r.dropoff === "string" ? r.dropoff : "")
       );
 
-      const pickupName = pickFirstString(pickupObj.name, r.pickupName, r.pickup_name);
+      const pickupName  = pickFirstString(pickupObj.name, r.pickupName, r.pickup_name);
       const dropoffName = pickFirstString(dropoffObj.name, r.dropoffName, r.dropoff_name);
 
       const pEl = document.getElementById("pickup");
@@ -419,10 +456,12 @@
         dEl.value = formatPlaceLine(dropoffName, dropoffAddr);
       }
 
+      // gate/access
       const gEl = document.getElementById("gateCode");
       const gateVal = String(pickupObj?.gate || pickupObj?.access || pickupObj?.notes || r.pickupGate || r.gateCode || "").trim();
       if (gEl && gateVal && !String(gEl.value||"").trim()) gEl.value = gateVal;
 
+      // pax/luggage
       const pax = Number(r?.rider?.partySize ?? r?.passengers ?? 1);
       const paxEl = document.getElementById("passengers");
       if (paxEl && Number.isFinite(pax) && pax > 0) paxEl.value = String(Math.min(6, pax));
@@ -431,6 +470,7 @@
       const lugEl = document.getElementById("luggageCount");
       if (lugEl && Number.isFinite(lug) && lug >= 0) lugEl.value = String(Math.min(6, lug));
 
+      // store pickup/dropoff place objects
       try {
         if (pickupAddr) {
           sessionStorage.setItem(PLACE_KEYS.pickup, JSON.stringify({
@@ -454,6 +494,7 @@
         }
       } catch(e) {}
 
+      // stops
       const stops = Array.isArray(r.stops) ? r.stops : [];
       for (const s of stops) {
         const addr = pickFirstString(s?.address, s?.addr, s?.location);
@@ -476,10 +517,7 @@
       }
 
       didEarlyRepeatPrefill = true;
-
-      u.searchParams.delete("repeat");
-      history.replaceState({}, "", u.pathname + (u.search || "") + (u.hash || ""));
-
+      clearRepeatParamsInUrl();
       showToast("Ride loaded ✅");
       syncLuggageVisibility();
     } catch (e) {
@@ -490,83 +528,6 @@
   document.addEventListener("DOMContentLoaded", () => {
     prefillFromRepeatRideIfAny_EARLY();
   });
-
-  // =====================================================
-  // REPEAT PREFILL (Google-dependent fallback)
-  // =====================================================
-  async function prefillFromRepeatRideIfAny() {
-    if (didEarlyRepeatPrefill) return;
-
-    try {
-      const u = new URL(location.href);
-      const repeatId = (u.searchParams.get("repeat") || "").trim();
-      if (!repeatId) return;
-
-      const res = await fetch(`${API_BOOK}/api/bookings/${encodeURIComponent(repeatId)}`);
-      if (!res.ok) return;
-
-      const r = await res.json();
-      if (!r) return;
-
-      const pickupObj  = r.pickup || {};
-      const dropoffObj = r.dropoff || {};
-
-      const pickupAddr = pickFirstString(
-        pickupObj.address,
-        r.pickupAddress,
-        r.pickup_address,
-        r.pickupAddr,
-        r.pickup
-      );
-
-      const dropoffAddr = pickFirstString(
-        dropoffObj.address,
-        r.dropoffAddress,
-        r.dropoff_address,
-        r.dropoffAddr,
-        r.dropoff
-      );
-
-      const pickupName = pickFirstString(pickupObj.name, r.pickupName, r.pickup_name);
-      const dropoffName = pickFirstString(dropoffObj.name, r.dropoffName, r.dropoff_name);
-
-      const pEl = document.getElementById("pickup");
-      const dEl = document.getElementById("dropoff");
-
-      if (pEl && !String(pEl.value || "").trim()) pEl.value = formatPlaceLine(pickupName, pickupAddr);
-      if (dEl && !String(dEl.value || "").trim()) dEl.value = formatPlaceLine(dropoffName, dropoffAddr);
-
-      try {
-        if (pickupAddr) {
-          sessionStorage.setItem(PLACE_KEYS.pickup, JSON.stringify({
-            address: pickupAddr,
-            placeId: pickupObj.placeId || pickupObj.placeID || null,
-            lat: (typeof pickupObj.lat === "number") ? pickupObj.lat : null,
-            lng: (typeof pickupObj.lng === "number") ? pickupObj.lng : null,
-            name: pickupName || "",
-            types: Array.isArray(pickupObj.types) ? pickupObj.types : []
-          }));
-        }
-        if (dropoffAddr) {
-          sessionStorage.setItem(PLACE_KEYS.dropoff, JSON.stringify({
-            address: dropoffAddr,
-            placeId: dropoffObj.placeId || dropoffObj.placeID || null,
-            lat: (typeof dropoffObj.lat === "number") ? dropoffObj.lat : null,
-            lng: (typeof dropoffObj.lng === "number") ? dropoffObj.lng : null,
-            name: dropoffName || "",
-            types: Array.isArray(dropoffObj.types) ? dropoffObj.types : []
-          }));
-        }
-      } catch(e) {}
-
-      showToast("Ride loaded ✅");
-
-      u.searchParams.delete("repeat");
-      history.replaceState({}, "", u.pathname + (u.search || "") + (u.hash || ""));
-    } catch (e) {
-      console.warn("repeat prefill failed:", e);
-    }
-  }
 
   // =====================================================
   // PROFILE SUMMARY
@@ -756,7 +717,7 @@
 
   function addStopField() {
     if (stopInputs.length >= 3) { alert("Limit 3 stops."); return; }
-    const id = "stop_" + Date.now();
+    const id = "stop_" + Date.now() + "_" + Math.floor(Math.random()*1000);
     stopInputs.push(id);
 
     const wrap = document.getElementById("stopsWrap");
@@ -896,7 +857,6 @@
     const dropText   = document.getElementById("dropoff").value || "";
     const pStored = loadPlace(PLACE_KEYS.pickup);
     const dStored = loadPlace(PLACE_KEYS.dropoff);
-
     return isAirportText(pickupText) || isAirportText(dropText) || isAirportPlace(pStored) || isAirportPlace(dStored);
   }
 
@@ -1007,7 +967,7 @@
 
   async function fetchDriverOrigin() {
     try {
-      const res = await fetch(STATUS_API);
+      const res = await fetch(STATUS_API, { cache: "no-store" });
       if (!res.ok) return;
       const data = await res.json();
       if (data && data.location && typeof data.location.lat === "number" && typeof data.location.lng === "number") {
@@ -1327,6 +1287,7 @@
     attachManualTypingWatcher("pickup");
     attachManualTypingWatcher("dropoff");
 
+    // hydrate any stops created before Google loaded
     if (Array.isArray(pendingStopsToHydrate) && pendingStopsToHydrate.length) {
       pendingStopsToHydrate.forEach(id => {
         try { setupAutocomplete(id, "stop"); } catch(e) {}
@@ -1338,10 +1299,6 @@
     hydrateFromStoredPlace("dropoff");
 
     applyHandoffDropoffIfAny();
-
-    if (!didEarlyRepeatPrefill) {
-      prefillFromRepeatRideIfAny();
-    }
 
     ensureRiderId();
     loadProfileSummary();
