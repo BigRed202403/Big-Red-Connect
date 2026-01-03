@@ -251,6 +251,7 @@
   // IMPORTANT: define these BEFORE early repeat-prefill runs
   // =====================================================
   let stopInputs = [];
+  let repeatLocked = false; // ✅ prevents profile/home/handoff from overriding repeat
 
   const PLACE_KEYS = {
     pickup: "brc_place_pickup_v1",
@@ -326,6 +327,7 @@
   }
 
   function applyHandoffDropoffIfAny() {
+    if (repeatLocked) return; // ✅ repeat is authoritative
     const handoff = readHandoffDropoff();
     if (!handoff || !handoff.value) return;
 
@@ -381,7 +383,6 @@
           if (status !== "OK" || !r?.routes?.[0]) return;
 
           directionsRenderer.setDirections(r);
-
           if (r.routes[0].bounds) map.fitBounds(r.routes[0].bounds);
 
           try {
@@ -449,13 +450,13 @@
 
     const key = which === "pickup" ? PLACE_KEYS.pickup : PLACE_KEYS.dropoff;
     el.addEventListener("input", () => {
+      repeatLocked = false; // typing = user taking control
       if (sessionStorage.getItem(key)) clearPlace(key);
       if (which === "pickup") pickupLatLng = null;
       if (which === "dropoff") dropoffLatLng = null;
       applyAutoRateLabels();
       updateFairnessPreview();
       syncLuggageVisibility();
-      // (don’t auto-render route while typing)
     });
   }
 
@@ -542,7 +543,7 @@
     setupAutocomplete(id, "stop");
 
     const stopEl = document.getElementById(id);
-    stopEl.addEventListener("input", () => clearPlace(PLACE_KEYS.stopPrefix + id));
+    stopEl.addEventListener("input", () => { repeatLocked = false; clearPlace(PLACE_KEYS.stopPrefix + id); });
   }
 
   function removeStop(id) {
@@ -555,7 +556,7 @@
   window.removeStop = removeStop;
 
   // =====================================================
-  // EARLY REPEAT PREFILL (not dependent on Google)
+  // EARLY REPEAT PREFILL (authoritative overwrite)
   // =====================================================
   let didEarlyRepeatPrefill = false;
   let pendingStopsToHydrate = [];
@@ -582,20 +583,34 @@
     if (stopEl) stopEl.value = initialValue;
 
     pendingStopsToHydrate.push(id);
-    stopEl?.addEventListener("input", () => clearPlace(PLACE_KEYS.stopPrefix + id));
+    stopEl?.addEventListener("input", () => { repeatLocked = false; clearPlace(PLACE_KEYS.stopPrefix + id); });
   }
 
   async function prefillFromRepeatRideIfAny_EARLY() {
     try {
       const u = new URL(location.href);
-      const repeatId = (u.searchParams.get("repeat") || "").trim();
+
+      const repeatId =
+        (u.searchParams.get("repeat") ||
+         u.searchParams.get("repeatId") ||
+         u.searchParams.get("repeat_id") ||
+         u.searchParams.get("rideId") ||
+         u.searchParams.get("ride_id") ||
+         u.searchParams.get("bookingId") ||
+         u.searchParams.get("booking_id") ||
+         u.searchParams.get("id") ||
+         "").trim();
+
       if (!repeatId) return;
 
-      const res = await fetch(`${API_BOOK}/api/bookings/${encodeURIComponent(repeatId)}`);
-      if (!res.ok) return;
+      repeatLocked = true;
 
-      const r = await res.json();
-      if (!r) return;
+      const res = await fetch(`${API_BOOK}/api/bookings/${encodeURIComponent(repeatId)}?t=${Date.now()}`, { cache: "no-store" });
+      if (!res.ok) { console.warn("Repeat fetch failed:", res.status); repeatLocked = false; return; }
+
+      const raw = await res.json();
+      const r = raw?.booking || raw?.data || raw;
+      if (!r) { repeatLocked = false; return; }
 
       const pickupObj  = (r.pickup && typeof r.pickup === "object") ? r.pickup : {};
       const dropoffObj = (r.dropoff && typeof r.dropoff === "object") ? r.dropoff : {};
@@ -605,7 +620,7 @@
         r.pickupAddress,
         r.pickup_address,
         r.pickupAddr,
-        r.pickup
+        (typeof r.pickup === "string" ? r.pickup : "")
       );
 
       const dropoffAddr = pickFirstString(
@@ -613,21 +628,29 @@
         r.dropoffAddress,
         r.dropoff_address,
         r.dropoffAddr,
-        r.dropoff
+        (typeof r.dropoff === "string" ? r.dropoff : "")
       );
 
-      const pickupName = pickFirstString(pickupObj.name, r.pickupName, r.pickup_name);
+      const pickupName  = pickFirstString(pickupObj.name,  r.pickupName,  r.pickup_name);
       const dropoffName = pickFirstString(dropoffObj.name, r.dropoffName, r.dropoff_name);
 
       const pEl = document.getElementById("pickup");
       const dEl = document.getElementById("dropoff");
 
-      if (pEl && !String(pEl.value||"").trim() && pickupAddr) pEl.value = formatPlaceLine(pickupName, pickupAddr);
-      if (dEl && !String(dEl.value||"").trim() && dropoffAddr) dEl.value = formatPlaceLine(dropoffName, dropoffAddr);
+      // ✅ FORCE overwrite when repeat is present
+      if (pEl && pickupAddr)  pEl.value = formatPlaceLine(pickupName, pickupAddr);
+      if (dEl && dropoffAddr) dEl.value = formatPlaceLine(dropoffName, dropoffAddr);
 
       const gEl = document.getElementById("gateCode");
-      const gateVal = String(pickupObj?.gate || pickupObj?.access || pickupObj?.notes || r.pickupGate || r.gateCode || "").trim();
-      if (gEl && gateVal && !String(gEl.value||"").trim()) gEl.value = gateVal;
+      const gateVal = String(
+        pickupObj?.gate ||
+        pickupObj?.access ||
+        pickupObj?.notes ||
+        r.pickupGate ||
+        r.gateCode ||
+        ""
+      ).trim();
+      if (gEl) gEl.value = gateVal;
 
       const pax = Number(r?.rider?.partySize ?? r?.passengers ?? 1);
       const paxEl = document.getElementById("passengers");
@@ -637,6 +660,7 @@
       const lugEl = document.getElementById("luggageCount");
       if (lugEl && Number.isFinite(lug) && lug >= 0) lugEl.value = String(Math.min(6, lug));
 
+      // Persist places for airport detection + marker hydration
       try {
         if (pickupAddr) {
           sessionStorage.setItem(PLACE_KEYS.pickup, JSON.stringify({
@@ -658,6 +682,13 @@
             types: Array.isArray(dropoffObj.types) ? dropoffObj.types : []
           }));
         }
+      } catch(e) {}
+
+      // Stops: clear existing and rebuild from repeat
+      try {
+        stopInputs.slice().forEach(id => removeStop(id));
+        stopInputs = [];
+        pendingStopsToHydrate = [];
       } catch(e) {}
 
       const stops = Array.isArray(r.stops) ? r.stops : [];
@@ -683,16 +714,16 @@
 
       didEarlyRepeatPrefill = true;
 
-      u.searchParams.delete("repeat");
+      // Remove repeat params so refresh won't keep forcing overwrite
+      ["repeat","repeatId","repeat_id","rideId","ride_id","bookingId","booking_id","id"].forEach(k => u.searchParams.delete(k));
       history.replaceState({}, "", u.pathname + (u.search || "") + (u.hash || ""));
 
       showToast("Ride loaded ✅");
       syncLuggageVisibility();
-
-      // ask map to render once Google is ready
       requestAutoRouteRender();
     } catch (e) {
       console.warn("early repeat prefill failed:", e);
+      repeatLocked = false;
     }
   }
 
@@ -722,11 +753,14 @@
         `<br><span style="font-size:0.7rem;color:#666;">Profile ID: ${rid}</span>`;
     }
 
-    const pickEl = document.getElementById("pickup");
-    if (home && pickEl && !String(pickEl.value||"").trim()) pickEl.value = home;
+    // ✅ Do NOT override repeat ride with “home pickup”
+    if (!repeatLocked) {
+      const pickEl = document.getElementById("pickup");
+      if (home && pickEl && !String(pickEl.value||"").trim()) pickEl.value = home;
 
-    const gateEl = document.getElementById("gateCode");
-    if (gate && gateEl && !String(gateEl.value||"").trim()) gateEl.value = gate;
+      const gateEl = document.getElementById("gateCode");
+      if (gate && gateEl && !String(gateEl.value||"").trim()) gateEl.value = gate;
+    }
 
     syncLuggageVisibility();
   }
@@ -769,6 +803,7 @@
 
     navigator.geolocation.getCurrentPosition(
       pos => {
+        repeatLocked = false;
         const lat = pos.coords.latitude;
         const lng = pos.coords.longitude;
         const latlng = { lat, lng };
@@ -1301,7 +1336,6 @@
     });
 
     directionsRenderer.setMap(map);
-
     googleReady = true;
 
     setupAutocomplete("pickup", "pickup");
@@ -1329,9 +1363,9 @@
     syncLuggageVisibility();
     applyAutoRateLabels();
 
-    // if anything requested an autoroute before maps loaded, render now
-    if (pendingAutoRoute) setTimeout(renderRouteFromCurrentInputs, 150);
-    else setTimeout(renderRouteFromCurrentInputs, 150); // safe: draws if pickup/dropoff already filled
+    // render route if repeat or anything requested it; safe otherwise
+    setTimeout(renderRouteFromCurrentInputs, 200);
+    if (pendingAutoRoute) setTimeout(renderRouteFromCurrentInputs, 250);
   };
 
   window.addEventListener("error", (e) => {
