@@ -151,6 +151,7 @@
       <div class="hint">Seatbelts for everyone. Max 6 depending on which vehicle is in service.</div>
     </div>
 
+    <!-- Luggage (Airport only) -->
     <div class="input-group" id="luggageWrap" style="display:none;">
       <label for="luggageCount">Luggage (airport rides)</label>
       <select id="luggageCount">
@@ -230,7 +231,7 @@
   }
 
   // =====================================================
-  // PLACE DISPLAY HELPERS
+  // PLACE DISPLAY HELPERS (name + address)
   // =====================================================
   function formatPlaceLine(name, address){
     const n = String(name || "").trim();
@@ -247,54 +248,10 @@
   }
 
   // =====================================================
-  // URL REPEAT HELPERS (repeat/id/rideId/bookingId)
-  // =====================================================
-  function getRepeatRideIdFromUrl() {
-    try {
-      const u = new URL(location.href);
-      return (
-        (u.searchParams.get("repeat") || "").trim() ||
-        (u.searchParams.get("id") || "").trim() ||
-        (u.searchParams.get("rideId") || "").trim() ||
-        (u.searchParams.get("bookingId") || "").trim()
-      );
-    } catch {
-      return "";
-    }
-  }
-
-  function clearRepeatParamsInUrl() {
-    try {
-      const u = new URL(location.href);
-      ["repeat","id","rideId","bookingId"].forEach(k => u.searchParams.delete(k));
-      history.replaceState({}, "", u.pathname + (u.search || "") + (u.hash || ""));
-    } catch {}
-  }
-
-  async function fetchBookingFlexible(rideId) {
-    const id = encodeURIComponent(rideId);
-    const tries = [
-      `${API_BOOK}/api/bookings/${id}?t=${Date.now()}`,
-      `${API_BOOK}/api/bookings?id=${id}&t=${Date.now()}`,
-    ];
-
-    for (const url of tries) {
-      try {
-        const res = await fetch(url, { cache: "no-store" });
-        if (!res.ok) continue;
-        const data = await res.json();
-        if (data?.booking) return data.booking;
-        if (data?.data) return data.data;
-        return data;
-      } catch (e) {}
-    }
-    return null;
-  }
-
-  // =====================================================
-  // PLACE STORAGE KEYS
+  // IMPORTANT: define these BEFORE early repeat-prefill runs
   // =====================================================
   let stopInputs = [];
+
   const PLACE_KEYS = {
     pickup: "brc_place_pickup_v1",
     dropoff: "brc_place_dropoff_v1",
@@ -379,17 +336,230 @@
 
     if (!String(dropEl.value || "").trim()) {
       dropEl.value = handoff.value;
-      sessionStorage.removeItem(PLACE_KEYS.dropoff);
+      sessionStorage.removeItem("brc_place_dropoff_v1");
       showToast("Drop-off carried over ✅");
+      requestAutoRouteRender();
     }
-
     syncLuggageVisibility();
   }
 
   // =====================================================
-  // STOPS (no-autocomplete until Google loads)
+  // MAPS + AUTOCOMPLETE
   // =====================================================
+  let map, geocoder, directionsService, directionsRenderer;
+  let pickupLatLng = null, dropoffLatLng = null;
+  let pickupMarker = null, dropoffMarker = null;
+
+  // --- auto-route scheduling flags
+  let googleReady = false;
+  let pendingAutoRoute = false;
+
+  function requestAutoRouteRender() {
+    pendingAutoRoute = true;
+    if (googleReady) setTimeout(renderRouteFromCurrentInputs, 150);
+  }
+
+  // =====================================================
+  // AUTO RENDER ROUTE + MARKERS (repeat-prefill / carry-over)
+  // =====================================================
+  function renderRouteFromCurrentInputs() {
+    try {
+      if (!googleReady || !directionsService || !directionsRenderer || !map) return;
+
+      const pickup = (document.getElementById("pickup")?.value || "").trim();
+      const dropoff = (document.getElementById("dropoff")?.value || "").trim();
+      if (!pickup || !dropoff) return;
+
+      const waypoints = (stopInputs || [])
+        .map(id => (document.getElementById(id)?.value || "").trim())
+        .filter(Boolean)
+        .map(v => ({ location: v, stopover: true }));
+
+      directionsService.route(
+        { origin: pickup, destination: dropoff, waypoints, travelMode: "DRIVING" },
+        (r, status) => {
+          if (status !== "OK" || !r?.routes?.[0]) return;
+
+          directionsRenderer.setDirections(r);
+
+          if (r.routes[0].bounds) map.fitBounds(r.routes[0].bounds);
+
+          try {
+            const legs = r.routes[0].legs || [];
+            if (!legs.length) return;
+
+            const first = legs[0];
+            const last = legs[legs.length - 1];
+
+            setMarker("pickup", first.start_location.lat(), first.start_location.lng());
+            setMarker("dropoff", last.end_location.lat(), last.end_location.lng());
+          } catch(e) {}
+        }
+      );
+    } catch (e) {
+      console.warn("renderRouteFromCurrentInputs failed:", e);
+    }
+  }
+
+  function placeFromGoogle(p) {
+    if (!p || !p.geometry || !p.geometry.location) return null;
+    const loc = p.geometry.location;
+    const lat = typeof loc.lat === "function" ? loc.lat() : loc.lat;
+    const lng = typeof loc.lng === "function" ? loc.lng() : loc.lng;
+
+    return {
+      address: p.formatted_address || p.name || "",
+      placeId: p.place_id || "",
+      lat, lng,
+      name: p.name || "",
+      types: Array.isArray(p.types) ? p.types : []
+    };
+  }
+
+  function setMarker(which, lat, lng) {
+    const latlng = { lat, lng };
+    if (which === "pickup") {
+      pickupLatLng = new google.maps.LatLng(lat, lng);
+      if (pickupMarker) pickupMarker.setMap(null);
+      pickupMarker = new google.maps.Marker({ position: latlng, map, icon: { url: "http://maps.google.com/mapfiles/ms/icons/green-dot.png" } });
+    } else if (which === "dropoff") {
+      dropoffLatLng = new google.maps.LatLng(lat, lng);
+      if (dropoffMarker) dropoffMarker.setMap(null);
+      dropoffMarker = new google.maps.Marker({ position: latlng, map, icon: { url: "http://maps.google.com/mapfiles/ms/icons/red-dot.png" } });
+    }
+  }
+
+  function hydrateFromStoredPlace(which) {
+    const key = which === "pickup" ? PLACE_KEYS.pickup : PLACE_KEYS.dropoff;
+    const stored = loadPlace(key);
+    if (!stored || !stored.address) return;
+
+    const el = document.getElementById(which);
+    if (el && !String(el.value||"").trim()) el.value = formatPlaceLine(stored.name, stored.address);
+
+    if (stored.lat && stored.lng && googleReady) {
+      setMarker(which, stored.lat, stored.lng);
+    }
+    syncLuggageVisibility();
+  }
+
+  function attachManualTypingWatcher(which) {
+    const el = document.getElementById(which);
+    if (!el) return;
+
+    const key = which === "pickup" ? PLACE_KEYS.pickup : PLACE_KEYS.dropoff;
+    el.addEventListener("input", () => {
+      if (sessionStorage.getItem(key)) clearPlace(key);
+      if (which === "pickup") pickupLatLng = null;
+      if (which === "dropoff") dropoffLatLng = null;
+      applyAutoRateLabels();
+      updateFairnessPreview();
+      syncLuggageVisibility();
+      // (don’t auto-render route while typing)
+    });
+  }
+
+  function setupAutocomplete(id, role) {
+    const input = document.getElementById(id);
+    if (!input) return null;
+
+    const okcBounds = new google.maps.LatLngBounds(
+      { lat: 34.9000, lng: -98.2000 },
+      { lat: 36.0000, lng: -96.0000 }
+    );
+
+    const options = {
+      bounds: okcBounds,
+      strictBounds: false,
+      componentRestrictions: { country: "us" },
+      fields: ["formatted_address", "geometry.location", "name", "place_id", "types"]
+    };
+
+    const ac = new google.maps.places.Autocomplete(input, options);
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          try {
+            const loc = new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude);
+            const biasBounds = new google.maps.LatLngBounds(loc, loc);
+            ac.setBounds(biasBounds);
+          } catch (e) {}
+        },
+        () => {},
+        { enableHighAccuracy:true, maximumAge:15000, timeout:8000 }
+      );
+    }
+
+    ac.addListener("place_changed", () => {
+      const p = ac.getPlace();
+      const packed = placeFromGoogle(p);
+      if (!packed) return;
+
+      input.value = formatPlaceLine(packed.name, packed.address);
+
+      if (role === "pickup") {
+        savePlace(PLACE_KEYS.pickup, packed);
+        if (packed.lat && packed.lng) setMarker("pickup", packed.lat, packed.lng);
+        applyAutoRateLabels();
+        updateFairnessPreview();
+        syncLuggageVisibility();
+        requestAutoRouteRender();
+      } else if (role === "dropoff") {
+        savePlace(PLACE_KEYS.dropoff, packed);
+        if (packed.lat && packed.lng) setMarker("dropoff", packed.lat, packed.lng);
+        applyAutoRateLabels();
+        updateFairnessPreview();
+        syncLuggageVisibility();
+        requestAutoRouteRender();
+      } else if (role === "stop") {
+        savePlace(PLACE_KEYS.stopPrefix + id, packed);
+        requestAutoRouteRender();
+      }
+    });
+
+    return ac;
+  }
+
+  function addStopField() {
+    if (stopInputs.length >= 3) { alert("Limit 3 stops."); return; }
+    const id = "stop_" + Date.now() + "_" + Math.floor(Math.random()*1000);
+    stopInputs.push(id);
+
+    const wrap = document.getElementById("stopsWrap");
+    const div = document.createElement("div");
+    div.className = "input-group";
+    div.id = "row_" + id;
+    div.innerHTML = `
+      <label>Stop ${stopInputs.length}</label>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <input id="${id}" type="text" placeholder="Enter stop address or place" style="flex:1;">
+        <button type="button" class="btn btn-secondary btn-small" onclick="removeStop('${id}')">✖</button>
+      </div>
+    `;
+    wrap.appendChild(div);
+
+    setupAutocomplete(id, "stop");
+
+    const stopEl = document.getElementById(id);
+    stopEl.addEventListener("input", () => clearPlace(PLACE_KEYS.stopPrefix + id));
+  }
+
+  function removeStop(id) {
+    const row = document.getElementById("row_" + id);
+    if (row) row.remove();
+    stopInputs = stopInputs.filter(x => x !== id);
+    clearPlace(PLACE_KEYS.stopPrefix + id);
+    requestAutoRouteRender();
+  }
+  window.removeStop = removeStop;
+
+  // =====================================================
+  // EARLY REPEAT PREFILL (not dependent on Google)
+  // =====================================================
+  let didEarlyRepeatPrefill = false;
   let pendingStopsToHydrate = [];
+
   function addStopField_NoAutocomplete(initialValue = "") {
     if (stopInputs.length >= 3) return;
     const id = "stop_" + Date.now() + "_" + Math.floor(Math.random()*1000);
@@ -415,17 +585,16 @@
     stopEl?.addEventListener("input", () => clearPlace(PLACE_KEYS.stopPrefix + id));
   }
 
-  // =====================================================
-  // ✅ EARLY REPEAT PREFILL (works before Google loads)
-  // =====================================================
-  let didEarlyRepeatPrefill = false;
-
   async function prefillFromRepeatRideIfAny_EARLY() {
     try {
-      const repeatId = getRepeatRideIdFromUrl();
+      const u = new URL(location.href);
+      const repeatId = (u.searchParams.get("repeat") || "").trim();
       if (!repeatId) return;
 
-      const r = await fetchBookingFlexible(repeatId);
+      const res = await fetch(`${API_BOOK}/api/bookings/${encodeURIComponent(repeatId)}`);
+      if (!res.ok) return;
+
+      const r = await res.json();
       if (!r) return;
 
       const pickupObj  = (r.pickup && typeof r.pickup === "object") ? r.pickup : {};
@@ -433,35 +602,33 @@
 
       const pickupAddr = pickFirstString(
         pickupObj.address,
-        r.pickupAddress, r.pickup_address, r.pickupAddr,
-        (typeof r.pickup === "string" ? r.pickup : "")
+        r.pickupAddress,
+        r.pickup_address,
+        r.pickupAddr,
+        r.pickup
       );
 
       const dropoffAddr = pickFirstString(
         dropoffObj.address,
-        r.dropoffAddress, r.dropoff_address, r.dropoffAddr,
-        (typeof r.dropoff === "string" ? r.dropoff : "")
+        r.dropoffAddress,
+        r.dropoff_address,
+        r.dropoffAddr,
+        r.dropoff
       );
 
-      const pickupName  = pickFirstString(pickupObj.name, r.pickupName, r.pickup_name);
+      const pickupName = pickFirstString(pickupObj.name, r.pickupName, r.pickup_name);
       const dropoffName = pickFirstString(dropoffObj.name, r.dropoffName, r.dropoff_name);
 
       const pEl = document.getElementById("pickup");
       const dEl = document.getElementById("dropoff");
 
-      if (pEl && !String(pEl.value||"").trim() && pickupAddr) {
-        pEl.value = formatPlaceLine(pickupName, pickupAddr);
-      }
-      if (dEl && !String(dEl.value||"").trim() && dropoffAddr) {
-        dEl.value = formatPlaceLine(dropoffName, dropoffAddr);
-      }
+      if (pEl && !String(pEl.value||"").trim() && pickupAddr) pEl.value = formatPlaceLine(pickupName, pickupAddr);
+      if (dEl && !String(dEl.value||"").trim() && dropoffAddr) dEl.value = formatPlaceLine(dropoffName, dropoffAddr);
 
-      // gate/access
       const gEl = document.getElementById("gateCode");
       const gateVal = String(pickupObj?.gate || pickupObj?.access || pickupObj?.notes || r.pickupGate || r.gateCode || "").trim();
       if (gEl && gateVal && !String(gEl.value||"").trim()) gEl.value = gateVal;
 
-      // pax/luggage
       const pax = Number(r?.rider?.partySize ?? r?.passengers ?? 1);
       const paxEl = document.getElementById("passengers");
       if (paxEl && Number.isFinite(pax) && pax > 0) paxEl.value = String(Math.min(6, pax));
@@ -470,7 +637,6 @@
       const lugEl = document.getElementById("luggageCount");
       if (lugEl && Number.isFinite(lug) && lug >= 0) lugEl.value = String(Math.min(6, lug));
 
-      // store pickup/dropoff place objects
       try {
         if (pickupAddr) {
           sessionStorage.setItem(PLACE_KEYS.pickup, JSON.stringify({
@@ -494,7 +660,6 @@
         }
       } catch(e) {}
 
-      // stops
       const stops = Array.isArray(r.stops) ? r.stops : [];
       for (const s of stops) {
         const addr = pickFirstString(s?.address, s?.addr, s?.location);
@@ -517,9 +682,15 @@
       }
 
       didEarlyRepeatPrefill = true;
-      clearRepeatParamsInUrl();
+
+      u.searchParams.delete("repeat");
+      history.replaceState({}, "", u.pathname + (u.search || "") + (u.hash || ""));
+
       showToast("Ride loaded ✅");
       syncLuggageVisibility();
+
+      // ask map to render once Google is ready
+      requestAutoRouteRender();
     } catch (e) {
       console.warn("early repeat prefill failed:", e);
     }
@@ -591,162 +762,8 @@
   document.getElementById("modeReserve").addEventListener("click", () => setMode("reserve"));
 
   // =====================================================
-  // MAPS + AUTOCOMPLETE
+  // GEOLOCATION BUTTONS
   // =====================================================
-  let map, geocoder, directionsService, directionsRenderer;
-  let pickupLatLng = null, dropoffLatLng = null;
-  let pickupMarker = null, dropoffMarker = null;
-
-  function placeFromGoogle(p) {
-    if (!p || !p.geometry || !p.geometry.location) return null;
-    const loc = p.geometry.location;
-    const lat = typeof loc.lat === "function" ? loc.lat() : loc.lat;
-    const lng = typeof loc.lng === "function" ? loc.lng() : loc.lng;
-
-    return {
-      address: p.formatted_address || p.name || "",
-      placeId: p.place_id || "",
-      lat, lng,
-      name: p.name || "",
-      types: Array.isArray(p.types) ? p.types : []
-    };
-  }
-
-  function setMarker(which, lat, lng) {
-    const latlng = { lat, lng };
-    if (which === "pickup") {
-      pickupLatLng = new google.maps.LatLng(lat, lng);
-      if (pickupMarker) pickupMarker.setMap(null);
-      pickupMarker = new google.maps.Marker({ position: latlng, map, icon: { url: "http://maps.google.com/mapfiles/ms/icons/green-dot.png" } });
-    } else if (which === "dropoff") {
-      dropoffLatLng = new google.maps.LatLng(lat, lng);
-      if (dropoffMarker) dropoffMarker.setMap(null);
-      dropoffMarker = new google.maps.Marker({ position: latlng, map, icon: { url: "http://maps.google.com/mapfiles/ms/icons/red-dot.png" } });
-    }
-    map.panTo(latlng);
-  }
-
-  function hydrateFromStoredPlace(which) {
-    const key = which === "pickup" ? PLACE_KEYS.pickup : PLACE_KEYS.dropoff;
-    const stored = loadPlace(key);
-    if (!stored || !stored.address) return;
-
-    const el = document.getElementById(which);
-    if (el && !String(el.value||"").trim()) el.value = formatPlaceLine(stored.name, stored.address);
-
-    if (stored.lat && stored.lng && typeof google !== "undefined" && google.maps) {
-      setMarker(which, stored.lat, stored.lng);
-    }
-
-    syncLuggageVisibility();
-  }
-
-  function attachManualTypingWatcher(which) {
-    const el = document.getElementById(which);
-    if (!el) return;
-
-    const key = which === "pickup" ? PLACE_KEYS.pickup : PLACE_KEYS.dropoff;
-    el.addEventListener("input", () => {
-      if (sessionStorage.getItem(key)) clearPlace(key);
-      if (which === "pickup") pickupLatLng = null;
-      if (which === "dropoff") dropoffLatLng = null;
-      applyAutoRateLabels();
-      updateFairnessPreview();
-      syncLuggageVisibility();
-    });
-  }
-
-  function setupAutocomplete(id, role) {
-    const input = document.getElementById(id);
-    if (!input) return null;
-
-    const okcBounds = new google.maps.LatLngBounds(
-      { lat: 34.9000, lng: -98.2000 },
-      { lat: 36.0000, lng: -96.0000 }
-    );
-
-    const options = {
-      bounds: okcBounds,
-      strictBounds: false,
-      componentRestrictions: { country: "us" },
-      fields: ["formatted_address", "geometry.location", "name", "place_id", "types"]
-    };
-
-    const ac = new google.maps.places.Autocomplete(input, options);
-
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        pos => {
-          try {
-            const loc = new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude);
-            const biasBounds = new google.maps.LatLngBounds(loc, loc);
-            ac.setBounds(biasBounds);
-          } catch (e) {}
-        },
-        () => {},
-        { enableHighAccuracy:true, maximumAge:15000, timeout:8000 }
-      );
-    }
-
-    ac.addListener("place_changed", () => {
-      const p = ac.getPlace();
-      const packed = placeFromGoogle(p);
-      if (!packed) return;
-
-      input.value = formatPlaceLine(packed.name, packed.address);
-
-      if (role === "pickup") {
-        savePlace(PLACE_KEYS.pickup, packed);
-        if (packed.lat && packed.lng) setMarker("pickup", packed.lat, packed.lng);
-        applyAutoRateLabels();
-        updateFairnessPreview();
-        syncLuggageVisibility();
-      } else if (role === "dropoff") {
-        savePlace(PLACE_KEYS.dropoff, packed);
-        if (packed.lat && packed.lng) setMarker("dropoff", packed.lat, packed.lng);
-        applyAutoRateLabels();
-        updateFairnessPreview();
-        syncLuggageVisibility();
-      } else if (role === "stop") {
-        savePlace(PLACE_KEYS.stopPrefix + id, packed);
-      }
-    });
-
-    return ac;
-  }
-
-  function addStopField() {
-    if (stopInputs.length >= 3) { alert("Limit 3 stops."); return; }
-    const id = "stop_" + Date.now() + "_" + Math.floor(Math.random()*1000);
-    stopInputs.push(id);
-
-    const wrap = document.getElementById("stopsWrap");
-    const div = document.createElement("div");
-    div.className = "input-group";
-    div.id = "row_" + id;
-    div.innerHTML = `
-      <label>Stop ${stopInputs.length}</label>
-      <div style="display:flex;gap:6px;align-items:center;">
-        <input id="${id}" type="text" placeholder="Enter stop address or place" style="flex:1;">
-        <button type="button" class="btn btn-secondary btn-small" onclick="removeStop('${id}')">✖</button>
-      </div>
-    `;
-    wrap.appendChild(div);
-
-    setupAutocomplete(id, "stop");
-
-    const stopEl = document.getElementById(id);
-    stopEl.addEventListener("input", () => clearPlace(PLACE_KEYS.stopPrefix + id));
-  }
-
-  function removeStop(id) {
-    const row = document.getElementById("row_" + id);
-    if (row) row.remove();
-    stopInputs = stopInputs.filter(x => x !== id);
-    clearPlace(PLACE_KEYS.stopPrefix + id);
-  }
-  window.removeStop = removeStop;
-
   function useMyLocation(which) {
     if (!navigator.geolocation) { alert("Location services not supported."); return; }
 
@@ -779,6 +796,7 @@
           applyAutoRateLabels();
           updateFairnessPreview();
           syncLuggageVisibility();
+          requestAutoRouteRender();
         });
       },
       err => alert("Unable to get location: " + err.message),
@@ -857,6 +875,7 @@
     const dropText   = document.getElementById("dropoff").value || "";
     const pStored = loadPlace(PLACE_KEYS.pickup);
     const dStored = loadPlace(PLACE_KEYS.dropoff);
+
     return isAirportText(pickupText) || isAirportText(dropText) || isAirportPlace(pStored) || isAirportPlace(dStored);
   }
 
@@ -967,7 +986,7 @@
 
   async function fetchDriverOrigin() {
     try {
-      const res = await fetch(STATUS_API, { cache: "no-store" });
+      const res = await fetch(STATUS_API);
       if (!res.ok) return;
       const data = await res.json();
       if (data && data.location && typeof data.location.lat === "number" && typeof data.location.lng === "number") {
@@ -1048,6 +1067,7 @@
     }
 
     directionsRenderer.setDirections(route);
+    if (route?.routes?.[0]?.bounds) map.fitBounds(route.routes[0].bounds);
 
     let miles = 0;
     let minutes = 0;
@@ -1282,6 +1302,8 @@
 
     directionsRenderer.setMap(map);
 
+    googleReady = true;
+
     setupAutocomplete("pickup", "pickup");
     setupAutocomplete("dropoff", "dropoff");
     attachManualTypingWatcher("pickup");
@@ -1306,6 +1328,10 @@
 
     syncLuggageVisibility();
     applyAutoRateLabels();
+
+    // if anything requested an autoroute before maps loaded, render now
+    if (pendingAutoRoute) setTimeout(renderRouteFromCurrentInputs, 150);
+    else setTimeout(renderRouteFromCurrentInputs, 150); // safe: draws if pickup/dropoff already filled
   };
 
   window.addEventListener("error", (e) => {
