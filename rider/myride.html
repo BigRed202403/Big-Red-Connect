@@ -28,6 +28,9 @@ h1{text-align:center;margin:16px 0;font-size:1.4rem}
 .locked{color:#ffcc66;font-size:.85rem;text-align:center;margin-top:6px}
 .small-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:0 12px}
 .small-row .btn{margin:0;min-width:150px}
+
+/* History cleanup buttons */
+.btn-danger{background:#400;border:1px solid #b30000;color:#fff}
 </style>
 
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=geometry"></script>
@@ -57,6 +60,12 @@ h1{text-align:center;margin:16px 0;font-size:1.4rem}
 <div id="map"></div>
 
 <h1 style="font-size:1.1rem;margin-top:24px;">Ride History</h1>
+
+<div class="small-row">
+  <button class="btn btn-danger" id="clearHistoryBtn">Clear History</button>
+  <button class="btn btn-secondary" id="restoreHistoryBtn">Restore History</button>
+</div>
+
 <div id="history"></div>
 
 <a href="/rider/ride-request.html" class="btn btn-primary">Request New Ride</a>
@@ -80,6 +89,46 @@ let map,driverMarker,pickupMarker,dropoffMarker,routeSvc,routeLine;
 let activeRideId = null;
 let autoTimer = null;
 let driverPollTimer = null;
+
+/* =======================
+   HISTORY CLEANUP (LOCAL)
+   ======================= */
+function hiddenKey(){
+  return `hiddenRideIds_${riderId || "unknown"}`;
+}
+function getHiddenSet(){
+  try{
+    const raw = localStorage.getItem(hiddenKey());
+    const arr = raw ? JSON.parse(raw) : [];
+    return new Set(Array.isArray(arr) ? arr : []);
+  }catch(e){
+    return new Set();
+  }
+}
+function saveHiddenSet(set){
+  try{
+    localStorage.setItem(hiddenKey(), JSON.stringify(Array.from(set)));
+  }catch(e){}
+}
+function hideRideFromHistory(rideId){
+  const set = getHiddenSet();
+  set.add(String(rideId));
+  saveHiddenSet(set);
+  loadRides();
+}
+function restoreHistory(){
+  try{ localStorage.removeItem(hiddenKey()); }catch(e){}
+  loadRides();
+}
+function clearHistory(list){
+  // Hide all CLOSED rides currently in history
+  const set = getHiddenSet();
+  (list||[]).forEach(r=>{
+    if(r && r.id) set.add(String(r.id));
+  });
+  saveHiddenSet(set);
+  loadRides();
+}
 
 function canModify(status){
   return ["REQUESTED","ACCEPTED","ENROUTE","ARRIVED"].includes(String(status||"").toUpperCase());
@@ -222,19 +271,36 @@ async function cancelRide(id){
 
 function renderHistory(list){
   const h=document.getElementById("history");
-  if(!list.length){
-    h.innerHTML=`<div class="card">No past rides.</div>`;
+  const hidden = getHiddenSet();
+
+  const visible = (list||[]).filter(r => r && r.id && !hidden.has(String(r.id)));
+
+  if(!visible.length){
+    const hiddenCount = (list||[]).filter(r => r && r.id && hidden.has(String(r.id))).length;
+    h.innerHTML=`<div class="card">${hiddenCount ? "No visible past rides (history cleared)." : "No past rides."}</div>`;
     return;
   }
-  h.innerHTML=list.slice().reverse().map(r=>`
+
+  h.innerHTML=visible.slice().reverse().map(r=>`
     <div class="card">
       <div class="status">${String(r.status||"").toUpperCase()}</div>
       <div>${r.pickup?.address || ""} → ${r.dropoff?.address || ""}</div>
+
       <a class="btn btn-secondary" href="/rider/ride-request.html?repeat=${encodeURIComponent(r.id)}">
         Re-Request Ride
       </a>
+
+      <button class="btn btn-danger" onclick="hideRideFromHistory('${String(r.id).replace(/'/g,"\\'")}')">
+        Hide From History
+      </button>
     </div>
   `).join("");
+
+  // Wire Clear History button to current CLOSED list
+  document.getElementById("clearHistoryBtn").onclick = ()=>{
+    if(!confirm("Hide all past rides from your history? (You can restore them later)")) return;
+    clearHistory(list || []);
+  };
 }
 
 async function drawMap(r){
@@ -369,6 +435,11 @@ function startAutoRefresh(){
 /* Manual refresh */
 document.getElementById("refreshBtn").onclick = async ()=>{
   await loadRides();
+};
+
+/* Restore History */
+document.getElementById("restoreHistoryBtn").onclick = ()=>{
+  restoreHistory();
 };
 
 loadRides();
