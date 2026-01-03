@@ -233,6 +233,23 @@
   }
 
   // =====================================================
+  // ✅ PLACE DISPLAY HELPERS (name + address)
+  // =====================================================
+  function formatPlaceLine(name, address){
+    const n = String(name || "").trim();
+    const a = String(address || "").trim();
+    if (n && a) return `${n} — ${a}`;
+    return a || n || "";
+  }
+
+  function pickFirstString(...vals){
+    for (const v of vals){
+      if (typeof v === "string" && v.trim()) return v.trim();
+    }
+    return "";
+  }
+
+  // =====================================================
   // RIDER ID
   // =====================================================
   function ensureRiderId() {
@@ -328,27 +345,89 @@
       const r = await res.json();
       if (!r) return;
 
+      // ✅ tolerate different booking shapes
+      const pickupObj  = r.pickup || {};
+      const dropoffObj = r.dropoff || {};
+
+      const pickupAddr = pickFirstString(
+        pickupObj.address,
+        r.pickupAddress,
+        r.pickup_address,
+        r.pickupAddr,
+        r.pickup
+      );
+
+      const dropoffAddr = pickFirstString(
+        dropoffObj.address,
+        r.dropoffAddress,
+        r.dropoff_address,
+        r.dropoffAddr,
+        r.dropoff
+      );
+
+      const pickupName = pickFirstString(pickupObj.name, r.pickupName, r.pickup_name);
+      const dropoffName = pickFirstString(dropoffObj.name, r.dropoffName, r.dropoff_name);
+
       const pEl = document.getElementById("pickup");
       const dEl = document.getElementById("dropoff");
 
-      if (pEl && !String(pEl.value || "").trim()) pEl.value = r.pickup?.address || "";
-      if (dEl && !String(dEl.value || "").trim()) dEl.value = r.dropoff?.address || "";
+      if (pEl && !String(pEl.value || "").trim()) pEl.value = formatPlaceLine(pickupName, pickupAddr);
+      if (dEl && !String(dEl.value || "").trim()) dEl.value = formatPlaceLine(dropoffName, dropoffAddr);
+
+      // ✅ restore stored place objects (so markers/fairness can work if lat/lng exist)
+      try {
+        if (pickupAddr) {
+          const packedP = {
+            address: pickupAddr,
+            placeId: pickupObj.placeId || pickupObj.placeID || null,
+            lat: (typeof pickupObj.lat === "number") ? pickupObj.lat : null,
+            lng: (typeof pickupObj.lng === "number") ? pickupObj.lng : null,
+            name: pickupName || "",
+            types: Array.isArray(pickupObj.types) ? pickupObj.types : []
+          };
+          sessionStorage.setItem("brc_place_pickup_v1", JSON.stringify(packedP));
+        }
+        if (dropoffAddr) {
+          const packedD = {
+            address: dropoffAddr,
+            placeId: dropoffObj.placeId || dropoffObj.placeID || null,
+            lat: (typeof dropoffObj.lat === "number") ? dropoffObj.lat : null,
+            lng: (typeof dropoffObj.lng === "number") ? dropoffObj.lng : null,
+            name: dropoffName || "",
+            types: Array.isArray(dropoffObj.types) ? dropoffObj.types : []
+          };
+          sessionStorage.setItem("brc_place_dropoff_v1", JSON.stringify(packedD));
+        }
+      } catch(e) {}
 
       const gEl = document.getElementById("gateCode");
-      const gateVal = (r.pickup?.gate || r.pickup?.access || r.pickup?.notes || "").toString();
+      const gateVal = (pickupObj?.gate || pickupObj?.access || pickupObj?.notes || r.pickupGate || r.gateCode || "").toString();
       if (gEl && gateVal && !String(gEl.value || "").trim()) gEl.value = gateVal;
 
       const stops = Array.isArray(r.stops) ? r.stops : [];
       for (const s of stops) {
-        const addr = (s?.address || "").trim();
+        const addr = pickFirstString(s?.address, s?.addr, s?.location);
         if (!addr) continue;
         addStopField();
         const lastId = stopInputs[stopInputs.length - 1];
         const stopEl = document.getElementById(lastId);
-        if (stopEl) stopEl.value = addr;
+        if (stopEl) stopEl.value = formatPlaceLine(s?.name, addr);
+
+        // also restore stop place object if present
+        try{
+          const packedS = {
+            address: addr,
+            placeId: s?.placeId || s?.placeID || null,
+            lat: (typeof s?.lat === "number") ? s.lat : null,
+            lng: (typeof s?.lng === "number") ? s.lng : null,
+            name: (s?.name || ""),
+            types: Array.isArray(s?.types) ? s.types : []
+          };
+          sessionStorage.setItem("brc_place_stop_v1:" + lastId, JSON.stringify(packedS));
+        }catch(e){}
       }
 
-      const pax = Number(r?.rider?.partySize ?? 1);
+      const pax = Number(r?.rider?.partySize ?? r?.passengers ?? 1);
       const paxEl = document.getElementById("passengers");
       if (paxEl && Number.isFinite(pax) && pax > 0) paxEl.value = String(Math.min(6, pax));
 
@@ -357,6 +436,10 @@
       if (lugEl && Number.isFinite(lug) && lug >= 0) lugEl.value = String(Math.min(6, lug));
 
       showToast("Ride loaded ✅");
+
+      // ✅ re-hydrate markers now that we restored storage
+      hydrateFromStoredPlace("pickup");
+      hydrateFromStoredPlace("dropoff");
 
       syncLuggageVisibility();
 
@@ -481,7 +564,7 @@
     if (!stored || !stored.address) return;
 
     const el = document.getElementById(which);
-    if (el && !String(el.value||"").trim()) el.value = stored.address;
+    if (el && !String(el.value||"").trim()) el.value = formatPlaceLine(stored.name, stored.address);
 
     if (stored.lat && stored.lng) setMarker(which, stored.lat, stored.lng);
 
@@ -541,7 +624,7 @@
       const packed = placeFromGoogle(p);
       if (!packed) return;
 
-      input.value = packed.address;
+      input.value = formatPlaceLine(packed.name, packed.address);
 
       if (role === "pickup") {
         savePlace(PLACE_KEYS.pickup, packed);
@@ -860,7 +943,9 @@
           address: addr,
           placeId: stored?.placeId || null,
           lat: (typeof stored?.lat === "number") ? stored.lat : null,
-          lng: (typeof stored?.lng === "number") ? stored.lng : null
+          lng: (typeof stored?.lng === "number") ? stored.lng : null,
+          name: stored?.name || null,
+          types: Array.isArray(stored?.types) ? stored.types : []
         };
       })
       .filter(Boolean);
@@ -986,6 +1071,7 @@
       type: bookingType,
       pickup: {
         address: q.pickup,
+        name: pickupStored?.name || null,
         gate: q.gateCode || "",
         placeId: pickupStored?.placeId || null,
         lat: (typeof pickupStored?.lat === "number") ? pickupStored.lat : null,
@@ -993,12 +1079,14 @@
       },
       dropoff: {
         address: q.dropoff,
+        name: dropStored?.name || null,
         placeId: dropStored?.placeId || null,
         lat: (typeof dropStored?.lat === "number") ? dropStored.lat : null,
         lng: (typeof dropStored?.lng === "number") ? dropStored.lng : null
       },
       stops: (q.stopsObj || []).map(s => ({
         address: s.address,
+        name: s.name || null,
         placeId: s.placeId || null,
         lat: (typeof s.lat === "number") ? s.lat : null,
         lng: (typeof s.lng === "number") ? s.lng : null
