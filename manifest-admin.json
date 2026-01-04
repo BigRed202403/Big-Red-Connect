@@ -1,5 +1,5 @@
 {
-  "name": "Big Red Admin/Driver App",
+  "name": "BR Admin/Driver App",
   "short_name": "Admin/Driver Big Red",
   "start_url": "admin-driver.html",
   "display": "standalone",
@@ -8,12 +8,12 @@
   "description": "Big Red Connect Admin Control — update status and GPS location.",
   "icons": [
     {
-      "src": "BRCNYE2026.png",
+      "src": "Official Logo.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "BRCNYE2026.png",
+      "src": "Official Logo.png",
       "sizes": "512x512",
       "type": "image/png"
     }
