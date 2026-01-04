@@ -1,5 +1,5 @@
 {
-  "name": "Big Red Connect",
+  "name": "Big Red Connect App",
   "short_name": "BigRed",
   "start_url": "index.html",
   "display": "standalone",
@@ -8,12 +8,12 @@
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "BRCNYE2026.png",
+      "src": "Official Logo.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "BRCNYE2026.png",
+      "src": "Official Logo.png",
       "sizes": "512x512",
       "type": "image/png"
     }
