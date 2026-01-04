@@ -1,6 +1,6 @@
 {
-  "name": "Big Red Connect App",
-  "short_name": "BigRed",
+  "name": "Big Red Connect",
+  "short_name": "Big Red",
   "start_url": "index.html",
   "display": "standalone",
   "background_color": "#000000",
