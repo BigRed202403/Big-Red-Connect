@@ -401,6 +401,30 @@ function formatDateTime(iso){
 function captionBox(){return document.getElementById("captionBox");}
 function digitsOnly(v){return String(v||"").replace(/\D/g,"");}
 
+/* ============================================================
+   NOTIFY PREF DISPLAY (Rider cards)
+   - Reads from booking.rider.notifyPref OR booking.notifyPref
+   - Falls back to "both"
+============================================================ */
+function normalizeNotifyPref(v){
+  const s = String(v || "").toLowerCase().trim();
+  return (s === "sms" || s === "push" || s === "both") ? s : "both";
+}
+function getBookingNotifyPref(b){
+  return normalizeNotifyPref(
+    b?.rider?.notifyPref ??
+    b?.notifyPref ??
+    b?.metadata?.notifyPref ??
+    "both"
+  );
+}
+function notifyPrefBadgeHTML(pref){
+  const p = normalizeNotifyPref(pref);
+  const label = (p === "sms") ? "SMS" : (p === "push") ? "PUSH" : "BOTH";
+  const border = (p === "sms") ? "#2f8f5f" : (p === "push") ? "#3a7bd5" : "#b38b00";
+  return `<span class="badge" style="border-color:${border};">${label}</span>`;
+}
+
 function applyMode(mode){
   currentMode = (mode === "driver") ? "driver" : "admin";
   const body=document.body;
@@ -808,6 +832,9 @@ function renderColumn(id,arr){
     const smsConfirm = phoneDigits ? smsHrefWithBody(phoneDigits, smsTemplateText("CONFIRM", b)) : "";
     const smsLate = phoneDigits ? smsHrefWithBody(phoneDigits, smsTemplateText("LATE", b)) : "";
 
+    const notifyPref = getBookingNotifyPref(b);
+    const notifyBadge = notifyPrefBadgeHTML(notifyPref);
+
     // ✅ FIX: build these as normal strings (no nested backticks inside outer template literal)
     const chips =
       (dirUrl ? ('<a class="chip primary" href="'+dirUrl+'" target="_blank" rel="noopener">🧭 Directions</a>') : '') +
@@ -868,7 +895,7 @@ function renderColumn(id,arr){
         </div>
 
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;max-width:100%;">
-          <div style="font-size:.75rem;color:#bbb;">Rider: ${b.rider?.name||"—"}</div>
+          <div style="font-size:.75rem;color:#bbb;">Rider: ${b.rider?.name||"—"} • Notify: ${notifyBadge}</div>
 
           <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
             ${chips}
