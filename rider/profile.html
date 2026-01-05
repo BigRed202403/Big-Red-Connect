@@ -6,8 +6,8 @@
   <title>Rider Profile – Big Red Connect</title>
 
   <!-- Icons -->
-  <link rel="apple-touch-icon" href="/BRCNYE2026.png">
-  <link rel="icon" type="image/png" sizes="192x192" href="/BRCNYE2026.png">
+  <link rel="apple-touch-icon" href="/icon.PNG">
+  <link rel="icon" type="image/png" sizes="192x192" href="/icon.PNG">
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#000"/>
 
@@ -143,6 +143,18 @@
       border:1px solid #444;
     }
 
+    .hint{
+      font-size:0.85rem;
+      color:var(--muted);
+      margin-top:6px;
+    }
+
+    .btn-secondary{
+      background:#111;
+      color:#fff;
+      border:1px solid #444;
+    }
+
     #toast {
       position:fixed;
       bottom:20px;
@@ -159,6 +171,33 @@
       font-size:0.85rem;
     }
     #toast.show { opacity:1; }
+
+    /* ==============================
+       NOTIFY PREFS + iOS PUSH BANNER
+       ============================== */
+    .radio-list { display:flex; flex-direction:column; gap:10px; margin-top:10px; }
+    .radio-item {
+      display:flex; align-items:center; gap:10px;
+      border:1px solid var(--border); border-radius:12px;
+      padding:10px 12px; background:#0f0f0f;
+      cursor:pointer;
+    }
+    .radio-item input { transform:scale(1.15); }
+    .radio-item .rt { display:flex; flex-direction:column; gap:2px; }
+    .radio-item .rt .title { font-weight:700; }
+    .radio-item .rt .desc { font-size:0.85rem; color:var(--muted); }
+
+    .ios-banner {
+      border:1px solid #2a2a2a;
+      background:#0b0b0b;
+    }
+    .ios-banner .banner-title { font-weight:800; margin-bottom:6px; }
+    .ios-banner .banner-body { color:#cfcfcf; font-size:0.92rem; line-height:1.25rem; }
+    .ios-banner .banner-actions { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+    .ios-banner details { margin-top:10px; }
+    .ios-banner summary { cursor:pointer; color:#fff; font-weight:700; }
+    .ios-banner ol { margin:8px 0 0 18px; color:#cfcfcf; }
+
   </style>
 </head>
 <body>
@@ -195,6 +234,59 @@
       <label>Mobile Number</label>
       <input id="phone" inputmode="tel" placeholder="555-555-5555">
       <div class="hint">This must match the number you text from.</div>
+    </div>
+  </div>
+
+  <!-- iOS Push Requirement Banner (only shows when needed) -->
+  <div class="card ios-banner" id="iosPushBannerProfile" style="display:none;">
+    <div class="banner-title">Push on iPhone/iPad requires Add to Home Screen</div>
+    <div class="banner-body">
+      If you want Push updates, add Big Red Connect to your Home Screen, then open the app icon.
+    </div>
+
+    <details>
+      <summary>How to enable</summary>
+      <ol>
+        <li>Tap the <b>Share</b> button in Safari</li>
+        <li>Select <b>Add to Home Screen</b></li>
+        <li>Open Big Red Connect from the new Home Screen icon</li>
+      </ol>
+    </details>
+
+    <div class="banner-actions">
+      <button class="btn btn-secondary" id="btnDismissIosBannerProfile">Don’t show again</button>
+    </div>
+  </div>
+
+  <!-- NOTIFICATIONS -->
+  <div class="card">
+    <div class="section-title">Notifications</div>
+    <div class="hint">Choose how you want ride status updates. If unsure, choose Both.</div>
+
+    <div class="radio-list" id="notifyPrefList">
+      <label class="radio-item">
+        <input type="radio" name="notifyPref" value="both">
+        <div class="rt">
+          <div class="title">Both (SMS + Push)</div>
+          <div class="desc">Most reliable — push + text backup.</div>
+        </div>
+      </label>
+
+      <label class="radio-item">
+        <input type="radio" name="notifyPref" value="sms">
+        <div class="rt">
+          <div class="title">Text messages (SMS)</div>
+          <div class="desc">Texts only. No push notifications.</div>
+        </div>
+      </label>
+
+      <label class="radio-item">
+        <input type="radio" name="notifyPref" value="push">
+        <div class="rt">
+          <div class="title">Push notifications</div>
+          <div class="desc">Push preferred. SMS may still be used if push fails.</div>
+        </div>
+      </label>
     </div>
   </div>
 
@@ -236,6 +328,70 @@ function showToast(msg){
   t.classList.add("show");
   setTimeout(()=> t.classList.remove("show"), 1800);
 }
+
+/* ============================================================
+   NOTIFY PREFS (v1 local-only)
+============================================================ */
+const NOTIFY_PREF_KEY = "notifyPref";                 // both | sms | push
+const IOS_BANNER_HIDE_KEY = "hideIosA2hsReminder";    // "true" hides banner
+
+function getNotifyPref(){
+  const v = (localStorage.getItem(NOTIFY_PREF_KEY) || "both").toLowerCase();
+  return (v === "sms" || v === "push" || v === "both") ? v : "both";
+}
+function setNotifyPref(v){
+  const val = (v === "sms" || v === "push" || v === "both") ? v : "both";
+  localStorage.setItem(NOTIFY_PREF_KEY, val);
+}
+
+function isIOS(){
+  const ua = navigator.userAgent || "";
+  return /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+}
+function isStandalone(){
+  return (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) ||
+         (navigator.standalone === true);
+}
+
+function updateIosBannerProfile(){
+  const banner = document.getElementById("iosPushBannerProfile");
+  if (!banner) return;
+
+  const pref = getNotifyPref();
+  const hide = localStorage.getItem(IOS_BANNER_HIDE_KEY) === "true";
+
+  const shouldShow = isIOS() && !isStandalone() && !hide && (pref === "both" || pref === "push");
+  banner.style.display = shouldShow ? "block" : "none";
+}
+
+function initNotifyPrefUI(){
+  const current = getNotifyPref();
+  setNotifyPref(current);
+
+  const radios = document.querySelectorAll('input[name="notifyPref"]');
+  radios.forEach(r => { r.checked = (r.value === current); });
+
+  radios.forEach(r => {
+    r.addEventListener("change", () => {
+      setNotifyPref(r.value);
+      showToast("Saved");
+      updateIosBannerProfile();
+    });
+  });
+
+  const dismissBtn = document.getElementById("btnDismissIosBannerProfile");
+  if (dismissBtn){
+    dismissBtn.addEventListener("click", () => {
+      localStorage.setItem(IOS_BANNER_HIDE_KEY, "true");
+      updateIosBannerProfile();
+      showToast("Got it");
+    });
+  }
+
+  updateIosBannerProfile();
+}
+
+initNotifyPrefUI();
 
 document.getElementById("logoHome").onclick = () => {
   window.location.href = "/index.html";
