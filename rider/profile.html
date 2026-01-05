@@ -12,14 +12,14 @@
   <meta name="theme-color" content="#000"/>
 
   <style>
-    :root {
-      --red: #b30000;
-      --panel: #111;
-      --border: #222;
-      --muted: #aaa;
+    :root{
+      --red:#b30000;
+      --panel:#111;
+      --border:#222;
+      --muted:#aaa;
     }
 
-    body {
+    body{
       margin:0;
       background:#000;
       color:#fff;
@@ -27,7 +27,7 @@
       padding-bottom:50px;
     }
 
-    header {
+    header{
       padding:12px 12px;
       display:flex;
       align-items:center;
@@ -39,38 +39,38 @@
       z-index:10;
     }
 
-    .logo-tap {
+    .logo-tap{
       display:flex;
       align-items:center;
       gap:8px;
       cursor:pointer;
     }
 
-    header img {
+    header img{
       height:44px;
       border-radius:4px;
     }
 
-    h1 {
+    h1{
       text-align:center;
       font-size:1.4rem;
       margin:18px 0 8px;
     }
 
-    .subhead {
+    .subhead{
       text-align:center;
       font-size:0.85rem;
       color:var(--muted);
       margin-bottom:6px;
     }
 
-    .page {
+    .page{
       width:calc(100% - 24px);
       max-width:520px;
       margin:0 auto;
     }
 
-    .card {
+    .card{
       background:var(--panel);
       border:1px solid var(--border);
       border-radius:12px;
@@ -78,7 +78,7 @@
       margin-top:10px;
     }
 
-    .section-title {
+    .section-title{
       font-size:0.9rem;
       font-weight:700;
       margin-bottom:8px;
@@ -86,18 +86,17 @@
       padding-bottom:4px;
     }
 
-    .input-group {
-      margin-bottom:12px;
-    }
+    .input-group{ margin-bottom:12px; }
 
-    label {
+    label{
       display:block;
       font-size:0.8rem;
       color:#ccc;
       margin-bottom:4px;
     }
 
-    input, textarea {
+    /* ✅ Inputs, but do NOT style radios like text fields */
+    input:not([type="radio"]), textarea{
       width:100%;
       padding:10px;
       background:#111;
@@ -105,14 +104,15 @@
       border-radius:8px;
       color:#fff;
       font-size:0.95rem;
+      box-sizing:border-box;
     }
 
-    textarea {
+    textarea{
       min-height:68px;
       resize:vertical;
     }
 
-    .btn-row {
+    .btn-row{
       display:flex;
       flex-direction:column;
       gap:8px;
@@ -120,7 +120,7 @@
       margin-bottom:10px;
     }
 
-    .btn {
+    .btn{
       display:block;
       text-align:center;
       padding:12px;
@@ -130,15 +130,22 @@
       border:none;
       cursor:pointer;
       text-decoration:none;
+      box-sizing:border-box;
     }
 
-    .btn-primary {
+    .btn-primary{
       background:var(--red);
       color:#fff;
     }
 
-    .btn-ghost {
+    .btn-ghost{
       background:#000;
+      color:#fff;
+      border:1px solid #444;
+    }
+
+    .btn-secondary{
+      background:#111;
       color:#fff;
       border:1px solid #444;
     }
@@ -149,13 +156,7 @@
       margin-top:6px;
     }
 
-    .btn-secondary{
-      background:#111;
-      color:#fff;
-      border:1px solid #444;
-    }
-
-    #toast {
+    #toast{
       position:fixed;
       bottom:20px;
       left:50%;
@@ -170,34 +171,74 @@
       z-index:99;
       font-size:0.85rem;
     }
-    #toast.show { opacity:1; }
+    #toast.show{ opacity:1; }
 
     /* ==============================
        NOTIFY PREFS + iOS PUSH BANNER
        ============================== */
-    .radio-list { display:flex; flex-direction:column; gap:10px; margin-top:10px; }
-    .radio-item {
-      display:flex; align-items:center; gap:10px;
-      border:1px solid var(--border); border-radius:12px;
-      padding:10px 12px; background:#0f0f0f;
-      cursor:pointer;
-    }
-    .radio-item input { transform:scale(1.15); }
-    .radio-item .rt { display:flex; flex-direction:column; gap:2px; }
-    .radio-item .rt .title { font-weight:700; }
-    .radio-item .rt .desc { font-size:0.85rem; color:var(--muted); }
 
-    .ios-banner {
+    .radio-list{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      margin-top:10px;
+    }
+
+    .radio-item{
+      display:flex;
+      align-items:flex-start; /* ✅ better when text wraps */
+      gap:10px;
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:10px 12px;
+      background:#0f0f0f;
+      cursor:pointer;
+
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* iOS/Safari: keep radio looking like a radio (not a full-width input) */
+    .radio-item input{ transform:scale(1.15); }
+
+    .radio-item input[type="radio"]{
+      width:auto !important;
+      height:auto !important;
+      padding:0 !important;
+      margin:2px 0 0 0 !important; /* ✅ slight top offset */
+      border:none !important;
+      background:transparent !important;
+      flex:0 0 auto;
+
+      -webkit-appearance: radio;
+      appearance: radio;
+    }
+
+    .radio-item .rt{
+      flex:1;
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+    }
+    .radio-item .rt .title{ font-weight:700; }
+    .radio-item .rt .desc{ font-size:0.85rem; color:var(--muted); }
+
+    /* ✅ Visual highlight for the selected option (works on modern Safari/Chrome) */
+    .radio-item:has(input:checked){
+      border-color: var(--red);
+    }
+
+    .ios-banner{
       border:1px solid #2a2a2a;
       background:#0b0b0b;
     }
-    .ios-banner .banner-title { font-weight:800; margin-bottom:6px; }
-    .ios-banner .banner-body { color:#cfcfcf; font-size:0.92rem; line-height:1.25rem; }
-    .ios-banner .banner-actions { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
-    .ios-banner details { margin-top:10px; }
-    .ios-banner summary { cursor:pointer; color:#fff; font-weight:700; }
-    .ios-banner ol { margin:8px 0 0 18px; color:#cfcfcf; }
-
+    .ios-banner .banner-title{ font-weight:800; margin-bottom:6px; }
+    .ios-banner .banner-body{ color:#cfcfcf; font-size:0.92rem; line-height:1.25rem; }
+    .ios-banner .banner-actions{ display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+    .ios-banner details{ margin-top:10px; }
+    .ios-banner summary{ cursor:pointer; color:#fff; font-weight:700; }
+    .ios-banner ol{ margin:8px 0 0 18px; color:#cfcfcf; }
   </style>
 </head>
 <body>
@@ -413,7 +454,7 @@ async function loadProfile(){
     return;
   }
 
-  try {
+  try{
     const res = await fetch(`${PROFILE_API}/api/rider/profile?riderId=${encodeURIComponent(riderId)}`);
     if (!res.ok){
       if (res.status === 404) return;
@@ -429,7 +470,7 @@ async function loadProfile(){
     document.getElementById("gateCode").value    = p.gateCode || "";
     document.getElementById("notes").value       = p.notes || "";
 
-  } catch (err){
+  } catch(err){
     console.error(err);
     showToast("Error loading profile");
   }
@@ -451,7 +492,7 @@ async function saveProfile(){
 
   const body = { riderId, name, phone, homeAddress, gateCode, notes };
 
-  try {
+  try{
     const res = await fetch(`${PROFILE_API}/api/rider/profile`, {
       method:"PUT",
       headers:{ "Content-Type":"application/json" },
@@ -470,8 +511,7 @@ async function saveProfile(){
     localStorage.setItem("riderGate", gateCode);
 
     showToast("Profile saved");
-
-  } catch (err){
+  } catch(err){
     console.error(err);
     showToast("Save failed");
   }
