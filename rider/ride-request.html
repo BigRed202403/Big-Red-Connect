@@ -59,20 +59,6 @@
     .disclaimer { font-size:0.75rem; color:var(--muted); margin-top:10px; text-align:center; }
     #toast { position:fixed; bottom:22px; left:50%; transform:translateX(-50%); background:#111; border:1px solid var(--red); padding:10px 18px; border-radius:999px; opacity:0; pointer-events:none; transition:opacity .25s; z-index:99; font-size:0.85rem; }
     #toast.show { opacity:1; }
-
-    /* ==============================
-       iOS PUSH REQUIREMENT BANNER
-       ============================== */
-    .ios-banner {
-      border:1px solid #2a2a2a;
-      background:#0b0b0b;
-    }
-    .ios-banner .banner-title { font-weight:800; margin-bottom:6px; }
-    .ios-banner .banner-body { color:#cfcfcf; font-size:0.92rem; line-height:1.25rem; }
-    .ios-banner .banner-actions { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
-    .ios-banner details { margin-top:10px; }
-    .ios-banner summary { cursor:pointer; color:#fff; font-weight:700; }
-    .ios-banner ol { margin:8px 0 0 18px; color:#cfcfcf; }
   </style>
 </head>
 <body>
@@ -94,27 +80,6 @@
 <div class="subhead">Get a local estimate first, then tap to send your request via text.</div>
 
 <div class="page">
-
-  <!-- iOS Push Requirement Banner (only shows when needed) -->
-  <div class="card ios-banner" id="iosPushBannerRequest" style="display:none;">
-    <div class="banner-title">Push on iPhone/iPad requires Add to Home Screen</div>
-    <div class="banner-body">
-      If you want Push updates, add Big Red Connect to your Home Screen, then open the app icon.
-    </div>
-
-    <details>
-      <summary>How to enable</summary>
-      <ol>
-        <li>Tap the <b>Share</b> button in Safari</li>
-        <li>Select <b>Add to Home Screen</b></li>
-        <li>Open Big Red Connect from the new Home Screen icon</li>
-      </ol>
-    </details>
-
-    <div class="banner-actions">
-      <button class="btn btn-secondary btn-small" id="btnDismissIosBannerRequest" type="button">Don’t show again</button>
-    </div>
-  </div>
 
   <div class="card">
     <div class="section-title">You’re booking as</div>
@@ -256,48 +221,6 @@
   let fairnessOrigin = { ...HQ };
 
   // =====================================================
-  // NOTIFY PREFS + iOS A2HS REMINDER (read-only here)
-  // =====================================================
-  const NOTIFY_PREF_KEY = "notifyPref";               // both | sms | push
-  const IOS_BANNER_HIDE_KEY = "hideIosA2hsReminder";  // "true" hides banner
-
-  function getNotifyPref(){
-    const v = (localStorage.getItem(NOTIFY_PREF_KEY) || "both").toLowerCase();
-    return (v === "sms" || v === "push" || v === "both") ? v : "both";
-  }
-
-  function isIOS(){
-    const ua = navigator.userAgent || "";
-    return /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
-  }
-
-  function isStandalone(){
-    return (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) ||
-           (navigator.standalone === true);
-  }
-
-  function updateIosBannerRequest(){
-    const banner = document.getElementById("iosPushBannerRequest");
-    if (!banner) return;
-
-    const pref = getNotifyPref();
-    const hide = localStorage.getItem(IOS_BANNER_HIDE_KEY) === "true";
-
-    const shouldShow = isIOS() && !isStandalone() && !hide && (pref === "both" || pref === "push");
-    banner.style.display = shouldShow ? "block" : "none";
-  }
-
-  document.getElementById("btnDismissIosBannerRequest")?.addEventListener("click", () => {
-    localStorage.setItem(IOS_BANNER_HIDE_KEY, "true");
-    updateIosBannerRequest();
-    showToast("Got it");
-  });
-
-  window.addEventListener("storage", (e) => {
-    if (e.key === NOTIFY_PREF_KEY || e.key === IOS_BANNER_HIDE_KEY) updateIosBannerRequest();
-  });
-
-  // =====================================================
   // TOAST
   // =====================================================
   function showToast(msg) {
@@ -305,6 +228,15 @@
     t.textContent = msg;
     t.classList.add("show");
     setTimeout(() => t.classList.remove("show"), 1800);
+  }
+
+  // =====================================================
+  // NOTIFY PREF (v1 local-only → stamped into bookings)
+  // =====================================================
+  const NOTIFY_PREF_KEY = "notifyPref"; // both | sms | push
+  function getNotifyPref(){
+    const v = String(localStorage.getItem(NOTIFY_PREF_KEY) || "both").toLowerCase();
+    return (v === "sms" || v === "push" || v === "both") ? v : "both";
   }
 
   // =====================================================
@@ -806,7 +738,6 @@
 
   document.addEventListener("DOMContentLoaded", () => {
     prefillFromRepeatRideIfAny_EARLY();
-    updateIosBannerRequest(); // ✅ show/hide iOS banner on load
   });
 
   // =====================================================
@@ -841,7 +772,6 @@
     }
 
     syncLuggageVisibility();
-    updateIosBannerRequest(); // ✅ if notify pref changed elsewhere
   }
 
   function formatPhone(p) {
@@ -1268,14 +1198,8 @@
 
     const bookingType = scheduledISO ? "RESERVATION" : "INSTANT";
 
-    const notifyPref = getNotifyPref(); // ✅ NEW
-
     const payload = {
       type: bookingType,
-
-      // ✅ NEW (root-level hint; harmless if ignored downstream)
-      notify_pref: notifyPref,
-
       pickup: {
         address: q.pickup,
         name: pickupStored?.name || null,
@@ -1302,9 +1226,7 @@
         name, phone,
         partySize: q.passengers || 1,
         riderId,
-
-        // ✅ NEW (preferred location to store it)
-        notifyPref: notifyPref
+        notifyPref: getNotifyPref()
       },
       pricing: {
         estimate: Number(q.total),
@@ -1316,7 +1238,8 @@
       source: "RIDE_REQUEST",
       metadata: {
         luggageCount: (q.luggageCount ?? 0),
-        routeUrl
+        routeUrl,
+        notifyPref: getNotifyPref()
       }
     };
 
@@ -1450,9 +1373,6 @@
 
     syncLuggageVisibility();
     applyAutoRateLabels();
-
-    // ✅ show/hide iOS banner once we know everything is loaded
-    updateIosBannerRequest();
 
     // render route if repeat or anything requested it; safe otherwise
     setTimeout(renderRouteFromCurrentInputs, 200);
