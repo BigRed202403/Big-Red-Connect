@@ -371,18 +371,30 @@ function showToast(msg){
 }
 
 /* ============================================================
-   NOTIFY PREFS (v1 local-only)
+   NOTIFY PREFS (v1 local + synced to profile worker)
 ============================================================ */
 const NOTIFY_PREF_KEY = "notifyPref";                 // both | sms | push
 const IOS_BANNER_HIDE_KEY = "hideIosA2hsReminder";    // "true" hides banner
 
-function getNotifyPref(){
-  const v = (localStorage.getItem(NOTIFY_PREF_KEY) || "both").toLowerCase();
-  return (v === "sms" || v === "push" || v === "both") ? v : "both";
+function normalizeNotifyPref(v){
+  const s = String(v || "").toLowerCase().trim();
+  return (s === "sms" || s === "push" || s === "both") ? s : "both";
 }
+
+function getNotifyPref(){
+  return normalizeNotifyPref(localStorage.getItem(NOTIFY_PREF_KEY) || "both");
+}
+
 function setNotifyPref(v){
-  const val = (v === "sms" || v === "push" || v === "both") ? v : "both";
+  const val = normalizeNotifyPref(v);
   localStorage.setItem(NOTIFY_PREF_KEY, val);
+}
+
+function applyNotifyPrefToUI(pref){
+  const val = normalizeNotifyPref(pref);
+  const radios = document.querySelectorAll('input[name="notifyPref"]');
+  radios.forEach(r => { r.checked = (r.value === val); });
+  updateIosBannerProfile();
 }
 
 function isIOS(){
@@ -406,12 +418,13 @@ function updateIosBannerProfile(){
 }
 
 function initNotifyPrefUI(){
+  // Ensure local default exists
   const current = getNotifyPref();
   setNotifyPref(current);
+  applyNotifyPrefToUI(current);
 
+  // Save locally on change (server sync happens on Save Profile)
   const radios = document.querySelectorAll('input[name="notifyPref"]');
-  radios.forEach(r => { r.checked = (r.value === current); });
-
   radios.forEach(r => {
     r.addEventListener("change", () => {
       setNotifyPref(r.value);
@@ -470,6 +483,16 @@ async function loadProfile(){
     document.getElementById("gateCode").value    = p.gateCode || "";
     document.getElementById("notes").value       = p.notes || "";
 
+    // ✅ NEW: pull notifyPref from server if present, sync to local + UI
+    if (p && p.notifyPref !== undefined && p.notifyPref !== null) {
+      const serverPref = normalizeNotifyPref(p.notifyPref);
+      setNotifyPref(serverPref);
+      applyNotifyPrefToUI(serverPref);
+    } else {
+      // Ensure UI matches local if server is older/missing
+      applyNotifyPrefToUI(getNotifyPref());
+    }
+
   } catch(err){
     console.error(err);
     showToast("Error loading profile");
@@ -487,10 +510,13 @@ async function saveProfile(){
   const gateCode    = document.getElementById("gateCode").value.trim();
   const notes       = document.getElementById("notes").value.trim();
 
+  // ✅ NEW: include notifyPref in payload
+  const notifyPref  = getNotifyPref();
+
   if (!riderId){ showToast("Session expired"); return; }
   if (!phone){ showToast("Phone required"); return; }
 
-  const body = { riderId, name, phone, homeAddress, gateCode, notes };
+  const body = { riderId, name, phone, homeAddress, gateCode, notes, notifyPref };
 
   try{
     const res = await fetch(`${PROFILE_API}/api/rider/profile`, {
@@ -504,12 +530,13 @@ async function saveProfile(){
       return;
     }
 
-    // Sync LS
+    // Sync LS (existing)
     localStorage.setItem("riderName", name);
     localStorage.setItem("riderPhone", phone);
     localStorage.setItem("riderHome", homeAddress);
     localStorage.setItem("riderGate", gateCode);
 
+    // Sync LS (notifyPref already stored by setNotifyPref)
     showToast("Profile saved");
   } catch(err){
     console.error(err);
