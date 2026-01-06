@@ -102,7 +102,7 @@
     }
 
     /* ------------------------------------------------------
-       DESTINATION HANDOFF (Index → Ride Request)
+       DESTINATION HANDOFF (Index → Estimate / Ride Request)
        - sessionStorage primary
        - localStorage fallback
        ------------------------------------------------------ */
@@ -112,32 +112,24 @@
     }
 
     function goRequestRide() {
-  if (!isRiderLoggedIn()) {
-    window.location.href = "/rider-login.html?next=ride-request";
-  } else {
-    window.location.href = "/rider/ride-request.html";
-  }
-}
+      if (!isRiderLoggedIn()) {
+        window.location.href = "/rider-login.html?next=ride-request";
+      } else {
+        window.location.href = "/rider/ride-request.html";
+      }
+    }
 
-    function goToFare(e) {
-      e.preventDefault();
-      const dest = document.getElementById("quickWhere").value.trim();
+    // ✅ NEW: Go to public Estimate page first (no login required)
+    function goToEstimate(e) {
+      if (e) e.preventDefault();
+      const dest = document.getElementById("quickWhere")?.value?.trim() || "";
       if (!dest) return;
 
-      // ✅ Store for reliable carryover into /rider/ride-request.html
+      // Store for carryover (Estimate can also read this if you want)
       stashDropoffHandoff(dest);
 
-      if (!isRiderLoggedIn()) {
-        // ✅ Login will read these and then forward to ride-request with dropoff
-        window.location.href =
-          "/rider-login.html?next=ride-request&dropoff=" +
-          encodeURIComponent(dest);
-      } else {
-        // ✅ Also pass via querystring as a fallback
-        window.location.href =
-          "/rider/ride-request.html?dropoff=" +
-          encodeURIComponent(dest);
-      }
+      // Pass via querystring too (optional, but nice)
+      window.location.href = "/Estimate.html?destination=" + encodeURIComponent(dest);
     }
 
     function goMyProfile() {
@@ -178,6 +170,8 @@
   <div class="cta-group">
     <a href="sms:14053784024" class="btn primary">📲 Text "RED"</a>
     <a href="tel:14053784024" class="btn secondary">📞 Call Big Red</a>
+    <!-- ✅ NEW: Quick Estimate -->
+    <a href="/Estimate.html" class="btn secondary">💲 Quick Estimate</a>
   </div>
 
   <!-- Notifications Section -->
@@ -213,10 +207,11 @@
   <!-- Quick Destination Form -->
   <div class="info-section" style="text-align:center; margin-top:20px;">
     <h2>Plan Your Connection</h2>
-    <form id="quickDestination" onsubmit="goToFare(event)" style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+    <!-- ✅ UPDATED: goes to Estimate first -->
+    <form id="quickDestination" onsubmit="goToEstimate(event)" style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
       <input id="quickWhere" type="text" placeholder="Where to?" required
         style="flex:1;min-width:220px;max-width:420px;padding:12px;border-radius:10px;border:1px solid #333;background:#111;color:#fff;">
-      <button type="submit" class="btn primary">➡️ Next</button>
+      <button type="submit" class="btn primary">💲 Estimate</button>
     </form>
     <p style="font-size:0.9em;color:#888;margin-top:6px;">
       Tip: Start typing a place, business, or address.
@@ -225,7 +220,9 @@
 
   <!-- Navigation Tiles -->
   <div class="tile-grid">
-    <a onclick="goRequestRide()" class="tile" style="cursor:pointer;">💲<br>🛷Request A Ride</a>
+    <a onclick="goRequestRide()" class="tile" style="cursor:pointer;">🛷<br>Request A Ride</a>
+    <!-- ✅ NEW tile -->
+    <a href="/Estimate.html" class="tile">💲<br>Quick Estimate</a>
     <a href="live.html" class="tile">🗺️<br>Live Map</a>
     <a href="reviews.html" class="tile">⭐<br>Rider Reviews</a>
     <a href="faq.html" class="tile">ℹ️<br>FAQ & Info</a>
