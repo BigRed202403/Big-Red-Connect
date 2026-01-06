@@ -303,8 +303,9 @@
   document.getElementById("btnEditProfile").addEventListener("click", () => window.location.href = "/rider/profile.html");
 
   // =====================================================
-  // HANDOFF DROP-OFF
+  // HANDOFF (DROP-OFF + PICKUP) + QUERYSTRING PREFILL
   // =====================================================
+
   function readHandoffDropoff() {
     try {
       const u = new URL(window.location.href);
@@ -324,34 +325,187 @@
     } catch (e) { return null; }
   }
 
-  function clearHandoffDropoff() {
+  function readHandoffPickup() {
+    try {
+      const u = new URL(window.location.href);
+      const qsPick = (u.searchParams.get("pickup") || "").trim();
+      if (qsPick) return { value: qsPick, source: "qs:pickup" };
+
+      const ss = (sessionStorage.getItem("brc_pickup_handoff") || "").trim();
+      if (ss) return { value: ss, source: "sessionStorage" };
+
+      const ls = (localStorage.getItem("brc_pickup_handoff") || "").trim();
+      if (ls) return { value: ls, source: "localStorage" };
+
+      return null;
+    } catch (e) { return null; }
+  }
+
+  function clearHandoffCommonParams() {
     try {
       sessionStorage.removeItem("brc_dropoff_handoff");
       localStorage.removeItem("brc_dropoff_handoff");
+      sessionStorage.removeItem("brc_pickup_handoff");
+      localStorage.removeItem("brc_pickup_handoff");
+
       const u = new URL(window.location.href);
-      u.searchParams.delete("dropoff");
-      u.searchParams.delete("destination");
+      [
+        "pickup","dropoff","destination",
+        "stop",
+        "mode","reserveDate","reserveTime","planBy",
+        "payment","estimate","miles","minutes",
+        "from"
+      ].forEach(k => u.searchParams.delete(k));
+
       window.history.replaceState({}, "", u.pathname + (u.search || "") + (u.hash || ""));
     } catch (e) {}
   }
 
-  function applyHandoffDropoffIfAny() {
-    if (repeatLocked) return; // ✅ repeat is authoritative
-    const handoff = readHandoffDropoff();
+  // =====================================================
+  // PREFILL FROM QUERYSTRING (Estimate → Request)
+  // Runs early at DOMContentLoaded (before Google loads).
+  // =====================================================
+  let didEarlyRepeatPrefill = false;
+  let pendingStopsToHydrate = [];
+
+  function addStopField_NoAutocomplete(initialValue = "") {
+    if (stopInputs.length >= 3) return;
+    const id = "stop_" + Date.now() + "_" + Math.floor(Math.random()*1000);
+    stopInputs.push(id);
+
+    const wrap = document.getElementById("stopsWrap");
+    const div = document.createElement("div");
+    div.className = "input-group";
+    div.id = "row_" + id;
+    div.innerHTML = `
+      <label>Stop ${stopInputs.length}</label>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <input id="${id}" type="text" placeholder="Enter stop address or place" style="flex:1;">
+        <button type="button" class="btn btn-secondary btn-small" onclick="removeStop('${id}')">✖</button>
+      </div>
+    `;
+    wrap.appendChild(div);
+
+    const stopEl = document.getElementById(id);
+    if (stopEl) stopEl.value = initialValue;
+
+    pendingStopsToHydrate.push(id);
+    stopEl?.addEventListener("input", () => { repeatLocked = false; clearPlace(PLACE_KEYS.stopPrefix + id); });
+  }
+
+  function prefillFromEstimateQuery_EARLY() {
+    try {
+      if (repeatLocked) return;
+
+      const u = new URL(window.location.href);
+
+      // only act if it's from estimate (or any qs values exist). no harm either way.
+      const qsPickup  = (u.searchParams.get("pickup") || "").trim();
+      const qsDropoff = (u.searchParams.get("dropoff") || u.searchParams.get("destination") || "").trim();
+      const qsStops   = u.searchParams.getAll("stop").map(s => String(s||"").trim()).filter(Boolean);
+
+      const qsMode = (u.searchParams.get("mode") || "").trim().toLowerCase();
+      const qsReserveDate = (u.searchParams.get("reserveDate") || "").trim();
+      const qsReserveTime = (u.searchParams.get("reserveTime") || "").trim();
+      const qsPlanBy      = (u.searchParams.get("planBy") || "").trim().toLowerCase();
+
+      const qsPayment = (u.searchParams.get("payment") || "").trim().toLowerCase();
+
+      // optional display-only
+      const qsEstimate = (u.searchParams.get("estimate") || "").trim();
+      const qsMiles    = (u.searchParams.get("miles") || "").trim();
+      const qsMinutes  = (u.searchParams.get("minutes") || "").trim();
+
+      const pEl = document.getElementById("pickup");
+      const dEl = document.getElementById("dropoff");
+
+      if (qsPickup && pEl && !String(pEl.value||"").trim()) {
+        pEl.value = qsPickup;
+        sessionStorage.removeItem(PLACE_KEYS.pickup);
+      }
+
+      if (qsDropoff && dEl && !String(dEl.value||"").trim()) {
+        dEl.value = qsDropoff;
+        sessionStorage.removeItem(PLACE_KEYS.dropoff);
+      }
+
+      // stops: if provided, create fields and fill
+      if (Array.isArray(qsStops) && qsStops.length) {
+        // clear existing stops first
+        try {
+          stopInputs.slice().forEach(id => removeStop(id));
+          stopInputs = [];
+          pendingStopsToHydrate = [];
+        } catch(e) {}
+
+        qsStops.slice(0, 3).forEach(s => addStopField_NoAutocomplete(s));
+      }
+
+      // mode + reserve controls
+      if (qsMode === "reserve") {
+        setMode("reserve");
+        if (qsReserveDate) document.getElementById("reserveDate").value = qsReserveDate;
+        if (qsReserveTime) document.getElementById("reserveTime").value = qsReserveTime;
+        if (qsPlanBy === "pickup" || qsPlanBy === "dropoff") document.getElementById("planBy").value = qsPlanBy;
+      } else if (qsMode === "now") {
+        setMode("now");
+      }
+
+      // payment
+      if (qsPayment === "cash" || qsPayment === "card") {
+        document.getElementById("payment").value = qsPayment;
+      }
+
+      // display-only estimate if provided
+      if (qsEstimate) {
+        const ed = document.getElementById("estimateDisplay");
+        if (ed && !String(ed.value||"").trim()) ed.value = "$" + String(qsEstimate).replace(/^\$/, "");
+      }
+      // we don't show miles/minutes anywhere here, but keeping them parsed is harmless.
+
+      // if any query data existed, clear the qs keys so refresh doesn't keep reapplying
+      const touched =
+        !!qsPickup || !!qsDropoff || qsStops.length ||
+        !!qsMode || !!qsReserveDate || !!qsReserveTime || !!qsPlanBy ||
+        !!qsPayment || !!qsEstimate || !!qsMiles || !!qsMinutes;
+
+      if (touched) {
+        clearHandoffCommonParams();
+        showToast("Trip carried over ✅");
+      }
+    } catch (e) {
+      console.warn("prefillFromEstimateQuery_EARLY failed:", e);
+    }
+  }
+
+  function applyHandoffPickupIfAny() {
+    if (repeatLocked) return;
+    const handoff = readHandoffPickup();
     if (!handoff || !handoff.value) return;
 
-    clearHandoffDropoff();
+    const pickEl = document.getElementById("pickup");
+    if (!pickEl) return;
+
+    if (!String(pickEl.value || "").trim()) {
+      pickEl.value = handoff.value;
+      sessionStorage.removeItem(PLACE_KEYS.pickup);
+      showToast("Pickup carried over ✅");
+    }
+  }
+
+  function applyHandoffDropoffIfAny() {
+    if (repeatLocked) return;
+    const handoff = readHandoffDropoff();
+    if (!handoff || !handoff.value) return;
 
     const dropEl = document.getElementById("dropoff");
     if (!dropEl) return;
 
     if (!String(dropEl.value || "").trim()) {
       dropEl.value = handoff.value;
-      sessionStorage.removeItem("brc_place_dropoff_v1");
+      sessionStorage.removeItem(PLACE_KEYS.dropoff);
       showToast("Drop-off carried over ✅");
-      requestAutoRouteRender();
     }
-    syncLuggageVisibility();
   }
 
   // =====================================================
@@ -567,34 +721,6 @@
   // =====================================================
   // EARLY REPEAT PREFILL (authoritative overwrite)
   // =====================================================
-  let didEarlyRepeatPrefill = false;
-  let pendingStopsToHydrate = [];
-
-  function addStopField_NoAutocomplete(initialValue = "") {
-    if (stopInputs.length >= 3) return;
-    const id = "stop_" + Date.now() + "_" + Math.floor(Math.random()*1000);
-    stopInputs.push(id);
-
-    const wrap = document.getElementById("stopsWrap");
-    const div = document.createElement("div");
-    div.className = "input-group";
-    div.id = "row_" + id;
-    div.innerHTML = `
-      <label>Stop ${stopInputs.length}</label>
-      <div style="display:flex;gap:6px;align-items:center;">
-        <input id="${id}" type="text" placeholder="Enter stop address or place" style="flex:1;">
-        <button type="button" class="btn btn-secondary btn-small" onclick="removeStop('${id}')">✖</button>
-      </div>
-    `;
-    wrap.appendChild(div);
-
-    const stopEl = document.getElementById(id);
-    if (stopEl) stopEl.value = initialValue;
-
-    pendingStopsToHydrate.push(id);
-    stopEl?.addEventListener("input", () => { repeatLocked = false; clearPlace(PLACE_KEYS.stopPrefix + id); });
-  }
-
   async function prefillFromRepeatRideIfAny_EARLY() {
     try {
       const u = new URL(location.href);
@@ -737,7 +863,15 @@
   }
 
   document.addEventListener("DOMContentLoaded", () => {
+    // 1) Repeat ride is strongest
     prefillFromRepeatRideIfAny_EARLY();
+
+    // 2) Estimate query should prefill if present (unless repeat locked)
+    setTimeout(() => {
+      if (!repeatLocked) prefillFromEstimateQuery_EARLY();
+      if (!repeatLocked) applyHandoffPickupIfAny();
+      if (!repeatLocked) applyHandoffDropoffIfAny();
+    }, 0);
   });
 
   // =====================================================
@@ -1364,8 +1498,6 @@
 
     hydrateFromStoredPlace("pickup");
     hydrateFromStoredPlace("dropoff");
-
-    applyHandoffDropoffIfAny();
 
     ensureRiderId();
     loadProfileSummary();
