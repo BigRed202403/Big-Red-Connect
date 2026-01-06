@@ -22,11 +22,11 @@
 
   <link rel="stylesheet" href="style.css" />
 
-  <!-- Google Maps (Places + Geometry) -->
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places,geometry&callback=initGoogle" async defer></script>
-
   <!-- OneSignal (NOTE: Your appId here differs from index.html) -->
   <script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async></script>
+
+  <!-- ✅ IMPORTANT: Google Maps script moved to bottom of body
+       so callback initGoogle exists before Google calls it. -->
 </head>
 
 <body>
@@ -114,7 +114,7 @@
     </select>
 
     <!-- Calculate CTA -->
-    <button class="btn primary" id="calcBtn" style="display:block;margin:20px auto;">
+    <button class="btn primary" id="calcBtn" type="button" style="display:block;margin:20px auto;">
       💲 Get Ride Estimate
     </button>
 
@@ -534,15 +534,9 @@
     const q = window.lastFare;
     if (!q) return;
 
-    // ✅ ride-request already reads dropoff handoff and ?dropoff=
     if (q.dropoff) stashDropoffHandoff(q.dropoff);
-
-    // ✅ optional: stash pickup for future patch (won’t break anything)
     if (q.pickup) stashPickupHandoff(q.pickup);
 
-    // Keep it simple + compatible:
-    // - pass dropoff as querystring (supported)
-    // - let ride-request handle stops/passengers/etc on that page
     const url = REQUEST_PAGE + "?dropoff=" + encodeURIComponent(q.dropoff || "");
     window.location.href = url;
   }
@@ -617,8 +611,8 @@
       <p>📏 ${miles} mi  ⏱️ ${Math.round(minutes)} min</p>
 
       <p style="text-align:center;margin-top:15px; display:flex; flex-direction:column; gap:10px;">
-        <button class="btn primary" id="btnContinue">➡️ Continue to Request Ride</button>
-        <button class="btn secondary" id="btnTextRed">📲 Text RED (No Login)</button>
+        <button class="btn primary" id="btnContinue" type="button">➡️ Continue to Request Ride</button>
+        <button class="btn secondary" id="btnTextRed" type="button">📲 Text RED (No Login)</button>
       </p>
 
       <p style="text-align:center;color:#ccc;font-size:.9em;margin-top:6px;">
@@ -668,5 +662,12 @@
     window.location.href = "sms:+14053784024?&body=" + encodeURIComponent(smsBody);
   }
   </script>
+
+  <!-- ✅ Google Maps (Places + Geometry) — moved here so initGoogle exists first -->
+  <script
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places,geometry&callback=initGoogle"
+    defer>
+  </script>
+
 </body>
 </html>
