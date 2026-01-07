@@ -365,7 +365,6 @@
   // PREFILL FROM QUERYSTRING (Estimate → Request)
   // Runs early at DOMContentLoaded (before Google loads).
   // =====================================================
-  let didEarlyRepeatPrefill = false;
   let pendingStopsToHydrate = [];
 
   function addStopField_NoAutocomplete(initialValue = "") {
@@ -399,7 +398,6 @@
 
       const u = new URL(window.location.href);
 
-      // only act if it's from estimate (or any qs values exist). no harm either way.
       const qsPickup  = (u.searchParams.get("pickup") || "").trim();
       const qsDropoff = (u.searchParams.get("dropoff") || u.searchParams.get("destination") || "").trim();
       const qsStops   = u.searchParams.getAll("stop").map(s => String(s||"").trim()).filter(Boolean);
@@ -411,7 +409,6 @@
 
       const qsPayment = (u.searchParams.get("payment") || "").trim().toLowerCase();
 
-      // optional display-only
       const qsEstimate = (u.searchParams.get("estimate") || "").trim();
       const qsMiles    = (u.searchParams.get("miles") || "").trim();
       const qsMinutes  = (u.searchParams.get("minutes") || "").trim();
@@ -429,9 +426,7 @@
         sessionStorage.removeItem(PLACE_KEYS.dropoff);
       }
 
-      // stops: if provided, create fields and fill
       if (Array.isArray(qsStops) && qsStops.length) {
-        // clear existing stops first
         try {
           stopInputs.slice().forEach(id => removeStop(id));
           stopInputs = [];
@@ -441,7 +436,6 @@
         qsStops.slice(0, 3).forEach(s => addStopField_NoAutocomplete(s));
       }
 
-      // mode + reserve controls
       if (qsMode === "reserve") {
         setMode("reserve");
         if (qsReserveDate) document.getElementById("reserveDate").value = qsReserveDate;
@@ -451,19 +445,15 @@
         setMode("now");
       }
 
-      // payment
       if (qsPayment === "cash" || qsPayment === "card") {
         document.getElementById("payment").value = qsPayment;
       }
 
-      // display-only estimate if provided
       if (qsEstimate) {
         const ed = document.getElementById("estimateDisplay");
         if (ed && !String(ed.value||"").trim()) ed.value = "$" + String(qsEstimate).replace(/^\$/, "");
       }
-      // we don't show miles/minutes anywhere here, but keeping them parsed is harmless.
 
-      // if any query data existed, clear the qs keys so refresh doesn't keep reapplying
       const touched =
         !!qsPickup || !!qsDropoff || qsStops.length ||
         !!qsMode || !!qsReserveDate || !!qsReserveTime || !!qsPlanBy ||
@@ -515,7 +505,6 @@
   let pickupLatLng = null, dropoffLatLng = null;
   let pickupMarker = null, dropoffMarker = null;
 
-  // --- auto-route scheduling flags
   let googleReady = false;
   let pendingAutoRoute = false;
 
@@ -524,9 +513,6 @@
     if (googleReady) setTimeout(renderRouteFromCurrentInputs, 150);
   }
 
-  // =====================================================
-  // AUTO RENDER ROUTE + MARKERS (repeat-prefill / carry-over)
-  // =====================================================
   function renderRouteFromCurrentInputs() {
     try {
       if (!googleReady || !directionsService || !directionsRenderer || !map) return;
@@ -613,7 +599,7 @@
 
     const key = which === "pickup" ? PLACE_KEYS.pickup : PLACE_KEYS.dropoff;
     el.addEventListener("input", () => {
-      repeatLocked = false; // typing = user taking control
+      repeatLocked = false;
       if (sessionStorage.getItem(key)) clearPlace(key);
       if (which === "pickup") pickupLatLng = null;
       if (which === "dropoff") dropoffLatLng = null;
@@ -736,16 +722,16 @@
          u.searchParams.get("id") ||
          "").trim();
 
-      if (!repeatId) return;
+      if (!repeatId) return false;
 
       repeatLocked = true;
 
       const res = await fetch(`${API_BOOK}/api/bookings/${encodeURIComponent(repeatId)}?t=${Date.now()}`, { cache: "no-store" });
-      if (!res.ok) { console.warn("Repeat fetch failed:", res.status); repeatLocked = false; return; }
+      if (!res.ok) { console.warn("Repeat fetch failed:", res.status); repeatLocked = false; return false; }
 
       const raw = await res.json();
       const r = raw?.booking || raw?.data || raw;
-      if (!r) { repeatLocked = false; return; }
+      if (!r) { repeatLocked = false; return false; }
 
       const pickupObj  = (r.pickup && typeof r.pickup === "object") ? r.pickup : {};
       const dropoffObj = (r.dropoff && typeof r.dropoff === "object") ? r.dropoff : {};
@@ -772,7 +758,6 @@
       const pEl = document.getElementById("pickup");
       const dEl = document.getElementById("dropoff");
 
-      // ✅ FORCE overwrite when repeat is present
       if (pEl && pickupAddr)  pEl.value = formatPlaceLine(pickupName, pickupAddr);
       if (dEl && dropoffAddr) dEl.value = formatPlaceLine(dropoffName, dropoffAddr);
 
@@ -795,7 +780,6 @@
       const lugEl = document.getElementById("luggageCount");
       if (lugEl && Number.isFinite(lug) && lug >= 0) lugEl.value = String(Math.min(6, lug));
 
-      // Persist places for airport detection + marker hydration
       try {
         if (pickupAddr) {
           sessionStorage.setItem(PLACE_KEYS.pickup, JSON.stringify({
@@ -819,7 +803,6 @@
         }
       } catch(e) {}
 
-      // Stops: clear existing and rebuild from repeat
       try {
         stopInputs.slice().forEach(id => removeStop(id));
         stopInputs = [];
@@ -847,31 +830,30 @@
         } catch(e) {}
       }
 
-      didEarlyRepeatPrefill = true;
-
-      // Remove repeat params so refresh won't keep forcing overwrite
       ["repeat","repeatId","repeat_id","rideId","ride_id","bookingId","booking_id","id"].forEach(k => u.searchParams.delete(k));
       history.replaceState({}, "", u.pathname + (u.search || "") + (u.hash || ""));
 
       showToast("Ride loaded ✅");
       syncLuggageVisibility();
       requestAutoRouteRender();
+      return true;
     } catch (e) {
       console.warn("early repeat prefill failed:", e);
       repeatLocked = false;
+      return false;
     }
   }
 
-  document.addEventListener("DOMContentLoaded", () => {
-    // 1) Repeat ride is strongest
-    prefillFromRepeatRideIfAny_EARLY();
+  // ✅ BULLETPROOF ORDER: await repeat first, then everything else
+  document.addEventListener("DOMContentLoaded", async () => {
+    const didRepeat = await prefillFromRepeatRideIfAny_EARLY();
 
-    // 2) Estimate query should prefill if present (unless repeat locked)
-    setTimeout(() => {
-      if (!repeatLocked) prefillFromEstimateQuery_EARLY();
-      if (!repeatLocked) applyHandoffPickupIfAny();
-      if (!repeatLocked) applyHandoffDropoffIfAny();
-    }, 0);
+    // Only if repeat did NOT lock the form:
+    if (!didRepeat && !repeatLocked) {
+      prefillFromEstimateQuery_EARLY();
+      applyHandoffPickupIfAny();
+      applyHandoffDropoffIfAny();
+    }
   });
 
   // =====================================================
@@ -896,7 +878,6 @@
         `<br><span style="font-size:0.7rem;color:#666;">Profile ID: ${rid}</span>`;
     }
 
-    // ✅ Do NOT override repeat ride with “home pickup”
     if (!repeatLocked) {
       const pickEl = document.getElementById("pickup");
       if (home && pickEl && !String(pickEl.value||"").trim()) pickEl.value = home;
@@ -1036,9 +1017,10 @@
     return new Date();
   }
 
+  // ✅ FIX: remove overly-broad "okc"
   function isAirportText(s) {
     const t = String(s || "").toLowerCase();
-    return t.includes("airport") || t.includes("will rogers") || t.includes("okc");
+    return t.includes("airport") || t.includes("will rogers");
   }
   function isAirportPlace(stored) {
     if (!stored) return false;
@@ -1488,7 +1470,6 @@
     attachManualTypingWatcher("pickup");
     attachManualTypingWatcher("dropoff");
 
-    // hydrate any stops created before Google loaded
     if (Array.isArray(pendingStopsToHydrate) && pendingStopsToHydrate.length) {
       pendingStopsToHydrate.forEach(id => {
         try { setupAutocomplete(id, "stop"); } catch(e) {}
@@ -1506,7 +1487,6 @@
     syncLuggageVisibility();
     applyAutoRateLabels();
 
-    // render route if repeat or anything requested it; safe otherwise
     setTimeout(renderRouteFromCurrentInputs, 200);
     if (pendingAutoRoute) setTimeout(renderRouteFromCurrentInputs, 250);
   };
