@@ -24,9 +24,6 @@
 
   <!-- OneSignal (NOTE: Your appId here differs from index.html) -->
   <script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async></script>
-
-  <!-- ✅ IMPORTANT: Google Maps script moved to bottom of body
-       so callback initGoogle exists before Google calls it. -->
 </head>
 
 <body>
@@ -155,7 +152,7 @@
   const REQUEST_PAGE = "https://bigredconnectokc.com/rider/ride-request.html";
 
   // ------------------------------------------------------
-  // Handoff helpers (match index pattern + add pickup handoff)
+  // Handoff helpers (session + local backup)
   // ------------------------------------------------------
   function stashDropoffHandoff(dest) {
     try { sessionStorage.setItem("brc_dropoff_handoff", dest); } catch (e) {}
@@ -165,6 +162,7 @@
     try { sessionStorage.setItem("brc_pickup_handoff", src); } catch (e) {}
     try { localStorage.setItem("brc_pickup_handoff", src); } catch (e) {}
   }
+
   function readIncomingDestination() {
     try {
       const u = new URL(window.location.href);
@@ -513,8 +511,8 @@
     const pickup = { lat: pickupLatLng.lat(), lng: pickupLatLng.lng() };
     const d = distMi(HQ, pickup);
 
-    if (d > 40) note.innerHTML = "📍 Pickup is well outside the core metro. A travel fairness fee *may* apply depending on total trip distance.";
-    else if (d > 20) note.innerHTML = "📍 Pickup is outside the central zone. A small travel fairness fee *may* apply depending on trip distance.";
+    if (d > 40) note.innerHTML = "📍 Pickup is well outside the core metro. A travel fairness fee <em>may</em> apply depending on total trip distance.";
+    else if (d > 20) note.innerHTML = "📍 Pickup is outside the central zone. A small travel fairness fee <em>may</em> apply depending on trip distance.";
   }
 
   // ======================================================
@@ -528,17 +526,41 @@
   }
 
   // ======================================================
-  //  CONTINUE → REQUEST PAGE (handoff + redirect)
+  //  BULLETPROOF CONTINUE → REQUEST PAGE
+  //  - Pass everything in querystring (authoritative)
+  //  - Also stash pickup/dropoff in storage (fallback)
   // ======================================================
   function continueToRequestFromLastFare() {
     const q = window.lastFare;
     if (!q) return;
 
-    if (q.dropoff) stashDropoffHandoff(q.dropoff);
+    // backup handoff
     if (q.pickup) stashPickupHandoff(q.pickup);
+    if (q.dropoff) stashDropoffHandoff(q.dropoff);
 
-    const url = REQUEST_PAGE + "?dropoff=" + encodeURIComponent(q.dropoff || "");
-    window.location.href = url;
+    const params = new URLSearchParams();
+
+    if (q.pickup)  params.set("pickup", q.pickup);
+    if (q.dropoff) params.set("dropoff", q.dropoff);
+
+    // stops as repeated ?stop=
+    (q.stops || []).slice(0, 3).forEach(s => params.append("stop", s));
+
+    // mode + reserve
+    if (q.mode) params.set("mode", q.mode);
+    if (q.reserveDate) params.set("reserveDate", q.reserveDate);
+    if (q.reserveTime) params.set("reserveTime", q.reserveTime);
+    if (q.planBy) params.set("planBy", q.planBy);
+
+    // payment + helpful display-only values
+    if (q.pay) params.set("payment", q.pay);
+    if (q.total != null) params.set("estimate", String(q.total));
+    if (q.miles != null) params.set("miles", String(q.miles));
+    if (q.minutes != null) params.set("minutes", String(q.minutes));
+
+    params.set("from", "estimate");
+
+    window.location.href = REQUEST_PAGE + "?" + params.toString();
   }
 
   // ======================================================
