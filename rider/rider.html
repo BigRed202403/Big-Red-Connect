@@ -184,6 +184,30 @@
       margin:0;
       display:inline-block;
     }
+
+    /* ✅ Toast */
+    #toast{
+      position:fixed;
+      bottom:18px;
+      left:50%;
+      transform:translateX(-50%);
+      background:#111;
+      border:1px solid #b30000;
+      color:#fff;
+      padding:10px 14px;
+      border-radius:999px;
+      font-size:.9rem;
+      opacity:0;
+      pointer-events:none;
+      transition:opacity .25s ease;
+      z-index:999;
+      max-width:92vw;
+      text-align:center;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    #toast.show{ opacity:1; }
   </style>
 </head>
 
@@ -202,6 +226,7 @@
   <a href="/rider/ride-request.html">Request a Ride</a>
   <a href="/rider/myride.html">My Ride</a>
   <a href="/rider/profile.html">Profile</a>
+  <a href="/reviews#leave-review" id="reviewsMenuLink">Leave a Review</a>
   <a href="#" id="logoutBtn">Log Out</a>
 </nav>
 
@@ -260,10 +285,16 @@
     <a id="openMyRideBtn" class="btn" href="/rider/myride.html">Open My Ride</a>
   </div>
 
+  <!-- ✅ NEW: Quick Actions (polish mode) -->
+  <button class="btn btn-secondary" id="repeatLastRideBtn" type="button">🔁 Repeat Last Ride</button>
+  <a class="btn btn-secondary" id="leaveReviewBtn" href="/reviews#leave-review">⭐ Leave a Review</a>
+
   <a class="btn" href="/rider/ride-request.html">Request a Ride</a>
   <a class="btn" href="/rider/myride.html">My Ride</a>
   <a class="btn btn-secondary" href="/rider/profile.html">Profile</a>
 </div>
+
+<div id="toast"></div>
 
 <script>
 /* MENU */
@@ -283,11 +314,41 @@ document.getElementById("logoutBtn").onclick = (e) => {
 const n = localStorage.getItem("riderName");
 document.getElementById("welcomeName").textContent =
   n ? `Hi ${n}, let’s get you moving.` : `Let’s get you moving.`;
+
+/* TOAST */
+function showToast(msg){
+  const t = document.getElementById("toast");
+  if(!t) return;
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"), 2200);
+}
 </script>
 
 <script>
 /* ✅ Active Ride Found Card */
 const BOOKINGS_API = "https://bigred-bookings.bigredtransportation.workers.dev";
+
+const LS_LAST_RIDE_ID = "brc_last_ride_id_v1";
+
+let __activeRideId = ""; // runtime only
+
+function setLastRideId(id){
+  if(!id) return;
+  try { localStorage.setItem(LS_LAST_RIDE_ID, String(id)); } catch(e){}
+}
+
+function getLastRideId(){
+  // Support a few legacy keys just in case you stored it elsewhere earlier
+  const candidates = [
+    localStorage.getItem(LS_LAST_RIDE_ID),
+    localStorage.getItem("lastRideId"),
+    localStorage.getItem("brc_lastRideId"),
+    localStorage.getItem("myRideId")
+  ];
+  const v = candidates.find(x => x && String(x).trim().length > 0);
+  return v ? String(v).trim() : "";
+}
 
 function getCanonicalRiderId(){
   // Prefer canonical profile object
@@ -336,6 +397,12 @@ function showActiveRideCard(booking){
   const dropoff = booking?.dropoff?.address || "—";
   const rideId = booking?.id || "";
 
+  // ✅ cache for repeat-last-ride
+  if (rideId) {
+    __activeRideId = String(rideId);
+    setLastRideId(rideId);
+  }
+
   details.textContent = `Status: ${status} • From: ${pickup} • To: ${dropoff}`;
   btn.href = rideId ? `/rider/myride.html?id=${encodeURIComponent(rideId)}` : "/rider/myride.html";
 
@@ -346,6 +413,40 @@ function showActiveRideCard(booking){
   const b = await findActiveRideForRider();
   if (b) showActiveRideCard(b);
 })();
+</script>
+
+<script>
+/* ✅ Repeat Last Ride + Review button behavior */
+const repeatBtn = document.getElementById("repeatLastRideBtn");
+const reviewBtn = document.getElementById("leaveReviewBtn");
+
+// Review button: keep default anchor behavior, but close menu if open
+reviewBtn.addEventListener("click", () => {
+  const p = document.getElementById("menuPanel");
+  if (p) p.style.display = "none";
+});
+
+repeatBtn.addEventListener("click", () => {
+  // If there is an active ride, guide the rider to it instead of duplicating
+  if (__activeRideId) {
+    showToast("You already have an active ride — opening it now.");
+    location.href = `/rider/myride.html?id=${encodeURIComponent(__activeRideId)}`;
+    return;
+  }
+
+  const lastId = getLastRideId();
+  if (!lastId) {
+    showToast("No previous ride found yet. Start a new request.");
+    location.href = "/rider/ride-request.html";
+    return;
+  }
+
+  // ✅ Polished “repeat” behavior:
+  // - We pass a repeat id for ride-request to use if it supports it.
+  // - If ride-request ignores it, rider still lands on the request page normally.
+  showToast("Loading your last ride…");
+  location.href = `/rider/ride-request.html?repeat=${encodeURIComponent(lastId)}`;
+});
 </script>
 
 <script>
