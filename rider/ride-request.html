@@ -146,7 +146,8 @@
       <label for="passengers">Passengers</label>
       <select id="passengers">
         <option value="1">1</option><option value="2">2</option><option value="3">3</option>
-        <option value="4">4</option><option value="5">5</option><option value="6">6</option>
+        <option value="4">4</option><option value="5">5</option>
+        <option value="6">6</option>
       </select>
       <div class="hint">Seatbelts for everyone. Max 6 depending on which vehicle is in service.</div>
     </div>
@@ -219,6 +220,15 @@
 
   const HQ = { lat: 35.3207, lng: -97.4929 };
   let fairnessOrigin = { ...HQ };
+
+  // =====================================================
+  // ✅ Last Ride Cache (canonical)
+  // =====================================================
+  const LS_LAST_RIDE_ID = "brc_last_ride_id_v1";
+  function setLastRideId(id){
+    if(!id) return;
+    try { localStorage.setItem(LS_LAST_RIDE_ID, String(id)); } catch(e) {}
+  }
 
   // =====================================================
   // TOAST
@@ -723,6 +733,9 @@
          "").trim();
 
       if (!repeatId) return false;
+
+      // ✅ remember last ride immediately (Hub will use this)
+      setLastRideId(repeatId);
 
       repeatLocked = true;
 
@@ -1381,6 +1394,10 @@
     const booking = await res.json();
     const rideId = booking.id;
 
+    // ✅ cache last ride id (canonical + legacy)
+    setLastRideId(rideId);
+    localStorage.setItem("lastRideId", rideId);
+
     try {
       await fetch(PUSH_API, {
         method: "POST",
@@ -1408,8 +1425,6 @@
       btn.disabled = true;
       btn.textContent = "Request Sent";
     }
-
-    localStorage.setItem("lastRideId", rideId);
 
     const stopsText = (q.stopsText && q.stopsText.length) ? q.stopsText.join(" → ") : "None";
     const whenText = (q.mode === "reserve" && q.reserveDate && q.reserveTime) ? `${q.reserveDate} at ${q.reserveTime}` : "ASAP (Ride Now)";
