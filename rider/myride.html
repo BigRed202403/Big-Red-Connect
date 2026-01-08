@@ -74,6 +74,25 @@ h1{text-align:center;margin:16px 0;font-size:1.4rem}
 const API="https://bigred-bookings.bigredtransportation.workers.dev";
 const STATUS_API="https://bigred-status-updater.bigredtransportation.workers.dev/status";
 
+/* ✅ Repeat-last-ride cache key (shared intent with Rider Hub) */
+const LS_LAST_RIDE_ID = "brc_last_ride_id_v1";
+function setLastRideId(id){
+  if(!id) return;
+  try{ localStorage.setItem(LS_LAST_RIDE_ID, String(id)); }catch(e){}
+}
+
+/* ✅ Canonical rider id (supports your newer profile storage + legacy fallback) */
+function getCanonicalRiderId(){
+  const raw = localStorage.getItem("bigred_rider_profile_v1");
+  if(raw){
+    try{
+      const p = JSON.parse(raw);
+      if(p && p.riderId) return String(p.riderId);
+    }catch(e){}
+  }
+  return String(localStorage.getItem("riderId") || "");
+}
+
 document.getElementById("menuBtn").onclick=()=>{
   const m=document.getElementById("menuPanel");
   m.style.display=m.style.display==="flex"?"none":"flex";
@@ -83,7 +102,7 @@ document.getElementById("logoutBtn").onclick=()=>{
   location.href="/index.html";
 };
 
-const riderId=localStorage.getItem("riderId") || "";
+const riderId = getCanonicalRiderId();
 const riderPhone=localStorage.getItem("riderPhone") || ""; // ✅ used for secure rider cancel
 let map,driverMarker,pickupMarker,dropoffMarker,routeSvc,routeLine;
 let activeRideId = null;
@@ -166,6 +185,13 @@ function pickActiveRide(mine){
   return open[0] || null;
 }
 
+function pickNewestClosedRide(mine){
+  const closed = (mine||[])
+    .filter(r => isClosed(r.status))
+    .sort((a,b)=> (b.createdAt||"").localeCompare(a.createdAt||""));
+  return closed[0] || null;
+}
+
 async function loadRides(){
   // 1) If ?id= exists, try to load that ride directly
   const urlRideId = getRideIdFromUrl();
@@ -173,6 +199,10 @@ async function loadRides(){
     const r = await fetchRideById(urlRideId);
     if(r && r?.rider?.riderId === riderId){
       activeRideId = r.id;
+
+      // ✅ Always cache this ride as the last ride (even if closed)
+      if(r?.id) setLastRideId(r.id);
+
       renderActive(r);
       // Still show history
       const mine = await fetchAllMine();
@@ -187,6 +217,15 @@ async function loadRides(){
   const mine = await fetchAllMine();
   const active = pickActiveRide(mine);
   activeRideId = active ? active.id : null;
+
+  // ✅ Cache logic:
+  // - If active exists, cache it
+  // - Else cache newest closed (so Repeat Last Ride works even later)
+  if(active?.id) setLastRideId(active.id);
+  else {
+    const newestClosed = pickNewestClosedRide(mine);
+    if(newestClosed?.id) setLastRideId(newestClosed.id);
+  }
 
   renderActive(active);
   renderHistory(mine.filter(r=>isClosed(r.status)));
@@ -208,6 +247,9 @@ function renderActive(r){
 
   const status = String(r.status||"").toUpperCase();
   const locked = !canModify(status);
+
+  // ✅ Cache active ride id here too (belt-and-suspenders)
+  if(r?.id) setLastRideId(r.id);
 
   box.innerHTML=`
     <div class="card">
@@ -232,6 +274,9 @@ function renderActive(r){
 
 async function cancelRide(id){
   if(!confirm("Cancel this ride?")) return;
+
+  // ✅ Cache immediately so Repeat Last Ride has something even if status flips quickly
+  if(id) setLastRideId(id);
 
   // ✅ Prefer rider cancel endpoint (triggers rider→admin push reliably)
   try{
@@ -419,6 +464,10 @@ function startAutoRefresh(){
       const r = await fetchRideById(urlRideId);
       if(r && r?.rider?.riderId === riderId){
         activeRideId = r.id;
+
+        // ✅ Keep caching while viewing by id
+        if(r?.id) setLastRideId(r.id);
+
         renderActive(r);
         // history still helpful
         const mine = await fetchAllMine();
