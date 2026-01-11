@@ -1,3 +1,8 @@
+<!-- =========================================================
+     ✅ UPDATED: rider/myride.html
+     Fix:
+       - fetchRideById() now unwraps { ok, booking } to return booking
+     ========================================================= -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -163,10 +168,12 @@ function getRideIdFromUrl(){
   return id || null;
 }
 
+/* ✅ FIX: unwrap { ok, booking } */
 async function fetchRideById(id){
   const res = await fetch(`${API}/api/bookings/${encodeURIComponent(id)}`);
   if(!res.ok) return null;
-  return await res.json();
+  const j = await res.json();
+  return j && j.booking ? j.booking : null;
 }
 
 async function fetchAllMine(){
