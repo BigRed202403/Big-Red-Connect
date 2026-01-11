@@ -126,6 +126,80 @@ body.mode-admin .driver-only{display:none;}
   .header-left div div:nth-child(2){display:none;}
 }
 .header-left > div{max-width:160px;min-width:0;}
+
+/* ============================================================
+   ✅ ADDITIVE: Admin Edit Modal styles (NEW)
+   ============================================================ */
+.modalOverlay{
+  position:fixed; inset:0;
+  background:rgba(0,0,0,.72);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:999;
+  padding:16px;
+}
+.modalOverlay.show{ display:flex; }
+.modalBox{
+  width:min(760px, 96vw);
+  background:#0b0b0b;
+  border:1px solid #333;
+  border-radius:12px;
+  padding:12px;
+  box-shadow: 0 18px 40px rgba(0,0,0,.55);
+}
+.modalTop{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  align-items:center;
+  border-bottom:1px solid #222;
+  padding-bottom:8px;
+  margin-bottom:10px;
+}
+.modalTitle{
+  font-weight:800;
+  font-size:.95rem;
+}
+.modalClose{
+  background:#111;
+  border:1px solid #444;
+  color:#fff;
+  border-radius:10px;
+  padding:8px 10px;
+  cursor:pointer;
+  font-weight:700;
+}
+.modalGrid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+@media (max-width:720px){
+  .modalGrid{ grid-template-columns:1fr; }
+}
+.modalBox label{ font-size:.78rem; color:#bbb; display:block; margin:2px 0 4px; }
+.modalBox input, .modalBox select, .modalBox textarea{
+  width:100%;
+  border-radius:10px;
+  border:1px solid #333;
+  background:#000;
+  color:#fff;
+  padding:10px;
+  font-weight:600;
+  font-size:.85rem;
+}
+.modalActions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+  margin-top:10px;
+  border-top:1px solid #222;
+  padding-top:10px;
+}
+.btn-danger{ background:#400; color:#fff; border:1px solid var(--red); }
+.btn-small{ padding:6px 10px; font-size:.8rem; border-radius:10px; }
 </style>
 </head>
 
@@ -183,7 +257,7 @@ body.mode-admin .driver-only{display:none;}
 
     <!-- =======================
          MANUAL CREATE (ADMIN)
-         NOW POSTS TO /api/bookings (same rider flow / same worker)
+         ✅ UPDATED: now posts to /api/admin/bookings/manual (NEW worker endpoint)
          ======================= -->
     <section class="admin-only" style="margin-top:12px;">
       <h2>Create Ride (Manual)</h2>
@@ -255,8 +329,8 @@ body.mode-admin .driver-only{display:none;}
       </div>
 
       <p class="meta">
-        This uses the same worker flow as riders: <code>POST /api/bookings</code>.<br>
-        Manual creates store <code>metadata.createdVia="manual"</code> and supports stops + luggage.
+        ✅ Manual create uses: <code>POST /api/admin/bookings/manual</code> (requires <code>X-Admin-Secret</code>).<br>
+        Stores <code>metadata.manualTimeText</code>, <code>metadata.notes</code>, and <code>metadata.luggageCount</code>.
       </p>
     </section>
 
@@ -363,6 +437,92 @@ body.mode-admin .driver-only{display:none;}
 <div id="toast"></div>
 <div id="debugLog" class="admin-only">[Debug started]</div>
 
+<!-- ============================================================
+     ✅ ADDITIVE: Admin Edit Modal markup (NEW)
+     ============================================================ -->
+<div id="editOverlay" class="modalOverlay" aria-hidden="true">
+  <div class="modalBox">
+    <div class="modalTop">
+      <div class="modalTitle" id="editTitle">Edit Ride</div>
+      <button class="modalClose" id="editCloseBtn">✖ Close</button>
+    </div>
+
+    <div class="modalGrid">
+      <div>
+        <label>Ride ID</label>
+        <input id="editRideId" type="text" readonly>
+      </div>
+      <div>
+        <label>Status (display only)</label>
+        <input id="editRideStatus" type="text" readonly>
+      </div>
+
+      <div>
+        <label>Rider Name</label>
+        <input id="editRiderName" type="text" placeholder="Rider name">
+      </div>
+      <div>
+        <label>Rider Phone</label>
+        <input id="editRiderPhone" type="text" placeholder="4055551234">
+      </div>
+
+      <div>
+        <label>Passengers</label>
+        <select id="editPartySize">
+          <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+          <option value="4">4</option><option value="5">5</option><option value="6">6</option>
+        </select>
+      </div>
+
+      <div>
+        <label>Luggage Count</label>
+        <select id="editLuggageCount">
+          <option value="0">0</option><option value="1">1</option><option value="2">2</option>
+          <option value="3">3</option><option value="4">4</option><option value="5">5</option>
+          <option value="6">6+</option>
+        </select>
+      </div>
+
+      <div style="grid-column:1/-1;">
+        <label>Pickup Address</label>
+        <input id="editPickup" type="text" placeholder="Pickup address">
+      </div>
+
+      <div style="grid-column:1/-1;">
+        <label>Stops (one per line, optional)</label>
+        <textarea id="editStops" placeholder="Stop 1&#10;Stop 2&#10;Stop 3"></textarea>
+      </div>
+
+      <div style="grid-column:1/-1;">
+        <label>Dropoff Address</label>
+        <input id="editDropoff" type="text" placeholder="Dropoff address">
+      </div>
+
+      <div style="grid-column:1/-1;">
+        <label>Scheduled For (optional ISO string)</label>
+        <input id="editScheduledFor" type="text" placeholder="2026-01-11T22:15:00-06:00">
+      </div>
+
+      <div style="grid-column:1/-1;">
+        <label>Notes (metadata.notes)</label>
+        <textarea id="editNotes" placeholder="Notes…"></textarea>
+      </div>
+
+      <div style="grid-column:1/-1;">
+        <label>Manual Time Text (metadata.manualTimeText)</label>
+        <input id="editManualTimeText" type="text" placeholder="1/11 10:15 PM">
+      </div>
+    </div>
+
+    <div class="modalActions">
+      <button class="btn btn-secondary btn-small" id="editCopyLoginLinkBtn">🔗 Copy Rider Login Link</button>
+      <button class="btn btn-secondary btn-small" id="editCopyDirectionsBtn">🧭 Copy Directions Link</button>
+      <button class="btn btn-primary btn-small" id="editSaveBtn">💾 Save Changes</button>
+      <button class="btn btn-danger btn-small" id="editCancelBtn">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const STATUS_WORKER="https://bigred-status-updater.bigredtransportation.workers.dev";
 const LOCATION_WORKER="https://update-location.bigredtransportation.workers.dev";
@@ -420,6 +580,9 @@ let dispatchScope="active";
 let currentStatusVal="offline";
 let currentMode = localStorage.getItem("adminDriverMode") || "admin";
 
+/* ✅ ADDITIVE: cache bookings by id for modal edit */
+const bookingCache = new Map();
+
 function showToast(msg){
   const t=document.getElementById("toast");
   if(!t) return;
@@ -446,31 +609,6 @@ function formatDateTime(iso){
 function captionBox(){return document.getElementById("captionBox");}
 function digitsOnly(v){return String(v||"").replace(/\D/g,"");}
 
-/* ============================
-   Notify Pref badge (display)
-   ============================ */
-function normalizeNotifyPref(v){
-  const s = String(v || "").toLowerCase().trim();
-  return (s === "sms" || s === "push" || s === "both") ? s : "both";
-}
-function getBookingNotifyPref(b){
-  return normalizeNotifyPref(
-    b?.rider?.notifyPref ??
-    b?.notifyPref ??
-    b?.metadata?.notifyPref ??
-    "both"
-  );
-}
-function notifyPrefBadgeHTML(pref){
-  const p = normalizeNotifyPref(pref);
-  const label = (p === "sms") ? "SMS" : (p === "push") ? "PUSH" : "BOTH";
-  const border = (p === "sms") ? "#2f8f5f" : (p === "push") ? "#3a7bd5" : "#b38b00";
-  return `<span class="badge" style="border-color:${border};">${label}</span>`;
-}
-
-/* ============================
-   Mode toggle
-   ============================ */
 function applyMode(mode){
   currentMode = (mode === "driver") ? "driver" : "admin";
   const body=document.body;
@@ -788,13 +926,7 @@ function stopGpsPings(){
 }
 
 /* ============================================================
-   MANUAL CREATE — uses SAME bookings worker: POST /api/bookings
-   Worker expects:
-     pickup: { address }
-     dropoff: { address }
-     stops: [ { address }, ... ]
-     rider: { name, phone, partySize, riderId }
-     metadata: { luggageCount, ... }
+   MANUAL CREATE — ✅ UPDATED to /api/admin/bookings/manual
 ============================================================ */
 let manualStopIds = [];
 
@@ -871,54 +1003,38 @@ function clearManualRideForm(){
 }
 
 async function createManualRide(){
-  const name  = (document.getElementById("manualRiderName").value || "").trim();
-  const phone = (document.getElementById("manualRiderPhone").value || "").trim();
-  const pickupAddr = (document.getElementById("manualPickup").value || "").trim();
-  const dropoffAddr = (document.getElementById("manualDropoff").value || "").trim();
-  const timeText = (document.getElementById("manualTime").value || "").trim();
-  const notes = (document.getElementById("manualNotes").value || "").trim();
-  const gateCode = (document.getElementById("manualGateCode").value || "").trim();
+  const rider_name  = (document.getElementById("manualRiderName").value || "").trim();
+  const rider_phone = (document.getElementById("manualRiderPhone").value || "").trim();
+  const pickup      = (document.getElementById("manualPickup").value || "").trim();
+  const dropoff     = (document.getElementById("manualDropoff").value || "").trim();
+  const time        = (document.getElementById("manualTime").value || "").trim();
+  const notes       = (document.getElementById("manualNotes").value || "").trim();
+  const gateCode    = (document.getElementById("manualGateCode").value || "").trim();
 
-  const passengers = Number(document.getElementById("manualPassengers")?.value || "1");
+  const partySize = Number(document.getElementById("manualPassengers")?.value || "1");
   const luggageCount = Number(document.getElementById("manualLuggageCount")?.value || "0");
   const stopsText = getManualStopsList();
 
-  if(!phone){ showToast("Rider phone required"); return; }
-  if(!pickupAddr || !dropoffAddr){ showToast("Pickup + dropoff required"); return; }
+  if(!rider_phone){ showToast("Rider phone required"); return; }
+  if(!pickup || !dropoff){ showToast("Pickup + dropoff required"); return; }
 
-  // Worker expects stops as ARRAY; in your booking schema it's array of objects in practice.
-  const stops = stopsText.map(a => ({ address: a }));
-
-  // Keep it minimal so we don't fight schema.
-  // Everything extra goes into metadata (safe: worker spreads metadata into booking.metadata).
   const payload = {
-    type: "INSTANT",
-    pickup: { address: pickupAddr },
-    dropoff: { address: dropoffAddr },
-    stops,
-    rider: {
-      riderId: null,                // manual create won't have external_id unless you add it
-      name: name || "",
-      phone: phone || "",
-      partySize: Number.isFinite(passengers) ? passengers : 1
-    },
-    pricing: { estimate: 0, travelFee: 0, ratePlan: "STANDARD" },
-    metrics: { miles: 0, minutes: 0 },
-    source: "RIDE_REQUEST",
-    metadata: {
-      createdVia: "manual",
-      gateCode: gateCode || null,
-      manualTimeText: timeText || null,
-      notes: notes || null,
-      luggageCount: (manualIsAirportRide() ? (Number.isFinite(luggageCount) ? luggageCount : 0) : 0)
-    }
+    rider_name,
+    rider_phone,
+    pickup,
+    dropoff,
+    time: time || "",
+    notes: (notes ? notes + (gateCode ? `\nGate: ${gateCode}` : "") : (gateCode ? `Gate: ${gateCode}` : "")),
+    stops: stopsText.map(a => ({ address: a })),
+    partySize: Number.isFinite(partySize) ? partySize : 1,
+    luggageCount: manualIsAirportRide() ? (Number.isFinite(luggageCount) ? luggageCount : 0) : 0
   };
 
   try{
-    log("Manual ride POST /api/bookings … " + JSON.stringify(payload));
-    const r = await fetch(`${BOOKINGS_API}/api/bookings`, {
+    log("Manual ride POST /api/admin/bookings/manual … " + JSON.stringify(payload));
+    const r = await fetch(`${BOOKINGS_API}/api/admin/bookings/manual`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "X-Admin-Secret": AUTH_SECRET },
       body: JSON.stringify(payload)
     });
 
@@ -959,6 +1075,9 @@ function resolveRiderIdFromBooking(b){
 }
 
 function renderAllBookings(list){
+  bookingCache.clear();
+  list.forEach(b => { if(b && b.id) bookingCache.set(String(b.id), b); });
+
   const newArr=list.filter(b=>b.status==="REQUESTED");
   const activeArr=list.filter(b=>["ACCEPTED","ENROUTE","ARRIVED","PICKED_UP"].includes(b.status));
   const doneArr=list.filter(b=>["COMPLETED","CANCELLED"].includes(b.status));
@@ -994,9 +1113,6 @@ function renderColumn(id,arr){
     const smsConfirm = phoneDigits ? smsHrefWithBody(phoneDigits, smsTemplateText("CONFIRM", b)) : "";
     const smsLate = phoneDigits ? smsHrefWithBody(phoneDigits, smsTemplateText("LATE", b)) : "";
 
-    const notifyPref = getBookingNotifyPref(b);
-    const notifyBadge = notifyPrefBadgeHTML(notifyPref);
-
     const luggage =
       (typeof b?.metadata?.luggageCount === "number" && b.metadata.luggageCount > 0)
         ? b.metadata.luggageCount
@@ -1010,6 +1126,14 @@ function renderColumn(id,arr){
       (phoneDigits ? ('<a class="chip" href="'+smsConfirm+'">✅ Confirm</a>') : '') +
       (phoneDigits ? ('<a class="chip" href="'+smsLate+'">⏳ Late</a>') : '') +
       (isEnroute ? ('<a class="chip" href="https://location-reader.bigredtransportation.workers.dev/?id='+rideId+'" target="_blank" rel="noopener">📍 Live Map</a>') : '');
+
+    /* ✅ ADDITIVE: Admin-only "Edit" + "Claim/Login" chips */
+    const claimLoginUrl =
+      "https://bigredconnectokc.com/rider/login.html?next=myride";
+    const claimChip =
+      `<span class="chip" onclick="copyText('${claimLoginUrl.replace(/'/g,"\\'")}')">🔗 Copy Login Link</span>`;
+    const editChip =
+      `<span class="chip primary admin-only" onclick="openEditModal('${String(rideId).replace(/'/g,"\\'")}')">✏️ Edit</span>`;
 
     const div=document.createElement("div");
     div.className="card";
@@ -1063,8 +1187,10 @@ function renderColumn(id,arr){
         </div>
 
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;max-width:100%;">
-          <div style="font-size:.75rem;color:#bbb;">Rider: ${b.rider?.name||"—"} • Notify: ${notifyBadge}</div>
+          <div style="font-size:.75rem;color:#bbb;">Rider: ${b.rider?.name||"—"} ${phoneDigits?("• "+phoneDigits):""}</div>
           <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+            ${editChip}
+            ${claimChip}
             ${chips}
           </div>
         </div>
@@ -1075,6 +1201,163 @@ function renderColumn(id,arr){
   });
 }
 
+/* ✅ ADDITIVE helper: copy arbitrary text */
+function copyText(txt){
+  try{
+    navigator.clipboard.writeText(txt).then(()=>showToast("Copied"),()=>showToast("Copy failed"));
+  }catch(e){
+    showToast("Copy failed");
+  }
+}
+window.copyText = copyText;
+
+/* ============================================================
+   ✅ ADDITIVE: Admin Edit Modal logic (NEW)
+   - Uses PUT /api/driver/bookings/:id with X-Admin-Secret
+   ============================================================ */
+let __editRideId = null;
+
+function showEditModal(show){
+  const ov = document.getElementById("editOverlay");
+  if(!ov) return;
+  if(show) ov.classList.add("show");
+  else ov.classList.remove("show");
+  ov.setAttribute("aria-hidden", show ? "false" : "true");
+}
+
+function openEditModal(rideId){
+  const b = bookingCache.get(String(rideId));
+  if(!b){
+    showToast("Ride not in cache yet — refresh");
+    return;
+  }
+  __editRideId = String(rideId);
+
+  document.getElementById("editTitle").textContent = "Edit Ride • " + __editRideId;
+  document.getElementById("editRideId").value = __editRideId;
+  document.getElementById("editRideStatus").value = String(b.status || "");
+  document.getElementById("editRiderName").value = String(b?.rider?.name || "");
+  document.getElementById("editRiderPhone").value = String(b?.rider?.phone || "");
+  document.getElementById("editPartySize").value = String(b?.rider?.partySize ?? 1);
+
+  const lc = (typeof b?.metadata?.luggageCount === "number") ? b.metadata.luggageCount : 0;
+  document.getElementById("editLuggageCount").value = String(lc > 6 ? 6 : lc);
+
+  document.getElementById("editPickup").value = String(b?.pickup?.address || "");
+  document.getElementById("editDropoff").value = String(b?.dropoff?.address || "");
+
+  const stops = Array.isArray(b?.stops) ? b.stops : [];
+  const stopLines = stops.map(s => String(s?.address || "").trim()).filter(Boolean).join("\n");
+  document.getElementById("editStops").value = stopLines;
+
+  document.getElementById("editScheduledFor").value = String(b?.scheduledFor || "");
+  document.getElementById("editNotes").value = String(b?.metadata?.notes || "");
+  document.getElementById("editManualTimeText").value = String(b?.metadata?.manualTimeText || "");
+
+  showEditModal(true);
+}
+window.openEditModal = openEditModal;
+
+async function saveEditModal(){
+  if(!__editRideId) return;
+
+  const pickup = (document.getElementById("editPickup").value || "").trim();
+  const dropoff = (document.getElementById("editDropoff").value || "").trim();
+  const riderName = (document.getElementById("editRiderName").value || "").trim();
+  const riderPhone = (document.getElementById("editRiderPhone").value || "").trim();
+  const partySize = Number(document.getElementById("editPartySize").value || "1");
+
+  const luggageCount = Number(document.getElementById("editLuggageCount").value || "0");
+  const notes = (document.getElementById("editNotes").value || "").trim();
+  const manualTimeText = (document.getElementById("editManualTimeText").value || "").trim();
+  const scheduledForRaw = (document.getElementById("editScheduledFor").value || "").trim();
+
+  const stopsLines = (document.getElementById("editStops").value || "")
+    .split("\n")
+    .map(s => s.trim())
+    .filter(Boolean)
+    .slice(0, 5);
+
+  if(!pickup || !dropoff){
+    showToast("Pickup + Dropoff required");
+    return;
+  }
+
+  const payload = {
+    pickup: { address: pickup },
+    dropoff: { address: dropoff },
+    stops: stopsLines.map(a => ({ address: a })),
+    rider: {
+      name: riderName,
+      phone: riderPhone,
+      partySize: Number.isFinite(partySize) && partySize > 0 ? partySize : 1
+    },
+    scheduledFor: scheduledForRaw ? scheduledForRaw : null,
+    metadata: {
+      notes: notes || "",
+      manualTimeText: manualTimeText || null,
+      luggageCount: Number.isFinite(luggageCount) ? luggageCount : 0
+    }
+  };
+
+  try{
+    log("Admin core edit PUT → " + __editRideId + " payload=" + JSON.stringify(payload));
+    const r = await fetch(`${BOOKINGS_API}/api/driver/bookings/${encodeURIComponent(__editRideId)}`,{
+      method:"PUT",
+      headers:{
+        "Content-Type":"application/json",
+        "X-Admin-Secret": AUTH_SECRET
+      },
+      body: JSON.stringify(payload)
+    });
+    const txt = await r.text();
+    log("Admin edit response: " + r.status + " " + txt);
+
+    if(!r.ok){
+      showToast("Save failed");
+      return;
+    }
+
+    showToast("Saved");
+    showEditModal(false);
+    __editRideId = null;
+    fetchBookings();
+  }catch(e){
+    log("Admin edit error: " + (e.message || e));
+    showToast("Save error");
+  }
+}
+
+function closeEditModal(){
+  showEditModal(false);
+  __editRideId = null;
+}
+
+document.getElementById("editCloseBtn").onclick = closeEditModal;
+document.getElementById("editCancelBtn").onclick = closeEditModal;
+document.getElementById("editSaveBtn").onclick = saveEditModal;
+
+document.getElementById("editCopyLoginLinkBtn").onclick = ()=>{
+  const url = "https://bigredconnectokc.com/rider/login.html?next=myride";
+  copyText(url);
+};
+
+document.getElementById("editCopyDirectionsBtn").onclick = ()=>{
+  if(!__editRideId){ showToast("No ride"); return; }
+  const b = bookingCache.get(String(__editRideId));
+  const dir = buildGoogleDirectionsUrl(b);
+  if(!dir){ showToast("No directions"); return; }
+  copyText(dir);
+};
+
+/* close modal when tapping backdrop */
+document.getElementById("editOverlay").addEventListener("click",(e)=>{
+  if(e.target && e.target.id === "editOverlay") closeEditModal();
+});
+
+/* ============================
+   Status dropdown updates
+   ============================ */
 document.body.addEventListener("change", async (e) => {
   if (!e.target.classList.contains("status-dropdown")) return;
 
