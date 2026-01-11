@@ -130,9 +130,7 @@ body.mode-admin .driver-only{display:none;}
 }
 .header-left > div{max-width:160px;min-width:0;}
 
-/* ============================================================
-   ✅ ADDITIVE: Admin Edit Modal styles (NEW)
-   ============================================================ */
+/* Admin Edit Modal styles */
 .modalOverlay{
   position:fixed; inset:0;
   background:rgba(0,0,0,.72);
@@ -258,10 +256,6 @@ body.mode-admin .driver-only{display:none;}
       </div>
     </section>
 
-    <!-- =======================
-         MANUAL CREATE (ADMIN)
-         ✅ UPDATED: now posts to /api/admin/bookings/manual
-         ======================= -->
     <section class="admin-only" style="margin-top:12px;">
       <h2>Create Ride (Manual)</h2>
 
@@ -440,9 +434,6 @@ body.mode-admin .driver-only{display:none;}
 <div id="toast"></div>
 <div id="debugLog" class="admin-only">[Debug started]</div>
 
-<!-- ============================================================
-     ✅ ADDITIVE: Admin Edit Modal markup (NEW)
-     ============================================================ -->
 <div id="editOverlay" class="modalOverlay" aria-hidden="true">
   <div class="modalBox">
     <div class="modalTop">
@@ -583,7 +574,6 @@ let dispatchScope="active";
 let currentStatusVal="offline";
 let currentMode = localStorage.getItem("adminDriverMode") || "admin";
 
-/* ✅ ADDITIVE: cache bookings by id for modal edit */
 const bookingCache = new Map();
 
 function showToast(msg){
@@ -612,21 +602,16 @@ function formatDateTime(iso){
 function captionBox(){return document.getElementById("captionBox");}
 function digitsOnly(v){return String(v||"").replace(/\D/g,"");}
 
-/* ✅ ADDITIVE: normalize phone to 10-digit (if 11-digit starting with 1) */
 function normalizePhoneDigits(raw){
   let d = digitsOnly(raw);
   if(d.length === 11 && d.startsWith("1")) d = d.slice(1);
   return d;
 }
 
-/* ============================================================
-   ✅ FIX: Google Places Autocomplete restricted to OKC Metro
-   ============================================================ */
+/* Places Autocomplete restricted to OKC Metro */
 const OKC_BOUNDS = (window.google && google.maps)
   ? new google.maps.LatLngBounds(
-      // SW corner (near Mustang / SW OKC)
       new google.maps.LatLng(35.20, -97.80),
-      // NE corner (near Edmond / NE OKC)
       new google.maps.LatLng(35.70, -97.20)
     )
   : null;
@@ -639,8 +624,6 @@ function attachAutocompleteToInput(inputEl){
     log("Places library not available (Google script missing or blocked).");
     return;
   }
-
-  // Avoid double-attaching
   if(__acMap.has(inputEl.id)) return;
 
   const ac = new google.maps.places.Autocomplete(inputEl, {
@@ -651,52 +634,39 @@ function attachAutocompleteToInput(inputEl){
   });
 
   ac.addListener("place_changed", ()=>{
-  const place = ac.getPlace();
-  const name = (place?.name || "").trim();
-  const addr = (place?.formatted_address || "").trim();
+    const place = ac.getPlace();
+    const name = (place?.name || "").trim();
+    const addr = (place?.formatted_address || "").trim();
 
-  if (name && addr) {
-    // Avoid ugly duplicates when Google repeats the name in the address-ish string
-    // (rare, but happens with some POIs)
-    const nameLower = name.toLowerCase();
-    const addrLower = addr.toLowerCase();
-
-    if (addrLower.startsWith(nameLower)) {
-      inputEl.value = addr; // already includes name-ish part
-    } else {
-      inputEl.value = `${name}, ${addr}`; // ✅ place name + address
+    if (name && addr) {
+      const nameLower = name.toLowerCase();
+      const addrLower = addr.toLowerCase();
+      if (addrLower.startsWith(nameLower)) {
+        inputEl.value = addr;
+      } else {
+        inputEl.value = `${name}, ${addr}`;
+      }
+      return;
     }
-    return;
-  }
-
-  if (addr) { inputEl.value = addr; return; }
-  if (name) { inputEl.value = name; return; }
-});
+    if (addr) { inputEl.value = addr; return; }
+    if (name) { inputEl.value = name; return; }
+  });
 
   __acMap.set(inputEl.id, ac);
 }
 
 function initAddressAutocomplete(){
-  // Static fields
   attachAutocompleteToInput(document.getElementById("manualPickup"));
   attachAutocompleteToInput(document.getElementById("manualDropoff"));
   attachAutocompleteToInput(document.getElementById("editPickup"));
   attachAutocompleteToInput(document.getElementById("editDropoff"));
-
-  // Any existing manual stop fields (in case restored)
   document.querySelectorAll('input[id^="manualStop_"]').forEach(attachAutocompleteToInput);
 }
 
-/* When a new stop input is created dynamically, attach autocomplete immediately */
 function attachAutocompleteToNewStop(id){
   const el = document.getElementById(id);
   attachAutocompleteToInput(el);
 }
-
-/* ============================================================
-   The rest of your code continues UNCHANGED below
-   (only additions are Autocomplete helpers + 1 call site)
-   ============================================================ */
 
 function applyMode(mode){
   currentMode = (mode === "driver") ? "driver" : "admin";
@@ -710,9 +680,7 @@ function applyMode(mode){
   localStorage.setItem("adminDriverMode",currentMode);
 }
 
-/* ============================
-   Directions + SMS helpers
-   ============================ */
+/* Directions + SMS helpers */
 function buildGoogleDirectionsUrl(booking){
   const origin = (booking?.pickup?.address || "").trim();
   const destination = (booking?.dropoff?.address || "").trim();
@@ -746,9 +714,7 @@ function smsTemplateText(templateKey, booking){
   return templates[templateKey] || `${greet}I’m on my way.`;
 }
 
-/* ============================
-   Live images + captions
-   ============================ */
+/* Live images + captions */
 function loadImages(){setImage(0);}
 function setImage(idx){
   if(!LIVE_IMAGES.length)return;
@@ -794,9 +760,7 @@ function copyCaption(){
     .then(()=>showToast("Copied"),()=>showToast("Copy failed"));
 }
 
-/* ============================
-   Push UI (broadcast)
-   ============================ */
+/* Push UI (broadcast) */
 function updPrev(){
   document.getElementById("pushPrevTitle").textContent=
     document.getElementById("pushTitle").value||"Big Red Connect";
@@ -863,9 +827,7 @@ function autoOnlinePush(){
   sendPush(payload);
 }
 
-/* ============================
-   Status + GPS
-   ============================ */
+/* Status + GPS */
 async function loadStatus(){
   try{
     const res=await fetch(STATUS_WORKER+"/status");
@@ -1014,9 +976,7 @@ function stopGpsPings(){
   document.getElementById("gpsRate").textContent="—";
 }
 
-/* ============================================================
-   MANUAL CREATE — ✅ UPDATED to /api/admin/bookings/manual
-============================================================ */
+/* Manual Create */
 let manualStopIds = [];
 
 function isAirportText(s){
@@ -1060,7 +1020,6 @@ function addManualStopField(initialValue=""){
   `;
   wrap.appendChild(div);
 
-  /* ✅ NEW: Attach OKC Places autocomplete to new stop input */
   attachAutocompleteToNewStop(id);
 }
 function removeManualStop(id){
@@ -1096,8 +1055,6 @@ function clearManualRideForm(){
 
 async function createManualRide(){
   const rider_name  = (document.getElementById("manualRiderName").value || "").trim();
-
-  /* ✅ FIX: normalize phone digits-only for consistent indexing/claiming */
   const rider_phone_raw = (document.getElementById("manualRiderPhone").value || "").trim();
   const rider_phone = normalizePhoneDigits(rider_phone_raw);
 
@@ -1148,9 +1105,7 @@ async function createManualRide(){
   }
 }
 
-/* ============================
-   Dispatch board
-   ============================ */
+/* Dispatch board */
 async function fetchBookings(){
   try{
     const r=await fetch(`${BOOKINGS_API}/api/driver/bookings?scope=${dispatchScope}&t=${Date.now()}`);
@@ -1171,8 +1126,84 @@ function resolveRiderIdFromBooking(b){
   return "";
 }
 
-/* ===== Your renderAllBookings/renderColumn/etc remains exactly as you pasted ===== */
-/* (Leaving it unchanged to avoid introducing unrelated diffs) */
+function escHtml(s){
+  return String(s ?? "")
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#39;");
+}
+
+function fmtStops(stops){
+  const arr = Array.isArray(stops) ? stops : [];
+  const addrs = arr.map(x => (x?.address || "").trim()).filter(Boolean);
+  if(!addrs.length) return "";
+  return addrs.map((a,i)=>`<div class="loc-line">🛑 Stop ${i+1}: ${escHtml(a)}</div>`).join("");
+}
+
+function renderColumn(containerId, items){
+  const box = document.getElementById(containerId);
+  if(!box) return;
+
+  if(!Array.isArray(items) || items.length === 0){
+    box.innerHTML = `<div class="empty-text">None</div>`;
+    return;
+  }
+
+  box.innerHTML = items.map(b=>{
+    const id = escHtml(b?.id || "");
+    const status = escHtml(b?.status || "");
+    const riderName = escHtml(b?.rider?.name || "");
+    const riderPhone = escHtml(b?.rider?.phone || "");
+    const partySize = escHtml(b?.rider?.partySize ?? "");
+    const pickup = escHtml(b?.pickup?.address || "");
+    const dropoff = escHtml(b?.dropoff?.address || "");
+    const createdAt = b?.createdAt ? formatDateTime(b.createdAt) : "—";
+    const scheduledFor = b?.scheduledFor ? formatDateTime(b.scheduledFor) : "";
+    const manualTimeText = escHtml(b?.metadata?.manualTimeText || "");
+    const notes = escHtml(b?.metadata?.notes || "");
+
+    const directionsUrl = buildGoogleDirectionsUrl(b);
+    const directionsBtn = directionsUrl
+      ? `<a class="chip primary" href="${escHtml(directionsUrl)}" target="_blank" rel="noopener">🧭 Directions</a>`
+      : ``;
+
+    const smsDigits = normalizePhoneDigits(b?.rider?.phone || "");
+    const smsBtn = smsDigits
+      ? `<a class="chip" href="${escHtml(smsHrefWithBody(smsDigits, smsTemplateText("CONFIRM", b)))}">💬 Text</a>`
+      : ``;
+
+    return `
+      <div class="card" data-id="${id}">
+        <div class="card-label-row">
+          <div><strong>${riderName || "Rider"}</strong> ${riderPhone ? `• ${riderPhone}` : ""}</div>
+          <span class="badge">${status}</span>
+        </div>
+
+        ${partySize ? `<div class="loc-line">👥 Party: ${partySize}</div>` : ""}
+
+        <div class="loc-line">📍 Pickup: ${pickup || "—"}</div>
+        ${fmtStops(b?.stops)}
+        <div class="loc-line">🏁 Dropoff: ${dropoff || "—"}</div>
+
+        ${scheduledFor ? `<div class="eta-line">🗓 Scheduled: ${escHtml(scheduledFor)}</div>` : ""}
+        ${manualTimeText ? `<div class="eta-line">⏱ Manual time: ${manualTimeText}</div>` : ""}
+        <div class="eta-line">🕒 Created: ${escHtml(createdAt)}</div>
+
+        ${notes ? `<div class="eta-line">📝 Notes: ${notes}</div>` : ""}
+
+        <div class="card-footer">
+          <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+            ${directionsBtn}
+            ${smsBtn}
+            <span class="chip" onclick="copyText('${id}')">📋 Copy ID</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
 
 function renderAllBookings(list){
   bookingCache.clear();
@@ -1189,15 +1220,6 @@ function renderAllBookings(list){
   document.getElementById("countDone").textContent=doneArr.length;
 }
 
-/* --- renderColumn (unchanged except it uses bookingCache as before) --- */
-/* (Your original renderColumn function stays here exactly; omitted for brevity) */
-
-/* ✅ IMPORTANT:
-   Paste your existing renderColumn() function here unchanged.
-   Nothing about autocomplete requires edits inside renderColumn.
-*/
-
-/* ✅ ADDITIVE helper: copy arbitrary text */
 function copyText(txt){
   try{
     navigator.clipboard.writeText(txt).then(()=>showToast("Copied"),()=>showToast("Copy failed"));
@@ -1207,14 +1229,7 @@ function copyText(txt){
 }
 window.copyText = copyText;
 
-/* ============================================================
-   ✅ ADDITIVE: Admin Edit Modal logic (NEW)
-   ============================================================ */
-/* (Your existing modal logic stays unchanged) */
-
-/* ============================
-   Wire buttons
-   ============================ */
+/* Wire buttons */
 document.getElementById("updateStatusBtn").onclick=updateStatus;
 document.getElementById("prevImage").onclick=()=>setImage(imgIndex-1);
 document.getElementById("nextImage").onclick=()=>setImage(imgIndex+1);
@@ -1255,7 +1270,7 @@ document.getElementById("manualClearStopsBtn").addEventListener("click", clearMa
   }
 });
 
-/* ✅ ADDITIVE: digits-only UX enforcement for phone fields (manual + edit) */
+/* digits-only UX enforcement for phone fields (manual + edit) */
 window.addEventListener("load",()=>{
   const phoneInput = document.getElementById("manualRiderPhone");
   if(phoneInput){
@@ -1277,8 +1292,6 @@ window.addEventListener("load",()=>{
   fetchBookings();
   setInterval(fetchBookings,20000);
   syncManualLuggageVisibility();
-
-  /* ✅ NEW: initialize OKC Places Autocomplete on page load */
   initAddressAutocomplete();
 });
 </script>
