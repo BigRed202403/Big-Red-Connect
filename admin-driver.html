@@ -56,18 +56,17 @@
 </script>
 
 <style>
-/* ===== OLD STYLE (RESTORED) ===== */
-:root{--red:#b30000;--bg:#000;--panel:#111;--muted:#aaa;--border:#222;--accent:#ffcc00;}
+:root{--red:#b30000;--bg:#000;--panel:#111;--muted:#aaa;--border:#222;}
 *{box-sizing:border-box;}
 body{background:var(--bg);color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;margin:0;}
-header{background:var(--panel);display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:2px solid var(--red);position:sticky;top:0;z-index:20;}
-.header-left{display:flex;align-items:center;gap:10px;font-size:.9rem;min-width:0;}
+header{background:var(--panel);display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:2px solid var(--red);position:sticky;top:0;z-index:20;flex-wrap:wrap;gap:8px;}
+.header-left{display:flex;align-items:center;gap:10px;font-size:.9rem;min-width:0;flex:1 1 260px;}
 .header-left img{height:40px;border-radius:4px;}
+.header-right{display:flex;gap:8px;align-items:center;justify-content:flex-end;flex:1 1 260px;flex-wrap:wrap;}
 .pill{padding:3px 10px;border-radius:999px;font-weight:700;font-size:.8rem;white-space:nowrap;}
 .pill.online{background:#064;}
 .pill.away{background:#665500;}
 .pill.offline{background:#400;}
-.header-right{display:flex;gap:6px;align-items:center;}
 .btn{padding:6px 10px;border-radius:8px;border:none;cursor:pointer;font-weight:600;font-size:.85rem;}
 .btn-primary{background:var(--red);color:#fff;}
 .btn-secondary{background:#000;color:#fff;border:1px solid var(--red);}
@@ -90,7 +89,6 @@ textarea{width:100%;min-height:90px;background:#111;color:#fff;border:1px solid 
 .preview-box{margin-top:6px;padding:8px;border-radius:6px;border:1px dashed #444;background:#050505;font-size:.8rem;color:#ddd;line-height:1.2rem;}
 .img-box{max-width:100%;margin:8px auto 4px;border:2px solid var(--red);border-radius:6px;padding:6px;background:#000;}
 .img-box img{width:100%;border-radius:6px;}
-
 .grid-dispatch{display:grid;grid-template-columns:1fr;gap:8px;}
 @media(min-width:900px){.grid-dispatch{grid-template-columns:repeat(3,1fr);}}
 .column{background:#000;border-radius:8px;border:1px solid #222;overflow:hidden;}
@@ -113,19 +111,21 @@ textarea{width:100%;min-height:90px;background:#111;color:#fff;border:1px solid 
 #toast.show{opacity:1;}
 #debugLog{font-family:monospace;font-size:.72rem;color:#0f0;background:#000;padding:6px;max-height:220px;overflow:auto;border-top:1px solid #222;margin:0 auto 18px;max-width:1200px;}
 
-/* 🔀 Admin / Driver mode visibility */
 body.mode-driver .admin-only{display:none;}
 body.mode-admin .driver-only{display:none;}
 
-/* ===== HEADER MOBILE CLEANUP ===== */
-header{flex-wrap:wrap;gap:8px;}
-.header-left{flex:1 1 260px;min-width:0;}
-.header-right{flex:1 1 260px;justify-content:flex-end;flex-wrap:wrap;gap:8px;}
-@media (max-width:520px){.header-left img{height:34px;}}
-@media (max-width:520px){#livePill{padding:3px 8px;font-size:.72rem;}}
-@media (max-width:520px){.btn{padding:8px 10px;font-size:.78rem;border-radius:10px;}}
-@media (max-width:520px){.header-left div div:nth-child(2){display:none;}}
-.header-left > div{max-width:160px;}
+.smalllabel{font-size:.8rem;color:#ccc;display:block;margin-top:6px;}
+.minihint{font-size:.72rem;color:#888;margin-top:2px;line-height:1.1rem;}
+.stop-row{display:flex;gap:6px;align-items:center;margin:6px 0;}
+.stop-row input{flex:1;min-width:180px;}
+
+@media (max-width:520px){
+  .header-left img{height:34px;}
+  .btn{padding:8px 10px;font-size:.78rem;border-radius:10px;}
+  #livePill{padding:3px 8px;font-size:.72rem;}
+  .header-left div div:nth-child(2){display:none;}
+}
+.header-left > div{max-width:160px;min-width:0;}
 </style>
 </head>
 
@@ -133,7 +133,7 @@ header{flex-wrap:wrap;gap:8px;}
 <header>
   <div class="header-left">
     <a href="index.html"><img src="BRCNYE2026.png" alt="Big Red Connect logo"></a>
-    <div style="min-width:0;">
+    <div>
       <div style="font-weight:700;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Big Red Admin / Driver</div>
       <div style="color:#888;font-size:.75rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Live Dispatch & Status</div>
     </div>
@@ -181,6 +181,10 @@ header{flex-wrap:wrap;gap:8px;}
       </div>
     </section>
 
+    <!-- =======================
+         MANUAL CREATE (ADMIN)
+         NOW POSTS TO /api/bookings (same rider flow / same worker)
+         ======================= -->
     <section class="admin-only" style="margin-top:12px;">
       <h2>Create Ride (Manual)</h2>
 
@@ -189,18 +193,61 @@ header{flex-wrap:wrap;gap:8px;}
         <input id="manualRiderPhone" type="text" placeholder="Rider phone (required)" style="flex:1;min-width:180px;">
       </div>
 
-      <label style="font-size:.8rem;color:#ccc;">Pickup</label>
+      <div class="row">
+        <label class="smalllabel" for="manualPassengers" style="margin:0;">Passengers</label>
+        <select id="manualPassengers" style="min-width:140px;">
+          <option value="1" selected>1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+          <option value="6">6</option>
+        </select>
+
+        <label class="smalllabel" for="manualAirportToggle" style="margin:0;">Airport ride?</label>
+        <select id="manualAirportToggle" style="min-width:160px;">
+          <option value="auto" selected>AUTO-detect</option>
+          <option value="yes">Yes</option>
+          <option value="no">No</option>
+        </select>
+      </div>
+
+      <span class="smalllabel">Pickup</span>
       <input id="manualPickup" type="text" placeholder="Pickup address">
 
-      <label style="font-size:.8rem;color:#ccc;">Dropoff</label>
+      <span class="smalllabel">Gate Code / Access (optional)</span>
+      <input id="manualGateCode" type="text" placeholder="Gate code, building, apartment…">
+
+      <div class="minihint">Stops are optional (up to 3). Add them in order.</div>
+      <div id="manualStopsWrap"></div>
+      <div class="row">
+        <button class="btn btn-secondary" id="manualAddStopBtn" type="button">➕ Add Stop</button>
+        <button class="btn btn-ghost" id="manualClearStopsBtn" type="button">🧹 Clear Stops</button>
+      </div>
+
+      <span class="smalllabel">Dropoff</span>
       <input id="manualDropoff" type="text" placeholder="Dropoff address">
 
+      <div class="row" id="manualLuggageRow" style="display:none;">
+        <label class="smalllabel" for="manualLuggageCount" style="margin:0;">Luggage</label>
+        <select id="manualLuggageCount" style="min-width:160px;">
+          <option value="0" selected>0</option>
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+          <option value="6">6+</option>
+        </select>
+        <div class="minihint" style="margin:0;">Shown when airport ride is detected / forced.</div>
+      </div>
+
       <div class="row">
-        <input id="manualTime" type="text" placeholder="Time (optional) e.g., 12/31 10:15 PM" style="flex:1;min-width:220px;">
+        <input id="manualTime" type="text" placeholder="Time (optional) e.g., 1/11 10:15 PM" style="flex:1;min-width:220px;">
       </div>
 
       <label style="font-size:.8rem;color:#ccc;">Notes (optional)</label>
-      <textarea id="manualNotes" placeholder="Gate code, apartment, extra context…"></textarea>
+      <textarea id="manualNotes" placeholder="Extra context…"></textarea>
 
       <div class="row" style="margin-top:8px;">
         <button class="btn btn-primary" id="btnCreateManualRide" title="Create Ride">➕ Create</button>
@@ -208,8 +255,8 @@ header{flex-wrap:wrap;gap:8px;}
       </div>
 
       <p class="meta">
-        Creates a REQUESTED booking with <code>created_via = "manual"</code>.
-        Rider push requires a riderId after claim/login (7.2).
+        This uses the same worker flow as riders: <code>POST /api/bookings</code>.<br>
+        Manual creates store <code>metadata.createdVia="manual"</code> and supports stops + luggage.
       </p>
     </section>
 
@@ -308,7 +355,7 @@ header{flex-wrap:wrap;gap:8px;}
         </div>
       </div>
 
-      <p class="meta">Change status to move rides. Rider push is sent on each status update (if riderId can be resolved).</p>
+      <p class="meta">Change status to move rides. Rider push is sent on each status update (if riderId exists).</p>
     </section>
   </div>
 </div>
@@ -326,7 +373,6 @@ const BOOKINGS_API="https://bigred-bookings.bigredtransportation.workers.dev";
 const AUTH_SECRET="BigRedPrivateKey2025";
 const TZ="America/Chicago";
 const HOME_URL="https://bigredconnectokc.com/";
-const RIDER_LOGIN_URL = `${HOME_URL}/rider-login.html`;
 
 const LIVE_IMAGES=[
   "Official Logo.png",
@@ -372,7 +418,6 @@ let gpsTimer=null;
 let gpsLastTs=null;
 let dispatchScope="active";
 let currentStatusVal="offline";
-
 let currentMode = localStorage.getItem("adminDriverMode") || "admin";
 
 function showToast(msg){
@@ -401,11 +446,9 @@ function formatDateTime(iso){
 function captionBox(){return document.getElementById("captionBox");}
 function digitsOnly(v){return String(v||"").replace(/\D/g,"");}
 
-/* ============================================================
-   NOTIFY PREF DISPLAY (Rider cards)
-   - Reads from booking.rider.notifyPref OR booking.notifyPref
-   - Falls back to "both"
-============================================================ */
+/* ============================
+   Notify Pref badge (display)
+   ============================ */
 function normalizeNotifyPref(v){
   const s = String(v || "").toLowerCase().trim();
   return (s === "sms" || s === "push" || s === "both") ? s : "both";
@@ -425,6 +468,9 @@ function notifyPrefBadgeHTML(pref){
   return `<span class="badge" style="border-color:${border};">${label}</span>`;
 }
 
+/* ============================
+   Mode toggle
+   ============================ */
 function applyMode(mode){
   currentMode = (mode === "driver") ? "driver" : "admin";
   const body=document.body;
@@ -437,6 +483,9 @@ function applyMode(mode){
   localStorage.setItem("adminDriverMode",currentMode);
 }
 
+/* ============================
+   Directions + SMS helpers
+   ============================ */
 function buildGoogleDirectionsUrl(booking){
   const origin = (booking?.pickup?.address || "").trim();
   const destination = (booking?.dropoff?.address || "").trim();
@@ -451,7 +500,6 @@ function buildGoogleDirectionsUrl(booking){
   if(waypointsArr.length){ params.set("waypoints", waypointsArr.join("|")); }
   return `https://www.google.com/maps/dir/?${params.toString()}`;
 }
-
 function smsHrefWithBody(phoneDigits, body){
   if(!phoneDigits) return "";
   const encoded = encodeURIComponent(body || "");
@@ -471,6 +519,9 @@ function smsTemplateText(templateKey, booking){
   return templates[templateKey] || `${greet}I’m on my way.`;
 }
 
+/* ============================
+   Live images + captions
+   ============================ */
 function loadImages(){setImage(0);}
 function setImage(idx){
   if(!LIVE_IMAGES.length)return;
@@ -479,47 +530,115 @@ function setImage(idx){
   if(img) img.src=LIVE_IMAGES[imgIndex];
   log("Image set: "+LIVE_IMAGES[imgIndex]);
 }
-
-function normPhone(p){ return String(p||"").replace(/[^\d+]/g,"").trim(); }
-
-async function createManualRide(){
-  const name  = (document.getElementById("manualRiderName").value || "").trim();
-  const phone = normPhone(document.getElementById("manualRiderPhone").value);
-  const pickup = (document.getElementById("manualPickup").value || "").trim();
-  const dropoff = (document.getElementById("manualDropoff").value || "").trim();
-  const time = (document.getElementById("manualTime").value || "").trim();
-  const notes = (document.getElementById("manualNotes").value || "").trim();
-
-  if(!phone){ showToast("Rider phone required"); return; }
-  if(!pickup || !dropoff){ showToast("Pickup + dropoff required"); return; }
-
-  const payload = { rider_name:name, rider_phone:phone, pickup, dropoff, time, notes };
-
+function applyTemplateToCaption(key){
+  const t=TEMPLATES[key];if(!t)return;
+  captionBox().value=t.message;
+  captionIndex=CAPTION_KEYS.indexOf(key);
+}
+function stepCaption(d){
+  captionIndex=(captionIndex+d+CAPTION_KEYS.length)%CAPTION_KEYS.length;
+  applyTemplateToCaption(CAPTION_KEYS[captionIndex]);
+}
+async function loadLastCaption(){
   try{
-    log("Manual ride POST… " + JSON.stringify(payload));
-    const r = await fetch(`${BOOKINGS_API}/api/admin/bookings/manual`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "X-Admin-Secret": AUTH_SECRET },
-      body: JSON.stringify(payload)
-    });
-    const txt = await r.text();
-    log(`Manual ride response → ${r.status} ${txt}`);
-    if(!r.ok){ showToast("Manual create failed"); return; }
-    showToast("Manual ride created");
-    fetchBookings();
+    const r=await fetch(POST_WORKER+"/current");
+    const d=await r.json();
+    captionBox().value=d.caption||TEMPLATES.LIVE.message;
   }catch(e){
-    log("Manual create error: " + e.message);
-    showToast("Manual create error");
+    captionBox().value=TEMPLATES.LIVE.message;
   }
 }
-
-function clearManualRideForm(){
-  ["manualRiderName","manualRiderPhone","manualPickup","manualDropoff","manualTime","manualNotes"].forEach(id=>{
-    const el = document.getElementById(id);
-    if(el) el.value = "";
-  });
+async function postToLive(){
+  const c=captionBox().value.trim();
+  if(!c){showToast("Caption required");return;}
+  const img=LIVE_IMAGES[imgIndex]||"";
+  const statusSel=document.getElementById("statusSelect").value;
+  try{
+    const r=await fetch(POST_WORKER,{
+      method:"POST",
+      headers:{ "Content-Type":"application/json","X-Admin-Secret":AUTH_SECRET },
+      body:JSON.stringify({caption:c,image:img,status:statusSel})
+    });
+    showToast(r.ok?"Live map updated":"Update failed");
+  }catch(e){ showToast("Error posting live"); }
+}
+function copyCaption(){
+  navigator.clipboard.writeText(captionBox().value)
+    .then(()=>showToast("Copied"),()=>showToast("Copy failed"));
 }
 
+/* ============================
+   Push UI (broadcast)
+   ============================ */
+function updPrev(){
+  document.getElementById("pushPrevTitle").textContent=
+    document.getElementById("pushTitle").value||"Big Red Connect";
+  document.getElementById("pushPrevMessage").textContent=
+    document.getElementById("pushMessage").value||"Message will appear here.";
+  document.getElementById("pushPrevUrl").textContent=
+    document.getElementById("pushUrl").value||HOME_URL;
+}
+function applyPushTemplate(){
+  const k=document.getElementById("pushTemplate").value;
+  if(k==="CUSTOM")return;
+  const t=TEMPLATES[k];if(!t)return;
+  document.getElementById("pushTitle").value=t.title;
+  document.getElementById("pushMessage").value=t.message;
+  document.getElementById("pushUrl").value=HOME_URL;
+  captionBox().value=t.message;
+  updPrev();
+  captionIndex=CAPTION_KEYS.indexOf(k);
+}
+function clearPush(){
+  document.getElementById("pushTitle").value="";
+  document.getElementById("pushMessage").value="";
+  document.getElementById("pushUrl").value="";
+  updPrev();
+}
+async function sendPush(payload){
+  try{
+    const r=await fetch(PUSH_WORKER,{
+      method:"POST",
+      headers:{ "Content-Type":"application/json","X-Admin-Secret":AUTH_SECRET },
+      body:JSON.stringify(payload)
+    });
+    const txt=await r.text();
+    log("Push response: "+r.status+" "+txt);
+    showToast(r.ok?"Push sent":"Push failed");
+  }catch(e){
+    log("Push error: "+e.message);
+    showToast("Push error");
+  }
+}
+function handlePushBroadcast(){
+  const title=document.getElementById("pushTitle").value.trim()||"Big Red Connect";
+  const msg=document.getElementById("pushMessage").value.trim();
+  const url=document.getElementById("pushUrl").value.trim()||HOME_URL;
+  if(!msg){ showToast("Message required"); return; }
+
+  const payload = {
+    type: "broadcast",
+    title,
+    message: msg,
+    url,
+    filters: [{ field: "tag", key: "env", value: "live" }]
+  };
+  sendPush(payload);
+}
+function autoOnlinePush(){
+  const payload = {
+    type: "broadcast",
+    title: "Big Red is LIVE",
+    message: "🚗 Big Red Connect is LIVE across the metro — text RED to 405-378-4024 for a flat-rate connection.",
+    url: HOME_URL,
+    filters: [{ field: "tag", key: "env", value: "live" }]
+  };
+  sendPush(payload);
+}
+
+/* ============================
+   Status + GPS
+   ============================ */
 async function loadStatus(){
   try{
     const res=await fetch(STATUS_WORKER+"/status");
@@ -571,7 +690,6 @@ async function loadStatus(){
 
 async function updateStatus(){
   const val=document.getElementById("statusSelect").value;
-  const normalized=val;
   const message=val==="online"?"On the Road":val==="away"?"Limited Availability":"Offline";
   const wasOnline = (currentStatusVal === "online");
 
@@ -580,7 +698,7 @@ async function updateStatus(){
 
   try{
     log("Status PUT…");
-    const payload = { status:normalized, online:(normalized==="online"), message };
+    const payload = { status:val, online:(val==="online"), message };
     if(vehicleCode) payload.vehicleCode = vehicleCode;
 
     const res=await fetch(STATUS_WORKER+"/status",{
@@ -594,8 +712,8 @@ async function updateStatus(){
     showToast(res.ok?"Status updated":"Status update failed");
 
     if(res.ok){
-      currentStatusVal = normalized;
-      if(!wasOnline && normalized==="online"){
+      currentStatusVal = val;
+      if(!wasOnline && val==="online"){
         log("Auto-online push trigger fired.");
         autoOnlinePush();
       }
@@ -669,113 +787,157 @@ function stopGpsPings(){
   document.getElementById("gpsRate").textContent="—";
 }
 
-function applyTemplateToCaption(key){
-  const t=TEMPLATES[key];if(!t)return;
-  captionBox().value=t.message;
-  captionIndex=CAPTION_KEYS.indexOf(key);
+/* ============================================================
+   MANUAL CREATE — uses SAME bookings worker: POST /api/bookings
+   Worker expects:
+     pickup: { address }
+     dropoff: { address }
+     stops: [ { address }, ... ]
+     rider: { name, phone, partySize, riderId }
+     metadata: { luggageCount, ... }
+============================================================ */
+let manualStopIds = [];
+
+function isAirportText(s){
+  const t = String(s||"").toLowerCase();
+  return t.includes("airport") || t.includes("will rogers");
 }
-function stepCaption(d){
-  captionIndex=(captionIndex+d+CAPTION_KEYS.length)%CAPTION_KEYS.length;
-  applyTemplateToCaption(CAPTION_KEYS[captionIndex]);
+function manualIsAirportRide(){
+  const toggle = (document.getElementById("manualAirportToggle")?.value || "auto").toLowerCase();
+  if(toggle === "yes") return true;
+  if(toggle === "no") return false;
+  const p = document.getElementById("manualPickup")?.value || "";
+  const d = document.getElementById("manualDropoff")?.value || "";
+  return isAirportText(p) || isAirportText(d);
 }
-async function loadLastCaption(){
-  try{
-    const r=await fetch(POST_WORKER+"/current");
-    const d=await r.json();
-    captionBox().value=d.caption||TEMPLATES.LIVE.message;
-  }catch(e){
-    captionBox().value=TEMPLATES.LIVE.message;
+function syncManualLuggageVisibility(){
+  const row = document.getElementById("manualLuggageRow");
+  const lug = document.getElementById("manualLuggageCount");
+  if(!row || !lug) return;
+  if(manualIsAirportRide()){
+    row.style.display = "flex";
+  }else{
+    row.style.display = "none";
+    lug.value = "0";
   }
 }
-async function postToLive(){
-  const c=captionBox().value.trim();
-  if(!c){showToast("Caption required");return;}
-  const img=LIVE_IMAGES[imgIndex]||"";
-  const statusSel=document.getElementById("statusSelect").value;
-  try{
-    const r=await fetch(POST_WORKER,{
-      method:"POST",
-      headers:{ "Content-Type":"application/json","X-Admin-Secret":AUTH_SECRET },
-      body:JSON.stringify({caption:c,image:img,status:statusSel})
-    });
-    showToast(r.ok?"Live map updated":"Update failed");
-  }catch(e){ showToast("Error posting live"); }
+function addManualStopField(initialValue=""){
+  if(manualStopIds.length >= 3){
+    showToast("Stop limit is 3");
+    return;
+  }
+  const id = "manualStop_" + Date.now() + "_" + Math.floor(Math.random()*1000);
+  manualStopIds.push(id);
+
+  const wrap = document.getElementById("manualStopsWrap");
+  const div = document.createElement("div");
+  div.className = "stop-row";
+  div.id = "row_" + id;
+  div.innerHTML = `
+    <input id="${id}" type="text" placeholder="Stop ${manualStopIds.length} address" value="${String(initialValue||"").replace(/"/g,"&quot;")}">
+    <button type="button" class="btn btn-ghost" title="Remove Stop" onclick="removeManualStop('${id}')">✖</button>
+  `;
+  wrap.appendChild(div);
+}
+function removeManualStop(id){
+  const row = document.getElementById("row_" + id);
+  if(row) row.remove();
+  manualStopIds = manualStopIds.filter(x => x !== id);
+}
+window.removeManualStop = removeManualStop;
+
+function clearManualStops(){
+  manualStopIds.slice().forEach(id => removeManualStop(id));
+  manualStopIds = [];
+}
+function getManualStopsList(){
+  return manualStopIds
+    .map(id => (document.getElementById(id)?.value || "").trim())
+    .filter(Boolean);
+}
+function clearManualRideForm(){
+  ["manualRiderName","manualRiderPhone","manualPickup","manualGateCode","manualDropoff","manualTime","manualNotes"].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.value = "";
+  });
+  const pax = document.getElementById("manualPassengers");
+  if(pax) pax.value = "1";
+  const airportToggle = document.getElementById("manualAirportToggle");
+  if(airportToggle) airportToggle.value = "auto";
+  const lug = document.getElementById("manualLuggageCount");
+  if(lug) lug.value = "0";
+  clearManualStops();
+  syncManualLuggageVisibility();
 }
 
-function updPrev(){
-  document.getElementById("pushPrevTitle").textContent=
-    document.getElementById("pushTitle").value||"Big Red Connect";
-  document.getElementById("pushPrevMessage").textContent=
-    document.getElementById("pushMessage").value||"Message will appear here.";
-  document.getElementById("pushPrevUrl").textContent=
-    document.getElementById("pushUrl").value||HOME_URL;
-}
-function applyPushTemplate(){
-  const k=document.getElementById("pushTemplate").value;
-  if(k==="CUSTOM")return;
-  const t=TEMPLATES[k];if(!t)return;
-  document.getElementById("pushTitle").value=t.title;
-  document.getElementById("pushMessage").value=t.message;
-  document.getElementById("pushUrl").value=HOME_URL;
-  captionBox().value=t.message;
-  updPrev();
-  captionIndex=CAPTION_KEYS.indexOf(k);
-}
-function clearPush(){
-  document.getElementById("pushTitle").value="";
-  document.getElementById("pushMessage").value="";
-  document.getElementById("pushUrl").value="";
-  updPrev();
-}
+async function createManualRide(){
+  const name  = (document.getElementById("manualRiderName").value || "").trim();
+  const phone = (document.getElementById("manualRiderPhone").value || "").trim();
+  const pickupAddr = (document.getElementById("manualPickup").value || "").trim();
+  const dropoffAddr = (document.getElementById("manualDropoff").value || "").trim();
+  const timeText = (document.getElementById("manualTime").value || "").trim();
+  const notes = (document.getElementById("manualNotes").value || "").trim();
+  const gateCode = (document.getElementById("manualGateCode").value || "").trim();
 
-async function sendPush(payload){
+  const passengers = Number(document.getElementById("manualPassengers")?.value || "1");
+  const luggageCount = Number(document.getElementById("manualLuggageCount")?.value || "0");
+  const stopsText = getManualStopsList();
+
+  if(!phone){ showToast("Rider phone required"); return; }
+  if(!pickupAddr || !dropoffAddr){ showToast("Pickup + dropoff required"); return; }
+
+  // Worker expects stops as ARRAY; in your booking schema it's array of objects in practice.
+  const stops = stopsText.map(a => ({ address: a }));
+
+  // Keep it minimal so we don't fight schema.
+  // Everything extra goes into metadata (safe: worker spreads metadata into booking.metadata).
+  const payload = {
+    type: "INSTANT",
+    pickup: { address: pickupAddr },
+    dropoff: { address: dropoffAddr },
+    stops,
+    rider: {
+      riderId: null,                // manual create won't have external_id unless you add it
+      name: name || "",
+      phone: phone || "",
+      partySize: Number.isFinite(passengers) ? passengers : 1
+    },
+    pricing: { estimate: 0, travelFee: 0, ratePlan: "STANDARD" },
+    metrics: { miles: 0, minutes: 0 },
+    source: "RIDE_REQUEST",
+    metadata: {
+      createdVia: "manual",
+      gateCode: gateCode || null,
+      manualTimeText: timeText || null,
+      notes: notes || null,
+      luggageCount: (manualIsAirportRide() ? (Number.isFinite(luggageCount) ? luggageCount : 0) : 0)
+    }
+  };
+
   try{
-    const r=await fetch(PUSH_WORKER,{
-      method:"POST",
-      headers:{ "Content-Type":"application/json","X-Admin-Secret":AUTH_SECRET },
-      body:JSON.stringify(payload)
+    log("Manual ride POST /api/bookings … " + JSON.stringify(payload));
+    const r = await fetch(`${BOOKINGS_API}/api/bookings`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
     });
-    const txt=await r.text();
-    log("Push response: "+r.status+" "+txt);
-    showToast(r.ok?"Push sent":"Push failed");
+
+    const txt = await r.text();
+    log(`Manual ride response → ${r.status} ${txt}`);
+    if(!r.ok){ showToast("Manual create failed"); return; }
+
+    showToast("Manual ride created");
+    clearManualRideForm();
+    fetchBookings();
   }catch(e){
-    log("Push error: "+e.message);
-    showToast("Push error");
+    log("Manual create error: " + e.message);
+    showToast("Manual create error");
   }
 }
 
-function handlePushBroadcast(){
-  const title=document.getElementById("pushTitle").value.trim()||"Big Red Connect";
-  const msg=document.getElementById("pushMessage").value.trim();
-  const url=document.getElementById("pushUrl").value.trim()||HOME_URL;
-  if(!msg){ showToast("Message required"); return; }
-
-  const payload = {
-    type: "broadcast",
-    title,
-    message: msg,
-    url,
-    filters: [{ field: "tag", key: "env", value: "live" }]
-  };
-  sendPush(payload);
-}
-
-function autoOnlinePush(){
-  const payload = {
-    type: "broadcast",
-    title: "Big Red is LIVE",
-    message: "🚗 Big Red Connect is LIVE across the metro — text RED to 405-378-4024 for a flat-rate connection.",
-    url: HOME_URL,
-    filters: [{ field: "tag", key: "env", value: "live" }]
-  };
-  sendPush(payload);
-}
-
-function copyCaption(){
-  navigator.clipboard.writeText(captionBox().value)
-    .then(()=>showToast("Copied"),()=>showToast("Copy failed"));
-}
-
+/* ============================
+   Dispatch board
+   ============================ */
 async function fetchBookings(){
   try{
     const r=await fetch(`${BOOKINGS_API}/api/driver/bookings?scope=${dispatchScope}&t=${Date.now()}`);
@@ -835,7 +997,11 @@ function renderColumn(id,arr){
     const notifyPref = getBookingNotifyPref(b);
     const notifyBadge = notifyPrefBadgeHTML(notifyPref);
 
-    // ✅ FIX: build these as normal strings (no nested backticks inside outer template literal)
+    const luggage =
+      (typeof b?.metadata?.luggageCount === "number" && b.metadata.luggageCount > 0)
+        ? b.metadata.luggageCount
+        : null;
+
     const chips =
       (dirUrl ? ('<a class="chip primary" href="'+dirUrl+'" target="_blank" rel="noopener">🧭 Directions</a>') : '') +
       (phoneDigits ? ('<a class="chip" href="'+smsPlainHref+'">💬 Text</a>') : '') +
@@ -857,6 +1023,7 @@ function renderColumn(id,arr){
       <div class="loc-line">FROM: ${b.pickup?.address||"—"}</div>
       ${b.stops?.length?`<div class="loc-line">STOPS: ${b.stops.map(s=>s.address).join(" → ")}</div>`:""}
       <div class="loc-line">TO: ${b.dropoff?.address||"—"}</div>
+      ${luggage ? `<div class="loc-line">🧳 Luggage: ${luggage}</div>` : ""}
 
       <div class="vehicle-select-row">
         <img src="${b.vehicle?.image||'/Black Acadia Thumbnail.PNG'}"
@@ -883,7 +1050,7 @@ function renderColumn(id,arr){
 
       <div class="card-footer">
         <div>
-          <select class="status-dropdown status-dropdown" data-id="${rideId}" data-rider-id="${riderIdResolved}">
+          <select class="status-dropdown" data-id="${rideId}" data-rider-id="${riderIdResolved}">
             <option ${b.status==="REQUESTED"?"selected":""}>REQUESTED</option>
             <option ${b.status==="ACCEPTED"?"selected":""}>ACCEPTED</option>
             <option ${b.status==="ENROUTE"?"selected":""}>ENROUTE</option>
@@ -891,12 +1058,12 @@ function renderColumn(id,arr){
             <option ${b.status==="PICKED_UP"?"selected":""}>PICKED_UP</option>
             <option ${b.status==="COMPLETED"?"selected":""}>COMPLETED</option>
             <option ${b.status==="CANCELLED"?"selected":""}>CANCELLED</option>
+            <option ${b.status==="DECLINED"?"selected":""}>DECLINED</option>
           </select>
         </div>
 
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;max-width:100%;">
           <div style="font-size:.75rem;color:#bbb;">Rider: ${b.rider?.name||"—"} • Notify: ${notifyBadge}</div>
-
           <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
             ${chips}
           </div>
@@ -914,10 +1081,6 @@ document.body.addEventListener("change", async (e) => {
   const select = e.target;
   const rideId = select.dataset.id;
   const newState = select.value;
-  const riderId = select.dataset.riderId || "";
-
-  log("Resolved rideId → " + rideId);
-  log("Resolved riderId → " + (riderId || "null"));
 
   try {
     const r = await fetch(`${BOOKINGS_API}/api/driver/bookings/${rideId}`, {
@@ -931,7 +1094,6 @@ document.body.addEventListener("change", async (e) => {
     showToast(r.ok ? `Status → ${newState}` : "Update failed");
 
     fetchBookings();
-
   } catch (err) {
     showToast("Failed");
     log("Status update error: " + err.message);
@@ -961,6 +1123,9 @@ document.body.addEventListener("change",async(e)=>{
   }
 });
 
+/* ============================
+   Dispatch scope toggle
+   ============================ */
 document.getElementById("btnScope").addEventListener("click",()=>{
   if(dispatchScope==="active")dispatchScope="upcoming";
   else if(dispatchScope==="upcoming")dispatchScope="all";
@@ -969,6 +1134,9 @@ document.getElementById("btnScope").addEventListener("click",()=>{
   fetchBookings();
 });
 
+/* ============================
+   Wire buttons
+   ============================ */
 document.getElementById("updateStatusBtn").onclick=updateStatus;
 document.getElementById("prevImage").onclick=()=>setImage(imgIndex-1);
 document.getElementById("nextImage").onclick=()=>setImage(imgIndex+1);
@@ -994,10 +1162,20 @@ document.getElementById("btnDispatchRefresh").onclick=()=>{
   fetchBookings();
   showToast("Dispatch refreshed");
 };
-
 document.getElementById("btnModeToggle").onclick=()=>{
   applyMode(currentMode==="admin"?"driver":"admin");
 };
+
+/* Manual stops + luggage wiring */
+document.getElementById("manualAddStopBtn").addEventListener("click", ()=>addManualStopField(""));
+document.getElementById("manualClearStopsBtn").addEventListener("click", clearManualStops);
+["manualPickup","manualDropoff","manualAirportToggle"].forEach(id=>{
+  const el = document.getElementById(id);
+  if(el){
+    el.addEventListener("input", syncManualLuggageVisibility);
+    el.addEventListener("change", syncManualLuggageVisibility);
+  }
+});
 
 window.addEventListener("load",()=>{
   applyMode(currentMode);
@@ -1008,6 +1186,7 @@ window.addEventListener("load",()=>{
   loadLastCaption();
   fetchBookings();
   setInterval(fetchBookings,20000);
+  syncManualLuggageVisibility();
 });
 </script>
 
