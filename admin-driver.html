@@ -651,14 +651,27 @@ function attachAutocompleteToInput(inputEl){
   });
 
   ac.addListener("place_changed", ()=>{
-    const place = ac.getPlace();
-    if(place && place.formatted_address){
-      inputEl.value = place.formatted_address;
-    } else if(place && place.name){
-      // Fallback if formatted not returned
-      inputEl.value = place.name;
+  const place = ac.getPlace();
+  const name = (place?.name || "").trim();
+  const addr = (place?.formatted_address || "").trim();
+
+  if (name && addr) {
+    // Avoid ugly duplicates when Google repeats the name in the address-ish string
+    // (rare, but happens with some POIs)
+    const nameLower = name.toLowerCase();
+    const addrLower = addr.toLowerCase();
+
+    if (addrLower.startsWith(nameLower)) {
+      inputEl.value = addr; // already includes name-ish part
+    } else {
+      inputEl.value = `${name}, ${addr}`; // ✅ place name + address
     }
-  });
+    return;
+  }
+
+  if (addr) { inputEl.value = addr; return; }
+  if (name) { inputEl.value = name; return; }
+});
 
   __acMap.set(inputEl.id, ac);
 }
