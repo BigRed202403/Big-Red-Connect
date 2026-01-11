@@ -257,7 +257,7 @@ body.mode-admin .driver-only{display:none;}
 
     <!-- =======================
          MANUAL CREATE (ADMIN)
-         ✅ UPDATED: now posts to /api/admin/bookings/manual (NEW worker endpoint)
+         ✅ UPDATED: now posts to /api/admin/bookings/manual
          ======================= -->
     <section class="admin-only" style="margin-top:12px;">
       <h2>Create Ride (Manual)</h2>
@@ -608,6 +608,13 @@ function formatDateTime(iso){
 }
 function captionBox(){return document.getElementById("captionBox");}
 function digitsOnly(v){return String(v||"").replace(/\D/g,"");}
+
+/* ✅ ADDITIVE: normalize phone to 10-digit (if 11-digit starting with 1) */
+function normalizePhoneDigits(raw){
+  let d = digitsOnly(raw);
+  if(d.length === 11 && d.startsWith("1")) d = d.slice(1);
+  return d;
+}
 
 function applyMode(mode){
   currentMode = (mode === "driver") ? "driver" : "admin";
@@ -1004,7 +1011,11 @@ function clearManualRideForm(){
 
 async function createManualRide(){
   const rider_name  = (document.getElementById("manualRiderName").value || "").trim();
-  const rider_phone = (document.getElementById("manualRiderPhone").value || "").trim();
+
+  /* ✅ FIX: normalize phone digits-only for consistent indexing/claiming */
+  const rider_phone_raw = (document.getElementById("manualRiderPhone").value || "").trim();
+  const rider_phone = normalizePhoneDigits(rider_phone_raw);
+
   const pickup      = (document.getElementById("manualPickup").value || "").trim();
   const dropoff     = (document.getElementById("manualDropoff").value || "").trim();
   const time        = (document.getElementById("manualTime").value || "").trim();
@@ -1019,6 +1030,9 @@ async function createManualRide(){
   if(!pickup || !dropoff){ showToast("Pickup + dropoff required"); return; }
 
   const payload = {
+    /* ✅ FIX: force MANUAL source so claim-rides can match */
+    source: "MANUAL",
+
     rider_name,
     rider_phone,
     pickup,
@@ -1104,7 +1118,9 @@ function renderColumn(id,arr){
     const isEnroute=["ENROUTE","ARRIVED","PICKED_UP"].includes(b.status);
 
     const riderIdResolved = resolveRiderIdFromBooking(b);
-    const phoneDigits = digitsOnly(b?.rider?.phone||"");
+
+    /* ✅ FIX: normalize phone display/links */
+    const phoneDigits = normalizePhoneDigits(b?.rider?.phone||"");
     const smsPlainHref = phoneDigits ? `sms:+1${phoneDigits}` : "";
     const dirUrl = buildGoogleDirectionsUrl(b);
 
@@ -1264,7 +1280,11 @@ async function saveEditModal(){
   const pickup = (document.getElementById("editPickup").value || "").trim();
   const dropoff = (document.getElementById("editDropoff").value || "").trim();
   const riderName = (document.getElementById("editRiderName").value || "").trim();
-  const riderPhone = (document.getElementById("editRiderPhone").value || "").trim();
+
+  /* ✅ FIX: digits-only normalize on save */
+  const riderPhoneRaw = (document.getElementById("editRiderPhone").value || "").trim();
+  const riderPhone = normalizePhoneDigits(riderPhoneRaw);
+
   const partySize = Number(document.getElementById("editPartySize").value || "1");
 
   const luggageCount = Number(document.getElementById("editLuggageCount").value || "0");
@@ -1457,6 +1477,18 @@ document.getElementById("manualClearStopsBtn").addEventListener("click", clearMa
   if(el){
     el.addEventListener("input", syncManualLuggageVisibility);
     el.addEventListener("change", syncManualLuggageVisibility);
+  }
+});
+
+/* ✅ ADDITIVE: digits-only UX enforcement for phone fields (manual + edit) */
+window.addEventListener("load",()=>{
+  const phoneInput = document.getElementById("manualRiderPhone");
+  if(phoneInput){
+    phoneInput.addEventListener("input", ()=>{ phoneInput.value = normalizePhoneDigits(phoneInput.value); });
+  }
+  const editPhone = document.getElementById("editRiderPhone");
+  if(editPhone){
+    editPhone.addEventListener("input", ()=>{ editPhone.value = normalizePhoneDigits(editPhone.value); });
   }
 });
 
