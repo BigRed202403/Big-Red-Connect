@@ -1,3 +1,8 @@
+<!-- =========================================================
+     rider/login.html  (UPDATED)
+     - Adds next=myride&id=BRxxxx support
+     - Calls POST /api/rider/claim-rides after login (bulk claim)
+     ========================================================= -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,7 +10,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Rider Login – Big Red Connect</title>
 
-  <!-- Icons -->
   <link rel="apple-touch-icon" href="/BRCNYE2026.png">
   <link rel="icon" type="image/png" sizes="192x192" href="/BRCNYE2026.png">
   <link rel="manifest" href="/manifest.json">
@@ -27,7 +31,6 @@
 </head>
 
 <body>
-
 <header>
   <img src="/BRCNYE2026.png" id="logoHome" alt="Big Red Connect">
   <div>
@@ -53,19 +56,18 @@
   const PROFILE_API  = "https://bigred-rider-profile.bigredtransportation.workers.dev";
   const BOOKINGS_API = "https://bigred-bookings.bigredtransportation.workers.dev";
 
-  // -------------------------------------------------------
-  // Read redirect intent from querystring
-  // Supports:
-  //   next=ride-request&dropoff=...
-  //   next=ride-from-search&address=...
-  //   next=profile
-  //   next=request
-  // -------------------------------------------------------
   const qs = new URLSearchParams(location.search);
-  const NEXT = (qs.get("next") || "").trim();
+  const NEXT = (qs.get("next") || "").trim().toLowerCase();
 
-  const NEXT_DROPOFF  = (qs.get("dropoff") || "").trim();  // NEW for ride-request
-  const NEXT_ADDRESS  = (qs.get("address") || "").trim();  // legacy for ride-from-search
+  // Supported intents:
+  // - ride-request + dropoff
+  // - ride-from-search + address (legacy)
+  // - profile
+  // - request (legacy)
+  // - myride + id   ✅ NEW
+  const NEXT_DROPOFF  = (qs.get("dropoff") || "").trim();
+  const NEXT_ADDRESS  = (qs.get("address") || "").trim();
+  const NEXT_RIDE_ID  = (qs.get("id") || "").trim();
 
   function showToast(msg){
     const t=document.getElementById("toast");
@@ -76,29 +78,25 @@
 
   document.getElementById("logoHome").onclick = () => location.href="/index.html";
 
-  // -------------------------------------------------------
-  // Destination handoff store (Index/Login → Ride Request)
-  // -------------------------------------------------------
   function stashDropoffHandoff(dest){
     if(!dest) return;
     try { sessionStorage.setItem("brc_dropoff_handoff", dest); } catch(e){}
     try { localStorage.setItem("brc_dropoff_handoff", dest); } catch(e){}
   }
 
-  // -------------------------------------------------------
-  // ✅ Claim any phone-only manual rides and attach this riderId
-  // -------------------------------------------------------
   async function claimManualRidesForThisPhone(){
     try{
       const riderId  = localStorage.getItem("riderId") || "";
       const phoneRaw = localStorage.getItem("riderPhone") || "";
-      const phone    = phoneRaw.replace(/\D/g,""); // digits only
+      const phone    = phoneRaw.replace(/\D/g,"");
+      const name     = localStorage.getItem("riderName") || "";
+
       if(!riderId || !phone) return;
 
       const resp = await fetch(`${BOOKINGS_API}/api/rider/claim-rides`,{
         method:"POST",
         headers:{ "Content-Type":"application/json" },
-        body: JSON.stringify({ riderId, phone })
+        body: JSON.stringify({ riderId, phone, riderName: name })
       });
 
       const txt = await resp.text();
@@ -108,11 +106,15 @@
     }
   }
 
-  // -------------------------------------------------------
-  // Decide where to go AFTER login
-  // -------------------------------------------------------
   function redirectAfterLogin(){
-    // ✅ NEW: Index can send next=ride-request&dropoff=...
+    if (NEXT === "myride") {
+      const url = NEXT_RIDE_ID
+        ? ("/rider/myride.html?id=" + encodeURIComponent(NEXT_RIDE_ID))
+        : "/rider/myride.html";
+      window.location.href = url;
+      return;
+    }
+
     if (NEXT === "ride-request") {
       if (NEXT_DROPOFF) stashDropoffHandoff(NEXT_DROPOFF);
       const url = NEXT_DROPOFF
@@ -122,32 +124,25 @@
       return;
     }
 
-    // ✅ Backward compatible: next=ride-from-search&address=...
     if (NEXT === "ride-from-search" && NEXT_ADDRESS) {
       stashDropoffHandoff(NEXT_ADDRESS);
       window.location.href = "/rider/ride-request.html?dropoff=" + encodeURIComponent(NEXT_ADDRESS);
       return;
     }
 
-    // ✅ Profile
     if (NEXT === "profile") {
       window.location.href = "/rider/profile.html";
       return;
     }
 
-    // ✅ Request (tile flow older behavior)
     if (NEXT === "request") {
       window.location.href = "/rider/ride-request.html";
       return;
     }
 
-    // Default: Rider hub
     window.location.href = "/rider/rider.html";
   }
 
-  // -------------------------------------------------------
-  // LOGIN CLICK
-  // -------------------------------------------------------
   document.getElementById("btnLogin").addEventListener("click", async () => {
     const btn = document.getElementById("btnLogin");
     btn.disabled = true;
@@ -167,7 +162,6 @@
     }
 
     try {
-      // 1) Get canonical riderId from profile worker
       const res = await fetch(`${PROFILE_API}/api/rider/login`, {
         method:"POST",
         headers:{ "Content-Type":"application/json" },
@@ -189,28 +183,24 @@
         return;
       }
 
-      // 2) Persist canonical profile
       const profile = { riderId, name, phone };
-      localStorage.setItem("bigred_rider_profile_v1", JSON.stringify(profile));
 
-      // 3) Backward compatibility (older pages)
+      localStorage.setItem("bigred_rider_profile_v1", JSON.stringify(profile));
       localStorage.setItem("riderId", riderId);
       localStorage.setItem("riderName", name);
       localStorage.setItem("riderPhone", phone);
 
-      // ✅ 3.5) Claim any manual rides for this phone (NEW)
+      // ✅ Claim any manual rides for this phone (bulk)
       await claimManualRidesForThisPhone();
 
-      // 4) Update profile server-side (best effort)
+      // best-effort profile update
       fetch(`${PROFILE_API}/api/rider/profile`, {
         method:"PUT",
         headers:{ "Content-Type":"application/json" },
         body:JSON.stringify(profile)
       }).catch(()=>{});
 
-      // 5) Redirect based on intent
       redirectAfterLogin();
-
     } catch(err){
       console.error(err);
       btn.disabled = false;
@@ -218,6 +208,5 @@
     }
   });
 </script>
-
 </body>
 </html>
