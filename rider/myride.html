@@ -1,7 +1,9 @@
 <!-- =========================================================
      ✅ UPDATED: rider/myride.html
-     Fix:
-       - fetchRideById() now unwraps { ok, booking } to return booking
+     Changes:
+       - Prefer rider-safe list endpoint (with graceful fallback)
+       - fetchRideById() now supports BOTH { ok, booking } and raw booking
+       - Centralized JSON unwrap helper
      ========================================================= -->
 <!DOCTYPE html>
 <html lang="en">
@@ -33,8 +35,6 @@ h1{text-align:center;margin:16px 0;font-size:1.4rem}
 .locked{color:#ffcc66;font-size:.85rem;text-align:center;margin-top:6px}
 .small-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:0 12px}
 .small-row .btn{margin:0;min-width:150px}
-
-/* History cleanup buttons */
 .btn-danger{background:#400;border:1px solid #b30000;color:#fff}
 </style>
 
@@ -44,7 +44,7 @@ h1{text-align:center;margin:16px 0;font-size:1.4rem}
 <body>
 
 <header>
-  <a href="/index.html"><img src="/BRCNYE2026.png" class="logo"></a>
+  <a href="/index.html"><img src="/BRCNYE2026.png" class="logo" alt="Big Red Connect"></a>
   <button id="menuBtn">☰</button>
 </header>
 
@@ -79,14 +79,14 @@ h1{text-align:center;margin:16px 0;font-size:1.4rem}
 const API="https://bigred-bookings.bigredtransportation.workers.dev";
 const STATUS_API="https://bigred-status-updater.bigredtransportation.workers.dev/status";
 
-/* ✅ Repeat-last-ride cache key (shared intent with Rider Hub) */
+/* ✅ Repeat-last-ride cache key */
 const LS_LAST_RIDE_ID = "brc_last_ride_id_v1";
 function setLastRideId(id){
   if(!id) return;
   try{ localStorage.setItem(LS_LAST_RIDE_ID, String(id)); }catch(e){}
 }
 
-/* ✅ Canonical rider id (supports your newer profile storage + legacy fallback) */
+/* ✅ Canonical rider id */
 function getCanonicalRiderId(){
   const raw = localStorage.getItem("bigred_rider_profile_v1");
   if(raw){
@@ -96,6 +96,20 @@ function getCanonicalRiderId(){
     }catch(e){}
   }
   return String(localStorage.getItem("riderId") || "");
+}
+
+/* ✅ Unified JSON unwrap:
+   - supports raw booking OR { ok, booking } OR { booking } */
+async function safeJson(res){
+  try{ return await res.json(); }catch(e){ return null; }
+}
+function unwrapBooking(payload){
+  if(!payload) return null;
+  if(payload.booking) return payload.booking;
+  if(payload.ok && payload.booking) return payload.booking;
+  // if it already looks like a booking object
+  if(payload.id && (payload.pickup || payload.dropoff || payload.status)) return payload;
+  return null;
 }
 
 document.getElementById("menuBtn").onclick=()=>{
@@ -108,7 +122,8 @@ document.getElementById("logoutBtn").onclick=()=>{
 };
 
 const riderId = getCanonicalRiderId();
-const riderPhone=localStorage.getItem("riderPhone") || ""; // ✅ used for secure rider cancel
+const riderPhone=localStorage.getItem("riderPhone") || "";
+
 let map,driverMarker,pickupMarker,dropoffMarker,routeSvc,routeLine;
 let activeRideId = null;
 let autoTimer = null;
@@ -117,22 +132,16 @@ let driverPollTimer = null;
 /* =======================
    HISTORY CLEANUP (LOCAL)
    ======================= */
-function hiddenKey(){
-  return `hiddenRideIds_${riderId || "unknown"}`;
-}
+function hiddenKey(){ return `hiddenRideIds_${riderId || "unknown"}`; }
 function getHiddenSet(){
   try{
     const raw = localStorage.getItem(hiddenKey());
     const arr = raw ? JSON.parse(raw) : [];
     return new Set(Array.isArray(arr) ? arr : []);
-  }catch(e){
-    return new Set();
-  }
+  }catch(e){ return new Set(); }
 }
 function saveHiddenSet(set){
-  try{
-    localStorage.setItem(hiddenKey(), JSON.stringify(Array.from(set)));
-  }catch(e){}
+  try{ localStorage.setItem(hiddenKey(), JSON.stringify(Array.from(set))); }catch(e){}
 }
 function hideRideFromHistory(rideId){
   const set = getHiddenSet();
@@ -145,7 +154,6 @@ function restoreHistory(){
   loadRides();
 }
 function clearHistory(list){
-  // Hide all CLOSED rides currently in history
   const set = getHiddenSet();
   (list||[]).forEach(r=>{
     if(r && r.id) set.add(String(r.id));
@@ -168,30 +176,55 @@ function getRideIdFromUrl(){
   return id || null;
 }
 
-/* ✅ FIX: unwrap { ok, booking } */
+/* ✅ Robust ride fetch (supports wrapped and unwrapped) */
 async function fetchRideById(id){
   const res = await fetch(`${API}/api/bookings/${encodeURIComponent(id)}`);
   if(!res.ok) return null;
-  const j = await res.json();
-  return j && j.booking ? j.booking : null;
+  const j = await safeJson(res);
+  return unwrapBooking(j);
 }
 
+/* ✅ Prefer rider list endpoint (if deployed), fallback to legacy driver list */
 async function fetchAllMine(){
   if(!riderId) return [];
-  const res=await fetch(`${API}/api/driver/bookings?scope=all`);
-  if(!res.ok) return [];
-  const all=await res.json();
-  return all.filter(r=>r?.rider?.riderId===riderId);
+
+  // 1) Rider-safe endpoint (preferred)
+  // NOTE: this assumes your worker supports one of these patterns.
+  const riderListCandidates = [
+    `${API}/api/rider/bookings?riderId=${encodeURIComponent(riderId)}`,
+    `${API}/api/bookings?riderId=${encodeURIComponent(riderId)}`,
+    `${API}/api/rider/bookings?rid=${encodeURIComponent(riderId)}`
+  ];
+
+  for(const url of riderListCandidates){
+    try{
+      const res = await fetch(url);
+      if(res.ok){
+        const data = await safeJson(res);
+        if(Array.isArray(data)) return data;
+        if(data && Array.isArray(data.bookings)) return data.bookings;
+      }
+    }catch(e){}
+  }
+
+  // 2) Legacy fallback (only if still open)
+  try{
+    const res=await fetch(`${API}/api/driver/bookings?scope=all`);
+    if(!res.ok) return [];
+    const all=await safeJson(res);
+    const list = Array.isArray(all) ? all : [];
+    return list.filter(r=>r?.rider?.riderId===riderId);
+  }catch(e){
+    return [];
+  }
 }
 
 function pickActiveRide(mine){
-  // newest open ride first
-  const open = mine
+  const open = (mine||[])
     .filter(r => !isClosed(r.status))
     .sort((a,b)=> (b.createdAt||"").localeCompare(a.createdAt||""));
   return open[0] || null;
 }
-
 function pickNewestClosedRide(mine){
   const closed = (mine||[])
     .filter(r => isClosed(r.status))
@@ -200,34 +233,26 @@ function pickNewestClosedRide(mine){
 }
 
 async function loadRides(){
-  // 1) If ?id= exists, try to load that ride directly
   const urlRideId = getRideIdFromUrl();
   if(urlRideId){
     const r = await fetchRideById(urlRideId);
     if(r && r?.rider?.riderId === riderId){
       activeRideId = r.id;
-
-      // ✅ Always cache this ride as the last ride (even if closed)
       if(r?.id) setLastRideId(r.id);
-
       renderActive(r);
-      // Still show history
+
       const mine = await fetchAllMine();
       renderHistory(mine.filter(x=>isClosed(x.status)));
+
       startAutoRefresh();
       return;
     }
-    // If id invalid or not this rider, fall back to normal flow
   }
 
-  // 2) Otherwise load mine and choose active
   const mine = await fetchAllMine();
   const active = pickActiveRide(mine);
   activeRideId = active ? active.id : null;
 
-  // ✅ Cache logic:
-  // - If active exists, cache it
-  // - Else cache newest closed (so Repeat Last Ride works even later)
   if(active?.id) setLastRideId(active.id);
   else {
     const newestClosed = pickNewestClosedRide(mine);
@@ -255,13 +280,17 @@ function renderActive(r){
   const status = String(r.status||"").toUpperCase();
   const locked = !canModify(status);
 
-  // ✅ Cache active ride id here too (belt-and-suspenders)
   if(r?.id) setLastRideId(r.id);
+
+  const stopsLine = (Array.isArray(r.stops) && r.stops.length)
+    ? `<div style="margin-top:6px;"><strong>Stops:</strong> ${r.stops.map(s=>s?.address).filter(Boolean).join(" → ")}</div>`
+    : "";
 
   box.innerHTML=`
     <div class="card">
       <div class="status">Status: ${status}</div>
       <div><strong>Pickup:</strong> ${r.pickup?.address || ""}</div>
+      ${stopsLine}
       <div style="margin-top:6px;"><strong>Dropoff:</strong> ${r.dropoff?.address || ""}</div>
 
       <a class="btn btn-secondary ${locked?"btn-disabled":""}" href="/rider/ride-request.html?id=${encodeURIComponent(r.id)}">
@@ -281,40 +310,27 @@ function renderActive(r){
 
 async function cancelRide(id){
   if(!confirm("Cancel this ride?")) return;
-
-  // ✅ Cache immediately so Repeat Last Ride has something even if status flips quickly
   if(id) setLastRideId(id);
 
-  // ✅ Prefer rider cancel endpoint (triggers rider→admin push reliably)
   try{
     const res = await fetch(`${API}/api/bookings/${encodeURIComponent(id)}/cancel`,{
       method:"POST",
       headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({
-        riderPhone: riderPhone || ""
-      })
+      body:JSON.stringify({ riderPhone: riderPhone || "" })
     });
 
     if(!res.ok){
-      // Fallback: keep your old behavior if endpoint not deployed yet
       await fetch(`${API}/api/driver/bookings/${encodeURIComponent(id)}`,{
         method:"PUT",
         headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({
-          status:"CANCELLED",
-          metadata: { cancelledBy: "rider" }
-        })
+        body:JSON.stringify({ status:"CANCELLED", metadata:{ cancelledBy:"rider" } })
       });
     }
   } catch(e){
-    // Network fallback (same as previous)
     await fetch(`${API}/api/driver/bookings/${encodeURIComponent(id)}`,{
       method:"PUT",
       headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({
-        status:"CANCELLED",
-        metadata: { cancelledBy: "rider" }
-      })
+      body:JSON.stringify({ status:"CANCELLED", metadata:{ cancelledBy:"rider" } })
     });
   }
 
@@ -348,7 +364,6 @@ function renderHistory(list){
     </div>
   `).join("");
 
-  // Wire Clear History button to current CLOSED list
   document.getElementById("clearHistoryBtn").onclick = ()=>{
     if(!confirm("Hide all past rides from your history? (You can restore them later)")) return;
     clearHistory(list || []);
@@ -366,7 +381,6 @@ async function drawMap(r){
     routeLine.setMap(map);
   }
 
-  // Geocode pickup/dropoff
   const geo=new google.maps.Geocoder();
   let p1, p2;
   try{
@@ -381,7 +395,6 @@ async function drawMap(r){
   const pickup=p1.results[0].geometry.location;
   const dropoff=p2.results[0].geometry.location;
 
-  // Reuse markers (prevents duplicates)
   if(!pickupMarker){
     pickupMarker=new google.maps.Marker({map,position:pickup,label:"📍"});
   } else {
@@ -418,10 +431,9 @@ async function pollDriver(){
   try{
     const r = await fetch(STATUS_API);
     if(!r.ok) throw new Error("status fetch failed");
-    const j = await r.json();
+    const j = await safeJson(r);
 
-    if(!j.location || typeof j.location.lat !== "number"){
-      console.log("Driver location not available yet");
+    if(!j || !j.location || typeof j.location.lat !== "number"){
       driverPollTimer = setTimeout(pollDriver, 15000);
       return;
     }
@@ -463,40 +475,26 @@ function stopAutoRefresh(){
 
 function startAutoRefresh(){
   stopAutoRefresh();
-  // Refresh active card/history every 15s
   autoTimer = setInterval(async ()=>{
-    // If URL has id, refresh that ride directly
     const urlRideId = getRideIdFromUrl();
     if(urlRideId){
       const r = await fetchRideById(urlRideId);
       if(r && r?.rider?.riderId === riderId){
         activeRideId = r.id;
-
-        // ✅ Keep caching while viewing by id
         if(r?.id) setLastRideId(r.id);
-
         renderActive(r);
-        // history still helpful
+
         const mine = await fetchAllMine();
         renderHistory(mine.filter(x=>isClosed(x.status)));
         return;
       }
     }
-
-    // Otherwise refresh normal
     await loadRides();
   }, 15000);
 }
 
-/* Manual refresh */
-document.getElementById("refreshBtn").onclick = async ()=>{
-  await loadRides();
-};
-
-/* Restore History */
-document.getElementById("restoreHistoryBtn").onclick = ()=>{
-  restoreHistory();
-};
+document.getElementById("refreshBtn").onclick = async ()=>{ await loadRides(); };
+document.getElementById("restoreHistoryBtn").onclick = ()=>{ restoreHistory(); };
 
 loadRides();
 </script>
