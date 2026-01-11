@@ -99,17 +99,17 @@ textarea{width:100%;min-height:90px;background:#111;color:#fff;border:1px solid 
 .col-body{max-height:60vh;overflow-y:auto;padding:8px;}
 .empty-text{text-align:center;color:#777;padding:18px 6px;font-size:.8rem;}
 .card{background:#111;border:1px solid #333;border-radius:8px;padding:8px;margin-bottom:8px;font-size:.78rem;}
+.card:hover{border-color:#555;}
 .card-label-row{display:flex;justify-content:space-between;margin-bottom:4px;gap:8px;}
 .badge{padding:2px 6px;border-radius:999px;font-size:.65rem;border:1px solid #666;white-space:nowrap;}
 .loc-line{margin:3px 0;font-size:.76rem;}
 .eta-line{margin-top:3px;font-size:.75rem;color:#ccc;}
-.vehicle-select-row{display:flex;align-items:center;gap:6px;margin:6px 0;}
-.vehicle-thumb{width:50px;height:50px;object-fit:cover;border-radius:6px;border:1px solid #333;}
-.vehicle-dropdown{flex:1;background:#111;color:#fff;border:1px solid #333;padding:5px;border-radius:6px;font-size:.75rem;min-width:160px;}
 .card-footer{border-top:1px solid #222;margin-top:6px;padding-top:6px;display:flex;justify-content:space-between;align-items:flex-start;gap:6px;flex-wrap:wrap;}
 .status-dropdown{background:#111;color:#fff;border:1px solid #333;padding:4px;border-radius:6px;font-size:.75rem;}
 .chip{padding:3px 7px;border-radius:999px;border:1px solid #444;background:#111;color:#eee;font-size:.7rem;cursor:pointer;text-decoration:none;display:inline-block;}
 .chip.primary{border-color:var(--red);color:#ffdada;}
+.chip.warn{border-color:#996600;color:#ffe3b0;}
+.chip.danger{border-color:#aa2222;color:#ffb9b9;}
 #toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#111;color:#fff;border:1px solid var(--red);padding:8px 16px;border-radius:16px;opacity:0;pointer-events:none;transition:opacity .35s;z-index:50;font-size:.8rem;max-width:92vw;text-align:center;}
 #toast.show{opacity:1;}
 #debugLog{font-family:monospace;font-size:.72rem;color:#0f0;background:#000;padding:6px;max-height:220px;overflow:auto;border-top:1px solid #222;margin:0 auto 18px;max-width:1200px;}
@@ -244,7 +244,7 @@ body.mode-admin .driver-only{display:none;}
 
       <div class="row">
         <label for="globalVehicleSelect" style="font-size:.8rem;color:#ccc;">Active Vehicle</label>
-        <select id="globalVehicleSelect" class="vehicle-dropdown">
+        <select id="globalVehicleSelect" class="status-dropdown" style="min-width:220px;">
           <option value="BLACK_ACADIA">Black GMC Acadia (SUV)</option>
           <option value="BIG_RED">Big Red (Red Silverado)</option>
         </select>
@@ -426,7 +426,10 @@ body.mode-admin .driver-only{display:none;}
         </div>
       </div>
 
-      <p class="meta">Change status to move rides. Rider push is sent on each status update (if riderId exists).</p>
+      <p class="meta">
+        Tap a card to open details. Use the status dropdown to move rides.<br>
+        Admin mode also allows editing ride details + sending rider notifications on status changes.
+      </p>
     </section>
   </div>
 </div>
@@ -518,16 +521,34 @@ body.mode-admin .driver-only{display:none;}
 </div>
 
 <script>
-const STATUS_WORKER="https://bigred-status-updater.bigredtransportation.workers.dev";
-const LOCATION_WORKER="https://update-location.bigredtransportation.workers.dev";
-const POST_WORKER="https://post-to-live-beta.bigredtransportation.workers.dev";
-const PUSH_WORKER="https://bigred-push.bigredtransportation.workers.dev";
-const BOOKINGS_API="https://bigred-bookings.bigredtransportation.workers.dev";
+/* =========================
+   CONFIG
+========================= */
+const STATUS_WORKER   = "https://bigred-status-updater.bigredtransportation.workers.dev";
+const LOCATION_WORKER = "https://update-location.bigredtransportation.workers.dev";
+const POST_WORKER     = "https://post-to-live-beta.bigredtransportation.workers.dev";
+const PUSH_WORKER     = "https://bigred-push.bigredtransportation.workers.dev";
+const BOOKINGS_API    = "https://bigred-bookings.bigredtransportation.workers.dev";
 
-const AUTH_SECRET="BigRedPrivateKey2025";
-const TZ="America/Chicago";
-const HOME_URL="https://bigredconnectokc.com/";
+const AUTH_SECRET = "BigRedPrivateKey2025";
+const TZ          = "America/Chicago";
+const HOME_URL    = "https://bigredconnectokc.com/";
 
+/* If your rider login page uses a different path, change it here */
+const RIDER_LOGIN_BASE = `${HOME_URL}rider.html`;
+
+/* Status + dispatch enums */
+const DRIVER_STATUSES = [
+  { value:"REQUESTED", label:"🆕 Requested" },
+  { value:"ACCEPTED",  label:"✅ Accepted" },
+  { value:"ENROUTE",   label:"🚗 Enroute" },
+  { value:"ARRIVED",   label:"📍 Arrived" },
+  { value:"PICKED_UP", label:"👋 Picked Up" },
+  { value:"COMPLETED", label:"🏁 Completed" },
+  { value:"CANCELLED", label:"✖ Cancelled" },
+];
+
+/* Live map images */
 const LIVE_IMAGES=[
   "Official Logo.png",
   "1A5072F2-8604-4CAB-BC84-E15D86D8CE73.png",
@@ -556,7 +577,6 @@ const LIVE_IMAGES=[
   "E6D81943-48D2-4F74-9B95-FFCD8421DD36.png",
   "Untitled design.png",
 ];
-let imgIndex=0;
 
 const TEMPLATES={
   LIVE:{title:"Big Red is LIVE",message:"🚗 Big Red Connect is LIVE across the metro — text RED to 405-378-4024."},
@@ -566,49 +586,93 @@ const TEMPLATES={
   OFFLINE:{title:"Big Red is Offline",message:"🔴 Big Red is offline — text RED for next run info."}
 };
 const CAPTION_KEYS=["LIVE","AIRPORT","WEEKEND","CAMPUS","OFFLINE"];
+
+/* =========================
+   STATE
+========================= */
+let imgIndex=0;
 let captionIndex=0;
 
 let gpsTimer=null;
 let gpsLastTs=null;
-let dispatchScope="active";
+
+let dispatchScope = localStorage.getItem("dispatchScope") || "active"; // active | all
 let currentStatusVal="offline";
 let currentMode = localStorage.getItem("adminDriverMode") || "admin";
 
 const bookingCache = new Map();
+let editingBookingId = null;
+
+/* =========================
+   SMALL UTILS
+========================= */
+function $(id){ return document.getElementById(id); }
 
 function showToast(msg){
-  const t=document.getElementById("toast");
+  const t=$("toast");
   if(!t) return;
   t.textContent=msg;
   t.classList.add("show");
   setTimeout(()=>t.classList.remove("show"),2000);
 }
 function log(msg){
-  const box=document.getElementById("debugLog");
+  const box=$("debugLog");
   if(!box) return;
   const time=new Date().toLocaleTimeString("en-US",{hour12:false});
   box.innerHTML=`[${time}] ${msg}<br>`+box.innerHTML;
 }
 function formatDateTime(iso){
-  if(!iso)return"—";
+  if(!iso) return "—";
   try{
     return new Date(iso).toLocaleString("en-US",{
       timeZone:TZ,
       month:"2-digit",day:"2-digit",year:"2-digit",
       hour:"2-digit",minute:"2-digit"
     });
-  }catch(e){return iso;}
+  }catch(e){ return iso; }
 }
-function captionBox(){return document.getElementById("captionBox");}
-function digitsOnly(v){return String(v||"").replace(/\D/g,"");}
-
+function escHtml(s){
+  return String(s ?? "")
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#39;");
+}
+function digitsOnly(v){ return String(v||"").replace(/\D/g,""); }
 function normalizePhoneDigits(raw){
   let d = digitsOnly(raw);
   if(d.length === 11 && d.startsWith("1")) d = d.slice(1);
   return d;
 }
+function captionBox(){ return $("captionBox"); }
 
-/* Places Autocomplete restricted to OKC Metro */
+function copyText(txt){
+  try{
+    navigator.clipboard.writeText(txt).then(()=>showToast("Copied"),()=>showToast("Copy failed"));
+  }catch(e){
+    showToast("Copy failed");
+  }
+}
+window.copyText = copyText;
+
+/* =========================
+   MODE TOGGLE
+========================= */
+function applyMode(mode){
+  currentMode = (mode === "driver") ? "driver" : "admin";
+  document.body.classList.remove("mode-admin","mode-driver");
+  document.body.classList.add(currentMode==="driver" ? "mode-driver" : "mode-admin");
+  const btn=$("btnModeToggle");
+  if(btn){
+    btn.textContent = currentMode==="driver" ? "🚗 Driver Mode" : "🛠 Admin Mode";
+  }
+  localStorage.setItem("adminDriverMode", currentMode);
+}
+
+/* =========================
+   PLACES AUTOCOMPLETE
+========================= */
 const OKC_BOUNDS = (window.google && google.maps)
   ? new google.maps.LatLngBounds(
       new google.maps.LatLng(35.20, -97.80),
@@ -623,6 +687,10 @@ function attachAutocompleteToInput(inputEl){
   if(!(window.google && google.maps && google.maps.places)) {
     log("Places library not available (Google script missing or blocked).");
     return;
+  }
+  if(!inputEl.id) {
+    // ensure it has an id (Autocomplete map key)
+    inputEl.id = "ac_" + Math.random().toString(36).slice(2);
   }
   if(__acMap.has(inputEl.id)) return;
 
@@ -641,11 +709,7 @@ function attachAutocompleteToInput(inputEl){
     if (name && addr) {
       const nameLower = name.toLowerCase();
       const addrLower = addr.toLowerCase();
-      if (addrLower.startsWith(nameLower)) {
-        inputEl.value = addr;
-      } else {
-        inputEl.value = `${name}, ${addr}`;
-      }
+      inputEl.value = addrLower.startsWith(nameLower) ? addr : `${name}, ${addr}`;
       return;
     }
     if (addr) { inputEl.value = addr; return; }
@@ -656,31 +720,16 @@ function attachAutocompleteToInput(inputEl){
 }
 
 function initAddressAutocomplete(){
-  attachAutocompleteToInput(document.getElementById("manualPickup"));
-  attachAutocompleteToInput(document.getElementById("manualDropoff"));
-  attachAutocompleteToInput(document.getElementById("editPickup"));
-  attachAutocompleteToInput(document.getElementById("editDropoff"));
+  attachAutocompleteToInput($("manualPickup"));
+  attachAutocompleteToInput($("manualDropoff"));
+  attachAutocompleteToInput($("editPickup"));
+  attachAutocompleteToInput($("editDropoff"));
   document.querySelectorAll('input[id^="manualStop_"]').forEach(attachAutocompleteToInput);
 }
 
-function attachAutocompleteToNewStop(id){
-  const el = document.getElementById(id);
-  attachAutocompleteToInput(el);
-}
-
-function applyMode(mode){
-  currentMode = (mode === "driver") ? "driver" : "admin";
-  const body=document.body;
-  body.classList.remove("mode-admin","mode-driver");
-  body.classList.add(currentMode==="driver"?"mode-driver":"mode-admin");
-  const btn=document.getElementById("btnModeToggle");
-  if(btn){
-    btn.textContent = currentMode==="driver" ? "🚗 Driver Mode" : "🛠 Admin Mode";
-  }
-  localStorage.setItem("adminDriverMode",currentMode);
-}
-
-/* Directions + SMS helpers */
+/* =========================
+   DIRECTIONS + SMS HELPERS
+========================= */
 function buildGoogleDirectionsUrl(booking){
   const origin = (booking?.pickup?.address || "").trim();
   const destination = (booking?.dropoff?.address || "").trim();
@@ -698,6 +747,7 @@ function buildGoogleDirectionsUrl(booking){
 function smsHrefWithBody(phoneDigits, body){
   if(!phoneDigits) return "";
   const encoded = encodeURIComponent(body || "");
+  // iOS tolerates "sms:+1XXXXXXXXXX&body=..."
   return `sms:+1${phoneDigits}&body=${encoded}`;
 }
 function smsTemplateText(templateKey, booking){
@@ -714,19 +764,39 @@ function smsTemplateText(templateKey, booking){
   return templates[templateKey] || `${greet}I’m on my way.`;
 }
 
-/* Live images + captions */
-function loadImages(){setImage(0);}
+/* Rider login link helper (based on riderId if present) */
+function resolveRiderIdFromBooking(b){
+  const a = b?.rider?.riderId; if(a) return a;
+  const b1 = b?.riderId; if(b1) return b1;
+  const c = b?.rider?.id; if(c) return c;
+  const d = b?.rider?.external_id; if(d) return d;
+  const e = b?.rider?.externalId; if(e) return e;
+  return "";
+}
+function buildRiderLoginLink(booking){
+  const riderId = resolveRiderIdFromBooking(booking);
+  if(!riderId) return "";
+  // This matches your "login via external_id" concept.
+  // If your rider page uses a different query param, change "external_id" here.
+  const u = new URL(RIDER_LOGIN_BASE);
+  u.searchParams.set("external_id", riderId);
+  return u.toString();
+}
+
+/* =========================
+   LIVE IMAGES + CAPTIONS
+========================= */
 function setImage(idx){
-  if(!LIVE_IMAGES.length)return;
+  if(!LIVE_IMAGES.length) return;
   imgIndex=(idx+LIVE_IMAGES.length)%LIVE_IMAGES.length;
-  const img=document.getElementById("statusImage");
+  const img=$("statusImage");
   if(img) img.src=LIVE_IMAGES[imgIndex];
   log("Image set: "+LIVE_IMAGES[imgIndex]);
 }
 function applyTemplateToCaption(key){
-  const t=TEMPLATES[key];if(!t)return;
+  const t=TEMPLATES[key]; if(!t) return;
   captionBox().value=t.message;
-  captionIndex=CAPTION_KEYS.indexOf(key);
+  captionIndex = Math.max(0, CAPTION_KEYS.indexOf(key));
 }
 function stepCaption(d){
   captionIndex=(captionIndex+d+CAPTION_KEYS.length)%CAPTION_KEYS.length;
@@ -736,7 +806,7 @@ async function loadLastCaption(){
   try{
     const r=await fetch(POST_WORKER+"/current");
     const d=await r.json();
-    captionBox().value=d.caption||TEMPLATES.LIVE.message;
+    captionBox().value=d.caption || TEMPLATES.LIVE.message;
   }catch(e){
     captionBox().value=TEMPLATES.LIVE.message;
   }
@@ -745,7 +815,7 @@ async function postToLive(){
   const c=captionBox().value.trim();
   if(!c){showToast("Caption required");return;}
   const img=LIVE_IMAGES[imgIndex]||"";
-  const statusSel=document.getElementById("statusSelect").value;
+  const statusSel=$("statusSelect").value;
   try{
     const r=await fetch(POST_WORKER,{
       method:"POST",
@@ -760,30 +830,29 @@ function copyCaption(){
     .then(()=>showToast("Copied"),()=>showToast("Copy failed"));
 }
 
-/* Push UI (broadcast) */
+/* =========================
+   PUSH UI (BROADCAST)
+========================= */
 function updPrev(){
-  document.getElementById("pushPrevTitle").textContent=
-    document.getElementById("pushTitle").value||"Big Red Connect";
-  document.getElementById("pushPrevMessage").textContent=
-    document.getElementById("pushMessage").value||"Message will appear here.";
-  document.getElementById("pushPrevUrl").textContent=
-    document.getElementById("pushUrl").value||HOME_URL;
+  $("pushPrevTitle").textContent = $("pushTitle").value || "Big Red Connect";
+  $("pushPrevMessage").textContent = $("pushMessage").value || "Message will appear here.";
+  $("pushPrevUrl").textContent = $("pushUrl").value || HOME_URL;
 }
 function applyPushTemplate(){
-  const k=document.getElementById("pushTemplate").value;
-  if(k==="CUSTOM")return;
-  const t=TEMPLATES[k];if(!t)return;
-  document.getElementById("pushTitle").value=t.title;
-  document.getElementById("pushMessage").value=t.message;
-  document.getElementById("pushUrl").value=HOME_URL;
+  const k=$("pushTemplate").value;
+  if(k==="CUSTOM") return;
+  const t=TEMPLATES[k]; if(!t) return;
+  $("pushTitle").value=t.title;
+  $("pushMessage").value=t.message;
+  $("pushUrl").value=HOME_URL;
   captionBox().value=t.message;
   updPrev();
   captionIndex=CAPTION_KEYS.indexOf(k);
 }
 function clearPush(){
-  document.getElementById("pushTitle").value="";
-  document.getElementById("pushMessage").value="";
-  document.getElementById("pushUrl").value="";
+  $("pushTitle").value="";
+  $("pushMessage").value="";
+  $("pushUrl").value="";
   updPrev();
 }
 async function sendPush(payload){
@@ -802,9 +871,9 @@ async function sendPush(payload){
   }
 }
 function handlePushBroadcast(){
-  const title=document.getElementById("pushTitle").value.trim()||"Big Red Connect";
-  const msg=document.getElementById("pushMessage").value.trim();
-  const url=document.getElementById("pushUrl").value.trim()||HOME_URL;
+  const title=$("pushTitle").value.trim() || "Big Red Connect";
+  const msg=$("pushMessage").value.trim();
+  const url=$("pushUrl").value.trim() || HOME_URL;
   if(!msg){ showToast("Message required"); return; }
 
   const payload = {
@@ -827,18 +896,20 @@ function autoOnlinePush(){
   sendPush(payload);
 }
 
-/* Status + GPS */
+/* =========================
+   STATUS + GPS
+========================= */
 async function loadStatus(){
   try{
     const res=await fetch(STATUS_WORKER+"/status");
-    if(!res.ok)return;
+    if(!res.ok) return;
     const data=await res.json();
     log("Status GET OK: "+JSON.stringify(data));
-    let statusVal=data.status||"offline";
+    const statusVal=data.status || "offline";
     currentStatusVal = statusVal;
 
-    const pill=document.getElementById("status-pill");
-    const headerPill=document.getElementById("livePill");
+    const pill=$("status-pill");
+    const headerPill=$("livePill");
     pill.classList.remove("online","away","offline");
     headerPill.classList.remove("online","away","offline");
 
@@ -862,10 +933,10 @@ async function loadStatus(){
 
     const when=formatDateTime(data.lastUpdated);
     pill.textContent=`Status: ${label} • as of ${when}`;
-    document.getElementById("statusStamp").textContent=when;
-    document.getElementById("statusSelect").value=statusVal;
+    $("statusStamp").textContent=when;
+    $("statusSelect").value=statusVal;
 
-    const globalVeh=document.getElementById("globalVehicleSelect");
+    const globalVeh=$("globalVehicleSelect");
     if(globalVeh){
       if(data.vehicle && data.vehicle.code) globalVeh.value=data.vehicle.code;
       else globalVeh.value="BLACK_ACADIA";
@@ -878,12 +949,11 @@ async function loadStatus(){
 }
 
 async function updateStatus(){
-  const val=document.getElementById("statusSelect").value;
+  const val=$("statusSelect").value;
   const message=val==="online"?"On the Road":val==="away"?"Limited Availability":"Offline";
   const wasOnline = (currentStatusVal === "online");
 
-  const globalVeh=document.getElementById("globalVehicleSelect");
-  const vehicleCode = globalVeh ? globalVeh.value : undefined;
+  const vehicleCode = $("globalVehicleSelect") ? $("globalVehicleSelect").value : undefined;
 
   try{
     log("Status PUT…");
@@ -914,13 +984,13 @@ async function updateStatus(){
   }
 }
 
-function handleGpsForStatus(val){ if(val==="online")startGpsPings(); else stopGpsPings(); }
+function handleGpsForStatus(val){ if(val==="online") startGpsPings(); else stopGpsPings(); }
 
 function determineGpsInterval() {
-  let interval = 600000;
+  let interval = 600000; // default 10m
   const active = document.querySelectorAll("#listActive .card");
-  if (active.length > 0) interval = 20000;
-  if (window.__nearPickup === true) interval = 5000;
+  if (active.length > 0) interval = 20000; // 20s while active trips exist
+  if (window.__nearPickup === true) interval = 5000; // optional flag if you add it later
   return interval;
 }
 
@@ -934,10 +1004,9 @@ function startGpsPings(){
     navigator.geolocation.getCurrentPosition(pos => {
       const now = Date.now();
 
-      document.getElementById("gpsStamp").textContent =
-        new Date().toLocaleString("en-US", { timeZone: TZ });
+      $("gpsStamp").textContent = new Date().toLocaleString("en-US", { timeZone: TZ });
 
-      document.getElementById("gpsRate").textContent =
+      $("gpsRate").textContent =
         gpsLastTs
           ? Math.round((now - gpsLastTs) / 1000) + "s"
           : interval >= 60000
@@ -973,10 +1042,12 @@ function startGpsPings(){
 
 function stopGpsPings(){
   if(gpsTimer){clearTimeout(gpsTimer);gpsTimer=null;}
-  document.getElementById("gpsRate").textContent="—";
+  $("gpsRate").textContent="—";
 }
 
-/* Manual Create */
+/* =========================
+   MANUAL CREATE (STOPS + LUGGAGE)
+========================= */
 let manualStopIds = [];
 
 function isAirportText(s){
@@ -984,16 +1055,16 @@ function isAirportText(s){
   return t.includes("airport") || t.includes("will rogers");
 }
 function manualIsAirportRide(){
-  const toggle = (document.getElementById("manualAirportToggle")?.value || "auto").toLowerCase();
+  const toggle = ($("manualAirportToggle")?.value || "auto").toLowerCase();
   if(toggle === "yes") return true;
   if(toggle === "no") return false;
-  const p = document.getElementById("manualPickup")?.value || "";
-  const d = document.getElementById("manualDropoff")?.value || "";
+  const p = $("manualPickup")?.value || "";
+  const d = $("manualDropoff")?.value || "";
   return isAirportText(p) || isAirportText(d);
 }
 function syncManualLuggageVisibility(){
-  const row = document.getElementById("manualLuggageRow");
-  const lug = document.getElementById("manualLuggageCount");
+  const row = $("manualLuggageRow");
+  const lug = $("manualLuggageCount");
   if(!row || !lug) return;
   if(manualIsAirportRide()){
     row.style.display = "flex";
@@ -1010,20 +1081,20 @@ function addManualStopField(initialValue=""){
   const id = "manualStop_" + Date.now() + "_" + Math.floor(Math.random()*1000);
   manualStopIds.push(id);
 
-  const wrap = document.getElementById("manualStopsWrap");
+  const wrap = $("manualStopsWrap");
   const div = document.createElement("div");
   div.className = "stop-row";
   div.id = "row_" + id;
   div.innerHTML = `
-    <input id="${id}" type="text" placeholder="Stop ${manualStopIds.length} address" value="${String(initialValue||"").replace(/"/g,"&quot;")}">
+    <input id="${id}" type="text" placeholder="Stop ${manualStopIds.length} address" value="${escHtml(String(initialValue||""))}">
     <button type="button" class="btn btn-ghost" title="Remove Stop" onclick="removeManualStop('${id}')">✖</button>
   `;
   wrap.appendChild(div);
 
-  attachAutocompleteToNewStop(id);
+  attachAutocompleteToInput($(id));
 }
 function removeManualStop(id){
-  const row = document.getElementById("row_" + id);
+  const row = $("row_" + id);
   if(row) row.remove();
   manualStopIds = manualStopIds.filter(x => x !== id);
 }
@@ -1035,37 +1106,37 @@ function clearManualStops(){
 }
 function getManualStopsList(){
   return manualStopIds
-    .map(id => (document.getElementById(id)?.value || "").trim())
+    .map(id => ($(id)?.value || "").trim())
     .filter(Boolean);
 }
 function clearManualRideForm(){
   ["manualRiderName","manualRiderPhone","manualPickup","manualGateCode","manualDropoff","manualTime","manualNotes"].forEach(id=>{
-    const el = document.getElementById(id);
+    const el = $(id);
     if(el) el.value = "";
   });
-  const pax = document.getElementById("manualPassengers");
+  const pax = $("manualPassengers");
   if(pax) pax.value = "1";
-  const airportToggle = document.getElementById("manualAirportToggle");
+  const airportToggle = $("manualAirportToggle");
   if(airportToggle) airportToggle.value = "auto";
-  const lug = document.getElementById("manualLuggageCount");
+  const lug = $("manualLuggageCount");
   if(lug) lug.value = "0";
   clearManualStops();
   syncManualLuggageVisibility();
 }
 
 async function createManualRide(){
-  const rider_name  = (document.getElementById("manualRiderName").value || "").trim();
-  const rider_phone_raw = (document.getElementById("manualRiderPhone").value || "").trim();
+  const rider_name  = ($("manualRiderName").value || "").trim();
+  const rider_phone_raw = ($("manualRiderPhone").value || "").trim();
   const rider_phone = normalizePhoneDigits(rider_phone_raw);
 
-  const pickup      = (document.getElementById("manualPickup").value || "").trim();
-  const dropoff     = (document.getElementById("manualDropoff").value || "").trim();
-  const time        = (document.getElementById("manualTime").value || "").trim();
-  const notes       = (document.getElementById("manualNotes").value || "").trim();
-  const gateCode    = (document.getElementById("manualGateCode").value || "").trim();
+  const pickup      = ($("manualPickup").value || "").trim();
+  const dropoff     = ($("manualDropoff").value || "").trim();
+  const time        = ($("manualTime").value || "").trim();
+  const notes       = ($("manualNotes").value || "").trim();
+  const gateCode    = ($("manualGateCode").value || "").trim();
 
-  const partySize = Number(document.getElementById("manualPassengers")?.value || "1");
-  const luggageCount = Number(document.getElementById("manualLuggageCount")?.value || "0");
+  const partySize = Number($("manualPassengers")?.value || "1");
+  const luggageCount = Number($("manualLuggageCount")?.value || "0");
   const stopsText = getManualStopsList();
 
   if(!rider_phone){ showToast("Rider phone required"); return; }
@@ -1105,36 +1176,9 @@ async function createManualRide(){
   }
 }
 
-/* Dispatch board */
-async function fetchBookings(){
-  try{
-    const r=await fetch(`${BOOKINGS_API}/api/driver/bookings?scope=${dispatchScope}&t=${Date.now()}`);
-    const data=await r.json();
-    renderAllBookings(Array.isArray(data) ? data : []);
-  }catch(e){
-    showToast("Dispatch sync failed");
-    log("Dispatch fetch error: "+e.message);
-  }
-}
-
-function resolveRiderIdFromBooking(b){
-  const a = b?.rider?.riderId; if(a) return a;
-  const b1 = b?.riderId; if(b1) return b1;
-  const c = b?.rider?.id; if(c) return c;
-  const d = b?.rider?.external_id; if(d) return d;
-  const e = b?.rider?.externalId; if(e) return e;
-  return "";
-}
-
-function escHtml(s){
-  return String(s ?? "")
-    .replace(/&/g,"&amp;")
-    .replace(/</g,"&lt;")
-    .replace(/>/g,"&gt;")
-    .replace(/"/g,"&quot;")
-    .replace(/'/g,"&#39;");
-}
-
+/* =========================
+   DISPATCH: FETCH + RENDER + STATUS UPDATE
+========================= */
 function fmtStops(stops){
   const arr = Array.isArray(stops) ? stops : [];
   const addrs = arr.map(x => (x?.address || "").trim()).filter(Boolean);
@@ -1142,8 +1186,45 @@ function fmtStops(stops){
   return addrs.map((a,i)=>`<div class="loc-line">🛑 Stop ${i+1}: ${escHtml(a)}</div>`).join("");
 }
 
+function statusDropdownHtml(current, bookingId){
+  const opts = DRIVER_STATUSES.map(s=>{
+    const sel = (s.value === current) ? "selected" : "";
+    return `<option value="${s.value}" ${sel}>${escHtml(s.label)}</option>`;
+  }).join("");
+  return `
+    <select class="status-dropdown" data-action="statusChange" data-id="${escHtml(bookingId)}" title="Change ride status">
+      ${opts}
+    </select>
+  `;
+}
+
+function quickChipsHtml(booking){
+  const directionsUrl = buildGoogleDirectionsUrl(booking);
+  const directionsBtn = directionsUrl
+    ? `<a class="chip primary" href="${escHtml(directionsUrl)}" target="_blank" rel="noopener">🧭 Directions</a>`
+    : ``;
+
+  const smsDigits = normalizePhoneDigits(booking?.rider?.phone || "");
+  const smsBtn = smsDigits
+    ? `<a class="chip" href="${escHtml(smsHrefWithBody(smsDigits, smsTemplateText("CONFIRM", booking)))}">💬 Text</a>`
+    : ``;
+
+  const riderLogin = buildRiderLoginLink(booking);
+  const riderBtn = riderLogin
+    ? `<a class="chip warn" href="${escHtml(riderLogin)}" target="_blank" rel="noopener">🔐 Rider Link</a>`
+    : ``;
+
+  return `
+    ${directionsBtn}
+    ${smsBtn}
+    ${riderBtn}
+    <span class="chip" data-action="copyId" data-id="${escHtml(booking.id)}">📋 Copy ID</span>
+    <span class="chip" data-action="openEdit" data-id="${escHtml(booking.id)}">✏️ Edit</span>
+  `;
+}
+
 function renderColumn(containerId, items){
-  const box = document.getElementById(containerId);
+  const box = $(containerId);
   if(!box) return;
 
   if(!Array.isArray(items) || items.length === 0){
@@ -1164,18 +1245,8 @@ function renderColumn(containerId, items){
     const manualTimeText = escHtml(b?.metadata?.manualTimeText || "");
     const notes = escHtml(b?.metadata?.notes || "");
 
-    const directionsUrl = buildGoogleDirectionsUrl(b);
-    const directionsBtn = directionsUrl
-      ? `<a class="chip primary" href="${escHtml(directionsUrl)}" target="_blank" rel="noopener">🧭 Directions</a>`
-      : ``;
-
-    const smsDigits = normalizePhoneDigits(b?.rider?.phone || "");
-    const smsBtn = smsDigits
-      ? `<a class="chip" href="${escHtml(smsHrefWithBody(smsDigits, smsTemplateText("CONFIRM", b)))}">💬 Text</a>`
-      : ``;
-
     return `
-      <div class="card" data-id="${id}">
+      <div class="card" data-id="${id}" data-action="cardTap">
         <div class="card-label-row">
           <div><strong>${riderName || "Rider"}</strong> ${riderPhone ? `• ${riderPhone}` : ""}</div>
           <span class="badge">${status}</span>
@@ -1195,9 +1266,8 @@ function renderColumn(containerId, items){
 
         <div class="card-footer">
           <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
-            ${directionsBtn}
-            ${smsBtn}
-            <span class="chip" onclick="copyText('${id}')">📋 Copy ID</span>
+            ${statusDropdownHtml(b.status, b.id)}
+            ${quickChipsHtml(b)}
           </div>
         </div>
       </div>
@@ -1209,90 +1279,408 @@ function renderAllBookings(list){
   bookingCache.clear();
   list.forEach(b => { if(b && b.id) bookingCache.set(String(b.id), b); });
 
-  const newArr=list.filter(b=>b.status==="REQUESTED");
-  const activeArr=list.filter(b=>["ACCEPTED","ENROUTE","ARRIVED","PICKED_UP"].includes(b.status));
-  const doneArr=list.filter(b=>["COMPLETED","CANCELLED"].includes(b.status));
-  renderColumn("listNew",newArr);
-  renderColumn("listActive",activeArr);
-  renderColumn("listDone",doneArr);
-  document.getElementById("countNew").textContent=newArr.length;
-  document.getElementById("countActive").textContent=activeArr.length;
-  document.getElementById("countDone").textContent=doneArr.length;
+  const newArr   = list.filter(b=>b.status==="REQUESTED");
+  const activeArr= list.filter(b=>["ACCEPTED","ENROUTE","ARRIVED","PICKED_UP"].includes(b.status));
+  const doneArr  = list.filter(b=>["COMPLETED","CANCELLED"].includes(b.status));
+
+  renderColumn("listNew", newArr);
+  renderColumn("listActive", activeArr);
+  renderColumn("listDone", doneArr);
+
+  $("countNew").textContent    = newArr.length;
+  $("countActive").textContent = activeArr.length;
+  $("countDone").textContent   = doneArr.length;
+
+  // Update scope button label
+  const scopeBtn = $("btnScope");
+  if(scopeBtn) scopeBtn.textContent = `📋 ${dispatchScope}`;
+
+  // If there are active trips, GPS interval tightens automatically
 }
 
-function copyText(txt){
+async function fetchBookings(){
   try{
-    navigator.clipboard.writeText(txt).then(()=>showToast("Copied"),()=>showToast("Copy failed"));
+    const r=await fetch(`${BOOKINGS_API}/api/driver/bookings?scope=${encodeURIComponent(dispatchScope)}&t=${Date.now()}`);
+    const data=await r.json();
+    renderAllBookings(Array.isArray(data) ? data : []);
   }catch(e){
-    showToast("Copy failed");
+    showToast("Dispatch sync failed");
+    log("Dispatch fetch error: "+e.message);
   }
 }
-window.copyText = copyText;
 
-/* Wire buttons */
-document.getElementById("updateStatusBtn").onclick=updateStatus;
-document.getElementById("prevImage").onclick=()=>setImage(imgIndex-1);
-document.getElementById("nextImage").onclick=()=>setImage(imgIndex+1);
-document.getElementById("prevCaption").onclick=()=>stepCaption(-1);
-document.getElementById("nextCaption").onclick=()=>stepCaption(1);
-document.getElementById("resetCaption").onclick=()=>applyTemplateToCaption("LIVE");
-document.getElementById("copyBtn").onclick=copyCaption;
-document.getElementById("postToLive").onclick=postToLive;
-document.getElementById("pushApplyTemplate").onclick=applyPushTemplate;
-document.getElementById("clearPush").onclick=clearPush;
-document.getElementById("sendBroadcastPush").onclick=handlePushBroadcast;
+/* Change booking status (driver) */
+async function updateBookingStatus(bookingId, newStatus){
+  if(!bookingId || !newStatus) return;
 
-document.getElementById("btnCreateManualRide").onclick=createManualRide;
-document.getElementById("btnClearManualRide").onclick=clearManualRideForm;
+  const booking = bookingCache.get(String(bookingId));
+  const prev = booking?.status;
 
-["pushTitle","pushMessage","pushUrl"].forEach(id=>{
-  const el=document.getElementById(id);
-  if(el) el.oninput=updPrev;
-});
+  try{
+    log(`Status change → ${bookingId}: ${prev} -> ${newStatus}`);
+    const r = await fetch(`${BOOKINGS_API}/api/driver/bookings/${encodeURIComponent(bookingId)}/status`,{
+      method:"PUT",
+      headers:{
+        "Content-Type":"application/json",
+        "X-Auth-Token": AUTH_SECRET
+      },
+      body: JSON.stringify({ status: newStatus })
+    });
 
-document.getElementById("btnRefreshPage").onclick=()=>location.reload(true);
-document.getElementById("btnDispatchRefresh").onclick=()=>{
-  fetchBookings();
-  showToast("Dispatch refreshed");
-};
-document.getElementById("btnModeToggle").onclick=()=>{
-  applyMode(currentMode==="admin"?"driver":"admin");
-};
+    const txt = await r.text();
+    log(`Booking status PUT ${r.status}: ${txt}`);
 
-/* Manual stops + luggage wiring */
-document.getElementById("manualAddStopBtn").addEventListener("click", ()=>addManualStopField(""));
-document.getElementById("manualClearStopsBtn").addEventListener("click", clearManualStops);
-["manualPickup","manualDropoff","manualAirportToggle"].forEach(id=>{
-  const el = document.getElementById(id);
-  if(el){
-    el.addEventListener("input", syncManualLuggageVisibility);
-    el.addEventListener("change", syncManualLuggageVisibility);
+    if(!r.ok){
+      showToast("Status update failed");
+      // revert dropdown visually by refetching
+      fetchBookings();
+      return;
+    }
+
+    showToast("Ride updated");
+
+    // Optional: notify rider via push worker if your backend doesn't already do it
+    // (You said rider push is sent on status update; if backend handles it, this is redundant)
+    // We'll only send if riderId exists AND you want front-end to do it.
+    // Comment/uncomment based on your preference:
+    // await maybeSendRiderStatusPush(bookingId, newStatus);
+
+    fetchBookings();
+  }catch(e){
+    log("updateBookingStatus error: "+e.message);
+    showToast("Status update error");
+    fetchBookings();
   }
-});
+}
 
-/* digits-only UX enforcement for phone fields (manual + edit) */
-window.addEventListener("load",()=>{
-  const phoneInput = document.getElementById("manualRiderPhone");
+/* Optional rider push on status change (safe/no-op if no riderId) */
+async function maybeSendRiderStatusPush(bookingId, newStatus){
+  const booking = bookingCache.get(String(bookingId));
+  if(!booking) return;
+
+  const riderId = resolveRiderIdFromBooking(booking);
+  if(!riderId) return;
+
+  const riderName = (booking?.rider?.name || "").trim();
+  const pickup = (booking?.pickup?.address || "").trim();
+  const title = "Big Red Update";
+  const msgMap = {
+    ACCEPTED:  `✅ ${riderName ? riderName + ", " : ""}I’ve accepted your request. I’ll head your way soon.`,
+    ENROUTE:   `🚗 ${riderName ? riderName + ", " : ""}I’m on the way to your pickup.`,
+    ARRIVED:   `📍 ${riderName ? riderName + ", " : ""}I’ve arrived at the pickup. Reply with where to pull in.`,
+    PICKED_UP: `👋 ${riderName ? riderName + ", " : ""}We’re on the way.`,
+    COMPLETED: `🏁 Trip completed. Thanks for riding local!`,
+    CANCELLED: `✖ Trip was cancelled. If you still need a connection, text RED.`,
+    REQUESTED: `🆕 Request received. I’ll confirm shortly.`,
+  };
+
+  const payload = {
+    type: "rider",
+    riderId,
+    title,
+    message: msgMap[newStatus] || `Update: ${newStatus}`,
+    url: HOME_URL
+  };
+
+  await sendPush(payload);
+}
+
+/* =========================
+   EDIT MODAL (ADMIN)
+========================= */
+function openEditModal(bookingId){
+  const b = bookingCache.get(String(bookingId));
+  if(!b){ showToast("Booking not found"); return; }
+
+  editingBookingId = String(bookingId);
+
+  $("editRideId").value = b.id || "";
+  $("editRideStatus").value = b.status || "";
+
+  $("editRiderName").value  = b?.rider?.name || "";
+  $("editRiderPhone").value = normalizePhoneDigits(b?.rider?.phone || "");
+
+  $("editPartySize").value  = String(b?.rider?.partySize ?? "1");
+  $("editLuggageCount").value = String(b?.metadata?.luggageCount ?? "0");
+
+  $("editPickup").value  = b?.pickup?.address || "";
+  $("editDropoff").value = b?.dropoff?.address || "";
+
+  const stopsArr = Array.isArray(b?.stops) ? b.stops : [];
+  const stopsLines = stopsArr.map(s=> (s?.address||"").trim()).filter(Boolean).join("\n");
+  $("editStops").value = stopsLines;
+
+  $("editScheduledFor").value = b?.scheduledFor || "";
+  $("editNotes").value = b?.metadata?.notes || "";
+  $("editManualTimeText").value = b?.metadata?.manualTimeText || "";
+
+  // ensure autocomplete attached for modal fields
+  attachAutocompleteToInput($("editPickup"));
+  attachAutocompleteToInput($("editDropoff"));
+
+  $("editOverlay").classList.add("show");
+  $("editOverlay").setAttribute("aria-hidden","false");
+}
+
+function closeEditModal(){
+  editingBookingId = null;
+  $("editOverlay").classList.remove("show");
+  $("editOverlay").setAttribute("aria-hidden","true");
+}
+
+async function saveEditModal(){
+  if(!editingBookingId){ showToast("No booking selected"); return; }
+
+  const rider_name = ($("editRiderName").value || "").trim();
+  const rider_phone = normalizePhoneDigits(($("editRiderPhone").value || "").trim());
+
+  const pickup  = ($("editPickup").value || "").trim();
+  const dropoff = ($("editDropoff").value || "").trim();
+
+  const partySize = Number(($("editPartySize").value || "1"));
+  const luggageCount = Number(($("editLuggageCount").value || "0"));
+
+  const scheduledFor = ($("editScheduledFor").value || "").trim();
+  const notes = ($("editNotes").value || "").trim();
+  const manualTimeText = ($("editManualTimeText").value || "").trim();
+
+  const stopsLines = ($("editStops").value || "")
+    .split("\n")
+    .map(s=>s.trim())
+    .filter(Boolean)
+    .slice(0,3);
+
+  if(!pickup || !dropoff){
+    showToast("Pickup + dropoff required");
+    return;
+  }
+  if(rider_phone && rider_phone.length !== 10){
+    showToast("Rider phone must be 10 digits");
+    return;
+  }
+
+  const payload = {
+    rider_name,
+    rider_phone,
+    pickup,
+    dropoff,
+    partySize: Number.isFinite(partySize) ? partySize : 1,
+    stops: stopsLines.map(a=>({ address:a })),
+    scheduledFor: scheduledFor || "",
+    metadata: {
+      notes,
+      manualTimeText,
+      luggageCount: Number.isFinite(luggageCount) ? luggageCount : 0
+    }
+  };
+
+  try{
+    log(`Admin edit PUT ${editingBookingId} … ${JSON.stringify(payload)}`);
+    const r = await fetch(`${BOOKINGS_API}/api/admin/bookings/${encodeURIComponent(editingBookingId)}`,{
+      method:"PUT",
+      headers:{
+        "Content-Type":"application/json",
+        "X-Admin-Secret": AUTH_SECRET
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const txt = await r.text();
+    log(`Admin edit response ${r.status}: ${txt}`);
+
+    if(!r.ok){
+      showToast("Save failed");
+      return;
+    }
+
+    showToast("Saved");
+    closeEditModal();
+    fetchBookings();
+  }catch(e){
+    log("saveEditModal error: "+e.message);
+    showToast("Save error");
+  }
+}
+
+function copyEditRiderLoginLink(){
+  if(!editingBookingId){ showToast("No ride selected"); return; }
+  const b = bookingCache.get(String(editingBookingId));
+  const link = buildRiderLoginLink(b);
+  if(!link){ showToast("No riderId on this booking"); return; }
+  copyText(link);
+}
+function copyEditDirectionsLink(){
+  if(!editingBookingId){ showToast("No ride selected"); return; }
+  const b = bookingCache.get(String(editingBookingId));
+  const link = buildGoogleDirectionsUrl(b);
+  if(!link){ showToast("Missing pickup/dropoff"); return; }
+  copyText(link);
+}
+
+/* =========================
+   SCOPE TOGGLE
+========================= */
+function toggleScope(){
+  dispatchScope = (dispatchScope === "active") ? "all" : "active";
+  localStorage.setItem("dispatchScope", dispatchScope);
+  $("btnScope").textContent = `📋 ${dispatchScope}`;
+  fetchBookings();
+  showToast(`Scope: ${dispatchScope}`);
+}
+
+/* =========================
+   EVENT DELEGATION (DISPATCH BOARD)
+========================= */
+function handleDispatchClick(e){
+  const target = e.target;
+
+  // Status dropdown change
+  if(target && target.matches('select[data-action="statusChange"]')){
+    const bookingId = target.getAttribute("data-id");
+    const newStatus = target.value;
+    updateBookingStatus(bookingId, newStatus);
+    e.stopPropagation();
+    return;
+  }
+
+  // Chips
+  const chip = target.closest && target.closest(".chip");
+  if(chip && chip.dataset && chip.dataset.action){
+    const action = chip.dataset.action;
+    const id = chip.dataset.id;
+    if(action === "copyId"){
+      copyText(id);
+      e.stopPropagation();
+      return;
+    }
+    if(action === "openEdit"){
+      if(currentMode !== "admin"){ showToast("Switch to Admin Mode to edit"); return; }
+      openEditModal(id);
+      e.stopPropagation();
+      return;
+    }
+  }
+
+  // Card tap opens edit (admin only)
+  const card = target.closest && target.closest(".card");
+  if(card && card.dataset && card.dataset.id){
+    if(currentMode === "admin"){
+      openEditModal(card.dataset.id);
+    }
+  }
+}
+
+/* =========================
+   WIRE BUTTONS
+========================= */
+function wireButtons(){
+  $("updateStatusBtn").onclick = updateStatus;
+
+  $("prevImage").onclick = ()=>setImage(imgIndex-1);
+  $("nextImage").onclick = ()=>setImage(imgIndex+1);
+
+  $("prevCaption").onclick = ()=>stepCaption(-1);
+  $("nextCaption").onclick = ()=>stepCaption(1);
+  $("resetCaption").onclick = ()=>applyTemplateToCaption("LIVE");
+
+  $("copyBtn").onclick = copyCaption;
+  $("postToLive").onclick = postToLive;
+
+  $("pushApplyTemplate").onclick = applyPushTemplate;
+  $("clearPush").onclick = clearPush;
+  $("sendBroadcastPush").onclick = handlePushBroadcast;
+
+  $("btnCreateManualRide").onclick = createManualRide;
+  $("btnClearManualRide").onclick = clearManualRideForm;
+
+  ["pushTitle","pushMessage","pushUrl"].forEach(id=>{
+    const el=$(id);
+    if(el) el.oninput=updPrev;
+  });
+
+  $("btnRefreshPage").onclick = ()=>location.reload(true);
+
+  $("btnDispatchRefresh").onclick = ()=>{
+    fetchBookings();
+    showToast("Dispatch refreshed");
+  };
+
+  $("btnScope").onclick = toggleScope;
+
+  $("btnModeToggle").onclick = ()=>{
+    applyMode(currentMode==="admin" ? "driver" : "admin");
+    showToast(`Mode: ${currentMode}`);
+  };
+
+  // Manual stops + luggage wiring
+  $("manualAddStopBtn").addEventListener("click", ()=>addManualStopField(""));
+  $("manualClearStopsBtn").addEventListener("click", clearManualStops);
+  ["manualPickup","manualDropoff","manualAirportToggle"].forEach(id=>{
+    const el = $(id);
+    if(el){
+      el.addEventListener("input", syncManualLuggageVisibility);
+      el.addEventListener("change", syncManualLuggageVisibility);
+    }
+  });
+
+  // digits-only UX enforcement for phone fields (manual + edit)
+  const phoneInput = $("manualRiderPhone");
   if(phoneInput){
     phoneInput.addEventListener("input", ()=>{ phoneInput.value = normalizePhoneDigits(phoneInput.value); });
   }
-  const editPhone = document.getElementById("editRiderPhone");
+  const editPhone = $("editRiderPhone");
   if(editPhone){
     editPhone.addEventListener("input", ()=>{ editPhone.value = normalizePhoneDigits(editPhone.value); });
   }
-});
 
+  // Modal buttons
+  $("editCloseBtn").onclick = closeEditModal;
+  $("editCancelBtn").onclick = closeEditModal;
+  $("editSaveBtn").onclick = saveEditModal;
+  $("editCopyLoginLinkBtn").onclick = copyEditRiderLoginLink;
+  $("editCopyDirectionsBtn").onclick = copyEditDirectionsLink;
+
+  // Click outside modal closes
+  $("editOverlay").addEventListener("click",(ev)=>{
+    if(ev.target === $("editOverlay")) closeEditModal();
+  });
+
+  // Dispatch click delegation
+  $("listNew").addEventListener("click", handleDispatchClick);
+  $("listActive").addEventListener("click", handleDispatchClick);
+  $("listDone").addEventListener("click", handleDispatchClick);
+
+  // ESC closes modal
+  document.addEventListener("keydown",(ev)=>{
+    if(ev.key === "Escape" && $("editOverlay").classList.contains("show")) closeEditModal();
+  });
+}
+
+/* =========================
+   BOOT
+========================= */
 window.addEventListener("load",()=>{
+  // mode + scope
   applyMode(currentMode);
+  $("btnScope").textContent = `📋 ${dispatchScope}`;
+
+  // initial UI
   updPrev();
   applyTemplateToCaption("LIVE");
-  loadImages();
+  setImage(0);
+
+  // load data
   loadStatus();
   loadLastCaption();
   fetchBookings();
-  setInterval(fetchBookings,20000);
+
+  // timers
+  setInterval(fetchBookings, 20000);
+
+  // init UX
   syncManualLuggageVisibility();
   initAddressAutocomplete();
+  wireButtons();
 });
 </script>
 
