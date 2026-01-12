@@ -1206,13 +1206,12 @@ function quickChipsHtml(booking){
 
   const smsDigits = normalizePhoneDigits(booking?.rider?.phone || "");
 
-  // ✅ SMS template buttons (back again)
-  const smsBtns = smsDigits ? `
-    <a class="chip" href="${escHtml(smsHrefWithBody(smsDigits, smsTemplateText("CONFIRM", booking)))}">💬 Confirm</a>
-    <a class="chip" href="${escHtml(smsHrefWithBody(smsDigits, smsTemplateText("OMW", booking)))}">🚗 OMW</a>
-    <a class="chip" href="${escHtml(smsHrefWithBody(smsDigits, smsTemplateText("ARRIVED", booking)))}">📍 Arrived</a>
-    <a class="chip" href="${escHtml(smsHrefWithBody(smsDigits, smsTemplateText("LATE", booking)))}">⏱ Running Late</a>
-  ` : ``;
+const smsBtns = smsDigits ? `
+  <span class="chip" data-action="copySms" data-template="CONFIRM" data-id="${escHtml(booking.id)}">💬 Confirm</span>
+  <span class="chip" data-action="copySms" data-template="OMW" data-id="${escHtml(booking.id)}">🚗 OMW</span>
+  <span class="chip" data-action="copySms" data-template="ARRIVED" data-id="${escHtml(booking.id)}">📍 Arrived</span>
+  <span class="chip" data-action="copySms" data-template="LATE" data-id="${escHtml(booking.id)}">⏱ Running Late</span>
+` : ``;
 
   const riderLogin = buildRiderLoginLink(booking);
   const riderBtn = riderLogin
