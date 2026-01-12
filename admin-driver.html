@@ -1322,7 +1322,7 @@ async function updateBookingStatus(bookingId, newStatus){
       method:"PUT",
       headers:{
         "Content-Type":"application/json",
-        "X-Auth-Secret": AUTH_SECRET
+        "X-Admin-Secret": AUTH_SECRET
       },
       body: JSON.stringify({ status: newStatus })
     });
@@ -1534,11 +1534,8 @@ function toggleScope(){
 function handleDispatchClick(e){
   const target = e.target;
 
-  // Status dropdown change
+  // If user taps the status dropdown, DO NOT update yet (iOS fires click before change)
   if(target && target.matches('select[data-action="statusChange"]')){
-    const bookingId = target.getAttribute("data-id");
-    const newStatus = target.value;
-    updateBookingStatus(bookingId, newStatus);
     e.stopPropagation();
     return;
   }
@@ -1569,6 +1566,17 @@ function handleDispatchClick(e){
     }
   }
 }
+function handleDispatchChange(e){
+  const target = e.target;
+
+  if(target && target.matches('select[data-action="statusChange"]')){
+    const bookingId = target.getAttribute("data-id");
+    const newStatus = target.value;
+    updateBookingStatus(bookingId, newStatus);
+    e.stopPropagation();
+  }
+}
+
 
 /* =========================
    WIRE BUTTONS
@@ -1649,7 +1657,10 @@ function wireButtons(){
   $("listNew").addEventListener("click", handleDispatchClick);
   $("listActive").addEventListener("click", handleDispatchClick);
   $("listDone").addEventListener("click", handleDispatchClick);
-
+  // ✅ Status dropdown should update on CHANGE (not click)
+  $("listNew").addEventListener("change", handleDispatchChange);
+  $("listActive").addEventListener("change", handleDispatchChange);
+  $("listDone").addEventListener("change", handleDispatchChange);
   // ESC closes modal
   document.addEventListener("keydown",(ev)=>{
     if(ev.key === "Escape" && $("editOverlay").classList.contains("show")) closeEditModal();
