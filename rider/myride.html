@@ -186,7 +186,7 @@ async function fetchRideById(id){
 
 /* ✅ Prefer rider list endpoint (if deployed), fallback to legacy driver list */
 async function fetchAllMine(){
-  if(!riderId) return [];
+  if(!riderId && !localStorage.getItem("riderPhone")) return [];
 
   // 1) Rider-safe endpoint (preferred)
   // NOTE: this assumes your worker supports one of these patterns.
