@@ -213,7 +213,12 @@ async function fetchAllMine(){
     if(!res.ok) return [];
     const all=await safeJson(res);
     const list = Array.isArray(all) ? all : [];
-    return list.filter(r=>r?.rider?.riderId===riderId);
+    const myPhone = String(localStorage.getItem("riderPhone") || "").replace(/\D/g,"").replace(/^1/,"");
+    return list.filter(r=>{
+      const rid = String(r?.rider?.riderId || "");
+      const rph = String(r?.rider?.phone || "").replace(/\D/g,"").replace(/^1/,"");
+      return (riderId && rid === riderId) || (myPhone && rph === myPhone);
+    });
   }catch(e){
     return [];
   }
