@@ -282,8 +282,7 @@ document.getElementById("menuBtn").onclick = () => {
 /* LOGOUT */
 document.getElementById("logoutBtn").onclick = (e) => {
   e.preventDefault();
-  localStorage.clear();
-  location.href = "/index.html";
+  window.forceLogout?.("manual") || (localStorage.clear(), location.href="/index.html");
 };
 
 /* WELCOME */
@@ -318,11 +317,163 @@ document.getElementById("welcomeName").textContent =
 </script>
 
 <script>
+/* ============================================================
+   AUTO LOGOUT + SESSION REFRESH (Rider Hub) — Option A
+   - Idle logout only if NO true active/near-term ride
+   - Hard cap ALWAYS applies
+   - End-of-day cap ALWAYS applies
+   ============================================================ */
+
+const LS_LAST_ACTIVE_AT   = "brc_last_active_at_v1";
+const LS_SESSION_CREATED  = "brc_session_created_at_v1";
+const LS_SESSION_EXPIRES  = "brc_session_expires_at_v1";
+
+const IDLE_LOGOUT_MS = 90 * 60 * 1000;           // 90 min idle
+const HARD_CAP_MS    = 12 * 60 * 60 * 1000;      // 12 hr hard cap
+const RES_ACTIVE_WINDOW_MS = 6 * 60 * 60 * 1000; // reservation counts "active-ish" only if within 6 hours
+
+const ACTIVE_NOW_STATUSES  = ["ENROUTE","ARRIVED","PICKED_UP"];
+const ACTIVE_SOON_STATUSES = ["REQUESTED","ACCEPTED"];
+
+// fed by the bookings fetch below
+window.__brc_has_active_for_session = false;
+
+function nowMs(){ return Date.now(); }
+function endOfLocalDayMs(){
+  const d = new Date();
+  d.setHours(23,59,59,999);
+  return d.getTime();
+}
+function parseIsoMs(iso){
+  if(!iso) return 0;
+  const t = Date.parse(iso);
+  return Number.isFinite(t) ? t : 0;
+}
+
+function bookingCountsAsActiveForSession(b){
+  const status = String(b?.status || "").toUpperCase();
+  const type   = String(b?.type || "").toUpperCase(); // INSTANT | RESERVATION (if present)
+  const now    = nowMs();
+
+  if (ACTIVE_NOW_STATUSES.includes(status)) return true;
+
+  if ((type === "INSTANT" || !type) && ACTIVE_SOON_STATUSES.includes(status)) return true;
+
+  if (type === "RESERVATION" && ACTIVE_SOON_STATUSES.includes(status)) {
+    const schedMs = parseIsoMs(b?.scheduledFor);
+    if (!schedMs) return false;
+    return (schedMs - now) <= RES_ACTIVE_WINDOW_MS;
+  }
+  return false;
+}
+
+function touchSession(){
+  const now = nowMs();
+
+  try { localStorage.setItem(LS_LAST_ACTIVE_AT, String(now)); } catch(e){}
+
+  const created = Number(localStorage.getItem(LS_SESSION_CREATED) || "0");
+  const expires = Number(localStorage.getItem(LS_SESSION_EXPIRES) || "0");
+
+  if (!created || !expires) {
+    const hardCapAt = now + HARD_CAP_MS;
+    const eodAt     = endOfLocalDayMs();
+    const expiresAt = Math.min(hardCapAt, eodAt);
+
+    try {
+      localStorage.setItem(LS_SESSION_CREATED, String(now));
+      localStorage.setItem(LS_SESSION_EXPIRES, String(expiresAt));
+    } catch(e){}
+  }
+}
+
+async function onesignalLogoutSafe(){
+  try {
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    OneSignalDeferred.push(async function(OneSignal){
+      try { await OneSignal.logout(); } catch(e){}
+    });
+  } catch(e){}
+}
+
+function clearRiderAuthStorage(){
+  const keysToRemove = [
+    "bigred_rider_profile_v1",
+    "riderId",
+    "riderName",
+    "lastRideId",
+    "brc_last_ride_id_v1",
+    LS_LAST_ACTIVE_AT,
+    LS_SESSION_CREATED,
+    LS_SESSION_EXPIRES
+  ];
+  try { keysToRemove.forEach(k => localStorage.removeItem(k)); } catch(e){}
+}
+
+window.forceLogout = async function(reason){
+  console.warn("🔒 Logout:", reason);
+  await onesignalLogoutSafe();
+  clearRiderAuthStorage();
+  try { sessionStorage.clear(); } catch(e){}
+  location.replace("/index.html");
+};
+
+function isLoggedIn(){
+  const raw = localStorage.getItem("bigred_rider_profile_v1");
+  if (!raw) return false;
+  try {
+    const p = JSON.parse(raw);
+    return !!p?.riderId;
+  } catch {
+    return false;
+  }
+}
+
+function shouldLogout(hasActiveForSession){
+  const now = nowMs();
+  const lastActive = Number(localStorage.getItem(LS_LAST_ACTIVE_AT) || "0");
+  const expiresAt  = Number(localStorage.getItem(LS_SESSION_EXPIRES) || "0");
+
+  // hard cap / end-of-day ALWAYS
+  if (expiresAt && now > expiresAt) return { yes:true, why:"hard_cap_or_eod" };
+
+  // idle logout only if NOT active-for-session
+  if (!hasActiveForSession && lastActive && (now - lastActive) > IDLE_LOGOUT_MS) {
+    return { yes:true, why:"idle_timeout" };
+  }
+  return { yes:false, why:"" };
+}
+
+/* --- Activity hooks (keeps session alive while they’re actually using the hub) --- */
+["click","keydown","scroll","touchstart"].forEach(evt => {
+  window.addEventListener(evt, () => touchSession(), { passive:true });
+});
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) touchSession();
+});
+
+/* --- Periodic enforcement --- */
+async function enforceSession(){
+  if (!isLoggedIn()) return;
+
+  touchSession();
+
+  const res = shouldLogout(!!window.__brc_has_active_for_session);
+  if (res.yes) await window.forceLogout(res.why);
+}
+
+window.addEventListener("load", () => {
+  touchSession();
+  enforceSession();
+  setInterval(enforceSession, 60 * 1000);
+});
+</script>
+
+<script>
 /* ✅ Active Ride Found Card */
 const BOOKINGS_API = "https://bigred-bookings.bigredtransportation.workers.dev";
 
 function getCanonicalRiderId(){
-  // Prefer canonical profile object
   const raw = localStorage.getItem("bigred_rider_profile_v1");
   if (raw) {
     try {
@@ -330,7 +481,6 @@ function getCanonicalRiderId(){
       if (p && p.riderId) return String(p.riderId);
     } catch {}
   }
-  // Backward compatibility
   const legacy = localStorage.getItem("riderId");
   return legacy ? String(legacy) : "";
 }
@@ -351,8 +501,16 @@ async function findActiveRideForRider(){
     const list = await resp.json();
     if(!Array.isArray(list)) return null;
 
-    const match = list.find(b => (b?.rider?.riderId === riderId) && isOpenStatus(b?.status));
-    return match || null;
+    const mine = list.filter(b => (b?.rider?.riderId === riderId) && isOpenStatus(b?.status));
+
+    try {
+      window.__brc_has_active_for_session = mine.some(bookingCountsAsActiveForSession);
+    } catch(e){
+      window.__brc_has_active_for_session = false;
+    }
+
+    return mine[0] || null;
+
   }catch(e){
     return null;
   }
@@ -384,7 +542,7 @@ function showActiveRideCard(booking){
 /* ============================================================
    Rider UX / PWA Enhancements (A)
    - Save to Home Screen guidance (iOS Safari only, informational)
-   - A.6 Enable Alerts UX (uses existing OneSignal wiring)
+   - Enable Alerts UX
    - Alerts status pill updates
    ============================================================ */
 
@@ -432,7 +590,7 @@ androidInstallBtn.addEventListener("click", async () => {
   androidInstallHelper.style.display = "none";
 });
 
-/* iOS A2HS helper (Safari only guidance; we can’t detect Safari perfectly, so we keep it iOS+not-standalone) */
+/* iOS A2HS helper */
 function updateA2HSHelper(){
   if (isIOS() && !isStandalone()) {
     const dismissed = (localStorage.getItem(LS_A2HS_DISMISSED) === "1");
@@ -457,7 +615,7 @@ async function refreshAlertsUI(){
     return;
   }
 
-  const perm = Notification.permission; // "default" | "granted" | "denied"
+  const perm = Notification.permission;
 
   if (perm === "granted") {
     setAlertsPill("ok","🔔 Alerts: ENABLED ✅");
@@ -473,7 +631,6 @@ async function refreshAlertsUI(){
     return;
   }
 
-  // default
   setAlertsPill("warn","🔔 Alerts: not enabled");
   alertsHelper.style.display = "block";
 
@@ -485,7 +642,6 @@ async function refreshAlertsUI(){
 }
 
 enableAlertsBtn.addEventListener("click", async () => {
-  // Only runs on user gesture
   try {
     window.OneSignalDeferred = window.OneSignalDeferred || [];
     OneSignalDeferred.push(async function(OneSignal){
@@ -508,7 +664,6 @@ enableAlertsBtn.addEventListener("click", async () => {
       setTimeout(refreshAlertsUI, 650);
     });
   } catch (e) {
-    // Fallback: native browser prompt
     try { await Notification.requestPermission(); } catch(_) {}
     refreshAlertsUI();
   }
@@ -518,7 +673,6 @@ enableAlertsBtn.addEventListener("click", async () => {
 window.addEventListener("load", () => {
   updateA2HSHelper();
   refreshAlertsUI();
-
   if (isStandalone()) a2hsHelper.style.display = "none";
 });
 </script>
@@ -551,7 +705,6 @@ OneSignalDeferred.push(async function(OneSignal){
 
     console.log("✅ Rider push identity ACTIVE:", profile.riderId);
 
-    // After init/login, refresh the pill again (in case permission state changed)
     setTimeout(() => {
       try {
         if ("Notification" in window) {
