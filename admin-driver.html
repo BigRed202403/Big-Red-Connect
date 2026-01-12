@@ -139,8 +139,14 @@ body.mode-admin .driver-only{display:none;}
   justify-content:center;
   z-index:999;
   padding:16px;
+
+  /* ✅ allow scrolling when modal is taller than screen */
+  overflow:auto;
+  -webkit-overflow-scrolling:touch;
 }
 .modalOverlay.show{ display:flex; }
+
+/* ✅ Make modal box never exceed viewport; allow internal scroll */
 .modalBox{
   width:min(760px, 96vw);
   background:#0b0b0b;
@@ -148,16 +154,19 @@ body.mode-admin .driver-only{display:none;}
   border-radius:12px;
   padding:12px;
   box-shadow: 0 18px 40px rgba(0,0,0,.55);
+
+  /* ✅ key parts */
+  max-height: calc(100vh - 32px);
+  overflow:auto;
+  -webkit-overflow-scrolling:touch;
 }
 .modalTop{
-  display:flex;
-  justify-content:space-between;
-  gap:10px;
-  align-items:center;
-  border-bottom:1px solid #222;
-  padding-bottom:8px;
-  margin-bottom:10px;
+  position: sticky;
+  top: 0;
+  background:#0b0b0b;
+  z-index: 5;
 }
+body.modal-open{ overflow:hidden; }
 .modalTitle{
   font-weight:800;
   font-size:.95rem;
@@ -1422,8 +1431,10 @@ function openEditModal(bookingId){
   attachAutocompleteToInput($("editPickup"));
   attachAutocompleteToInput($("editDropoff"));
 
+  document.body.classList.add("modal-open");
   $("editOverlay").classList.add("show");
   $("editOverlay").setAttribute("aria-hidden","false");
+  document.body.classList.remove("modal-open");
 }
 
 function closeEditModal(){
