@@ -1449,13 +1449,13 @@ async function saveEditModal(){
   const rider_name = ($("editRiderName").value || "").trim();
   const rider_phone = normalizePhoneDigits(($("editRiderPhone").value || "").trim());
 
-  const pickup  = ($("editPickup").value || "").trim();
-  const dropoff = ($("editDropoff").value || "").trim();
+  const pickupAddr  = ($("editPickup").value || "").trim();
+  const dropoffAddr = ($("editDropoff").value || "").trim();
 
   const partySize = Number(($("editPartySize").value || "1"));
   const luggageCount = Number(($("editLuggageCount").value || "0"));
 
-  const scheduledFor = ($("editScheduledFor").value || "").trim();
+  const scheduledForRaw = ($("editScheduledFor").value || "").trim(); // ISO or blank
   const notes = ($("editNotes").value || "").trim();
   const manualTimeText = ($("editManualTimeText").value || "").trim();
 
@@ -1465,7 +1465,7 @@ async function saveEditModal(){
     .filter(Boolean)
     .slice(0,3);
 
-  if(!pickup || !dropoff){
+  if(!pickupAddr || !dropoffAddr){
     showToast("Pickup + dropoff required");
     return;
   }
@@ -1474,14 +1474,17 @@ async function saveEditModal(){
     return;
   }
 
+  // ✅ MATCH WORKER SHAPE
   const payload = {
-    rider_name,
-    rider_phone,
-    pickup,
-    dropoff,
-    partySize: Number.isFinite(partySize) ? partySize : 1,
-    stops: stopsLines.map(a=>({ address:a })),
-    scheduledFor: scheduledFor || "",
+    pickup:  { address: pickupAddr },
+    dropoff: { address: dropoffAddr },
+    stops: stopsLines.map(a => ({ address: a })),
+    scheduledFor: scheduledForRaw ? scheduledForRaw : null,
+    rider: {
+      name: rider_name,
+      phone: rider_phone,
+      partySize: Number.isFinite(partySize) && partySize > 0 ? partySize : 1
+    },
     metadata: {
       notes,
       manualTimeText,
@@ -1490,12 +1493,14 @@ async function saveEditModal(){
   };
 
   try{
-    log(`Admin edit PUT ${editingBookingId} … ${JSON.stringify(payload)}`);
-    const r = await fetch(`${BOOKINGS_API}/api/admin/bookings/${encodeURIComponent(editingBookingId)}`,{
+    log(`Admin edit PUT (driver endpoint) ${editingBookingId} … ${JSON.stringify(payload)}`);
+
+    // ✅ Correct endpoint that exists in worker:
+    const r = await fetch(`${BOOKINGS_API}/api/driver/bookings/${encodeURIComponent(editingBookingId)}`,{
       method:"PUT",
       headers:{
         "Content-Type":"application/json",
-        "X-Admin-Secret": AUTH_SECRET
+        "X-Admin-Secret": AUTH_SECRET  // ✅ correct auth header for core edits
       },
       body: JSON.stringify(payload)
     });
