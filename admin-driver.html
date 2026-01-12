@@ -666,6 +666,38 @@ function copyText(txt){
 window.copyText = copyText;
 
 /* =========================
+   NOTIFY PREF (for rider cards)
+========================= */
+function normalizeNotifyPref(v){
+  const s = String(v || "").toLowerCase().trim();
+  return (s === "sms" || s === "push" || s === "both") ? s : "";
+}
+function prettyNotifyPref(v){
+  const n = normalizeNotifyPref(v);
+  if(n === "both") return "Both (SMS + Push)";
+  if(n === "sms")  return "SMS only";
+  if(n === "push") return "Push preferred";
+  return "—";
+}
+/* Best-effort extraction from booking shape(s) */
+function getNotifyPrefFromBooking(b){
+  // common candidates across versions
+  const candidates = [
+    b?.notifyPref,
+    b?.rider?.notifyPref,
+    b?.riderProfile?.notifyPref,
+    b?.metadata?.notifyPref,
+    b?.rider?.preferences?.notifyPref,
+    b?.preferences?.notifyPref
+  ];
+  for(const c of candidates){
+    const n = normalizeNotifyPref(c);
+    if(n) return n;
+  }
+  return "";
+}
+
+/* =========================
    MODE TOGGLE
 ========================= */
 function applyMode(mode){
@@ -1215,12 +1247,12 @@ function quickChipsHtml(booking){
 
   const smsDigits = normalizePhoneDigits(booking?.rider?.phone || "");
 
-const smsBtns = smsDigits ? `
-  <span class="chip" data-action="copySms" data-template="CONFIRM" data-id="${escHtml(booking.id)}">💬 Confirm</span>
-  <span class="chip" data-action="copySms" data-template="OMW" data-id="${escHtml(booking.id)}">🚗 OMW</span>
-  <span class="chip" data-action="copySms" data-template="ARRIVED" data-id="${escHtml(booking.id)}">📍 Arrived</span>
-  <span class="chip" data-action="copySms" data-template="LATE" data-id="${escHtml(booking.id)}">⏱ Running Late</span>
-` : ``;
+  const smsBtns = smsDigits ? `
+    <span class="chip" data-action="copySms" data-template="CONFIRM" data-id="${escHtml(booking.id)}">💬 Confirm</span>
+    <span class="chip" data-action="copySms" data-template="OMW" data-id="${escHtml(booking.id)}">🚗 OMW</span>
+    <span class="chip" data-action="copySms" data-template="ARRIVED" data-id="${escHtml(booking.id)}">📍 Arrived</span>
+    <span class="chip" data-action="copySms" data-template="LATE" data-id="${escHtml(booking.id)}">⏱ Running Late</span>
+  ` : ``;
 
   const riderLogin = buildRiderLoginLink(booking);
   const riderBtn = riderLogin
@@ -1258,6 +1290,9 @@ function renderColumn(containerId, items){
     const manualTimeText = escHtml(b?.metadata?.manualTimeText || "");
     const notes = escHtml(b?.metadata?.notes || "");
 
+    const notifyPrefRaw = getNotifyPrefFromBooking(b);
+    const notifyPrefLabel = escHtml(prettyNotifyPref(notifyPrefRaw));
+
     return `
       <div class="card" data-id="${id}" data-action="cardTap">
         <div class="card-label-row">
@@ -1266,6 +1301,8 @@ function renderColumn(containerId, items){
         </div>
 
         ${partySize ? `<div class="loc-line">👥 Party: ${partySize}</div>` : ""}
+
+        <div class="loc-line">🔔 Notify: ${notifyPrefLabel}</div>
 
         <div class="loc-line">📍 Pickup: ${pickup || "—"}</div>
         ${fmtStops(b?.stops)}
@@ -1283,7 +1320,7 @@ function renderColumn(containerId, items){
             ${quickChipsHtml(b)}
           </div>
         </div>
-      </div>
+ remember:  </div>
     `;
   }).join("");
 }
@@ -1351,51 +1388,12 @@ async function updateBookingStatus(bookingId, newStatus){
     }
 
     showToast("Ride updated");
-
-    // Optional: notify rider via push worker if your backend doesn't already do it
-    // (You said rider push is sent on status update; if backend handles it, this is redundant)
-    // We'll only send if riderId exists AND you want front-end to do it.
-    // Comment/uncomment based on your preference:
-    // await maybeSendRiderStatusPush(bookingId, newStatus);
-
     fetchBookings();
   }catch(e){
     log("updateBookingStatus error: "+e.message);
     showToast("Status update error");
     fetchBookings();
   }
-}
-
-/* Optional rider push on status change (safe/no-op if no riderId) */
-async function maybeSendRiderStatusPush(bookingId, newStatus){
-  const booking = bookingCache.get(String(bookingId));
-  if(!booking) return;
-
-  const riderId = resolveRiderIdFromBooking(booking);
-  if(!riderId) return;
-
-  const riderName = (booking?.rider?.name || "").trim();
-  const pickup = (booking?.pickup?.address || "").trim();
-  const title = "Big Red Update";
-  const msgMap = {
-    ACCEPTED:  `✅ ${riderName ? riderName + ", " : ""}I’ve accepted your request. I’ll head your way soon.`,
-    ENROUTE:   `🚗 ${riderName ? riderName + ", " : ""}I’m on the way to your pickup.`,
-    ARRIVED:   `📍 ${riderName ? riderName + ", " : ""}I’ve arrived at the pickup. Reply with where to pull in.`,
-    PICKED_UP: `👋 ${riderName ? riderName + ", " : ""}We’re on the way.`,
-    COMPLETED: `🏁 Trip completed. Thanks for riding local!`,
-    CANCELLED: `✖ Trip was cancelled. If you still need a connection, text RED.`,
-    REQUESTED: `🆕 Request received. I’ll confirm shortly.`,
-  };
-
-  const payload = {
-    type: "rider",
-    riderId,
-    title,
-    message: msgMap[newStatus] || `Update: ${newStatus}`,
-    url: HOME_URL
-  };
-
-  await sendPush(payload);
 }
 
 /* =========================
@@ -1563,13 +1561,13 @@ function handleDispatchClick(e){
   // Chips
   const chip = target.closest && target.closest(".chip");
   if(chip){
-    // ✅ If it's a real link (Directions / SMS / Rider Link), let it work and don't open the card
+    // ✅ If it's a real link (Directions / Rider Link), let it work and don't open the card
     if(chip.tagName === "A" && chip.getAttribute("href")){
       e.stopPropagation();
       return;
     }
 
-    // Existing dataset-action chips (Copy ID / Edit)
+    // Dataset-action chips (Copy ID / SMS / Edit)
     if(chip.dataset && chip.dataset.action){
       const action = chip.dataset.action;
       const id = chip.dataset.id;
@@ -1579,6 +1577,23 @@ function handleDispatchClick(e){
         e.stopPropagation();
         return;
       }
+
+      /* ✅ FIX: SMS template chips should COPY, not open edit */
+      if(action === "copySms"){
+        const templateKey = chip.dataset.template || "CONFIRM";
+        const booking = bookingCache.get(String(id));
+        if(!booking){
+          showToast("Ride not found");
+          e.stopPropagation();
+          return;
+        }
+        const txt = smsTemplateText(templateKey, booking);
+        copyText(txt);
+        showToast("SMS template copied");
+        e.stopPropagation();
+        return;
+      }
+
       if(action === "openEdit"){
         if(currentMode !== "admin"){ showToast("Switch to Admin Mode to edit"); return; }
         openEditModal(id);
@@ -1586,6 +1601,9 @@ function handleDispatchClick(e){
         return;
       }
     }
+
+    e.stopPropagation();
+    return;
   }
 
   // Card tap opens edit (admin only)
@@ -1606,7 +1624,6 @@ function handleDispatchChange(e){
     e.stopPropagation();
   }
 }
-
 
 /* =========================
    WIRE BUTTONS
