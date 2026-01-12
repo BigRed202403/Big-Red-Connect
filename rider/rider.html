@@ -94,7 +94,6 @@
       border:1px solid #333;
     }
 
-    /* ✅ Active Ride Found Card */
     .card {
       max-width:340px;
       margin:0 auto 16px;
@@ -127,7 +126,6 @@
       border-radius:10px;
     }
 
-    /* ✅ Helpers */
     .helper {
       max-width:340px;
       margin:0 auto 16px;
@@ -174,7 +172,6 @@
       line-height:1.3rem;
     }
 
-    /* A2HS dismiss button styling uses existing .btn-secondary; keep it smaller */
     .btn-smallish{
       padding:12px 14px;
       font-size:1rem;
@@ -209,51 +206,25 @@
   <h1>Welcome</h1>
   <div id="welcomeName" class="welcome"></div>
 
-  <!-- ✅ Alerts Status Pill -->
   <div id="alertsPill" class="pillline">🔔 Alerts: checking…</div>
 
-  <!-- ✅ Add to Home Screen helper (iPhone/iPad guidance) -->
   <div id="a2hsHelper" class="helper" style="display:none;">
     <h2>Save to Home Screen</h2>
-    <p>
-      For the best iPhone experience (and to help alerts work reliably), save Big Red Connect as an app on your Home Screen.
-    </p>
+    <p>For the best iPhone experience, save Big Red Connect to your Home Screen.</p>
     <ol class="steps">
-      <li>Open this page in <b>Safari</b></li>
-      <li>Tap <b>Share</b> (square with arrow)</li>
+      <li>Open in <b>Safari</b></li>
+      <li>Tap <b>Share</b></li>
       <li>Tap <b>Add to Home Screen</b></li>
     </ol>
-    <div style="margin-top:10px;">
-      <button id="a2hsDismissBtn" class="btn btn-secondary btn-smallish" type="button">Got it</button>
-    </div>
-    <p class="mini" style="margin-top:10px;">
-      Already installed? You can ignore this.
-    </p>
+    <button id="a2hsDismissBtn" class="btn btn-secondary btn-smallish">Got it</button>
   </div>
 
-  <!-- ✅ Android Install helper (only shows if beforeinstallprompt fires) -->
-  <div id="androidInstallHelper" class="helper" style="display:none;">
-    <h2>Install the App</h2>
-    <p>
-      Install Big Red Connect for faster access and better alerts.
-    </p>
-    <button id="androidInstallBtn" class="btn" type="button">➕ Install Big Red Connect</button>
-    <p class="mini" style="margin-top:10px;">
-      If Install doesn’t appear, use your browser menu → <b>Install app</b> / <b>Add to Home screen</b>.
-    </p>
-  </div>
-
-  <!-- ✅ Enable Alerts Helper (only shown when useful) -->
   <div id="alertsHelper" class="helper" style="display:none;">
     <h2>Enable Alerts</h2>
-    <p>
-      Turn on notifications so you get updates like <b>Accepted</b>, <b>On the way</b>, and <b>Arrived</b>.
-    </p>
-    <button id="enableAlertsBtn" class="btn" type="button">🔔 Enable Alerts</button>
-    <div class="mini" id="alertsNote" style="margin-top:8px;"></div>
+    <button id="enableAlertsBtn" class="btn">🔔 Enable Alerts</button>
+    <div id="alertsNote" class="mini"></div>
   </div>
 
-  <!-- ✅ Active Ride Found Card (hidden unless an open ride is found) -->
   <div id="activeRideCard" class="card" style="display:none;">
     <div class="card-title">🚗 Active Ride Found</div>
     <div id="activeRideDetails" class="card-sub">Loading…</div>
@@ -262,470 +233,12 @@
 
   <a class="btn" href="/rider/ride-request.html">Request a Ride</a>
   <a class="btn" href="/rider/myride.html">My Ride</a>
-
-  <!-- ✅ Repeat Last Ride -->
-  <button class="btn btn-secondary" id="repeatLastRideBtn" type="button">🔁 Repeat Last Ride</button>
-
-  <!-- ✅ Leave a Review -->
+  <button class="btn btn-secondary" id="repeatLastRideBtn">🔁 Repeat Last Ride</button>
   <a class="btn btn-secondary" href="/reviews#leave-review">⭐ Leave a Review</a>
-
   <a class="btn btn-secondary" href="/rider/profile.html">Profile</a>
 </div>
 
-<script>
-/* MENU */
-document.getElementById("menuBtn").onclick = () => {
-  const p = document.getElementById("menuPanel");
-  p.style.display = p.style.display === "flex" ? "none" : "flex";
-};
-
-/* LOGOUT */
-document.getElementById("logoutBtn").onclick = (e) => {
-  e.preventDefault();
-  window.forceLogout?.("manual") || (localStorage.clear(), location.href="/index.html");
-};
-
-/* WELCOME */
-const n = localStorage.getItem("riderName");
-document.getElementById("welcomeName").textContent =
-  n ? `Hi ${n}, let’s get you moving.` : `Let’s get you moving.`;
-</script>
-
-<script>
-/* ✅ Repeat Last Ride */
-(function initRepeatLastRide(){
-  const LS_LAST_RIDE_ID = "brc_last_ride_id_v1";
-  const btn = document.getElementById("repeatLastRideBtn");
-  if(!btn) return;
-
-  function getLastRideId(){
-    const v1 = (localStorage.getItem(LS_LAST_RIDE_ID) || "").trim();
-    if(v1) return v1;
-    const legacy = (localStorage.getItem("lastRideId") || "").trim();
-    return legacy || "";
-  }
-
-  btn.addEventListener("click", () => {
-    const id = getLastRideId();
-    if(!id){
-      alert("No past ride found yet. Request your first ride, then you’ll be able to repeat it here.");
-      return;
-    }
-    window.location.href = "/rider/ride-request.html?repeat=" + encodeURIComponent(id);
-  });
-})();
-</script>
-
-<script>
-/* ============================================================
-   AUTO LOGOUT + SESSION REFRESH (Rider Hub) — Option A
-   - Idle logout only if NO true active/near-term ride
-   - Hard cap ALWAYS applies
-   - End-of-day cap ALWAYS applies
-   ============================================================ */
-
-const LS_LAST_ACTIVE_AT   = "brc_last_active_at_v1";
-const LS_SESSION_CREATED  = "brc_session_created_at_v1";
-const LS_SESSION_EXPIRES  = "brc_session_expires_at_v1";
-
-const IDLE_LOGOUT_MS = 90 * 60 * 1000;           // 90 min idle
-const HARD_CAP_MS    = 12 * 60 * 60 * 1000;      // 12 hr hard cap
-const RES_ACTIVE_WINDOW_MS = 6 * 60 * 60 * 1000; // reservation counts "active-ish" only if within 6 hours
-
-const ACTIVE_NOW_STATUSES  = ["ENROUTE","ARRIVED","PICKED_UP"];
-const ACTIVE_SOON_STATUSES = ["REQUESTED","ACCEPTED"];
-
-// fed by the bookings fetch below
-window.__brc_has_active_for_session = false;
-
-function nowMs(){ return Date.now(); }
-function endOfLocalDayMs(){
-  const d = new Date();
-  d.setHours(23,59,59,999);
-  return d.getTime();
-}
-function parseIsoMs(iso){
-  if(!iso) return 0;
-  const t = Date.parse(iso);
-  return Number.isFinite(t) ? t : 0;
-}
-
-function bookingCountsAsActiveForSession(b){
-  const status = String(b?.status || "").toUpperCase();
-  const type   = String(b?.type || "").toUpperCase(); // INSTANT | RESERVATION (if present)
-  const now    = nowMs();
-
-  if (ACTIVE_NOW_STATUSES.includes(status)) return true;
-
-  if ((type === "INSTANT" || !type) && ACTIVE_SOON_STATUSES.includes(status)) return true;
-
-  if (type === "RESERVATION" && ACTIVE_SOON_STATUSES.includes(status)) {
-    const schedMs = parseIsoMs(b?.scheduledFor);
-    if (!schedMs) return false;
-    return (schedMs - now) <= RES_ACTIVE_WINDOW_MS;
-  }
-  return false;
-}
-
-function touchSession(){
-  const now = nowMs();
-
-  try { localStorage.setItem(LS_LAST_ACTIVE_AT, String(now)); } catch(e){}
-
-  const created = Number(localStorage.getItem(LS_SESSION_CREATED) || "0");
-  const expires = Number(localStorage.getItem(LS_SESSION_EXPIRES) || "0");
-
-  if (!created || !expires) {
-    const hardCapAt = now + HARD_CAP_MS;
-    const eodAt     = endOfLocalDayMs();
-    const expiresAt = Math.min(hardCapAt, eodAt);
-
-    try {
-      localStorage.setItem(LS_SESSION_CREATED, String(now));
-      localStorage.setItem(LS_SESSION_EXPIRES, String(expiresAt));
-    } catch(e){}
-  }
-}
-
-async function onesignalLogoutSafe(){
-  try {
-    window.OneSignalDeferred = window.OneSignalDeferred || [];
-    OneSignalDeferred.push(async function(OneSignal){
-      try { await OneSignal.logout(); } catch(e){}
-    });
-  } catch(e){}
-}
-
-function clearRiderAuthStorage(){
-  const keysToRemove = [
-    "bigred_rider_profile_v1",
-    "riderId",
-    "riderName",
-    "lastRideId",
-    "brc_last_ride_id_v1",
-    LS_LAST_ACTIVE_AT,
-    LS_SESSION_CREATED,
-    LS_SESSION_EXPIRES
-  ];
-  try { keysToRemove.forEach(k => localStorage.removeItem(k)); } catch(e){}
-}
-
-window.forceLogout = async function(reason){
-  console.warn("🔒 Logout:", reason);
-  await onesignalLogoutSafe();
-  clearRiderAuthStorage();
-  try { sessionStorage.clear(); } catch(e){}
-  location.replace("/index.html");
-};
-
-function isLoggedIn(){
-  const raw = localStorage.getItem("bigred_rider_profile_v1");
-  if (!raw) return false;
-  try {
-    const p = JSON.parse(raw);
-    return !!p?.riderId;
-  } catch {
-    return false;
-  }
-}
-
-function shouldLogout(hasActiveForSession){
-  const now = nowMs();
-  const lastActive = Number(localStorage.getItem(LS_LAST_ACTIVE_AT) || "0");
-  const expiresAt  = Number(localStorage.getItem(LS_SESSION_EXPIRES) || "0");
-
-  // hard cap / end-of-day ALWAYS
-  if (expiresAt && now > expiresAt) return { yes:true, why:"hard_cap_or_eod" };
-
-  // idle logout only if NOT active-for-session
-  if (!hasActiveForSession && lastActive && (now - lastActive) > IDLE_LOGOUT_MS) {
-    return { yes:true, why:"idle_timeout" };
-  }
-  return { yes:false, why:"" };
-}
-
-/* --- Activity hooks (keeps session alive while they’re actually using the hub) --- */
-["click","keydown","scroll","touchstart"].forEach(evt => {
-  window.addEventListener(evt, () => touchSession(), { passive:true });
-});
-document.addEventListener("visibilitychange", () => {
-  if (!document.hidden) touchSession();
-});
-
-/* --- Periodic enforcement --- */
-async function enforceSession(){
-  if (!isLoggedIn()) return;
-
-  touchSession();
-
-  const res = shouldLogout(!!window.__brc_has_active_for_session);
-  if (res.yes) await window.forceLogout(res.why);
-}
-
-window.addEventListener("load", () => {
-  touchSession();
-  enforceSession();
-  setInterval(enforceSession, 60 * 1000);
-});
-</script>
-
-<script>
-/* ✅ Active Ride Found Card */
-const BOOKINGS_API = "https://bigred-bookings.bigredtransportation.workers.dev";
-
-function getCanonicalRiderId(){
-  const raw = localStorage.getItem("bigred_rider_profile_v1");
-  if (raw) {
-    try {
-      const p = JSON.parse(raw);
-      if (p && p.riderId) return String(p.riderId);
-    } catch {}
-  }
-  const legacy = localStorage.getItem("riderId");
-  return legacy ? String(legacy) : "";
-}
-
-function isOpenStatus(s){
-  const st = String(s || "").toUpperCase();
-  return ["REQUESTED","ACCEPTED","ENROUTE","ARRIVED","PICKED_UP"].includes(st);
-}
-
-async function findActiveRideForRider(){
-  const riderId = getCanonicalRiderId();
-  if (!riderId) return null;
-
-  try{
-    const resp = await fetch(`${BOOKINGS_API}/api/driver/bookings?scope=active&t=${Date.now()}`);
-    if(!resp.ok) return null;
-
-    const list = await resp.json();
-    if(!Array.isArray(list)) return null;
-
-    const mine = list.filter(b => (b?.rider?.riderId === riderId) && isOpenStatus(b?.status));
-
-    try {
-      window.__brc_has_active_for_session = mine.some(bookingCountsAsActiveForSession);
-    } catch(e){
-      window.__brc_has_active_for_session = false;
-    }
-
-    return mine[0] || null;
-
-  }catch(e){
-    return null;
-  }
-}
-
-function showActiveRideCard(booking){
-  const card = document.getElementById("activeRideCard");
-  const details = document.getElementById("activeRideDetails");
-  const btn = document.getElementById("openMyRideBtn");
-
-  const status = String(booking?.status || "").toUpperCase() || "—";
-  const pickup = booking?.pickup?.address || "—";
-  const dropoff = booking?.dropoff?.address || "—";
-  const rideId = booking?.id || "";
-
-  details.textContent = `Status: ${status} • From: ${pickup} • To: ${dropoff}`;
-  btn.href = rideId ? `/rider/myride.html?id=${encodeURIComponent(rideId)}` : "/rider/myride.html";
-
-  card.style.display = "block";
-}
-
-(async function initActiveRideCard(){
-  const b = await findActiveRideForRider();
-  if (b) showActiveRideCard(b);
-})();
-</script>
-
-<script>
-/* ============================================================
-   Rider UX / PWA Enhancements (A)
-   - Save to Home Screen guidance (iOS Safari only, informational)
-   - Enable Alerts UX
-   - Alerts status pill updates
-   ============================================================ */
-
-function isIOS(){
-  return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-}
-function isStandalone(){
-  return (window.navigator.standalone === true) ||
-         (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches);
-}
-
-const LS_A2HS_DISMISSED = "brc_a2hs_dismissed_v1";
-
-const alertsPill = document.getElementById("alertsPill");
-const alertsHelper = document.getElementById("alertsHelper");
-const alertsNote = document.getElementById("alertsNote");
-const enableAlertsBtn = document.getElementById("enableAlertsBtn");
-
-const a2hsHelper = document.getElementById("a2hsHelper");
-const a2hsDismissBtn = document.getElementById("a2hsDismissBtn");
-
-const androidInstallHelper = document.getElementById("androidInstallHelper");
-const androidInstallBtn = document.getElementById("androidInstallBtn");
-
-let deferredInstallPrompt = null;
-
-function setAlertsPill(state, text){
-  alertsPill.classList.remove("ok","warn","bad");
-  if (state) alertsPill.classList.add(state);
-  alertsPill.textContent = text;
-}
-
-/* Android install prompt capture */
-window.addEventListener("beforeinstallprompt", (e) => {
-  e.preventDefault();
-  deferredInstallPrompt = e;
-  if (!isStandalone()) androidInstallHelper.style.display = "block";
-});
-
-androidInstallBtn.addEventListener("click", async () => {
-  if (!deferredInstallPrompt) return;
-  deferredInstallPrompt.prompt();
-  try { await deferredInstallPrompt.userChoice; } catch {}
-  deferredInstallPrompt = null;
-  androidInstallHelper.style.display = "none";
-});
-
-/* iOS A2HS helper */
-function updateA2HSHelper(){
-  if (isIOS() && !isStandalone()) {
-    const dismissed = (localStorage.getItem(LS_A2HS_DISMISSED) === "1");
-    a2hsHelper.style.display = dismissed ? "none" : "block";
-  } else {
-    a2hsHelper.style.display = "none";
-  }
-}
-
-a2hsDismissBtn.addEventListener("click", () => {
-  try { localStorage.setItem(LS_A2HS_DISMISSED, "1"); } catch(e) {}
-  a2hsHelper.style.display = "none";
-});
-
-/* Alerts helper + pill */
-async function refreshAlertsUI(){
-  alertsHelper.style.display = "none";
-  alertsNote.textContent = "";
-
-  if (!("Notification" in window)) {
-    setAlertsPill("bad","🔔 Alerts: not supported on this device");
-    return;
-  }
-
-  const perm = Notification.permission;
-
-  if (perm === "granted") {
-    setAlertsPill("ok","🔔 Alerts: ENABLED ✅");
-    return;
-  }
-
-  if (perm === "denied") {
-    setAlertsPill("bad","🔔 Alerts: blocked (needs settings)");
-    alertsHelper.style.display = "block";
-    alertsNote.innerHTML = isIOS()
-      ? `Notifications are blocked. Try: Settings → Notifications → Safari (if available), or open Big Red Connect from your Home Screen and try again.`
-      : `Notifications are blocked. Use your browser/site settings to allow notifications, then come back and tap Enable Alerts.`;
-    return;
-  }
-
-  setAlertsPill("warn","🔔 Alerts: not enabled");
-  alertsHelper.style.display = "block";
-
-  if (isIOS() && !isStandalone()) {
-    alertsNote.textContent = "Tip: On iPhone, add Big Red Connect to your Home Screen first for the smoothest alert experience.";
-  } else {
-    alertsNote.textContent = "Tap Enable Alerts, then allow notifications when prompted.";
-  }
-}
-
-enableAlertsBtn.addEventListener("click", async () => {
-  try {
-    window.OneSignalDeferred = window.OneSignalDeferred || [];
-    OneSignalDeferred.push(async function(OneSignal){
-      const supported = OneSignal.Notifications.isPushSupported();
-      if(!supported){
-        setAlertsPill("bad","🔔 Alerts: not supported on this device");
-        alertsHelper.style.display = "block";
-        alertsNote.textContent = "This device/browser doesn’t support push notifications.";
-        return;
-      }
-
-      const perm = OneSignal.Notifications.permission;
-      if (perm === "granted" || perm === true) {
-        setAlertsPill("ok","🔔 Alerts: ENABLED ✅");
-        alertsHelper.style.display = "none";
-        return;
-      }
-
-      await OneSignal.Slidedown.promptPush();
-      setTimeout(refreshAlertsUI, 650);
-    });
-  } catch (e) {
-    try { await Notification.requestPermission(); } catch(_) {}
-    refreshAlertsUI();
-  }
-});
-
-/* INIT */
-window.addEventListener("load", () => {
-  updateA2HSHelper();
-  refreshAlertsUI();
-  if (isStandalone()) a2hsHelper.style.display = "none";
-});
-</script>
-
-<!-- 🔔 OneSignal INIT + IDENTITY REBIND (uses existing wiring) -->
-<script>
-window.OneSignalDeferred = window.OneSignalDeferred || [];
-OneSignalDeferred.push(async function(OneSignal){
-  try {
-    await OneSignal.init({
-      appId: "9b8bcc89-87d3-46e2-b2d0-042d1a267718",
-      safari_web_id: "web.onesignal.auto.0c90051e-4735-447d-b203-75e3767d91b9",
-      notifyButton: { enable:false },
-      serviceWorkerPath: "/onesignalsdkworker.js",
-      path: "/"
-    });
-
-    const raw = localStorage.getItem("bigred_rider_profile_v1");
-    if (!raw) return;
-
-    const profile = JSON.parse(raw);
-    if (!profile.riderId) return;
-
-    await OneSignal.login(profile.riderId);
-
-    await OneSignal.User.addTags({
-      role_rider: "true",
-      env: "live"
-    });
-
-    console.log("✅ Rider push identity ACTIVE:", profile.riderId);
-
-    setTimeout(() => {
-      try {
-        if ("Notification" in window) {
-          const perm = Notification.permission;
-          if (perm === "granted") {
-            const pill = document.getElementById("alertsPill");
-            if (pill) {
-              pill.classList.remove("warn","bad");
-              pill.classList.add("ok");
-              pill.textContent = "🔔 Alerts: ENABLED ✅";
-            }
-          }
-        }
-      } catch(e){}
-    }, 800);
-
-  } catch (e) {
-    console.warn("OneSignal rider init failed:", e);
-  }
-});
-</script>
+<script src="/rider/session-guard.js"></script>
 
 </body>
 </html>
