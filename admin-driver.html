@@ -1205,9 +1205,14 @@ function quickChipsHtml(booking){
     : ``;
 
   const smsDigits = normalizePhoneDigits(booking?.rider?.phone || "");
-  const smsBtn = smsDigits
-    ? `<a class="chip" href="${escHtml(smsHrefWithBody(smsDigits, smsTemplateText("CONFIRM", booking)))}">💬 Text</a>`
-    : ``;
+
+  // ✅ SMS template buttons (back again)
+  const smsBtns = smsDigits ? `
+    <a class="chip" href="${escHtml(smsHrefWithBody(smsDigits, smsTemplateText("CONFIRM", booking)))}">💬 Confirm</a>
+    <a class="chip" href="${escHtml(smsHrefWithBody(smsDigits, smsTemplateText("OMW", booking)))}">🚗 OMW</a>
+    <a class="chip" href="${escHtml(smsHrefWithBody(smsDigits, smsTemplateText("ARRIVED", booking)))}">📍 Arrived</a>
+    <a class="chip" href="${escHtml(smsHrefWithBody(smsDigits, smsTemplateText("LATE", booking)))}">⏱ Running Late</a>
+  ` : ``;
 
   const riderLogin = buildRiderLoginLink(booking);
   const riderBtn = riderLogin
@@ -1216,7 +1221,7 @@ function quickChipsHtml(booking){
 
   return `
     ${directionsBtn}
-    ${smsBtn}
+    ${smsBtns}
     ${riderBtn}
     <span class="chip" data-action="copyId" data-id="${escHtml(booking.id)}">📋 Copy ID</span>
     <span class="chip" data-action="openEdit" data-id="${escHtml(booking.id)}">✏️ Edit</span>
@@ -1542,19 +1547,29 @@ function handleDispatchClick(e){
 
   // Chips
   const chip = target.closest && target.closest(".chip");
-  if(chip && chip.dataset && chip.dataset.action){
-    const action = chip.dataset.action;
-    const id = chip.dataset.id;
-    if(action === "copyId"){
-      copyText(id);
+  if(chip){
+    // ✅ If it's a real link (Directions / SMS / Rider Link), let it work and don't open the card
+    if(chip.tagName === "A" && chip.getAttribute("href")){
       e.stopPropagation();
       return;
     }
-    if(action === "openEdit"){
-      if(currentMode !== "admin"){ showToast("Switch to Admin Mode to edit"); return; }
-      openEditModal(id);
-      e.stopPropagation();
-      return;
+
+    // Existing dataset-action chips (Copy ID / Edit)
+    if(chip.dataset && chip.dataset.action){
+      const action = chip.dataset.action;
+      const id = chip.dataset.id;
+
+      if(action === "copyId"){
+        copyText(id);
+        e.stopPropagation();
+        return;
+      }
+      if(action === "openEdit"){
+        if(currentMode !== "admin"){ showToast("Switch to Admin Mode to edit"); return; }
+        openEditModal(id);
+        e.stopPropagation();
+        return;
+      }
     }
   }
 
