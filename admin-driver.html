@@ -1318,11 +1318,11 @@ async function updateBookingStatus(bookingId, newStatus){
 
   try{
     log(`Status change → ${bookingId}: ${prev} -> ${newStatus}`);
-    const r = await fetch(`${BOOKINGS_API}/api/driver/bookings/${encodeURIComponent(bookingId)}/status`,{
+    const r = await fetch(`${BOOKINGS_API}/api/driver/bookings/${encodeURIComponent(bookingId)}`,{
       method:"PUT",
       headers:{
         "Content-Type":"application/json",
-        "X-Auth-Token": AUTH_SECRET
+        "X-Auth-Secret": AUTH_SECRET
       },
       body: JSON.stringify({ status: newStatus })
     });
