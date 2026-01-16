@@ -78,14 +78,12 @@
     const stamp = fmtCT(iso);
     switch (status) {
       case "online":
-        return { text: `🟢 Online — as of ${stamp}`, cls: "online" };
+        return { text: `🟢 On the road — updated ${stamp}`, cls: "online" };
       case "away":
-        // This case still supported if Worker ever includes "status":"away"
-        return { text: `🟡 Limited Availability — as of ${stamp}`, cls: "away" };
+        return { text: `🟡 Limited availability — updated ${stamp}`, cls: "away" };
       default:
-        return { text: `🔴 Offline — as of ${stamp}`, cls: "offline" };
+        return { text: `🔴 Off for now — updated ${stamp}`, cls: "offline" };
     }
-  }
 
   // ----------------------------------
   // Render pill + broadcast update
