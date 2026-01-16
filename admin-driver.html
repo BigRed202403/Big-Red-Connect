@@ -956,21 +956,21 @@ async function loadStatus(){
 
     let label="";
     if(statusVal==="online"){
-      label="ONLINE";
+      label="ON THE ROAD";
       pill.classList.add("online");
       headerPill.classList.add("online");
       headerPill.textContent="📡 Tracking: ON";
     }else if(statusVal==="away"){
-      label="LIMITED";
+      label="LIMITED AVAILABILITY";
       pill.classList.add("away");
       headerPill.classList.add("away");
       headerPill.textContent="📡 Tracking: LIMITED";
     }else{
-      label="OFFLINE";
+      label="OFF FOR NOW";
       pill.classList.add("offline");
       headerPill.classList.add("offline");
       headerPill.textContent="📡 Tracking: OFF";
-    }
+}
 
     const when=formatDateTime(data.lastUpdated);
     pill.textContent=`Status: ${label} • as of ${when}`;
