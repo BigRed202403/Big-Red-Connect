@@ -17,7 +17,7 @@
   const w = document.createElement("div");
   w.id = "shimmer";
   w.innerHTML = `
-    <img class="logo" src="official_logo_Nov.png" alt="Big Red Connect Logo">
+    <img class="logo" src="official_logo.jpeg" alt="Big Red Connect Logo">
     <div class="msg">${msg}</div>
   `;
 
