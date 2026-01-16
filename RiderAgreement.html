@@ -39,7 +39,7 @@
       if (sessionStorage.getItem("brc_splash_shown")) return;
       const w=document.createElement("div");
       w.id="shimmer";
-      w.innerHTML = '<img class="logo" src="official_logo_Nov.png" alt="Big Red Connect Logo"><div class="msg">'+(window.SPLASH_MESSAGE||"Loading…")+'</div>';
+      w.innerHTML = '<img class="logo" src="official_logo.jpeg" alt="Big Red Connect Logo"><div class="msg">'+(window.SPLASH_MESSAGE||"Loading…")+'</div>';
       document.addEventListener("DOMContentLoaded", ()=>document.body.appendChild(w));
       window.addEventListener("load", ()=>{
         setTimeout(()=>{
@@ -55,7 +55,7 @@
 
   <!-- 🚗 Logo Header -->
   <div class="logo-header">
-    <img src="official_logo_Nov.png" alt="Big Red Connect Logo" />
+    <img src="official_logo.jpeg" alt="Big Red Connect Logo" />
   </div>
 
   <!-- 🏷️ Header -->
