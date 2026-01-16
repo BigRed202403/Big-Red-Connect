@@ -973,7 +973,7 @@ async function loadStatus(){
 }
 
     const when=formatDateTime(data.lastUpdated);
-    pill.textContent=`Status: ${label} • as of ${when}`;
+    pill.textContent=`Status: ${label} • updated ${when}`;
     $("statusStamp").textContent=when;
     $("statusSelect").value=statusVal;
 
