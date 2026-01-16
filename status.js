@@ -84,7 +84,7 @@
       default:
         return { text: `🔴 Off for now — updated ${stamp}`, cls: "offline" };
     }
-
+}
   // ----------------------------------
   // Render pill + broadcast update
   // ----------------------------------
