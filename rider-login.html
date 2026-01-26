@@ -1,14 +1,14 @@
 <!-- =========================================================
-     rider/login.html  (UPDATED)
-     - Adds next=myride&id=BRxxxx support
-     - Calls POST /api/rider/claim-rides after login (bulk claim)
+     rider/login.html  (SOFT-COPY UPDATE)
+     - Same functionality
+     - Friendlier wording (no "login required" vibe)
      ========================================================= -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Rider Login – Big Red Connect</title>
+  <title>Your Details – Big Red Connect</title>
 
   <link rel="apple-touch-icon" href="/official_logo.jpeg">
   <link rel="icon" type="image/png" sizes="192x192" href="/official_logo.jpeg">
@@ -20,6 +20,7 @@
     header { padding:15px 12px; display:flex; align-items:center; gap:12px; border-bottom:2px solid #b30000; background:#000; position:sticky; top:0; z-index:20; }
     header img { height:46px; cursor:pointer; }
     h1 { text-align:center; margin:25px 10px 10px; font-size:1.44rem; font-weight:700; }
+    .sub { text-align:center; margin:0 16px 14px; color:#aaa; font-size:.95rem; line-height:1.35; }
     .box { background:#111; border:1px solid #222; border-radius:10px; margin:12px; padding:18px; }
     label { display:block; margin-top:14px; font-size:.85rem; color:#bbb; }
     input { width:100%; padding:12px; font-size:1rem; margin-top:6px; border-radius:8px; border:1px solid #333; background:#000; color:#fff; }
@@ -35,11 +36,12 @@
   <img src="/official_logo.jpeg" id="logoHome" alt="Big Red Connect">
   <div>
     <div style="font-weight:700;">Big Red Connect</div>
-    <div style="color:#888;font-size:.8rem;">Rider Login</div>
+    <div style="color:#888;font-size:.8rem;">Quick Details</div>
   </div>
 </header>
 
-<h1>Welcome Back</h1>
+<h1>One Quick Step</h1>
+<p class="sub">Add your name and number so Big Red knows who you are and can confirm your request.</p>
 
 <div class="box">
   <label>Your Name</label>
@@ -59,12 +61,6 @@
   const qs = new URLSearchParams(location.search);
   const NEXT = (qs.get("next") || "").trim().toLowerCase();
 
-  // Supported intents:
-  // - ride-request + dropoff
-  // - ride-from-search + address (legacy)
-  // - profile
-  // - request (legacy)
-  // - myride + id   ✅ NEW
   const NEXT_DROPOFF  = (qs.get("dropoff") || "").trim();
   const NEXT_ADDRESS  = (qs.get("address") || "").trim();
   const NEXT_RIDE_ID  = (qs.get("id") || "").trim();
@@ -170,7 +166,7 @@
 
       if(!res.ok){
         btn.disabled = false;
-        showToast("Login failed");
+        showToast("Unable to continue");
         return;
       }
 
@@ -190,10 +186,8 @@
       localStorage.setItem("riderName", name);
       localStorage.setItem("riderPhone", phone);
 
-      // ✅ Claim any manual rides for this phone (bulk)
       await claimManualRidesForThisPhone();
 
-      // best-effort profile update
       fetch(`${PROFILE_API}/api/rider/profile`, {
         method:"PUT",
         headers:{ "Content-Type":"application/json" },
