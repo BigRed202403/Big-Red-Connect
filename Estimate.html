@@ -534,6 +534,13 @@
     const q = window.lastFare;
     if (!q) return;
 
+    // ✅ REQUIRE RIDER NAME BEFORE CONTINUING (small change)
+    const riderName = (localStorage.getItem("riderName") || "").trim();
+    if (!riderName) {
+      alert("Please add your name first (Profile → Edit Profile) so Big Red knows who you are.");
+      return;
+    }
+
     // backup handoff
     if (q.pickup) stashPickupHandoff(q.pickup);
     if (q.dropoff) stashDropoffHandoff(q.dropoff);
