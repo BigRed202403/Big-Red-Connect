@@ -46,25 +46,27 @@
   <div id="status-pill" class="status">Checking status…</div>
 
   <section class="info-section calculator">
-    <!-- Ride Mode -->
-    <div class="ride-mode-toggle" aria-label="Choose ride mode">
-      <button id="modeNow" class="btn btn-toggle active" type="button">🚗 Request Today</button>
-      <button id="modeReserve" class="btn btn-toggle" type="button">🕒 Schedule Ride</button>
-    </div>
 
-    <!-- Reserve Controls -->
-    <div id="reserveControls" style="display:none;">
-      <label for="reserveDate">Date</label>
+    <!-- ✅ WHEN (Optional) — softened, no "on demand" feel -->
+    <div id="whenControls" style="margin-bottom:14px;">
+      <label for="reserveDate">Date (optional)</label>
       <input id="reserveDate" type="date" />
-      <label for="reserveTime">Time</label>
-      <input id="reserveTime" type="time" step="900" />
-      <label for="planBy">Plan By</label>
+
+      <label for="reserveTime" style="margin-top:10px;">Time (optional)</label>
+      <!-- ✅ iOS Safari ignores step for <input type="time"> in many cases.
+           Using a 15-min dropdown for consistent behavior. -->
+      <select id="reserveTime">
+        <option value="">Select a time</option>
+      </select>
+
+      <label for="planBy" style="margin-top:10px;">Plan By</label>
       <select id="planBy">
         <option value="pickup">Pickup Time</option>
         <option value="dropoff">Drop-Off Time</option>
       </select>
+
       <div id="reserveHint" style="color:#ccc;font-size:0.9em;margin:6px 0 10px;">
-        Choose a date/time. Rush hour auto-applies if the pickup is a weekday 5–9 AM or 3–7 PM.
+        Add a date/time if you have one. Rush hour auto-applies if pickup is a weekday 5–9 AM or 3–7 PM.
       </div>
     </div>
 
@@ -206,6 +208,33 @@
     return typed;
   }
 
+  // ======================================================
+  // ✅ 15-MIN TIME OPTIONS (for iOS Safari consistency)
+  // ======================================================
+  function pad2(n){ return String(n).padStart(2,"0"); }
+  function to12hLabel(h, m){
+    const ampm = h >= 12 ? "PM" : "AM";
+    const hh = ((h + 11) % 12) + 1;
+    return `${hh}:${pad2(m)} ${ampm}`;
+  }
+  function buildTimeOptions15(){
+    const sel = document.getElementById("reserveTime");
+    if (!sel) return;
+
+    // keep the first placeholder option, clear anything else
+    while (sel.options.length > 1) sel.remove(1);
+
+    for (let h = 0; h < 24; h++){
+      for (let m = 0; m < 60; m += 15){
+        const val = `${pad2(h)}:${pad2(m)}`;
+        const opt = document.createElement("option");
+        opt.value = val;
+        opt.textContent = to12hLabel(h, m);
+        sel.appendChild(opt);
+      }
+    }
+  }
+
   // Holiday info — only actual holiday days
   function getHolidayInfo(d) {
     if (!(d instanceof Date) || isNaN(d)) return null;
@@ -284,18 +313,27 @@
     setupAutocomplete("pickup", true);
     setupAutocomplete("dropoff", false);
 
-    document.getElementById("modeNow").onclick = () => setMode("now");
-    document.getElementById("modeReserve").onclick = () => setMode("reserve");
     document.getElementById("calcBtn").onclick = calculateFare;
     document.getElementById("addStopBtn").onclick = addStopField;
     document.getElementById("useLocPickup").onclick = () => useMyLocation("pickup");
     document.getElementById("useLocDrop").onclick = () => useMyLocation("dropoff");
 
+    // ✅ build 15-min time options (iOS-safe)
+    buildTimeOptions15();
+
+    // ✅ Re-evaluate pricing notes when date/time changes
+    const dEl = document.getElementById("reserveDate");
+    const tEl = document.getElementById("reserveTime");
+    const pBy = document.getElementById("planBy");
+    if (dEl) dEl.addEventListener("change", applyAutoRateLabels);
+    if (tEl) tEl.addEventListener("change", applyAutoRateLabels);
+    if (pBy) pBy.addEventListener("change", applyAutoRateLabels);
+
     // ✅ Prefill dropoff if coming from index (destination handoff)
     const incoming = readIncomingDestination() || readStashedDestination();
     if (incoming) {
-      const dEl = document.getElementById("dropoff");
-      if (dEl && !String(dEl.value||"").trim()) dEl.value = incoming;
+      const dEl2 = document.getElementById("dropoff");
+      if (dEl2 && !String(dEl2.value||"").trim()) dEl2.value = incoming;
     }
 
     applyAutoRateLabels();
@@ -380,27 +418,6 @@
   }
 
   // ======================================================
-  //  MODE SWITCH
-  // ======================================================
-  function setMode(m) {
-    mode = m;
-    const nowBtn = document.getElementById("modeNow");
-    const resBtn = document.getElementById("modeReserve");
-    const controls = document.getElementById("reserveControls");
-
-    if (m === "now") {
-      nowBtn.classList.add("active");
-      resBtn.classList.remove("active");
-      controls.style.display = "none";
-    } else {
-      resBtn.classList.add("active");
-      nowBtn.classList.remove("active");
-      controls.style.display = "block";
-    }
-    applyAutoRateLabels();
-  }
-
-  // ======================================================
   //  STOPS
   // ======================================================
   function addStopField() {
@@ -472,11 +489,20 @@
   //  RATE LOGIC
   // ======================================================
   function getEffectiveDate() {
-    if (mode === "reserve") {
-      const dStr = document.getElementById("reserveDate").value;
-      const tStr = document.getElementById("reserveTime").value;
-      if (dStr && tStr) return new Date(dStr + "T" + tStr + ":00");
+    // ✅ If date+time are provided, use them. If only date is provided, use noon.
+    const dStr = document.getElementById("reserveDate").value;
+    const tStr = document.getElementById("reserveTime").value;
+
+    if (dStr && tStr) {
+      mode = "reserve";
+      return new Date(dStr + "T" + tStr + ":00");
     }
+    if (dStr && !tStr) {
+      mode = "reserve";
+      return new Date(dStr + "T12:00:00");
+    }
+
+    mode = "now";
     return new Date();
   }
 
@@ -685,6 +711,11 @@
       </p>
     `;
 
+    // ✅ derive mode from optional date/time fields
+    const dStr = document.getElementById("reserveDate").value;
+    const tStr = document.getElementById("reserveTime").value;
+    const derivedMode = (dStr || tStr) ? "reserve" : "now";
+
     window.lastFare = {
       pickup,
       dropoff,
@@ -695,10 +726,10 @@
       mileageSub,
       fairnessFee,
       pay,
-      mode,
+      mode: derivedMode,
       stops: stopInputs.map(id => document.getElementById(id)?.value.trim()).filter(Boolean),
-      reserveDate: document.getElementById("reserveDate").value,
-      reserveTime: document.getElementById("reserveTime").value,
+      reserveDate: dStr,
+      reserveTime: tStr,
       planBy: document.getElementById("planBy").value
     };
 
@@ -715,7 +746,13 @@
     if (!riderName) { alert("No worries — just add your name so Big Red knows who’s texting."); return; }
 
     const stopsText = (q.stops && q.stops.length) ? q.stops.join(" → ") : "None";
-    const whenText = (q.mode === "reserve" && q.reserveDate && q.reserveTime) ? `${q.reserveDate} at ${q.reserveTime}` : "ASAP (Ride Now)";
+
+    // ✅ more neutral wording when time/date not provided
+    let whenText = "Time not specified";
+    if (q.reserveDate && q.reserveTime) whenText = `${q.reserveDate} at ${q.reserveTime}`;
+    else if (q.reserveDate && !q.reserveTime) whenText = `${q.reserveDate} (time TBD)`;
+    else if (!q.reserveDate && q.reserveTime) whenText = `Today at ${q.reserveTime}`;
+
     const routeUrl = buildRouteUrl(q.pickup, q.dropoff, q.stops || []);
 
     const smsBody =
