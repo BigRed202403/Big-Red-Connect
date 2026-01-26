@@ -678,8 +678,12 @@
     const whenText = (q.mode === "reserve" && q.reserveDate && q.reserveTime) ? `${q.reserveDate} at ${q.reserveTime}` : "ASAP (Ride Now)";
     const routeUrl = buildRouteUrl(q.pickup, q.dropoff, q.stops || []);
 
+    // ✅ NEW: pull rider name from saved profile (no-login path)
+    const riderName = (localStorage.getItem("riderName") || "Rider").trim() || "Rider";
+
+    // ✅ UPDATED: include rider name in the SMS lead line
     const smsBody =
-      `Hey Big Red — I’d like to plan a ride:\n\n` +
+      `Hey Big Red — it’s ${riderName}. I’d like to request a ride:\n\n` +
       `Pickup: ${q.pickup}\n` +
       `Dropoff: ${q.dropoff}\n` +
       `Stops: ${stopsText}\n` +
