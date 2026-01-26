@@ -92,20 +92,20 @@
   <div class="card">
     <div class="section-title">When?</div>
 
-    <div class="ride-mode-toggle" aria-label="Ride mode">
-      <button id="modeNow" class="btn-toggle active" type="button">🚗 Ride Now</button>
-      <button id="modeReserve" class="btn-toggle" type="button">🕒 Reserve Ride</button>
-    </div>
-
-    <div id="reserveControls" style="display:none;">
+    <!-- ✅ CHANGE: Remove Ride Now / Reserve toggle. Always pre-arranged. -->
+    <div id="reserveControls">
       <div class="input-group">
         <label for="reserveDate">Date</label>
         <input id="reserveDate" type="date">
       </div>
+
       <div class="input-group">
-        <label for="reserveTime">Time</label>
-        <input id="reserveTime" type="time" step="900">
+        <label for="reserveTimeSelect">Time (15-min increments)</label>
+        <!-- ✅ CHANGE: 15-min dropdown -->
+        <select id="reserveTimeSelect"></select>
+        <div class="hint">Pick a time (required). This keeps every request pre-arranged and predictable.</div>
       </div>
+
       <div class="input-group">
         <label for="planBy">Plan By</label>
         <select id="planBy">
@@ -113,6 +113,7 @@
           <option value="dropoff">Drop-off Time</option>
         </select>
       </div>
+
       <div class="hint">
         Rush hour auto-applies if weekday 5–9 AM or 3–7 PM. Holidays and big events may use special base rates.
       </div>
@@ -313,6 +314,64 @@
   document.getElementById("btnEditProfile").addEventListener("click", () => window.location.href = "/rider/profile.html");
 
   // =====================================================
+  // ✅ CHANGE: Always pre-arranged (mode fixed to "reserve")
+  // =====================================================
+  let mode = "reserve";
+
+  // =====================================================
+  // ✅ CHANGE: 15-min time dropdown helpers
+  // =====================================================
+  function pad2(n){ return String(n).padStart(2,"0"); }
+
+  function build15MinOptions(selectEl){
+    if(!selectEl) return;
+    selectEl.innerHTML = "";
+
+    for(let h=0; h<24; h++){
+      for(let m=0; m<60; m+=15){
+        const v = `${pad2(h)}:${pad2(m)}`;
+        const opt = document.createElement("option");
+        opt.value = v;
+        opt.textContent = v;
+        selectEl.appendChild(opt);
+      }
+    }
+  }
+
+  function nextQuarterTimeHHMM(now = new Date()){
+    const d = new Date(now);
+    d.setSeconds(0); d.setMilliseconds(0);
+    const mins = d.getMinutes();
+    const next = Math.ceil((mins + 1) / 15) * 15; // bump forward at least 1 min, then ceil to 15
+    d.setMinutes(next);
+    if (d.getMinutes() === 60) { d.setMinutes(0); d.setHours(d.getHours() + 1); }
+    return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+  }
+
+  function initDefaultScheduleIfEmpty(){
+    const dateEl = document.getElementById("reserveDate");
+    const timeEl = document.getElementById("reserveTimeSelect");
+    if(!dateEl || !timeEl) return;
+
+    if(!dateEl.value){
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = pad2(today.getMonth()+1);
+      const dd = pad2(today.getDate());
+      dateEl.value = `${yyyy}-${mm}-${dd}`;
+    }
+
+    if(!timeEl.value){
+      timeEl.value = nextQuarterTimeHHMM(new Date());
+    }
+  }
+
+  function getReserveTimeValue(){
+    const t = (document.getElementById("reserveTimeSelect")?.value || "").trim();
+    return t;
+  }
+
+  // =====================================================
   // HANDOFF (DROP-OFF + PICKUP) + QUERYSTRING PREFILL
   // =====================================================
 
@@ -412,7 +471,6 @@
       const qsDropoff = (u.searchParams.get("dropoff") || u.searchParams.get("destination") || "").trim();
       const qsStops   = u.searchParams.getAll("stop").map(s => String(s||"").trim()).filter(Boolean);
 
-      const qsMode = (u.searchParams.get("mode") || "").trim().toLowerCase();
       const qsReserveDate = (u.searchParams.get("reserveDate") || "").trim();
       const qsReserveTime = (u.searchParams.get("reserveTime") || "").trim();
       const qsPlanBy      = (u.searchParams.get("planBy") || "").trim().toLowerCase();
@@ -446,14 +504,10 @@
         qsStops.slice(0, 3).forEach(s => addStopField_NoAutocomplete(s));
       }
 
-      if (qsMode === "reserve") {
-        setMode("reserve");
-        if (qsReserveDate) document.getElementById("reserveDate").value = qsReserveDate;
-        if (qsReserveTime) document.getElementById("reserveTime").value = qsReserveTime;
-        if (qsPlanBy === "pickup" || qsPlanBy === "dropoff") document.getElementById("planBy").value = qsPlanBy;
-      } else if (qsMode === "now") {
-        setMode("now");
-      }
+      // ✅ CHANGE: always reserve, but allow handoff of date/time
+      if (qsReserveDate) document.getElementById("reserveDate").value = qsReserveDate;
+      if (qsReserveTime) document.getElementById("reserveTimeSelect").value = qsReserveTime;
+      if (qsPlanBy === "pickup" || qsPlanBy === "dropoff") document.getElementById("planBy").value = qsPlanBy;
 
       if (qsPayment === "cash" || qsPayment === "card") {
         document.getElementById("payment").value = qsPayment;
@@ -466,7 +520,7 @@
 
       const touched =
         !!qsPickup || !!qsDropoff || qsStops.length ||
-        !!qsMode || !!qsReserveDate || !!qsReserveTime || !!qsPlanBy ||
+        !!qsReserveDate || !!qsReserveTime || !!qsPlanBy ||
         !!qsPayment || !!qsEstimate || !!qsMiles || !!qsMinutes;
 
       if (touched) {
@@ -734,7 +788,6 @@
 
       if (!repeatId) return false;
 
-      // ✅ remember last ride immediately (Hub will use this)
       setLastRideId(repeatId);
 
       repeatLocked = true;
@@ -859,13 +912,21 @@
 
   // ✅ BULLETPROOF ORDER: await repeat first, then everything else
   document.addEventListener("DOMContentLoaded", async () => {
+    // ✅ time dropdown + defaults
+    build15MinOptions(document.getElementById("reserveTimeSelect"));
+    initDefaultScheduleIfEmpty();
+
+    // Recompute rate labels when date/time changes
+    document.getElementById("reserveDate")?.addEventListener("change", applyAutoRateLabels);
+    document.getElementById("reserveTimeSelect")?.addEventListener("change", applyAutoRateLabels);
+
     const didRepeat = await prefillFromRepeatRideIfAny_EARLY();
 
-    // Only if repeat did NOT lock the form:
     if (!didRepeat && !repeatLocked) {
       prefillFromEstimateQuery_EARLY();
       applyHandoffPickupIfAny();
       applyHandoffDropoffIfAny();
+      initDefaultScheduleIfEmpty();
     }
   });
 
@@ -907,30 +968,6 @@
     if (digits.length === 10) return `(${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6)}`;
     return p;
   }
-
-  // =====================================================
-  // MODE
-  // =====================================================
-  let mode = "now";
-  function setMode(m) {
-    mode = m;
-    const nowBtn = document.getElementById("modeNow");
-    const resBtn = document.getElementById("modeReserve");
-    const controls = document.getElementById("reserveControls");
-
-    if (m === "now") {
-      nowBtn.classList.add("active");
-      resBtn.classList.remove("active");
-      controls.style.display = "none";
-    } else {
-      resBtn.classList.add("active");
-      nowBtn.classList.remove("active");
-      controls.style.display = "block";
-    }
-    applyAutoRateLabels();
-  }
-  document.getElementById("modeNow").addEventListener("click", () => setMode("now"));
-  document.getElementById("modeReserve").addEventListener("click", () => setMode("reserve"));
 
   // =====================================================
   // GEOLOCATION BUTTONS
@@ -1022,11 +1059,10 @@
   ];
 
   function getEffectiveDate() {
-    if (mode === "reserve") {
-      const dStr = document.getElementById("reserveDate").value;
-      const tStr = document.getElementById("reserveTime").value;
-      if (dStr && tStr) return new Date(dStr + "T" + tStr + ":00");
-    }
+    // ✅ CHANGE: always use the selected date/time (pre-arranged)
+    const dStr = document.getElementById("reserveDate").value;
+    const tStr = getReserveTimeValue();
+    if (dStr && tStr) return new Date(dStr + "T" + tStr + ":00");
     return new Date();
   }
 
@@ -1211,6 +1247,14 @@
   }
 
   async function calculateFare() {
+    // ✅ CHANGE: require scheduled date/time
+    const rd = (document.getElementById("reserveDate")?.value || "").trim();
+    const rt = (getReserveTimeValue() || "").trim();
+    if (!rd || !rt) {
+      showToast("Select date & time");
+      return;
+    }
+
     const pickup = document.getElementById("pickup").value.trim();
     const dropoff = document.getElementById("dropoff").value.trim();
 
@@ -1286,11 +1330,11 @@
       pickup, dropoff, miles, minutes, base, mileageSub, fairnessFee,
       total: Number(total),
       pay,
-      mode,
+      mode, // fixed reserve
       stopsText: getStopsAsTextList(),
       stopsObj: getStopsAsObjects(),
-      reserveDate: document.getElementById("reserveDate").value,
-      reserveTime: document.getElementById("reserveTime").value,
+      reserveDate: rd,
+      reserveTime: rt,
       planBy: document.getElementById("planBy").value,
       passengers: Number(document.getElementById("passengers").value || "1"),
       luggageCount: readLuggageCount(),
@@ -1308,6 +1352,10 @@
   async function sendRequest() {
     if (!lastFare) { showToast("Get an estimate first."); return; }
     if (requestInFlight) { showToast("Request already sending…"); return; }
+
+    // ✅ CHANGE: require scheduled date/time before sending
+    if (!lastFare.reserveDate || !lastFare.reserveTime) { showToast("Select date & time"); return; }
+
     requestInFlight = true;
 
     const name  = localStorage.getItem("riderName")  || "Rider";
@@ -1315,17 +1363,15 @@
     const riderId = ensureRiderId();
     const q = lastFare;
 
-    let scheduledISO = null;
-    if (q.mode === "reserve" && q.reserveDate && q.reserveTime) {
-      const localISO = q.reserveDate + "T" + q.reserveTime + ":00";
-      scheduledISO = new Date(localISO).toISOString();
-    }
+    const localISO = q.reserveDate + "T" + q.reserveTime + ":00";
+    const scheduledISO = new Date(localISO).toISOString();
 
     const routeUrl = buildRouteUrl(q.pickup, q.dropoff, q.stopsText || []);
     const pickupStored = loadPlace(PLACE_KEYS.pickup);
     const dropStored   = loadPlace(PLACE_KEYS.dropoff);
 
-    const bookingType = scheduledISO ? "RESERVATION" : "INSTANT";
+    // ✅ CHANGE: always a reservation (pre-arranged)
+    const bookingType = "RESERVATION";
 
     const payload = {
       type: bookingType,
@@ -1360,7 +1406,7 @@
       pricing: {
         estimate: Number(q.total),
         travelFee: q.fairnessFee || 0,
-        ratePlan: scheduledISO ? "RESERVATION" : "STANDARD"
+        ratePlan: "RESERVATION"
       },
       metrics: { miles: q.miles, minutes: q.minutes },
       scheduledFor: scheduledISO,
@@ -1368,7 +1414,8 @@
       metadata: {
         luggageCount: (q.luggageCount ?? 0),
         routeUrl,
-        notifyPref: getNotifyPref()
+        notifyPref: getNotifyPref(),
+        planBy: q.planBy || "pickup"
       }
     };
 
@@ -1427,7 +1474,7 @@
     }
 
     const stopsText = (q.stopsText && q.stopsText.length) ? q.stopsText.join(" → ") : "None";
-    const whenText = (q.mode === "reserve" && q.reserveDate && q.reserveTime) ? `${q.reserveDate} at ${q.reserveTime}` : "ASAP (Ride Now)";
+    const whenText = `${q.reserveDate} at ${q.reserveTime}`;
     const shortRoute = `https://bigredconnectokc.com/rider/route.html?id=${encodeURIComponent(rideId)}`;
 
     const smsBody =
@@ -1439,6 +1486,7 @@
       `Miles: ${q.miles}\n` +
       `Estimated Fare: $${q.total}\n` +
       `When: ${whenText}\n` +
+      `Plan By: ${q.planBy || "pickup"}\n` +
       `Passengers: ${q.passengers}\n` +
       `Luggage: ${q.luggageCount ?? 0}\n` +
       `Gate / Access: ${q.gateCode || "None"}\n` +
