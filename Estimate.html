@@ -151,6 +151,9 @@
   // ✅ Request page (correct, with .html)
   const REQUEST_PAGE = "https://bigredconnectokc.com/rider/ride-request.html";
 
+  // ✅ "Soft login" page (collect name + phone, then route to request)
+  const RIDER_DETAILS_PAGE = "/rider/login.html";
+
   // ------------------------------------------------------
   // Handoff helpers (session + local backup)
   // ------------------------------------------------------
@@ -173,6 +176,34 @@
     try {
       return (sessionStorage.getItem("brc_dropoff_handoff") || localStorage.getItem("brc_dropoff_handoff") || "").trim();
     } catch (e) { return ""; }
+  }
+
+  // ✅ Rider helpers
+  function getRiderName() {
+    return (localStorage.getItem("riderName") || "").trim();
+  }
+  function ensureRiderNameSoft() {
+    // For SMS only: ask name if missing, but don't force phone/profile.
+    let name = getRiderName();
+    if (name) return name;
+
+    const typed = (prompt("Quick question — what’s your name?") || "").trim();
+    if (!typed) return "";
+
+    localStorage.setItem("riderName", typed);
+    // keep profile blob in sync if it exists (best effort, no schema changes)
+    try {
+      const raw = localStorage.getItem("bigred_rider_profile_v1");
+      if (raw) {
+        const p = JSON.parse(raw);
+        if (p && typeof p === "object") {
+          p.name = typed;
+          localStorage.setItem("bigred_rider_profile_v1", JSON.stringify(p));
+        }
+      }
+    } catch(e){}
+
+    return typed;
   }
 
   // Holiday info — only actual holiday days
@@ -270,8 +301,6 @@
     applyAutoRateLabels();
   };
 
-  // NOTE: Your OneSignal appId here differs from your index page.
-  // If you keep it, align it to your live appId to avoid split identities.
   window.OneSignal = window.OneSignal || [];
   OneSignal.push(function() {
     OneSignal.init({
@@ -526,18 +555,28 @@
   }
 
   // ======================================================
-  //  BULLETPROOF CONTINUE → REQUEST PAGE
-  //  - Pass everything in querystring (authoritative)
-  //  - Also stash pickup/dropoff in storage (fallback)
+  //  CONTINUE → REQUEST PAGE
+  //  - If rider profile not present: route to "Quick Details" page
   // ======================================================
   function continueToRequestFromLastFare() {
     const q = window.lastFare;
     if (!q) return;
 
-    // ✅ REQUIRE RIDER NAME BEFORE CONTINUING (small change)
-    const riderName = (localStorage.getItem("riderName") || "").trim();
+    const riderName = getRiderName();
+
+    // ✅ If missing, send them to the "Quick Details" page
+    // (keeps it friendly while still creating their profile)
     if (!riderName) {
-      alert("Please add your name first (Profile → Edit Profile) so Big Red knows who you are.");
+      // preserve handoff so request page can prefill after they enter details
+      if (q.dropoff) stashDropoffHandoff(q.dropoff);
+      if (q.pickup)  stashPickupHandoff(q.pickup);
+
+      // pass dropoff as a convenience for your existing login redirect logic
+      const next = new URLSearchParams();
+      next.set("next", "ride-request");
+      if (q.dropoff) next.set("dropoff", q.dropoff);
+
+      window.location.href = RIDER_DETAILS_PAGE + "?" + next.toString();
       return;
     }
 
@@ -550,16 +589,13 @@
     if (q.pickup)  params.set("pickup", q.pickup);
     if (q.dropoff) params.set("dropoff", q.dropoff);
 
-    // stops as repeated ?stop=
     (q.stops || []).slice(0, 3).forEach(s => params.append("stop", s));
 
-    // mode + reserve
     if (q.mode) params.set("mode", q.mode);
     if (q.reserveDate) params.set("reserveDate", q.reserveDate);
     if (q.reserveTime) params.set("reserveTime", q.reserveTime);
     if (q.planBy) params.set("planBy", q.planBy);
 
-    // payment + helpful display-only values
     if (q.pay) params.set("payment", q.pay);
     if (q.total != null) params.set("estimate", String(q.total));
     if (q.miles != null) params.set("miles", String(q.miles));
@@ -674,16 +710,16 @@
     if (!window.lastFare) { alert("Please calculate your fare first."); return; }
     const q = window.lastFare;
 
+    // ✅ Soft prompt for name (SMS only)
+    const riderName = ensureRiderNameSoft();
+    if (!riderName) { alert("No worries — just add your name so Big Red knows who’s texting."); return; }
+
     const stopsText = (q.stops && q.stops.length) ? q.stops.join(" → ") : "None";
     const whenText = (q.mode === "reserve" && q.reserveDate && q.reserveTime) ? `${q.reserveDate} at ${q.reserveTime}` : "ASAP (Ride Now)";
     const routeUrl = buildRouteUrl(q.pickup, q.dropoff, q.stops || []);
 
-    // ✅ NEW: pull rider name from saved profile (no-login path)
-    const riderName = (localStorage.getItem("riderName") || "Rider").trim() || "Rider";
-
-    // ✅ UPDATED: include rider name in the SMS lead line
     const smsBody =
-      `Hey Big Red — it’s ${riderName}. I’d like to request a ride:\n\n` +
+      `Hey Big Red, it’s ${riderName} — I’d like to plan a ride:\n\n` +
       `Pickup: ${q.pickup}\n` +
       `Dropoff: ${q.dropoff}\n` +
       `Stops: ${stopsText}\n` +
