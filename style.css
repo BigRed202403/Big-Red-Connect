@@ -262,6 +262,36 @@ footer a:hover { text-decoration:underline; }
   font-weight:700;
 }
 
+/* ================================
+   Bigger form fields (iPhone-friendly)
+   Applies to Quick Estimate + Ride Request
+=================================== */
+
+.info-section input,
+.info-section select,
+.info-section textarea {
+  font-size: 18px;
+  line-height: 1.2;
+  padding: 14px 12px;
+}
+
+/* Make placeholders readable too */
+.info-section input::placeholder,
+.info-section textarea::placeholder {
+  font-size: 18px;
+  opacity: 0.7;
+}
+
+/* Optional: make dropdown text match */
+.info-section select option {
+  font-size: 18px;
+}
+
+/* Prevent iOS from shrinking/zooming weirdness */
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
 /* Additional spacing tweaks */
 #dropoff { margin-top:12px; }
 .info-section.calculator { padding-bottom:28px; }
