@@ -209,7 +209,7 @@
   }
 
   // ======================================================
-  // ✅ 15-MIN TIME OPTIONS (for iOS Safari consistency)
+  // ✅ 15-MIN TIME OPTIONS + SMART DEFAULTS
   // ======================================================
   function pad2(n){ return String(n).padStart(2,"0"); }
   function to12hLabel(h, m){
@@ -217,6 +217,7 @@
     const hh = ((h + 11) % 12) + 1;
     return `${hh}:${pad2(m)} ${ampm}`;
   }
+
   function buildTimeOptions15(){
     const sel = document.getElementById("reserveTime");
     if (!sel) return;
@@ -232,6 +233,51 @@
         opt.textContent = to12hLabel(h, m);
         sel.appendChild(opt);
       }
+    }
+  }
+
+  function nextQuarterTimeHHMM(now = new Date()){
+    const d = new Date(now);
+    d.setSeconds(0); d.setMilliseconds(0);
+    const mins = d.getMinutes();
+    const next = Math.ceil((mins + 1) / 15) * 15; // always at least +1 min, then round up to quarter hour
+    d.setMinutes(next);
+    if (d.getMinutes() === 60) { d.setMinutes(0); d.setHours(d.getHours() + 1); }
+    return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+  }
+
+  function yyyymmdd(dateObj){
+    const yyyy = dateObj.getFullYear();
+    const mm = pad2(dateObj.getMonth()+1);
+    const dd = pad2(dateObj.getDate());
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  // ✅ Smart default rule:
+  // - If after 11:30 PM → date tomorrow, time 00:15
+  // - Else → date today, time next quarter hour
+  function initSmartDefaultSchedule(){
+    const dateEl = document.getElementById("reserveDate");
+    const timeEl = document.getElementById("reserveTime");
+    if (!dateEl || !timeEl) return;
+
+    // Only set defaults if user hasn't set them
+    const hasDate = !!String(dateEl.value || "").trim();
+    const hasTime = !!String(timeEl.value || "").trim();
+
+    if (hasDate && hasTime) return;
+
+    const now = new Date();
+    const isAfter1130 = (now.getHours() > 23) || (now.getHours() === 23 && now.getMinutes() >= 30);
+
+    if (!hasDate) {
+      const d = new Date(now);
+      if (isAfter1130) d.setDate(d.getDate() + 1);
+      dateEl.value = yyyymmdd(d);
+    }
+
+    if (!hasTime) {
+      timeEl.value = isAfter1130 ? "00:15" : nextQuarterTimeHHMM(now);
     }
   }
 
@@ -320,6 +366,9 @@
 
     // ✅ build 15-min time options (iOS-safe)
     buildTimeOptions15();
+
+    // ✅ SMART DEFAULTS (after options exist)
+    initSmartDefaultSchedule();
 
     // ✅ Re-evaluate pricing notes when date/time changes
     const dEl = document.getElementById("reserveDate");
@@ -582,7 +631,6 @@
 
   // ======================================================
   //  CONTINUE → REQUEST PAGE
-  //  - If rider profile not present: route to "Quick Details" page
   // ======================================================
   function continueToRequestFromLastFare() {
     const q = window.lastFare;
@@ -590,14 +638,10 @@
 
     const riderName = getRiderName();
 
-    // ✅ If missing, send them to the "Quick Details" page
-    // (keeps it friendly while still creating their profile)
     if (!riderName) {
-      // preserve handoff so request page can prefill after they enter details
       if (q.dropoff) stashDropoffHandoff(q.dropoff);
       if (q.pickup)  stashPickupHandoff(q.pickup);
 
-      // pass dropoff as a convenience for your existing login redirect logic
       const next = new URLSearchParams();
       next.set("next", "ride-request");
       if (q.dropoff) next.set("dropoff", q.dropoff);
@@ -606,12 +650,10 @@
       return;
     }
 
-    // backup handoff
     if (q.pickup) stashPickupHandoff(q.pickup);
     if (q.dropoff) stashDropoffHandoff(q.dropoff);
 
     const params = new URLSearchParams();
-
     if (q.pickup)  params.set("pickup", q.pickup);
     if (q.dropoff) params.set("dropoff", q.dropoff);
 
@@ -711,7 +753,6 @@
       </p>
     `;
 
-    // ✅ derive mode from optional date/time fields
     const dStr = document.getElementById("reserveDate").value;
     const tStr = document.getElementById("reserveTime").value;
     const derivedMode = (dStr || tStr) ? "reserve" : "now";
@@ -741,13 +782,11 @@
     if (!window.lastFare) { alert("Please calculate your fare first."); return; }
     const q = window.lastFare;
 
-    // ✅ Soft prompt for name (SMS only)
     const riderName = ensureRiderNameSoft();
     if (!riderName) { alert("No worries — just add your name so Big Red knows who’s texting."); return; }
 
     const stopsText = (q.stops && q.stops.length) ? q.stops.join(" → ") : "None";
 
-    // ✅ more neutral wording when time/date not provided
     let whenText = "Time not specified";
     if (q.reserveDate && q.reserveTime) whenText = `${q.reserveDate} at ${q.reserveTime}`;
     else if (q.reserveDate && !q.reserveTime) whenText = `${q.reserveDate} (time TBD)`;
@@ -769,7 +808,7 @@
   }
   </script>
 
-  <!-- ✅ Google Maps (Places + Geometry) — moved here so initGoogle exists first -->
+  <!-- ✅ Google Maps (Places + Geometry) -->
   <script
     src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places,geometry&callback=initGoogle"
     defer>
