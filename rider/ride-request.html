@@ -319,7 +319,7 @@
   let mode = "reserve";
 
   // =====================================================
-  // ✅ CHANGE: 15-min time dropdown helpers
+  // ✅ CHANGE: 15-min time dropdown helpers (SMART DEFAULTS)
   // =====================================================
   function pad2(n){ return String(n).padStart(2,"0"); }
 
@@ -338,14 +338,41 @@
     }
   }
 
-  function nextQuarterTimeHHMM(now = new Date()){
+  // ✅ NEW: smart default logic
+  // - Normal: default to next 15-min increment (near now)
+  // - After 11:30 PM: default to tomorrow at 00:15
+  function getSmartDefaultSchedule(now = new Date()){
     const d = new Date(now);
     d.setSeconds(0); d.setMilliseconds(0);
-    const mins = d.getMinutes();
-    const next = Math.ceil((mins + 1) / 15) * 15; // bump forward at least 1 min, then ceil to 15
-    d.setMinutes(next);
-    if (d.getMinutes() === 60) { d.setMinutes(0); d.setHours(d.getHours() + 1); }
-    return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+
+    const isLate = (d.getHours() === 23 && d.getMinutes() >= 30);
+
+    if (isLate) {
+      const tomorrow = new Date(d);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const yyyy = tomorrow.getFullYear();
+      const mm = pad2(tomorrow.getMonth() + 1);
+      const dd = pad2(tomorrow.getDate());
+      return { date: `${yyyy}-${mm}-${dd}`, time: "00:15" };
+    }
+
+    const next = new Date(d);
+    const mins = next.getMinutes();
+    const rounded = Math.ceil((mins + 1) / 15) * 15; // bump forward at least 1 min, then ceil to 15
+    next.setMinutes(rounded);
+    if (next.getMinutes() === 60) {
+      next.setMinutes(0);
+      next.setHours(next.getHours() + 1);
+    }
+
+    const yyyy = next.getFullYear();
+    const mm = pad2(next.getMonth() + 1);
+    const dd = pad2(next.getDate());
+
+    return {
+      date: `${yyyy}-${mm}-${dd}`,
+      time: `${pad2(next.getHours())}:${pad2(next.getMinutes())}`
+    };
   }
 
   function initDefaultScheduleIfEmpty(){
@@ -353,16 +380,16 @@
     const timeEl = document.getElementById("reserveTimeSelect");
     if(!dateEl || !timeEl) return;
 
-    if(!dateEl.value){
-      const today = new Date();
-      const yyyy = today.getFullYear();
-      const mm = pad2(today.getMonth()+1);
-      const dd = pad2(today.getDate());
-      dateEl.value = `${yyyy}-${mm}-${dd}`;
-    }
+    // After build15MinOptions(), select will default to "00:00".
+    // Treat blank OR "00:00" as "unset" so we can pick a smart default.
+    const dateVal = (dateEl.value || "").trim();
+    const timeVal = (timeEl.value || "").trim();
 
-    if(!timeEl.value){
-      timeEl.value = nextQuarterTimeHHMM(new Date());
+    if (!dateVal || !timeVal || timeVal === "00:00") {
+      const smart = getSmartDefaultSchedule(new Date());
+
+      if (!dateVal) dateEl.value = smart.date;
+      if (!timeVal || timeVal === "00:00") timeEl.value = smart.time;
     }
   }
 
