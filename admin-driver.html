@@ -1851,7 +1851,11 @@ window.addEventListener("load",()=>{
   // ✅ wire first (safe), then init autocomplete
   wireButtons();
   syncManualLuggageVisibility();
+  if (typeof initAddressAutocomplete === "function") {
   initAddressAutocomplete();
+} else {
+  log("initAddressAutocomplete() missing — skipping autocomplete init.");
+}
 
   loadStatus();
   loadLastCaption();
