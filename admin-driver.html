@@ -1848,13 +1848,24 @@ window.addEventListener("load",()=>{
   applyTemplateToCaption("LIVE");
   setImage(0);
 
-  // ✅ wire first (safe), then init autocomplete
-  wireButtons();
-  syncManualLuggageVisibility();
-  if (typeof initAddressAutocomplete === "function") {
-  initAddressAutocomplete();
-} else {
-  log("initAddressAutocomplete() missing — skipping autocomplete init.");
+  function initAddressAutocomplete(){
+  try{
+    // Manual create fields
+    attachAutocompleteToInput($("manualPickup"));
+    attachAutocompleteToInput($("manualDropoff"));
+    attachAutocompleteToInput($("manualGateCode")); // optional, but handy
+
+    // Existing manual stop inputs (if any already exist)
+    manualStopIds.forEach(id => attachAutocompleteToInput($(id)));
+
+    // Edit modal fields (they also get attached when modal opens, but safe to call here too)
+    attachAutocompleteToInput($("editPickup"));
+    attachAutocompleteToInput($("editDropoff"));
+
+    log("Autocomplete init complete.");
+  }catch(e){
+    log("initAddressAutocomplete error: " + (e?.message || e));
+  }
 }
 
   loadStatus();
