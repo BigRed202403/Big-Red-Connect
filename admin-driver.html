@@ -15,9 +15,7 @@
 <meta name="theme-color" content="#000">
 <meta http-equiv="Cache-Control" content="no-store"/>
 
-<!-- ✅ Google Maps Places (Autocomplete)
-     IMPORTANT: Restrict this key by HTTP referrer in Google Cloud Console.
--->
+<!-- ✅ Google Maps Places (Autocomplete) -->
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places"></script>
 
 <!-- OneSignal v16 -->
@@ -141,12 +139,14 @@ body.mode-admin .driver-only{display:none;}
   justify-content:center;
   z-index:999;
   padding:16px;
+
+  /* ✅ allow scrolling when modal is taller than screen */
   overflow:auto;
   -webkit-overflow-scrolling:touch;
 }
 .modalOverlay.show{ display:flex; }
 
-/* Make modal box never exceed viewport; allow internal scroll */
+/* ✅ Make modal box never exceed viewport; allow internal scroll */
 .modalBox{
   width:min(760px, 96vw);
   background:#0b0b0b;
@@ -154,6 +154,8 @@ body.mode-admin .driver-only{display:none;}
   border-radius:12px;
   padding:12px;
   box-shadow: 0 18px 40px rgba(0,0,0,.55);
+
+  /* ✅ key parts */
   max-height: calc(100vh - 32px);
   overflow:auto;
   -webkit-overflow-scrolling:touch;
@@ -163,22 +165,29 @@ body.mode-admin .driver-only{display:none;}
   top: 0;
   background:#0b0b0b;
   z-index: 5;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:10px;
-  padding-bottom:8px;
-  border-bottom:1px solid #222;
-  margin-bottom:8px;
 }
 body.modal-open{ overflow:hidden; }
-.modalTitle{ font-weight:800; font-size:.95rem; }
-.modalClose{
-  background:#111;border:1px solid #444;color:#fff;border-radius:10px;
-  padding:8px 10px;cursor:pointer;font-weight:700;
+.modalTitle{
+  font-weight:800;
+  font-size:.95rem;
 }
-.modalGrid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-@media (max-width:720px){ .modalGrid{ grid-template-columns:1fr; } }
+.modalClose{
+  background:#111;
+  border:1px solid #444;
+  color:#fff;
+  border-radius:10px;
+  padding:8px 10px;
+  cursor:pointer;
+  font-weight:700;
+}
+.modalGrid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+@media (max-width:720px){
+  .modalGrid{ grid-template-columns:1fr; }
+}
 .modalBox label{ font-size:.78rem; color:#bbb; display:block; margin:2px 0 4px; }
 .modalBox input, .modalBox select, .modalBox textarea{
   width:100%;
@@ -319,31 +328,6 @@ body.modal-open{ overflow:hidden; }
 
       <label style="font-size:.8rem;color:#ccc;">Notes (optional)</label>
       <textarea id="manualNotes" placeholder="Extra context…"></textarea>
-
-      <!-- ✅ Fare Estimate (Manual Create) -->
-      <div style="margin-top:10px;padding:10px;border:1px solid #222;border-radius:8px;background:#0a0a0a;">
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
-          <div style="font-weight:800;color:#ddd;">Fare Estimate</div>
-
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-            <label style="font-size:.75rem;color:#aaa;">Rate</label>
-            <select id="rateType" class="status-dropdown" style="min-width:180px;">
-              <option value="auto" selected>AUTO (Airport/Standard)</option>
-              <option value="standard">Standard</option>
-              <option value="rush">Rush Hour</option>
-              <option value="event">Special Event / Holiday</option>
-              <option value="airport">Airport</option>
-            </select>
-
-            <button type="button" class="btn btn-secondary" id="btnCalcFare">🧮 Calculate</button>
-          </div>
-        </div>
-
-        <div class="meta" style="margin-top:8px;">
-          Distance: <span id="fareMiles">—</span> mi • ETA: <span id="fareEta">—</span><br>
-          Estimated Fare: <span id="fareTotal" style="font-weight:900;color:#fff;">—</span>
-        </div>
-      </div>
 
       <div class="row" style="margin-top:8px;">
         <button class="btn btn-primary" id="btnCreateManualRide" title="Create Ride">➕ Create</button>
@@ -550,21 +534,19 @@ body.modal-open{ overflow:hidden; }
    CONFIG
 ========================= */
 const STATUS_WORKER   = "https://bigred-status-updater.bigredtransportation.workers.dev";
-const LOCATION_WORKER = "https://update-location.bigredtransportation.workers.dev"; // kept if you still use it elsewhere
+const LOCATION_WORKER = "https://update-location.bigredtransportation.workers.dev";
 const POST_WORKER     = "https://post-to-live-beta.bigredtransportation.workers.dev";
 const PUSH_WORKER     = "https://bigred-push.bigredtransportation.workers.dev";
 const BOOKINGS_API    = "https://bigred-bookings.bigredtransportation.workers.dev";
 
-/*
-  IMPORTANT:
-  Do NOT leave secrets in a public page. At minimum, protect /admin.html behind Cloudflare Access.
-  For now this remains as you had it so the page works end-to-end.
-*/
 const AUTH_SECRET = "BigRedPrivateKey2025";
 const TZ          = "America/Chicago";
 const HOME_URL    = "https://bigredconnectokc.com/";
+
+/* If your rider login page uses a different path, change it here */
 const RIDER_LOGIN_BASE = `${HOME_URL}rider.html`;
 
+/* Status + dispatch enums */
 const DRIVER_STATUSES = [
   { value:"REQUESTED", label:"🆕 Requested" },
   { value:"ACCEPTED",  label:"✅ Accepted" },
@@ -575,6 +557,7 @@ const DRIVER_STATUSES = [
   { value:"CANCELLED", label:"✖ Cancelled" },
 ];
 
+/* Live map images */
 const LIVE_IMAGES=[
   "Official Logo.png",
   "1A5072F2-8604-4CAB-BC84-E15D86D8CE73.png",
@@ -628,8 +611,6 @@ let currentMode = localStorage.getItem("adminDriverMode") || "admin";
 
 const bookingCache = new Map();
 let editingBookingId = null;
-let manualStopIds = [];
-const __acMap = new Map(); // inputId -> Autocomplete instance
 
 /* =========================
    SMALL UTILS
@@ -677,9 +658,7 @@ function captionBox(){ return $("captionBox"); }
 
 function copyText(txt){
   try{
-    navigator.clipboard.writeText(txt)
-      .then(()=>showToast("Copied"))
-      .catch(()=>showToast("Copy failed"));
+    navigator.clipboard.writeText(txt).then(()=>showToast("Copied"),()=>showToast("Copy failed"));
   }catch(e){
     showToast("Copy failed");
   }
@@ -700,7 +679,9 @@ function prettyNotifyPref(v){
   if(n === "push") return "Push preferred";
   return "—";
 }
+/* Best-effort extraction from booking shape(s) */
 function getNotifyPrefFromBooking(b){
+  // common candidates across versions
   const candidates = [
     b?.notifyPref,
     b?.rider?.notifyPref,
@@ -723,7 +704,6 @@ function applyMode(mode){
   currentMode = (mode === "driver") ? "driver" : "admin";
   document.body.classList.remove("mode-admin","mode-driver");
   document.body.classList.add(currentMode==="driver" ? "mode-driver" : "mode-admin");
-
   const btn=$("btnModeToggle");
   if(btn){
     btn.textContent = currentMode==="driver" ? "🚗 Driver Mode" : "🛠 Admin Mode";
@@ -732,75 +712,62 @@ function applyMode(mode){
 }
 
 /* =========================
-   PLACES AUTOCOMPLETE (SAFE)
+   PLACES AUTOCOMPLETE
 ========================= */
+const OKC_BOUNDS = (window.google && google.maps)
+  ? new google.maps.LatLngBounds(
+      new google.maps.LatLng(35.20, -97.80),
+      new google.maps.LatLng(35.70, -97.20)
+    )
+  : null;
 
-// Wider metro bounds that include Moore/Norman/Yukon/Mustang/Shawnee-ish
-let METRO_BOUNDS = null;
-
-function buildMetroBounds(){
-  if(!(window.google && google.maps)) return null;
-  // SW corner / NE corner (roughly covers your metro footprint)
-  return new google.maps.LatLngBounds(
-    new google.maps.LatLng(35.10, -97.95),
-    new google.maps.LatLng(35.75, -96.85)
-  );
-}
+const __acMap = new Map(); // inputId -> Autocomplete instance
 
 function attachAutocompleteToInput(inputEl){
   if(!inputEl) return;
-
-  // If Google isn't ready, don't attach (no crash)
-  if(!(window.google && google.maps && google.maps.places && google.maps.places.Autocomplete)){
-    log("Places library not available (Google script missing/blocked).");
+  if(!(window.google && google.maps && google.maps.places)) {
+    log("Places library not available (Google script missing or blocked).");
     return;
   }
-
-  if(!METRO_BOUNDS) METRO_BOUNDS = buildMetroBounds();
-
-  if(!inputEl.id) inputEl.id = "ac_" + Math.random().toString(36).slice(2);
+  if(!inputEl.id) {
+    // ensure it has an id (Autocomplete map key)
+    inputEl.id = "ac_" + Math.random().toString(36).slice(2);
+  }
   if(__acMap.has(inputEl.id)) return;
 
-  try{
-    const opts = {
-      componentRestrictions: { country: "us" },
-      fields: ["formatted_address","name","geometry"],
-      types: ["geocode"]
-    };
+  const ac = new google.maps.places.Autocomplete(inputEl, {
+    bounds: OKC_BOUNDS || undefined,
+    strictBounds: true,
+    componentRestrictions: { country: "us" },
+    fields: ["formatted_address","name","geometry"]
+  });
 
-    // Only apply bounds + strictBounds if bounds exists
-    if(METRO_BOUNDS){
-      opts.bounds = METRO_BOUNDS;
-      opts.strictBounds = false; // <-- IMPORTANT: do NOT hard-lock
+  ac.addListener("place_changed", ()=>{
+    const place = ac.getPlace();
+    const name = (place?.name || "").trim();
+    const addr = (place?.formatted_address || "").trim();
+
+    if (name && addr) {
+      const nameLower = name.toLowerCase();
+      const addrLower = addr.toLowerCase();
+      inputEl.value = addrLower.startsWith(nameLower) ? addr : `${name}, ${addr}`;
+      return;
     }
+    if (addr) { inputEl.value = addr; return; }
+    if (name) { inputEl.value = name; return; }
+  });
 
-    const ac = new google.maps.places.Autocomplete(inputEl, opts);
-
-    ac.addListener("place_changed", ()=>{
-      try{
-        const place = ac.getPlace?.() || {};
-        const name = (place.name || "").trim();
-        const addr = (place.formatted_address || "").trim();
-
-        if(name && addr){
-          const n = name.toLowerCase();
-          const a = addr.toLowerCase();
-          inputEl.value = a.startsWith(n) ? addr : `${name}, ${addr}`;
-        } else if(addr){
-          inputEl.value = addr;
-        } else if(name){
-          inputEl.value = name;
-        }
-      }catch(err){
-        log("place_changed error: " + (err?.message || err));
-      }
-    });
-
-    __acMap.set(inputEl.id, ac);
-  }catch(err){
-    log("Autocomplete attach failed: " + (err?.message || err));
-  }
+  __acMap.set(inputEl.id, ac);
 }
+
+function initAddressAutocomplete(){
+  attachAutocompleteToInput($("manualPickup"));
+  attachAutocompleteToInput($("manualDropoff"));
+  attachAutocompleteToInput($("editPickup"));
+  attachAutocompleteToInput($("editDropoff"));
+  document.querySelectorAll('input[id^="manualStop_"]').forEach(attachAutocompleteToInput);
+}
+
 /* =========================
    DIRECTIONS + SMS HELPERS
 ========================= */
@@ -818,7 +785,12 @@ function buildGoogleDirectionsUrl(booking){
   if(waypointsArr.length){ params.set("waypoints", waypointsArr.join("|")); }
   return `https://www.google.com/maps/dir/?${params.toString()}`;
 }
-
+function smsHrefWithBody(phoneDigits, body){
+  if(!phoneDigits) return "";
+  const encoded = encodeURIComponent(body || "");
+  // iOS tolerates "sms:+1XXXXXXXXXX&body=..."
+  return `sms:+1${phoneDigits}&body=${encoded}`;
+}
 function smsTemplateText(templateKey, booking){
   const riderName = (booking?.rider?.name || "").trim();
   const pickup = (booking?.pickup?.address || "").trim();
@@ -833,12 +805,20 @@ function smsTemplateText(templateKey, booking){
   return templates[templateKey] || `${greet}I’m on my way.`;
 }
 
+/* Rider login link helper (based on riderId if present) */
 function resolveRiderIdFromBooking(b){
-  return b?.rider?.riderId || b?.riderId || b?.rider?.id || b?.rider?.external_id || b?.rider?.externalId || "";
+  const a = b?.rider?.riderId; if(a) return a;
+  const b1 = b?.riderId; if(b1) return b1;
+  const c = b?.rider?.id; if(c) return c;
+  const d = b?.rider?.external_id; if(d) return d;
+  const e = b?.rider?.externalId; if(e) return e;
+  return "";
 }
 function buildRiderLoginLink(booking){
   const riderId = resolveRiderIdFromBooking(booking);
   if(!riderId) return "";
+  // This matches your "login via external_id" concept.
+  // If your rider page uses a different query param, change "external_id" here.
   const u = new URL(RIDER_LOGIN_BASE);
   u.searchParams.set("external_id", riderId);
   return u.toString();
@@ -990,7 +970,7 @@ async function loadStatus(){
       pill.classList.add("offline");
       headerPill.classList.add("offline");
       headerPill.textContent="📡 Tracking: OFF";
-    }
+}
 
     const when=formatDateTime(data.lastUpdated);
     pill.textContent=`Status: ${label} • updated ${when}`;
@@ -1013,6 +993,7 @@ async function updateStatus(){
   const val=$("statusSelect").value;
   const message=val==="online"?"On the Road":val==="away"?"Limited Availability":"Offline";
   const wasOnline = (currentStatusVal === "online");
+
   const vehicleCode = $("globalVehicleSelect") ? $("globalVehicleSelect").value : undefined;
 
   try{
@@ -1075,20 +1056,19 @@ function startGpsPings(){
 
       gpsLastTs = now;
 
-      /*
-        ✅ GPS -> STATUS_WORKER
-        IMPORTANT: STATUS_WORKER must MERGE partial PUTs (location-only) and not wipe status fields.
-      */
-      fetch(STATUS_WORKER + "/status", {
+      fetch(LOCATION_WORKER, {
         method: "PUT",
-        headers: { "Content-Type": "application/json", "X-Auth-Token": AUTH_SECRET },
+        headers: { "Content-Type": "application/json","X-Auth-Token": AUTH_SECRET },
         body: JSON.stringify({
-          location: { lat: pos.coords.latitude, lng: pos.coords.longitude }
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+          accuracy: pos.coords.accuracy,
+          updated: new Date().toISOString()
         })
       })
       .then(r => r.text())
-      .then(t => log("GPS→STATUS PUT: " + t))
-      .catch(e => log("GPS→STATUS error: " + e.message));
+      .then(t => log("GPS PUT: " + t))
+      .catch(e => log("GPS error: " + e.message));
 
       gpsTimer = setTimeout(pingOnce, interval);
 
@@ -1109,6 +1089,8 @@ function stopGpsPings(){
 /* =========================
    MANUAL CREATE (STOPS + LUGGAGE)
 ========================= */
+let manualStopIds = [];
+
 function isAirportText(s){
   const t = String(s||"").toLowerCase();
   return t.includes("airport") || t.includes("will rogers");
@@ -1236,121 +1218,6 @@ async function createManualRide(){
 }
 
 /* =========================
-   FARE ESTIMATE (Manual Create)
-========================= */
-const PRICING = {
-  STANDARD_BASE: 10,
-  RUSH_BASE: 15,
-  AIRPORT_BASE: 15,
-  EVENT_BASE: 20,
-  MILES_INCLUDED: 10,
-  RATE_11_TO_20: 1.25,
-  RATE_20_PLUS: 1.00
-};
-function metersToMiles(m){ return (Number(m || 0) / 1609.344); }
-function computeFareFromMiles(base, miles){
-  const m = Math.max(0, Number(miles || 0));
-  let total = base;
-  if (m <= PRICING.MILES_INCLUDED) return total;
-  if (m <= 20){
-    total += (m - PRICING.MILES_INCLUDED) * PRICING.RATE_11_TO_20;
-    return total;
-  }
-  total += (20 - PRICING.MILES_INCLUDED) * PRICING.RATE_11_TO_20;
-  total += (m - 20) * PRICING.RATE_20_PLUS;
-  return total;
-}
-function formatMoney(n){
-  const v = Number(n);
-  if(!Number.isFinite(v)) return "—";
-  return `$${v.toFixed(2)}`;
-}
-function formatMinutesFromSeconds(s){
-  const sec = Number(s || 0);
-  if(!Number.isFinite(sec) || sec <= 0) return "—";
-  const mins = Math.round(sec / 60);
-  if(mins < 60) return `${mins} min`;
-  const h = Math.floor(mins / 60);
-  const m = mins % 60;
-  return `${h}h ${m}m`;
-}
-function getManualRouteAddresses(){
-  const pickup  = ($("manualPickup")?.value || "").trim();
-  const dropoff = ($("manualDropoff")?.value || "").trim();
-  const stops   = getManualStopsList();
-  const waypoints = stops.map(s => String(s||"").trim()).filter(Boolean);
-  return { pickup, dropoff, waypoints };
-}
-function resolveBaseRate(){
-  const rateType = ($("rateType")?.value || "auto").toLowerCase();
-  if(rateType === "standard") return PRICING.STANDARD_BASE;
-  if(rateType === "rush")     return PRICING.RUSH_BASE;
-  if(rateType === "event")    return PRICING.EVENT_BASE;
-  if(rateType === "airport")  return PRICING.AIRPORT_BASE;
-  return manualIsAirportRide() ? PRICING.AIRPORT_BASE : PRICING.STANDARD_BASE;
-}
-async function calculateManualFare(){
-  if(!(window.google && google.maps)){
-    showToast("Google Maps not available");
-    return;
-  }
-  const { pickup, dropoff, waypoints } = getManualRouteAddresses();
-  if(!pickup || !dropoff){
-    showToast("Enter pickup + dropoff first");
-    return;
-  }
-
-  const points = [pickup, ...waypoints, dropoff];
-  const svc = new google.maps.DistanceMatrixService();
-
-  let totalMeters = 0;
-  let totalSeconds = 0;
-
-  for(let i=0; i<points.length-1; i++){
-    const origin = points[i];
-    const dest   = points[i+1];
-
-    // eslint-disable-next-line no-await-in-loop
-    const leg = await new Promise((resolve, reject)=>{
-      svc.getDistanceMatrix({
-        origins: [origin],
-        destinations: [dest],
-        travelMode: google.maps.TravelMode.DRIVING,
-        unitSystem: google.maps.UnitSystem.IMPERIAL
-      }, (resp, status)=>{
-        if(status !== "OK" || !resp?.rows?.[0]?.elements?.[0]){
-          reject(new Error("Distance lookup failed"));
-          return;
-        }
-        const el = resp.rows[0].elements[0];
-        if(el.status !== "OK"){
-          reject(new Error("Route not found"));
-          return;
-        }
-        resolve({
-          meters: el.distance?.value || 0,
-          seconds: el.duration?.value || 0
-        });
-      });
-    });
-
-    totalMeters  += Number(leg.meters || 0);
-    totalSeconds += Number(leg.seconds || 0);
-  }
-
-  const miles = metersToMiles(totalMeters);
-  const base = resolveBaseRate();
-  const fare = computeFareFromMiles(base, miles);
-
-  if($("fareMiles")) $("fareMiles").textContent = miles.toFixed(1);
-  if($("fareEta"))   $("fareEta").textContent   = formatMinutesFromSeconds(totalSeconds);
-  if($("fareTotal")) $("fareTotal").textContent = formatMoney(fare);
-
-  log(`Fare calc: miles=${miles.toFixed(2)} base=${base} fare=${fare.toFixed(2)}`);
-  showToast("Fare updated");
-}
-
-/* =========================
    DISPATCH: FETCH + RENDER + STATUS UPDATE
 ========================= */
 function fmtStops(stops){
@@ -1359,6 +1226,7 @@ function fmtStops(stops){
   if(!addrs.length) return "";
   return addrs.map((a,i)=>`<div class="loc-line">🛑 Stop ${i+1}: ${escHtml(a)}</div>`).join("");
 }
+
 function statusDropdownHtml(current, bookingId){
   const opts = DRIVER_STATUSES.map(s=>{
     const sel = (s.value === current) ? "selected" : "";
@@ -1370,6 +1238,7 @@ function statusDropdownHtml(current, bookingId){
     </select>
   `;
 }
+
 function quickChipsHtml(booking){
   const directionsUrl = buildGoogleDirectionsUrl(booking);
   const directionsBtn = directionsUrl
@@ -1377,6 +1246,7 @@ function quickChipsHtml(booking){
     : ``;
 
   const smsDigits = normalizePhoneDigits(booking?.rider?.phone || "");
+
   const smsBtns = smsDigits ? `
     <span class="chip" data-action="copySms" data-template="CONFIRM" data-id="${escHtml(booking.id)}">💬 Confirm</span>
     <span class="chip" data-action="copySms" data-template="OMW" data-id="${escHtml(booking.id)}">🚗 OMW</span>
@@ -1397,6 +1267,7 @@ function quickChipsHtml(booking){
     <span class="chip" data-action="openEdit" data-id="${escHtml(booking.id)}">✏️ Edit</span>
   `;
 }
+
 function renderColumn(containerId, items){
   const box = $(containerId);
   if(!box) return;
@@ -1430,6 +1301,7 @@ function renderColumn(containerId, items){
         </div>
 
         ${partySize ? `<div class="loc-line">👥 Party: ${partySize}</div>` : ""}
+
         <div class="loc-line">🔔 Notify: ${notifyPrefLabel}</div>
 
         <div class="loc-line">📍 Pickup: ${pickup || "—"}</div>
@@ -1448,7 +1320,7 @@ function renderColumn(containerId, items){
             ${quickChipsHtml(b)}
           </div>
         </div>
-      </div>
+ remember:  </div>
     `;
   }).join("");
 }
@@ -1469,8 +1341,11 @@ function renderAllBookings(list){
   $("countActive").textContent = activeArr.length;
   $("countDone").textContent   = doneArr.length;
 
+  // Update scope button label
   const scopeBtn = $("btnScope");
   if(scopeBtn) scopeBtn.textContent = `📋 ${dispatchScope}`;
+
+  // If there are active trips, GPS interval tightens automatically
 }
 
 async function fetchBookings(){
@@ -1484,6 +1359,7 @@ async function fetchBookings(){
   }
 }
 
+/* Change booking status (driver) */
 async function updateBookingStatus(bookingId, newStatus){
   if(!bookingId || !newStatus) return;
 
@@ -1506,6 +1382,7 @@ async function updateBookingStatus(bookingId, newStatus){
 
     if(!r.ok){
       showToast("Status update failed");
+      // revert dropdown visually by refetching
       fetchBookings();
       return;
     }
@@ -1541,25 +1418,27 @@ function openEditModal(bookingId){
   $("editDropoff").value = b?.dropoff?.address || "";
 
   const stopsArr = Array.isArray(b?.stops) ? b.stops : [];
-  $("editStops").value = stopsArr.map(s=> (s?.address||"").trim()).filter(Boolean).join("\n");
+  const stopsLines = stopsArr.map(s=> (s?.address||"").trim()).filter(Boolean).join("\n");
+  $("editStops").value = stopsLines;
 
   $("editScheduledFor").value = b?.scheduledFor || "";
   $("editNotes").value = b?.metadata?.notes || "";
   $("editManualTimeText").value = b?.metadata?.manualTimeText || "";
 
+  // ensure autocomplete attached for modal fields
   attachAutocompleteToInput($("editPickup"));
   attachAutocompleteToInput($("editDropoff"));
 
   document.body.classList.add("modal-open");
   $("editOverlay").classList.add("show");
   $("editOverlay").setAttribute("aria-hidden","false");
+  document.body.classList.remove("modal-open");
 }
 
 function closeEditModal(){
   editingBookingId = null;
   $("editOverlay").classList.remove("show");
   $("editOverlay").setAttribute("aria-hidden","true");
-  document.body.classList.remove("modal-open");
 }
 
 async function saveEditModal(){
@@ -1574,7 +1453,7 @@ async function saveEditModal(){
   const partySize = Number(($("editPartySize").value || "1"));
   const luggageCount = Number(($("editLuggageCount").value || "0"));
 
-  const scheduledForRaw = ($("editScheduledFor").value || "").trim();
+  const scheduledForRaw = ($("editScheduledFor").value || "").trim(); // ISO or blank
   const notes = ($("editNotes").value || "").trim();
   const manualTimeText = ($("editManualTimeText").value || "").trim();
 
@@ -1593,6 +1472,7 @@ async function saveEditModal(){
     return;
   }
 
+  // ✅ MATCH WORKER SHAPE
   const payload = {
     pickup:  { address: pickupAddr },
     dropoff: { address: dropoffAddr },
@@ -1611,13 +1491,14 @@ async function saveEditModal(){
   };
 
   try{
-    log(`Admin edit PUT ${editingBookingId} … ${JSON.stringify(payload)}`);
+    log(`Admin edit PUT (driver endpoint) ${editingBookingId} … ${JSON.stringify(payload)}`);
 
+    // ✅ Correct endpoint that exists in worker:
     const r = await fetch(`${BOOKINGS_API}/api/driver/bookings/${encodeURIComponent(editingBookingId)}`,{
       method:"PUT",
       headers:{
         "Content-Type":"application/json",
-        "X-Admin-Secret": AUTH_SECRET
+        "X-Admin-Secret": AUTH_SECRET  // ✅ correct auth header for core edits
       },
       body: JSON.stringify(payload)
     });
@@ -1671,18 +1552,22 @@ function toggleScope(){
 function handleDispatchClick(e){
   const target = e.target;
 
+  // If user taps the status dropdown, DO NOT update yet (iOS fires click before change)
   if(target && target.matches('select[data-action="statusChange"]')){
     e.stopPropagation();
     return;
   }
 
+  // Chips
   const chip = target.closest && target.closest(".chip");
   if(chip){
+    // ✅ If it's a real link (Directions / Rider Link), let it work and don't open the card
     if(chip.tagName === "A" && chip.getAttribute("href")){
       e.stopPropagation();
       return;
     }
 
+    // Dataset-action chips (Copy ID / SMS / Edit)
     if(chip.dataset && chip.dataset.action){
       const action = chip.dataset.action;
       const id = chip.dataset.id;
@@ -1693,6 +1578,7 @@ function handleDispatchClick(e){
         return;
       }
 
+      /* ✅ FIX: SMS template chips should COPY, not open edit */
       if(action === "copySms"){
         const templateKey = chip.dataset.template || "CONFIRM";
         const booking = bookingCache.get(String(id));
@@ -1720,6 +1606,7 @@ function handleDispatchClick(e){
     return;
   }
 
+  // Card tap opens edit (admin only)
   const card = target.closest && target.closest(".card");
   if(card && card.dataset && card.dataset.id){
     if(currentMode === "admin"){
@@ -1729,6 +1616,7 @@ function handleDispatchClick(e){
 }
 function handleDispatchChange(e){
   const target = e.target;
+
   if(target && target.matches('select[data-action="statusChange"]')){
     const bookingId = target.getAttribute("data-id");
     const newStatus = target.value;
@@ -1757,20 +1645,6 @@ function wireButtons(){
   $("clearPush").onclick = clearPush;
   $("sendBroadcastPush").onclick = handlePushBroadcast;
 
-  const calcBtn = $("btnCalcFare");
-  if(calcBtn) calcBtn.onclick = calculateManualFare;
-
-  ["manualPickup","manualDropoff","manualAirportToggle","rateType"].forEach(id=>{
-    const el = $(id);
-    if(el){
-      el.addEventListener("change", ()=> {
-        if($("fareMiles")) $("fareMiles").textContent="—";
-        if($("fareEta")) $("fareEta").textContent="—";
-        if($("fareTotal")) $("fareTotal").textContent="—";
-      });
-    }
-  });
-
   $("btnCreateManualRide").onclick = createManualRide;
   $("btnClearManualRide").onclick = clearManualRideForm;
 
@@ -1779,7 +1653,7 @@ function wireButtons(){
     if(el) el.oninput=updPrev;
   });
 
-  $("btnRefreshPage").onclick = ()=>location.reload();
+  $("btnRefreshPage").onclick = ()=>location.reload(true);
 
   $("btnDispatchRefresh").onclick = ()=>{
     fetchBookings();
@@ -1788,13 +1662,12 @@ function wireButtons(){
 
   $("btnScope").onclick = toggleScope;
 
-  // ✅ FIX: toast shows NEXT mode (not stale currentMode)
   $("btnModeToggle").onclick = ()=>{
-    const next = (currentMode === "admin") ? "driver" : "admin";
-    applyMode(next);
-    showToast(`Mode: ${next}`);
+    applyMode(currentMode==="admin" ? "driver" : "admin");
+    showToast(`Mode: ${currentMode}`);
   };
 
+  // Manual stops + luggage wiring
   $("manualAddStopBtn").addEventListener("click", ()=>addManualStopField(""));
   $("manualClearStopsBtn").addEventListener("click", clearManualStops);
   ["manualPickup","manualDropoff","manualAirportToggle"].forEach(id=>{
@@ -1805,6 +1678,7 @@ function wireButtons(){
     }
   });
 
+  // digits-only UX enforcement for phone fields (manual + edit)
   const phoneInput = $("manualRiderPhone");
   if(phoneInput){
     phoneInput.addEventListener("input", ()=>{ phoneInput.value = normalizePhoneDigits(phoneInput.value); });
@@ -1814,24 +1688,27 @@ function wireButtons(){
     editPhone.addEventListener("input", ()=>{ editPhone.value = normalizePhoneDigits(editPhone.value); });
   }
 
+  // Modal buttons
   $("editCloseBtn").onclick = closeEditModal;
   $("editCancelBtn").onclick = closeEditModal;
   $("editSaveBtn").onclick = saveEditModal;
   $("editCopyLoginLinkBtn").onclick = copyEditRiderLoginLink;
   $("editCopyDirectionsBtn").onclick = copyEditDirectionsLink;
 
+  // Click outside modal closes
   $("editOverlay").addEventListener("click",(ev)=>{
     if(ev.target === $("editOverlay")) closeEditModal();
   });
 
+  // Dispatch click delegation
   $("listNew").addEventListener("click", handleDispatchClick);
   $("listActive").addEventListener("click", handleDispatchClick);
   $("listDone").addEventListener("click", handleDispatchClick);
-
+  // ✅ Status dropdown should update on CHANGE (not click)
   $("listNew").addEventListener("change", handleDispatchChange);
   $("listActive").addEventListener("change", handleDispatchChange);
   $("listDone").addEventListener("change", handleDispatchChange);
-
+  // ESC closes modal
   document.addEventListener("keydown",(ev)=>{
     if(ev.key === "Escape" && $("editOverlay").classList.contains("show")) closeEditModal();
   });
@@ -1841,38 +1718,27 @@ function wireButtons(){
    BOOT
 ========================= */
 window.addEventListener("load",()=>{
+  // mode + scope
   applyMode(currentMode);
   $("btnScope").textContent = `📋 ${dispatchScope}`;
 
+  // initial UI
   updPrev();
   applyTemplateToCaption("LIVE");
   setImage(0);
 
-  function initAddressAutocomplete(){
-  try{
-    // Manual create fields
-    attachAutocompleteToInput($("manualPickup"));
-    attachAutocompleteToInput($("manualDropoff"));
-    attachAutocompleteToInput($("manualGateCode")); // optional, but handy
-
-    // Existing manual stop inputs (if any already exist)
-    manualStopIds.forEach(id => attachAutocompleteToInput($(id)));
-
-    // Edit modal fields (they also get attached when modal opens, but safe to call here too)
-    attachAutocompleteToInput($("editPickup"));
-    attachAutocompleteToInput($("editDropoff"));
-
-    log("Autocomplete init complete.");
-  }catch(e){
-    log("initAddressAutocomplete error: " + (e?.message || e));
-  }
-}
-
+  // load data
   loadStatus();
   loadLastCaption();
   fetchBookings();
 
+  // timers
   setInterval(fetchBookings, 20000);
+
+  // init UX
+  syncManualLuggageVisibility();
+  initAddressAutocomplete();
+  wireButtons();
 });
 </script>
 
