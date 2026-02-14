@@ -970,7 +970,7 @@ async function loadStatus(){
       pill.classList.add("offline");
       headerPill.classList.add("offline");
       headerPill.textContent="📡 Tracking: OFF";
-}
+    }
 
     const when=formatDateTime(data.lastUpdated);
     pill.textContent=`Status: ${label} • updated ${when}`;
@@ -1056,19 +1056,20 @@ function startGpsPings(){
 
       gpsLastTs = now;
 
-      fetch(LOCATION_WORKER, {
+      /* ✅ SINGLE SURGICAL CHANGE:
+         Send GPS to STATUS_WORKER so /status carries the latest location.
+         This avoids admin GPS mismatches when other logic reads from /status.
+      */
+      fetch(STATUS_WORKER + "/status", {
         method: "PUT",
-        headers: { "Content-Type": "application/json","X-Auth-Token": AUTH_SECRET },
+        headers: { "Content-Type": "application/json", "X-Auth-Token": AUTH_SECRET },
         body: JSON.stringify({
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
-          accuracy: pos.coords.accuracy,
-          updated: new Date().toISOString()
+          location: { lat: pos.coords.latitude, lng: pos.coords.longitude }
         })
       })
       .then(r => r.text())
-      .then(t => log("GPS PUT: " + t))
-      .catch(e => log("GPS error: " + e.message));
+      .then(t => log("GPS→STATUS PUT: " + t))
+      .catch(e => log("GPS→STATUS error: " + e.message));
 
       gpsTimer = setTimeout(pingOnce, interval);
 
@@ -1320,7 +1321,7 @@ function renderColumn(containerId, items){
             ${quickChipsHtml(b)}
           </div>
         </div>
- remember:  </div>
+      </div>
     `;
   }).join("");
 }
