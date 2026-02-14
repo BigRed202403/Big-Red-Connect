@@ -18,7 +18,7 @@
 <!-- ✅ Google Maps Places (Autocomplete)
      IMPORTANT: Restrict this key by HTTP referrer in Google Cloud Console.
 -->
-<script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_KEY&libraries=places"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places"></script>
 
 <!-- OneSignal v16 -->
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
@@ -732,57 +732,75 @@ function applyMode(mode){
 }
 
 /* =========================
-   PLACES AUTOCOMPLETE
+   PLACES AUTOCOMPLETE (SAFE)
 ========================= */
-const OKC_BOUNDS = (window.google && google.maps)
-  ? new google.maps.LatLngBounds(
-      new google.maps.LatLng(35.20, -97.80),
-      new google.maps.LatLng(35.70, -97.20)
-    )
-  : null;
+
+// Wider metro bounds that include Moore/Norman/Yukon/Mustang/Shawnee-ish
+let METRO_BOUNDS = null;
+
+function buildMetroBounds(){
+  if(!(window.google && google.maps)) return null;
+  // SW corner / NE corner (roughly covers your metro footprint)
+  return new google.maps.LatLngBounds(
+    new google.maps.LatLng(35.10, -97.95),
+    new google.maps.LatLng(35.75, -96.85)
+  );
+}
 
 function attachAutocompleteToInput(inputEl){
   if(!inputEl) return;
-  if(!(window.google && google.maps && google.maps.places)) {
-    log("Places library not available (Google script missing or blocked).");
+
+  // If Google isn't ready, don't attach (no crash)
+  if(!(window.google && google.maps && google.maps.places && google.maps.places.Autocomplete)){
+    log("Places library not available (Google script missing/blocked).");
     return;
   }
+
+  if(!METRO_BOUNDS) METRO_BOUNDS = buildMetroBounds();
+
   if(!inputEl.id) inputEl.id = "ac_" + Math.random().toString(36).slice(2);
   if(__acMap.has(inputEl.id)) return;
 
-  const ac = new google.maps.places.Autocomplete(inputEl, {
-    bounds: OKC_BOUNDS || undefined,
-    strictBounds: true,
-    componentRestrictions: { country: "us" },
-    fields: ["formatted_address","name","geometry"]
-  });
+  try{
+    const opts = {
+      componentRestrictions: { country: "us" },
+      fields: ["formatted_address","name","geometry"],
+      types: ["geocode"]
+    };
 
-  ac.addListener("place_changed", ()=>{
-    const place = ac.getPlace();
-    const name = (place?.name || "").trim();
-    const addr = (place?.formatted_address || "").trim();
-
-    if (name && addr) {
-      const nameLower = name.toLowerCase();
-      const addrLower = addr.toLowerCase();
-      inputEl.value = addrLower.startsWith(nameLower) ? addr : `${name}, ${addr}`;
-      return;
+    // Only apply bounds + strictBounds if bounds exists
+    if(METRO_BOUNDS){
+      opts.bounds = METRO_BOUNDS;
+      opts.strictBounds = false; // <-- IMPORTANT: do NOT hard-lock
     }
-    if (addr) { inputEl.value = addr; return; }
-    if (name) { inputEl.value = name; return; }
-  });
 
-  __acMap.set(inputEl.id, ac);
+    const ac = new google.maps.places.Autocomplete(inputEl, opts);
+
+    ac.addListener("place_changed", ()=>{
+      try{
+        const place = ac.getPlace?.() || {};
+        const name = (place.name || "").trim();
+        const addr = (place.formatted_address || "").trim();
+
+        if(name && addr){
+          const n = name.toLowerCase();
+          const a = addr.toLowerCase();
+          inputEl.value = a.startsWith(n) ? addr : `${name}, ${addr}`;
+        } else if(addr){
+          inputEl.value = addr;
+        } else if(name){
+          inputEl.value = name;
+        }
+      }catch(err){
+        log("place_changed error: " + (err?.message || err));
+      }
+    });
+
+    __acMap.set(inputEl.id, ac);
+  }catch(err){
+    log("Autocomplete attach failed: " + (err?.message || err));
+  }
 }
-
-function initAddressAutocomplete(){
-  attachAutocompleteToInput($("manualPickup"));
-  attachAutocompleteToInput($("manualDropoff"));
-  attachAutocompleteToInput($("editPickup"));
-  attachAutocompleteToInput($("editDropoff"));
-  document.querySelectorAll('input[id^="manualStop_"]').forEach(attachAutocompleteToInput);
-}
-
 /* =========================
    DIRECTIONS + SMS HELPERS
 ========================= */
