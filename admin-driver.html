@@ -66,7 +66,7 @@ header{background:var(--panel);display:flex;justify-content:space-between;align-
 .header-left{display:flex;align-items:center;gap:10px;font-size:.9rem;min-width:0;flex:1 1 260px;}
 .header-left img{height:40px;border-radius:4px;}
 .header-right{display:flex;gap:8px;align-items:center;justify-content:flex-end;flex:1 1 260px;flex-wrap:wrap;}
-.pill{padding:3px 10px;border-radius:999px;font-weight:700;font-size:.8rem;white-space:nowrap;}
+.pill{padding:3px 10px;border-radius:999px;font-weight:700;font-size:.8rem;white-space:nowrap;cursor:pointer;user-select:none;}
 .pill.online{background:#064;}
 .pill.away{background:#665500;}
 .pill.offline{background:#400;}
@@ -139,14 +139,11 @@ body.mode-admin .driver-only{display:none;}
   justify-content:center;
   z-index:999;
   padding:16px;
-
-  /* ✅ allow scrolling when modal is taller than screen */
   overflow:auto;
   -webkit-overflow-scrolling:touch;
 }
 .modalOverlay.show{ display:flex; }
 
-/* ✅ Make modal box never exceed viewport; allow internal scroll */
 .modalBox{
   width:min(760px, 96vw);
   background:#0b0b0b;
@@ -154,8 +151,6 @@ body.mode-admin .driver-only{display:none;}
   border-radius:12px;
   padding:12px;
   box-shadow: 0 18px 40px rgba(0,0,0,.55);
-
-  /* ✅ key parts */
   max-height: calc(100vh - 32px);
   overflow:auto;
   -webkit-overflow-scrolling:touch;
@@ -165,6 +160,13 @@ body.mode-admin .driver-only{display:none;}
   top: 0;
   background:#0b0b0b;
   z-index: 5;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding-bottom:10px;
+  border-bottom:1px solid #222;
+  margin-bottom:10px;
 }
 body.modal-open{ overflow:hidden; }
 .modalTitle{
@@ -221,7 +223,11 @@ body.modal-open{ overflow:hidden; }
       <div style="font-weight:700;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Big Red Admin / Driver</div>
       <div style="color:#888;font-size:.75rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Live Dispatch & Status</div>
     </div>
-    <span id="livePill" class="pill offline">📡 Tracking: OFF</span>
+
+    <!-- ✅ TRACKING PILL IS NOW A TRUE TOGGLE (NOT TIED TO STATUS) -->
+    <span id="livePill" class="pill offline" title="Tap to toggle GPS tracking">
+      📡 Tracking: OFF
+    </span>
   </div>
   <div class="header-right">
     <button class="btn btn-secondary" id="btnModeToggle" title="Toggle Admin/Driver">🛠 Admin Mode</button>
@@ -261,7 +267,10 @@ body.modal-open{ overflow:hidden; }
 
       <div class="meta">
         Last status update: <span id="statusStamp">—</span><br>
-        Last GPS ping: <span id="gpsStamp">—</span> • Interval: <span id="gpsRate">—</span>
+        Last GPS ping: <span id="gpsStamp">—</span> • Interval: <span id="gpsRate">—</span><br>
+        <span style="color:#888;">
+          ✅ GPS only sends when: <strong>Status = Online</strong> AND <strong>Tracking = ON</strong>.
+        </span>
       </div>
     </section>
 
@@ -612,6 +621,9 @@ let currentMode = localStorage.getItem("adminDriverMode") || "admin";
 const bookingCache = new Map();
 let editingBookingId = null;
 
+/* ✅ NEW: Tracking toggle that is NOT tied to status */
+let trackingEnabled = (localStorage.getItem("trackingEnabled") === "true");
+
 /* =========================
    SMALL UTILS
 ========================= */
@@ -666,6 +678,45 @@ function copyText(txt){
 window.copyText = copyText;
 
 /* =========================
+   TRACKING PILL (TOGGLE)
+========================= */
+function applyTrackingPill(){
+  const pill = $("livePill");
+  if(!pill) return;
+
+  pill.classList.remove("online","away","offline");
+
+  if(trackingEnabled){
+    pill.classList.add("online");
+    pill.textContent = "📡 Tracking: ON";
+    pill.title = "Tap to turn GPS tracking OFF";
+  }else{
+    pill.classList.add("offline");
+    pill.textContent = "📡 Tracking: OFF";
+    pill.title = "Tap to turn GPS tracking ON";
+  }
+}
+
+function setTrackingEnabled(next){
+  trackingEnabled = !!next;
+  localStorage.setItem("trackingEnabled", trackingEnabled ? "true" : "false");
+  applyTrackingPill();
+
+  // ✅ Only start GPS if status is online AND trackingEnabled
+  if(trackingEnabled && currentStatusVal === "online"){
+    startGpsPings();
+    showToast("Tracking ON");
+  }else{
+    stopGpsPings();
+    showToast("Tracking OFF");
+  }
+}
+
+function toggleTracking(){
+  setTrackingEnabled(!trackingEnabled);
+}
+
+/* =========================
    NOTIFY PREF (for rider cards)
 ========================= */
 function normalizeNotifyPref(v){
@@ -679,9 +730,7 @@ function prettyNotifyPref(v){
   if(n === "push") return "Push preferred";
   return "—";
 }
-/* Best-effort extraction from booking shape(s) */
 function getNotifyPrefFromBooking(b){
-  // common candidates across versions
   const candidates = [
     b?.notifyPref,
     b?.rider?.notifyPref,
@@ -730,7 +779,6 @@ function attachAutocompleteToInput(inputEl){
     return;
   }
   if(!inputEl.id) {
-    // ensure it has an id (Autocomplete map key)
     inputEl.id = "ac_" + Math.random().toString(36).slice(2);
   }
   if(__acMap.has(inputEl.id)) return;
@@ -788,7 +836,6 @@ function buildGoogleDirectionsUrl(booking){
 function smsHrefWithBody(phoneDigits, body){
   if(!phoneDigits) return "";
   const encoded = encodeURIComponent(body || "");
-  // iOS tolerates "sms:+1XXXXXXXXXX&body=..."
   return `sms:+1${phoneDigits}&body=${encoded}`;
 }
 function smsTemplateText(templateKey, booking){
@@ -805,7 +852,7 @@ function smsTemplateText(templateKey, booking){
   return templates[templateKey] || `${greet}I’m on my way.`;
 }
 
-/* Rider login link helper (based on riderId if present) */
+/* Rider login link helper */
 function resolveRiderIdFromBooking(b){
   const a = b?.rider?.riderId; if(a) return a;
   const b1 = b?.riderId; if(b1) return b1;
@@ -817,8 +864,6 @@ function resolveRiderIdFromBooking(b){
 function buildRiderLoginLink(booking){
   const riderId = resolveRiderIdFromBooking(booking);
   if(!riderId) return "";
-  // This matches your "login via external_id" concept.
-  // If your rider page uses a different query param, change "external_id" here.
   const u = new URL(RIDER_LOGIN_BASE);
   u.searchParams.set("external_id", riderId);
   return u.toString();
@@ -950,27 +995,19 @@ async function loadStatus(){
     currentStatusVal = statusVal;
 
     const pill=$("status-pill");
-    const headerPill=$("livePill");
     pill.classList.remove("online","away","offline");
-    headerPill.classList.remove("online","away","offline");
 
     let label="";
     if(statusVal==="online"){
       label="ON THE ROAD";
       pill.classList.add("online");
-      headerPill.classList.add("online");
-      headerPill.textContent="📡 Tracking: ON";
     }else if(statusVal==="away"){
       label="LIMITED AVAILABILITY";
       pill.classList.add("away");
-      headerPill.classList.add("away");
-      headerPill.textContent="📡 Tracking: LIMITED";
     }else{
       label="OFF FOR NOW";
       pill.classList.add("offline");
-      headerPill.classList.add("offline");
-      headerPill.textContent="📡 Tracking: OFF";
-}
+    }
 
     const when=formatDateTime(data.lastUpdated);
     pill.textContent=`Status: ${label} • updated ${when}`;
@@ -1025,21 +1062,34 @@ async function updateStatus(){
   }
 }
 
-function handleGpsForStatus(val){ if(val==="online") startGpsPings(); else stopGpsPings(); }
+/* ✅ GPS ONLY RUNS WHEN (status online) AND (trackingEnabled true) */
+function handleGpsForStatus(val){
+  if(val === "online" && trackingEnabled) startGpsPings();
+  else stopGpsPings();
+}
 
 function determineGpsInterval() {
   let interval = 600000; // default 10m
   const active = document.querySelectorAll("#listActive .card");
   if (active.length > 0) interval = 20000; // 20s while active trips exist
-  if (window.__nearPickup === true) interval = 5000; // optional flag if you add it later
+  if (window.__nearPickup === true) interval = 5000;
   return interval;
 }
 
 function startGpsPings(){
+  if (!trackingEnabled) { stopGpsPings(); return; }
+  if (currentStatusVal !== "online") { stopGpsPings(); return; }
+
   if (gpsTimer) { clearTimeout(gpsTimer); gpsTimer = null; }
   if (!("geolocation" in navigator)) { log("No geolocation support."); return; }
 
   async function pingOnce(){
+    // ✅ re-check every loop (so flipping tracking off stops immediately)
+    if(!trackingEnabled || currentStatusVal !== "online"){
+      stopGpsPings();
+      return;
+    }
+
     const interval = determineGpsInterval();
 
     navigator.geolocation.getCurrentPosition(pos => {
@@ -1083,6 +1133,7 @@ function startGpsPings(){
 
 function stopGpsPings(){
   if(gpsTimer){clearTimeout(gpsTimer);gpsTimer=null;}
+  gpsLastTs = null;            // ✅ reset
   $("gpsRate").textContent="—";
 }
 
@@ -1320,7 +1371,7 @@ function renderColumn(containerId, items){
             ${quickChipsHtml(b)}
           </div>
         </div>
- remember:  </div>
+      </div>
     `;
   }).join("");
 }
@@ -1341,11 +1392,8 @@ function renderAllBookings(list){
   $("countActive").textContent = activeArr.length;
   $("countDone").textContent   = doneArr.length;
 
-  // Update scope button label
   const scopeBtn = $("btnScope");
   if(scopeBtn) scopeBtn.textContent = `📋 ${dispatchScope}`;
-
-  // If there are active trips, GPS interval tightens automatically
 }
 
 async function fetchBookings(){
@@ -1359,7 +1407,6 @@ async function fetchBookings(){
   }
 }
 
-/* Change booking status (driver) */
 async function updateBookingStatus(bookingId, newStatus){
   if(!bookingId || !newStatus) return;
 
@@ -1382,7 +1429,6 @@ async function updateBookingStatus(bookingId, newStatus){
 
     if(!r.ok){
       showToast("Status update failed");
-      // revert dropdown visually by refetching
       fetchBookings();
       return;
     }
@@ -1425,20 +1471,19 @@ function openEditModal(bookingId){
   $("editNotes").value = b?.metadata?.notes || "";
   $("editManualTimeText").value = b?.metadata?.manualTimeText || "";
 
-  // ensure autocomplete attached for modal fields
   attachAutocompleteToInput($("editPickup"));
   attachAutocompleteToInput($("editDropoff"));
 
-  document.body.classList.add("modal-open");
+  document.body.classList.add("modal-open");                 // ✅ keep lock ON while open
   $("editOverlay").classList.add("show");
   $("editOverlay").setAttribute("aria-hidden","false");
-  document.body.classList.remove("modal-open");
 }
 
 function closeEditModal(){
   editingBookingId = null;
   $("editOverlay").classList.remove("show");
   $("editOverlay").setAttribute("aria-hidden","true");
+  document.body.classList.remove("modal-open");              // ✅ release lock here
 }
 
 async function saveEditModal(){
@@ -1453,7 +1498,7 @@ async function saveEditModal(){
   const partySize = Number(($("editPartySize").value || "1"));
   const luggageCount = Number(($("editLuggageCount").value || "0"));
 
-  const scheduledForRaw = ($("editScheduledFor").value || "").trim(); // ISO or blank
+  const scheduledForRaw = ($("editScheduledFor").value || "").trim();
   const notes = ($("editNotes").value || "").trim();
   const manualTimeText = ($("editManualTimeText").value || "").trim();
 
@@ -1472,7 +1517,6 @@ async function saveEditModal(){
     return;
   }
 
-  // ✅ MATCH WORKER SHAPE
   const payload = {
     pickup:  { address: pickupAddr },
     dropoff: { address: dropoffAddr },
@@ -1493,12 +1537,11 @@ async function saveEditModal(){
   try{
     log(`Admin edit PUT (driver endpoint) ${editingBookingId} … ${JSON.stringify(payload)}`);
 
-    // ✅ Correct endpoint that exists in worker:
     const r = await fetch(`${BOOKINGS_API}/api/driver/bookings/${encodeURIComponent(editingBookingId)}`,{
       method:"PUT",
       headers:{
         "Content-Type":"application/json",
-        "X-Admin-Secret": AUTH_SECRET  // ✅ correct auth header for core edits
+        "X-Admin-Secret": AUTH_SECRET
       },
       body: JSON.stringify(payload)
     });
@@ -1552,22 +1595,18 @@ function toggleScope(){
 function handleDispatchClick(e){
   const target = e.target;
 
-  // If user taps the status dropdown, DO NOT update yet (iOS fires click before change)
   if(target && target.matches('select[data-action="statusChange"]')){
     e.stopPropagation();
     return;
   }
 
-  // Chips
   const chip = target.closest && target.closest(".chip");
   if(chip){
-    // ✅ If it's a real link (Directions / Rider Link), let it work and don't open the card
     if(chip.tagName === "A" && chip.getAttribute("href")){
       e.stopPropagation();
       return;
     }
 
-    // Dataset-action chips (Copy ID / SMS / Edit)
     if(chip.dataset && chip.dataset.action){
       const action = chip.dataset.action;
       const id = chip.dataset.id;
@@ -1578,7 +1617,6 @@ function handleDispatchClick(e){
         return;
       }
 
-      /* ✅ FIX: SMS template chips should COPY, not open edit */
       if(action === "copySms"){
         const templateKey = chip.dataset.template || "CONFIRM";
         const booking = bookingCache.get(String(id));
@@ -1606,7 +1644,6 @@ function handleDispatchClick(e){
     return;
   }
 
-  // Card tap opens edit (admin only)
   const card = target.closest && target.closest(".card");
   if(card && card.dataset && card.dataset.id){
     if(currentMode === "admin"){
@@ -1663,9 +1700,13 @@ function wireButtons(){
   $("btnScope").onclick = toggleScope;
 
   $("btnModeToggle").onclick = ()=>{
-    applyMode(currentMode==="admin" ? "driver" : "admin");
-    showToast(`Mode: ${currentMode}`);
+    const next = (currentMode==="admin") ? "driver" : "admin";  // ✅ toast matches
+    applyMode(next);
+    showToast(`Mode: ${next}`);
   };
+
+  // ✅ Tracking pill toggle
+  $("livePill").addEventListener("click", toggleTracking);
 
   // Manual stops + luggage wiring
   $("manualAddStopBtn").addEventListener("click", ()=>addManualStopField(""));
@@ -1678,7 +1719,7 @@ function wireButtons(){
     }
   });
 
-  // digits-only UX enforcement for phone fields (manual + edit)
+  // digits-only UX enforcement for phone fields
   const phoneInput = $("manualRiderPhone");
   if(phoneInput){
     phoneInput.addEventListener("input", ()=>{ phoneInput.value = normalizePhoneDigits(phoneInput.value); });
@@ -1704,10 +1745,11 @@ function wireButtons(){
   $("listNew").addEventListener("click", handleDispatchClick);
   $("listActive").addEventListener("click", handleDispatchClick);
   $("listDone").addEventListener("click", handleDispatchClick);
-  // ✅ Status dropdown should update on CHANGE (not click)
+
   $("listNew").addEventListener("change", handleDispatchChange);
   $("listActive").addEventListener("change", handleDispatchChange);
   $("listDone").addEventListener("change", handleDispatchChange);
+
   // ESC closes modal
   document.addEventListener("keydown",(ev)=>{
     if(ev.key === "Escape" && $("editOverlay").classList.contains("show")) closeEditModal();
@@ -1721,6 +1763,9 @@ window.addEventListener("load",()=>{
   // mode + scope
   applyMode(currentMode);
   $("btnScope").textContent = `📋 ${dispatchScope}`;
+
+  // tracking pill state
+  applyTrackingPill();
 
   // initial UI
   updPrev();
