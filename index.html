@@ -330,5 +330,35 @@
     }
   </style>
 
+<script>
+(async function () {
+  const u = new URL(location.href);
+  if (u.searchParams.get("reset") !== "1") return;
+
+  try {
+    // Unregister ALL service workers
+    if ("serviceWorker" in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(r => r.unregister()));
+    }
+
+    // Delete ALL caches
+    if (window.caches && caches.keys) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map(k => caches.delete(k)));
+    }
+
+    // Clear storages (optional but helpful for stubborn iOS PWAs)
+    try { localStorage.clear(); } catch(e) {}
+    try { sessionStorage.clear(); } catch(e) {}
+
+    // Reload clean with cache-buster
+    location.href = "/index.html?reset_done=" + Date.now();
+  } catch (e) {
+    alert("Reset failed: " + (e && e.message ? e.message : e));
+  }
+})();
+</script>
+
 </body>
 </html>
