@@ -216,10 +216,13 @@
   // CONFIG
   // =====================================================
   const API_BOOK   = "https://bigred-bookings.bigredtransportation.workers.dev";
-  const STATUS_API = "https://bigred-status-updater.bigredtransportation.workers.dev/status";
   const PUSH_API   = "https://bigred-push.bigredtransportation.workers.dev/push/ride-request";
 
   const HQ = { lat: 35.3207, lng: -97.4929 };
+
+  // ✅ Option B: Pull live driver origin from update-location worker (CURRENT)
+  const LOCATION_API = "https://update-location.bigredtransportation.workers.dev/";
+
   let fairnessOrigin = { ...HQ };
 
   // =====================================================
@@ -326,7 +329,6 @@
   function build15MinOptions(selectEl){
     if(!selectEl) return;
     selectEl.innerHTML = "";
-
     for(let h=0; h<24; h++){
       for(let m=0; m<60; m+=15){
         const v = `${pad2(h)}:${pad2(m)}`;
@@ -338,9 +340,6 @@
     }
   }
 
-  // ✅ NEW: smart default logic
-  // - Normal: default to next 15-min increment (near now)
-  // - After 11:30 PM: default to tomorrow at 00:15
   function getSmartDefaultSchedule(now = new Date()){
     const d = new Date(now);
     d.setSeconds(0); d.setMilliseconds(0);
@@ -358,7 +357,7 @@
 
     const next = new Date(d);
     const mins = next.getMinutes();
-    const rounded = Math.ceil((mins + 1) / 15) * 15; // bump forward at least 1 min, then ceil to 15
+    const rounded = Math.ceil((mins + 1) / 15) * 15;
     next.setMinutes(rounded);
     if (next.getMinutes() === 60) {
       next.setMinutes(0);
@@ -380,14 +379,11 @@
     const timeEl = document.getElementById("reserveTimeSelect");
     if(!dateEl || !timeEl) return;
 
-    // After build15MinOptions(), select will default to "00:00".
-    // Treat blank OR "00:00" as "unset" so we can pick a smart default.
     const dateVal = (dateEl.value || "").trim();
     const timeVal = (timeEl.value || "").trim();
 
     if (!dateVal || !timeVal || timeVal === "00:00") {
       const smart = getSmartDefaultSchedule(new Date());
-
       if (!dateVal) dateEl.value = smart.date;
       if (!timeVal || timeVal === "00:00") timeEl.value = smart.time;
     }
@@ -399,18 +395,22 @@
   }
 
   // =====================================================
-  // ✅ Option A: Fetch driver origin for fairness (with fallback HQ)
+  // ✅ Option B: fetch live driver origin from update-location
   // =====================================================
-  async function fetchDriverOrigin() {
+  async function fetchDriverOriginFromLiveGPS() {
     try {
-      const res = await fetch(STATUS_API, { cache: "no-store" });
+      const res = await fetch(LOCATION_API + "?t=" + Date.now(), { cache: "no-store" });
       if (!res.ok) return;
+
       const data = await res.json();
-      if (data && data.location && typeof data.location.lat === "number" && typeof data.location.lng === "number") {
-        fairnessOrigin = { lat: data.location.lat, lng: data.location.lng };
+      const lat = Number(data?.lat ?? data?.latitude);
+      const lng = Number(data?.lng ?? data?.longitude);
+
+      if (Number.isFinite(lat) && Number.isFinite(lng)) {
+        fairnessOrigin = { lat, lng };
       }
     } catch (e) {
-      // non-blocking
+      console.warn("Live GPS origin fetch failed; using HQ", e);
     }
   }
 
@@ -474,7 +474,6 @@
 
   // =====================================================
   // PREFILL FROM QUERYSTRING (Estimate → Request)
-  // Runs early at DOMContentLoaded (before Google loads).
   // =====================================================
   let pendingStopsToHydrate = [];
 
@@ -546,7 +545,6 @@
         qsStops.slice(0, 3).forEach(s => addStopField_NoAutocomplete(s));
       }
 
-      // ✅ CHANGE: always reserve, but allow handoff of date/time
       if (qsReserveDate) document.getElementById("reserveDate").value = qsReserveDate;
       if (qsReserveTime) document.getElementById("reserveTimeSelect").value = qsReserveTime;
       if (qsPlanBy === "pickup" || qsPlanBy === "dropoff") document.getElementById("planBy").value = qsPlanBy;
@@ -952,13 +950,11 @@
     }
   }
 
-  // ✅ BULLETPROOF ORDER: await repeat first, then everything else
+  // ✅ BULLETPROOF ORDER
   document.addEventListener("DOMContentLoaded", async () => {
-    // ✅ time dropdown + defaults
     build15MinOptions(document.getElementById("reserveTimeSelect"));
     initDefaultScheduleIfEmpty();
 
-    // Recompute rate labels when date/time changes
     document.getElementById("reserveDate")?.addEventListener("change", applyAutoRateLabels);
     document.getElementById("reserveTimeSelect")?.addEventListener("change", applyAutoRateLabels);
 
@@ -1101,14 +1097,12 @@
   ];
 
   function getEffectiveDate() {
-    // ✅ CHANGE: always use the selected date/time (pre-arranged)
     const dStr = document.getElementById("reserveDate").value;
     const tStr = getReserveTimeValue();
     if (dStr && tStr) return new Date(dStr + "T" + tStr + ":00");
     return new Date();
   }
 
-  // ✅ FIX: remove overly-broad "okc"
   function isAirportText(s) {
     const t = String(s || "").toLowerCase();
     return t.includes("airport") || t.includes("will rogers");
@@ -1197,7 +1191,7 @@
   }
 
   // =====================================================
-  // FAIRNESS FEE
+  // FAIRNESS FEE (Option B: origin = live GPS when available)
   // =====================================================
   function distMi(a, b) {
     const p1 = new google.maps.LatLng(a.lat, a.lng);
@@ -1276,21 +1270,13 @@
   }
 
   async function calculateFare() {
-    // ✅ CHANGE: require scheduled date/time
     const rd = (document.getElementById("reserveDate")?.value || "").trim();
     const rt = (getReserveTimeValue() || "").trim();
-    if (!rd || !rt) {
-      showToast("Select date & time");
-      return;
-    }
+    if (!rd || !rt) { showToast("Select date & time"); return; }
 
     const pickup = document.getElementById("pickup").value.trim();
     const dropoff = document.getElementById("dropoff").value.trim();
-
-    if (!pickup || !dropoff) {
-      showToast("Enter pickup & drop-off");
-      return;
-    }
+    if (!pickup || !dropoff) { showToast("Enter pickup & drop-off"); return; }
 
     const waypoints = stopInputs
       .map(id => {
@@ -1333,8 +1319,8 @@
 
     const basePlusMiles = base + mileageSub;
 
-    // ✅ CHANGE (Option A): refresh driver origin immediately before fairness calc
-    await fetchDriverOrigin();
+    // ✅ Option B: refresh live driver origin BEFORE fairness calc
+    await fetchDriverOriginFromLiveGPS();
 
     const fairnessFee = computeFairnessFee(miles, basePlusMiles);
 
@@ -1363,7 +1349,7 @@
       pickup, dropoff, miles, minutes, base, mileageSub, fairnessFee,
       total: Number(total),
       pay,
-      mode, // fixed reserve
+      mode,
       stopsText: getStopsAsTextList(),
       stopsObj: getStopsAsObjects(),
       reserveDate: rd,
@@ -1375,6 +1361,8 @@
     };
 
     document.getElementById("btnRequest").onclick = sendRequest;
+
+    updateFairnessPreview();
   }
 
   document.getElementById("calcBtn").addEventListener("click", calculateFare);
@@ -1385,8 +1373,6 @@
   async function sendRequest() {
     if (!lastFare) { showToast("Get an estimate first."); return; }
     if (requestInFlight) { showToast("Request already sending…"); return; }
-
-    // ✅ CHANGE: require scheduled date/time before sending
     if (!lastFare.reserveDate || !lastFare.reserveTime) { showToast("Select date & time"); return; }
 
     requestInFlight = true;
@@ -1403,7 +1389,6 @@
     const pickupStored = loadPlace(PLACE_KEYS.pickup);
     const dropStored   = loadPlace(PLACE_KEYS.dropoff);
 
-    // ✅ CHANGE: always a reservation (pre-arranged)
     const bookingType = "RESERVATION";
 
     const payload = {
@@ -1474,7 +1459,6 @@
     const booking = await res.json();
     const rideId = booking.id;
 
-    // ✅ cache last ride id (canonical + legacy)
     setLastRideId(rideId);
     localStorage.setItem("lastRideId", rideId);
 
@@ -1579,11 +1563,12 @@
     ensureRiderId();
     loadProfileSummary();
 
-    // ✅ Option A: load driver origin early (non-blocking)
-    fetchDriverOrigin();
-
-    syncLuggageVisibility();
-    applyAutoRateLabels();
+    // ✅ Option B: load live GPS origin once on init (non-blocking)
+    fetchDriverOriginFromLiveGPS().finally(() => {
+      syncLuggageVisibility();
+      applyAutoRateLabels();
+      updateFairnessPreview();
+    });
 
     setTimeout(renderRouteFromCurrentInputs, 200);
     if (pendingAutoRoute) setTimeout(renderRouteFromCurrentInputs, 250);
