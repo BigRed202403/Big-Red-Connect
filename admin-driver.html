@@ -269,7 +269,7 @@ body.modal-open{ overflow:hidden; }
         Last status update: <span id="statusStamp">—</span><br>
         Last GPS ping: <span id="gpsStamp">—</span> • Interval: <span id="gpsRate">—</span><br>
         <span style="color:#888;">
-          ✅ GPS only sends when: <strong>Status = Online</strong> AND <strong>Tracking = ON</strong>.
+          ✅ GPS sends when: <strong>Status = Online or Limited Availability</strong> AND <strong>Tracking = ON</strong>.
         </span>
       </div>
     </section>
@@ -621,7 +621,7 @@ let currentMode = localStorage.getItem("adminDriverMode") || "admin";
 const bookingCache = new Map();
 let editingBookingId = null;
 
-/* ✅ NEW: Tracking toggle that is NOT tied to status */
+/* ✅ Tracking toggle that is NOT tied to status */
 let trackingEnabled = (localStorage.getItem("trackingEnabled") === "true");
 
 /* =========================
@@ -697,16 +697,17 @@ function applyTrackingPill(){
   }
 }
 
+/* ✅ FIXED: correct condition + includes AWAY */
 function setTrackingEnabled(next){
   trackingEnabled = !!next;
   localStorage.setItem("trackingEnabled", trackingEnabled ? "true" : "false");
   applyTrackingPill();
 
-  // ✅ Only start GPS if status is online AND trackingEnabled
-  if(trackingEnabled && currentStatusVal === "online" || val === "away"){
+  // ✅ Start GPS if tracking is ON and status is ONLINE or AWAY
+  if (trackingEnabled && (currentStatusVal === "online" || currentStatusVal === "away")) {
     startGpsPings();
     showToast("Tracking ON");
-  }else{
+  } else {
     stopGpsPings();
     showToast("Tracking OFF");
   }
@@ -1062,9 +1063,9 @@ async function updateStatus(){
   }
 }
 
-/* ✅ GPS ONLY RUNS WHEN (status online) AND (trackingEnabled true) */
+/* ✅ FIXED: GPS runs when (status online OR away) AND trackingEnabled */
 function handleGpsForStatus(val){
-  if(val === "online" && trackingEnabled) startGpsPings();
+  if ((val === "online" || val === "away") && trackingEnabled) startGpsPings();
   else stopGpsPings();
 }
 
@@ -1076,16 +1077,17 @@ function determineGpsInterval() {
   return interval;
 }
 
+/* ✅ FIXED: allow GPS in away, and keep loop checks consistent */
 function startGpsPings(){
   if (!trackingEnabled) { stopGpsPings(); return; }
-  if (currentStatusVal !== "online") { stopGpsPings(); return; }
+  if (!(currentStatusVal === "online" || currentStatusVal === "away")) { stopGpsPings(); return; }
 
   if (gpsTimer) { clearTimeout(gpsTimer); gpsTimer = null; }
   if (!("geolocation" in navigator)) { log("No geolocation support."); return; }
 
   async function pingOnce(){
     // ✅ re-check every loop (so flipping tracking off stops immediately)
-    if(!trackingEnabled || currentStatusVal !== "online"){
+    if(!trackingEnabled || !(currentStatusVal === "online" || currentStatusVal === "away")){
       stopGpsPings();
       return;
     }
