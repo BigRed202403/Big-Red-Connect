@@ -22,8 +22,6 @@
 
   <link rel="stylesheet" href="style.css" />
 
-  <!-- OneSignal (NOTE: Your appId here differs from index.html) -->
-  <script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async></script>
 </head>
 
 <body>
@@ -387,15 +385,6 @@
 
     applyAutoRateLabels();
   };
-
-  window.OneSignal = window.OneSignal || [];
-  OneSignal.push(function() {
-    OneSignal.init({
-      appId: "64641a89-3619-4491-a25b-c0ab000bdfe0",
-      allowLocalhostAsSecureOrigin: true,
-      notifyButton: { enable: false }
-    });
-  });
 
   // ======================================================
   //  AUTOCOMPLETE
