@@ -147,8 +147,10 @@
   // ======================================================
   const HQ = { lat: 35.3207, lng: -97.4929 }; // Moore HQ
 
-  // ✅ CHANGE (Option A): Pull driver origin from status API for fairness
-  const STATUS_API = "https://bigred-status-updater.bigredtransportation.workers.dev/status";
+  // ✅ Option B: fairness origin pulls from update-location worker (CURRENT)
+  const LOCATION_API = "https://update-location.bigredtransportation.workers.dev/";
+
+  // Live fairness origin (defaults to HQ if no live GPS)
   let fairnessOrigin = { ...HQ };
 
   // ✅ Request page (correct, with .html)
@@ -210,18 +212,24 @@
   }
 
   // ======================================================
-  // ✅ CHANGE (Option A): Fetch current driver origin for fairness
+  // ✅ Option B: fetch live driver origin from update-location
   // ======================================================
-  async function fetchDriverOrigin() {
+  async function fetchDriverOriginFromLiveGPS() {
     try {
-      const res = await fetch(STATUS_API, { cache: "no-store" });
+      const res = await fetch(LOCATION_API + "?t=" + Date.now(), { cache: "no-store" });
       if (!res.ok) return;
+
       const data = await res.json();
-      if (data && data.location && typeof data.location.lat === "number" && typeof data.location.lng === "number") {
-        fairnessOrigin = { lat: data.location.lat, lng: data.location.lng };
+      // Your worker returns { latitude, longitude, ... } (and accepts lat/lng too).
+      const lat = Number(data?.lat ?? data?.latitude);
+      const lng = Number(data?.lng ?? data?.longitude);
+
+      if (Number.isFinite(lat) && Number.isFinite(lng)) {
+        fairnessOrigin = { lat, lng };
       }
     } catch (e) {
       // non-blocking
+      console.warn("Live GPS origin fetch failed; using HQ", e);
     }
   }
 
@@ -402,10 +410,11 @@
       if (dEl2 && !String(dEl2.value||"").trim()) dEl2.value = incoming;
     }
 
-    // ✅ CHANGE (Option A): load driver origin early (non-blocking)
-    fetchDriverOrigin();
-
-    applyAutoRateLabels();
+    // ✅ Option B: load live driver origin once at startup (non-blocking)
+    fetchDriverOriginFromLiveGPS().finally(() => {
+      applyAutoRateLabels();
+      updateFairnessPreview();
+    });
   };
 
   // ======================================================
@@ -597,7 +606,7 @@
   }
 
   // ======================================================
-  //  FAIRNESS FEE
+  //  FAIRNESS FEE (Option B: origin = live GPS when available)
   // ======================================================
   function distMi(a, b) {
     const p1 = new google.maps.LatLng(a.lat, a.lng);
@@ -609,8 +618,7 @@
     if (!pickupLatLng) return 0;
     const pickup = { lat: pickupLatLng.lat(), lng: pickupLatLng.lng() };
 
-    // ✅ CHANGE (Option A): use fairnessOrigin (driver status origin) not HQ-only
-    const origin = fairnessOrigin || HQ;
+    const origin = fairnessOrigin || HQ; // ✅ live GPS origin when available
     const d = distMi(origin, pickup);
 
     let zoneFee = 0;
@@ -627,8 +635,6 @@
     if (!pickupLatLng) return;
 
     const pickup = { lat: pickupLatLng.lat(), lng: pickupLatLng.lng() };
-
-    // ✅ CHANGE (Option A): preview based on driver origin
     const origin = fairnessOrigin || HQ;
     const d = distMi(origin, pickup);
 
@@ -686,7 +692,7 @@
       const next = new URLSearchParams();
       next.set("next", "ride-request");
 
-      // ✅ include the full ride details on the login hop
+      // include the full ride details on the login hop
       for (const [k, v] of rideParams.entries()) next.append(k, v);
 
       window.location.href = RIDER_DETAILS_PAGE + "?" + next.toString();
@@ -752,8 +758,8 @@
 
     const basePlusMiles = base + mileageSub;
 
-    // ✅ CHANGE (Option A): refresh driver origin right before fairness calc
-    await fetchDriverOrigin();
+    // ✅ Option B: refresh live driver origin BEFORE fairness calc
+    await fetchDriverOriginFromLiveGPS();
 
     const fairnessFee = computeFairnessFee(miles, basePlusMiles);
 
@@ -806,6 +812,9 @@
 
     document.getElementById("btnContinue").onclick = continueToRequestFromLastFare;
     document.getElementById("btnTextRed").onclick = sendTextRedFromLastFare;
+
+    // keep fairness note current
+    updateFairnessPreview();
   }
 
   function sendTextRedFromLastFare() {
