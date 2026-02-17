@@ -147,10 +147,9 @@
   // ======================================================
   const HQ = { lat: 35.3207, lng: -97.4929 }; // Moore HQ
 
-  // ✅ NEW (Option A): pull fairness origin from live status (fallback HQ)
+  // ✅ CHANGE (Option A): Pull driver origin from status API for fairness
   const STATUS_API = "https://bigred-status-updater.bigredtransportation.workers.dev/status";
   let fairnessOrigin = { ...HQ };
-  let driverOriginLoaded = false;
 
   // ✅ Request page (correct, with .html)
   const REQUEST_PAGE = "/rider/ride-request.html";
@@ -208,6 +207,22 @@
     } catch(e){}
 
     return typed;
+  }
+
+  // ======================================================
+  // ✅ CHANGE (Option A): Fetch current driver origin for fairness
+  // ======================================================
+  async function fetchDriverOrigin() {
+    try {
+      const res = await fetch(STATUS_API, { cache: "no-store" });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data && data.location && typeof data.location.lat === "number" && typeof data.location.lng === "number") {
+        fairnessOrigin = { lat: data.location.lat, lng: data.location.lng };
+      }
+    } catch (e) {
+      // non-blocking
+    }
   }
 
   // ======================================================
@@ -327,23 +342,6 @@
   }
 
   // ======================================================
-  // ✅ NEW (Option A): fetch live origin for fairness fee
-  // ======================================================
-  async function fetchDriverOrigin() {
-    try {
-      const res = await fetch(STATUS_API, { cache: "no-store" });
-      if (!res.ok) return;
-      const data = await res.json();
-      if (data && data.location && typeof data.location.lat === "number" && typeof data.location.lng === "number") {
-        fairnessOrigin = { lat: data.location.lat, lng: data.location.lng };
-        driverOriginLoaded = true;
-      }
-    } catch (e) {
-      // silent fallback to HQ
-    }
-  }
-
-  // ======================================================
   //  STATE
   // ======================================================
   let mode = "now";
@@ -404,7 +402,7 @@
       if (dEl2 && !String(dEl2.value||"").trim()) dEl2.value = incoming;
     }
 
-    // ✅ NEW: fetch live driver origin for fairness logic (non-blocking)
+    // ✅ CHANGE (Option A): load driver origin early (non-blocking)
     fetchDriverOrigin();
 
     applyAutoRateLabels();
@@ -599,7 +597,7 @@
   }
 
   // ======================================================
-  //  FAIRNESS FEE (Option A: origin = driver location if available)
+  //  FAIRNESS FEE
   // ======================================================
   function distMi(a, b) {
     const p1 = new google.maps.LatLng(a.lat, a.lng);
@@ -611,8 +609,9 @@
     if (!pickupLatLng) return 0;
     const pickup = { lat: pickupLatLng.lat(), lng: pickupLatLng.lng() };
 
-    const origin = fairnessOrigin || HQ; // ✅ CHANGE
-    const d = distMi(origin, pickup);    // ✅ CHANGE
+    // ✅ CHANGE (Option A): use fairnessOrigin (driver status origin) not HQ-only
+    const origin = fairnessOrigin || HQ;
+    const d = distMi(origin, pickup);
 
     let zoneFee = 0;
     if (d > 40) zoneFee = 20;
@@ -628,11 +627,13 @@
     if (!pickupLatLng) return;
 
     const pickup = { lat: pickupLatLng.lat(), lng: pickupLatLng.lng() };
-    const origin = fairnessOrigin || HQ; // ✅ CHANGE
-    const d = distMi(origin, pickup);    // ✅ CHANGE
 
-    if (d > 40) note.innerHTML = "📍 Pickup is well outside the core metro. A travel fairness fee <em>may</em> apply depending on total trip distance.";
-    else if (d > 20) note.innerHTML = "📍 Pickup is outside the central zone. A small travel fairness fee <em>may</em> apply depending on trip distance.";
+    // ✅ CHANGE (Option A): preview based on driver origin
+    const origin = fairnessOrigin || HQ;
+    const d = distMi(origin, pickup);
+
+    if (d > 40) note.innerHTML = "📍 Pickup is well outside the core metro / current driver area. A travel fairness fee <em>may</em> apply depending on total trip distance.";
+    else if (d > 20) note.innerHTML = "📍 Pickup is outside the central zone / current driver area. A small travel fairness fee <em>may</em> apply depending on trip distance.";
   }
 
   // ======================================================
@@ -678,18 +679,21 @@
 
     // If not "soft logged in" yet → go to rider-login with ALL ride details included
     if (!riderName) {
+      // Keep your existing storage handoff too (belt + suspenders)
       if (q.pickup)  stashPickupHandoff(q.pickup);
       if (q.dropoff) stashDropoffHandoff(q.dropoff);
 
       const next = new URLSearchParams();
       next.set("next", "ride-request");
 
+      // ✅ include the full ride details on the login hop
       for (const [k, v] of rideParams.entries()) next.append(k, v);
 
       window.location.href = RIDER_DETAILS_PAGE + "?" + next.toString();
       return;
     }
 
+    // Already has riderName → go straight to request with full ride details
     if (q.pickup)  stashPickupHandoff(q.pickup);
     if (q.dropoff) stashDropoffHandoff(q.dropoff);
 
@@ -703,11 +707,6 @@
     const pickup = document.getElementById("pickup").value.trim();
     const dropoff = document.getElementById("dropoff").value.trim();
     if (!pickup || !dropoff) { alert("Please enter both pickup and drop-off."); return; }
-
-    // ✅ NEW: ensure driver origin is loaded before fairness calc (Option A)
-    if (!driverOriginLoaded) {
-      await fetchDriverOrigin();
-    }
 
     const waypoints = stopInputs
       .map(id => {
@@ -752,6 +751,10 @@
     const mileageSub = tier2 + tier3;
 
     const basePlusMiles = base + mileageSub;
+
+    // ✅ CHANGE (Option A): refresh driver origin right before fairness calc
+    await fetchDriverOrigin();
+
     const fairnessFee = computeFairnessFee(miles, basePlusMiles);
 
     const pay = document.getElementById("payment").value;
