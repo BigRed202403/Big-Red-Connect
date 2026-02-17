@@ -619,49 +619,60 @@
   }
 
   // ======================================================
-  //  CONTINUE → REQUEST PAGE
-  // ======================================================
-  function continueToRequestFromLastFare() {
-    const q = window.lastFare;
-    if (!q) return;
+//  CONTINUE → REQUEST PAGE (PWA-safe + full handoff)
+// ======================================================
+function continueToRequestFromLastFare() {
+  const q = window.lastFare;
+  if (!q) return;
 
-    const riderName = getRiderName();
+  // Build ONE payload of ride details we can reuse for either path
+  const rideParams = new URLSearchParams();
 
-    if (!riderName) {
-      if (q.dropoff) stashDropoffHandoff(q.dropoff);
-      if (q.pickup)  stashPickupHandoff(q.pickup);
+  if (q.pickup)  rideParams.set("pickup", q.pickup);
+  if (q.dropoff) rideParams.set("dropoff", q.dropoff);
 
-      const next = new URLSearchParams();
-      next.set("next", "ride-request");
-      if (q.dropoff) next.set("dropoff", q.dropoff);
+  (q.stops || []).slice(0, 3).forEach(s => rideParams.append("stop", s));
 
-      window.location.href = RIDER_DETAILS_PAGE + "?" + next.toString();
-      return;
-    }
+  if (q.mode)       rideParams.set("mode", q.mode);
+  if (q.reserveDate) rideParams.set("reserveDate", q.reserveDate);
+  if (q.reserveTime) rideParams.set("reserveTime", q.reserveTime);
+  if (q.planBy)     rideParams.set("planBy", q.planBy);
 
-    if (q.pickup) stashPickupHandoff(q.pickup);
+  // Payment + estimate detail
+  if (q.pay)        rideParams.set("payment", q.pay);
+  if (q.total != null)   rideParams.set("estimate", String(q.total));
+  if (q.miles != null)   rideParams.set("miles", String(q.miles));
+  if (q.minutes != null) rideParams.set("minutes", String(q.minutes));
+
+  // Helpful origin marker
+  rideParams.set("from", "estimate");
+
+  const riderName = getRiderName();
+
+  // If not "soft logged in" yet → go to rider-login with ALL ride details included
+  // so rider-login can forward everything cleanly to ride-request.
+  if (!riderName) {
+    // Keep your existing storage handoff too (belt + suspenders)
+    if (q.pickup)  stashPickupHandoff(q.pickup);
     if (q.dropoff) stashDropoffHandoff(q.dropoff);
 
-    const params = new URLSearchParams();
-    if (q.pickup)  params.set("pickup", q.pickup);
-    if (q.dropoff) params.set("dropoff", q.dropoff);
+    const next = new URLSearchParams();
+    next.set("next", "ride-request");
 
-    (q.stops || []).slice(0, 3).forEach(s => params.append("stop", s));
+    // ✅ include the full ride details on the login hop
+    // rider-login should preserve/forward these params
+    for (const [k, v] of rideParams.entries()) next.append(k, v);
 
-    if (q.mode) params.set("mode", q.mode);
-    if (q.reserveDate) params.set("reserveDate", q.reserveDate);
-    if (q.reserveTime) params.set("reserveTime", q.reserveTime);
-    if (q.planBy) params.set("planBy", q.planBy);
-
-    if (q.pay) params.set("payment", q.pay);
-    if (q.total != null) params.set("estimate", String(q.total));
-    if (q.miles != null) params.set("miles", String(q.miles));
-    if (q.minutes != null) params.set("minutes", String(q.minutes));
-
-    params.set("from", "estimate");
-
-    window.location.href = REQUEST_PAGE + "?" + params.toString();
+    window.location.href = RIDER_DETAILS_PAGE + "?" + next.toString();
+    return;
   }
+
+  // Already has riderName → go straight to request with full ride details
+  if (q.pickup)  stashPickupHandoff(q.pickup);
+  if (q.dropoff) stashDropoffHandoff(q.dropoff);
+
+  window.location.href = REQUEST_PAGE + "?" + rideParams.toString();
+}
 
   // ======================================================
   //  CALCULATE FARE
