@@ -224,7 +224,7 @@ body.modal-open{ overflow:hidden; }
       <div style="color:#888;font-size:.75rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Live Dispatch & Status</div>
     </div>
 
-    <!-- ✅ TRACKING PILL IS NOW A TRUE TOGGLE (NOT TIED TO STATUS) -->
+    <!-- ✅ TRACKING PILL IS A TRUE TOGGLE (NOT TIED TO STATUS) -->
     <span id="livePill" class="pill offline" title="Tap to toggle GPS tracking">
       📡 Tracking: OFF
     </span>
@@ -268,8 +268,10 @@ body.modal-open{ overflow:hidden; }
       <div class="meta">
         Last status update: <span id="statusStamp">—</span><br>
         Last GPS ping: <span id="gpsStamp">—</span> • Interval: <span id="gpsRate">—</span><br>
+        Live location (GPS worker): <span id="liveLoc">—</span><br>
         <span style="color:#888;">
-          ✅ GPS sends when: <strong>Status = Online or Limited Availability</strong> AND <strong>Tracking = ON</strong>.
+          ✅ GPS only sends when: <strong>Status = Online</strong> AND <strong>Tracking = ON</strong>.<br>
+          ✅ Live location display comes from the <strong>Location Worker</strong> (not the Status worker).
         </span>
       </div>
     </section>
@@ -621,7 +623,7 @@ let currentMode = localStorage.getItem("adminDriverMode") || "admin";
 const bookingCache = new Map();
 let editingBookingId = null;
 
-/* ✅ Tracking toggle that is NOT tied to status */
+/* ✅ Tracking toggle (not tied to status) */
 let trackingEnabled = (localStorage.getItem("trackingEnabled") === "true");
 
 /* =========================
@@ -678,6 +680,39 @@ function copyText(txt){
 window.copyText = copyText;
 
 /* =========================
+   OPTION A: LIVE LOCATION FROM LOCATION WORKER (GET)
+========================= */
+async function loadLiveLocation(){
+  try{
+    const r = await fetch(`${LOCATION_WORKER}?t=${Date.now()}`, { method:"GET" });
+    if(!r.ok) return null;
+
+    const data = await r.json();
+
+    // Support either shape:
+    // { lat, lng } OR { latitude, longitude } OR { location:{lat,lng} }
+    const lat =
+      (typeof data?.lat === "number") ? data.lat :
+      (typeof data?.latitude === "number") ? data.latitude :
+      (typeof data?.location?.lat === "number") ? data.location.lat :
+      null;
+
+    const lng =
+      (typeof data?.lng === "number") ? data.lng :
+      (typeof data?.longitude === "number") ? data.longitude :
+      (typeof data?.location?.lng === "number") ? data.location.lng :
+      null;
+
+    const ts =
+      data?.updated || data?.timestamp || data?.lastUpdated || null;
+
+    return { lat, lng, ts, raw:data };
+  }catch(e){
+    return null;
+  }
+}
+
+/* =========================
    TRACKING PILL (TOGGLE)
 ========================= */
 function applyTrackingPill(){
@@ -697,17 +732,16 @@ function applyTrackingPill(){
   }
 }
 
-/* ✅ FIXED: correct condition + includes AWAY */
 function setTrackingEnabled(next){
   trackingEnabled = !!next;
   localStorage.setItem("trackingEnabled", trackingEnabled ? "true" : "false");
   applyTrackingPill();
 
-  // ✅ Start GPS if tracking is ON and status is ONLINE or AWAY
-  if (trackingEnabled && (currentStatusVal === "online" || currentStatusVal === "away")) {
+  // ✅ Only start GPS if status is online AND trackingEnabled
+  if(trackingEnabled && currentStatusVal === "online"){
     startGpsPings();
     showToast("Tracking ON");
-  } else {
+  }else{
     stopGpsPings();
     showToast("Tracking OFF");
   }
@@ -1021,6 +1055,15 @@ async function loadStatus(){
       else globalVeh.value="BLACK_ACADIA";
     }
 
+    // ✅ OPTION A: display live location from the LOCATION_WORKER (not from status worker)
+    const loc = await loadLiveLocation();
+    if(loc && typeof loc.lat === "number" && typeof loc.lng === "number"){
+      $("liveLoc").textContent = `${loc.lat.toFixed(5)}, ${loc.lng.toFixed(5)}`;
+      log(`Live Location GET OK: lat=${loc.lat} lng=${loc.lng} ${loc.ts ? ("ts="+loc.ts) : ""}`);
+    }else{
+      $("liveLoc").textContent = "—";
+    }
+
     handleGpsForStatus(statusVal);
   }catch(e){
     log("Status error: "+e.message);
@@ -1063,9 +1106,9 @@ async function updateStatus(){
   }
 }
 
-/* ✅ FIXED: GPS runs when (status online OR away) AND trackingEnabled */
+/* ✅ GPS ONLY RUNS WHEN (status online) AND (trackingEnabled true) */
 function handleGpsForStatus(val){
-  if ((val === "online" || val === "away") && trackingEnabled) startGpsPings();
+  if(val === "online" && trackingEnabled) startGpsPings();
   else stopGpsPings();
 }
 
@@ -1077,17 +1120,16 @@ function determineGpsInterval() {
   return interval;
 }
 
-/* ✅ FIXED: allow GPS in away, and keep loop checks consistent */
 function startGpsPings(){
   if (!trackingEnabled) { stopGpsPings(); return; }
-  if (!(currentStatusVal === "online" || currentStatusVal === "away")) { stopGpsPings(); return; }
+  if (currentStatusVal !== "online") { stopGpsPings(); return; }
 
   if (gpsTimer) { clearTimeout(gpsTimer); gpsTimer = null; }
   if (!("geolocation" in navigator)) { log("No geolocation support."); return; }
 
   async function pingOnce(){
     // ✅ re-check every loop (so flipping tracking off stops immediately)
-    if(!trackingEnabled || !(currentStatusVal === "online" || currentStatusVal === "away")){
+    if(!trackingEnabled || currentStatusVal !== "online"){
       stopGpsPings();
       return;
     }
@@ -1119,7 +1161,15 @@ function startGpsPings(){
         })
       })
       .then(r => r.text())
-      .then(t => log("GPS PUT: " + t))
+      .then(t => {
+        log("GPS PUT: " + t);
+        // refresh live location display from worker after PUT
+        loadLiveLocation().then(loc=>{
+          if(loc && typeof loc.lat === "number" && typeof loc.lng === "number"){
+            $("liveLoc").textContent = `${loc.lat.toFixed(5)}, ${loc.lng.toFixed(5)}`;
+          }
+        }).catch(()=>{});
+      })
       .catch(e => log("GPS error: " + e.message));
 
       gpsTimer = setTimeout(pingOnce, interval);
@@ -1476,7 +1526,7 @@ function openEditModal(bookingId){
   attachAutocompleteToInput($("editPickup"));
   attachAutocompleteToInput($("editDropoff"));
 
-  document.body.classList.add("modal-open");                 // ✅ keep lock ON while open
+  document.body.classList.add("modal-open");
   $("editOverlay").classList.add("show");
   $("editOverlay").setAttribute("aria-hidden","false");
 }
@@ -1485,7 +1535,7 @@ function closeEditModal(){
   editingBookingId = null;
   $("editOverlay").classList.remove("show");
   $("editOverlay").setAttribute("aria-hidden","true");
-  document.body.classList.remove("modal-open");              // ✅ release lock here
+  document.body.classList.remove("modal-open");
 }
 
 async function saveEditModal(){
@@ -1702,7 +1752,7 @@ function wireButtons(){
   $("btnScope").onclick = toggleScope;
 
   $("btnModeToggle").onclick = ()=>{
-    const next = (currentMode==="admin") ? "driver" : "admin";  // ✅ toast matches
+    const next = (currentMode==="admin") ? "driver" : "admin";
     applyMode(next);
     showToast(`Mode: ${next}`);
   };
