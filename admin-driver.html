@@ -703,7 +703,7 @@ function setTrackingEnabled(next){
   applyTrackingPill();
 
   // ✅ Only start GPS if status is online AND trackingEnabled
-  if(trackingEnabled && currentStatusVal === "online"){
+  if(trackingEnabled && currentStatusVal === "online" || val === "away"){
     startGpsPings();
     showToast("Tracking ON");
   }else{
