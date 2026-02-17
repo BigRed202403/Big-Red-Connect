@@ -399,9 +399,24 @@
   }
 
   // =====================================================
+  // ✅ Option A: Fetch driver origin for fairness (with fallback HQ)
+  // =====================================================
+  async function fetchDriverOrigin() {
+    try {
+      const res = await fetch(STATUS_API, { cache: "no-store" });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data && data.location && typeof data.location.lat === "number" && typeof data.location.lng === "number") {
+        fairnessOrigin = { lat: data.location.lat, lng: data.location.lng };
+      }
+    } catch (e) {
+      // non-blocking
+    }
+  }
+
+  // =====================================================
   // HANDOFF (DROP-OFF + PICKUP) + QUERYSTRING PREFILL
   // =====================================================
-
   function readHandoffDropoff() {
     try {
       const u = new URL(window.location.href);
@@ -1220,19 +1235,6 @@
     else if (d > 20) note.textContent = "📍 Pickup is outside the central zone / current driver area. A small travel fairness fee may apply depending on trip distance.";
   }
 
-  async function fetchDriverOrigin() {
-    try {
-      const res = await fetch(STATUS_API);
-      if (!res.ok) return;
-      const data = await res.json();
-      if (data && data.location && typeof data.location.lat === "number" && typeof data.location.lng === "number") {
-        fairnessOrigin = { lat: data.location.lat, lng: data.location.lng };
-      }
-    } catch (e) {
-      console.warn("Status origin fetch failed; using HQ", e);
-    }
-  }
-
   // =====================================================
   // ROUTE URL
   // =====================================================
@@ -1330,6 +1332,10 @@
     const mileageSub = tier2 + tier3;
 
     const basePlusMiles = base + mileageSub;
+
+    // ✅ CHANGE (Option A): refresh driver origin immediately before fairness calc
+    await fetchDriverOrigin();
+
     const fairnessFee = computeFairnessFee(miles, basePlusMiles);
 
     const pay = document.getElementById("payment").value;
@@ -1572,6 +1578,8 @@
 
     ensureRiderId();
     loadProfileSummary();
+
+    // ✅ Option A: load driver origin early (non-blocking)
     fetchDriverOrigin();
 
     syncLuggageVisibility();
