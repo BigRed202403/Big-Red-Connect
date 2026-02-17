@@ -615,20 +615,21 @@
       }
     
       function computeFairnessFee(miles /*, basePlusMiles */) {
-      if (!pickupLatLng) return 0;
-    
-      const pickup = { lat: pickupLatLng.lat(), lng: pickupLatLng.lng() };
-      const d = distMi(HQ, pickup);
-    
-      let zoneFee = 0;
-      if (d > 40) zoneFee = 20;
-      else if (d > 20) zoneFee = 10;
-    
-      // ✅ Waive only for true long trips (prevents rush base from killing it)
-      if (zoneFee > 0 && miles > 20) zoneFee = 0;
-    
-      return zoneFee;
-  }
+  if (!pickupLatLng) return 0;
+
+  const pickup = { lat: pickupLatLng.lat(), lng: pickupLatLng.lng() };
+  const origin = fairnessOrigin || HQ;        // ✅ use live origin
+  const d = distMi(origin, pickup);           // ✅ measure from live origin
+
+  let zoneFee = 0;
+  if (d > 40) zoneFee = 20;
+  else if (d > 20) zoneFee = 10;
+
+  // ✅ Waive only for true long trips
+  if (zoneFee > 0 && miles > 20) zoneFee = 0;
+
+  return zoneFee;
+}
 
   function updateFairnessPreview() {
     const note = document.getElementById("fairness-note");
