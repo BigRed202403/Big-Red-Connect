@@ -21,7 +21,6 @@
   <meta http-equiv="Expires" content="0" />
 
   <link rel="stylesheet" href="style.css" />
-
 </head>
 
 <body>
@@ -147,6 +146,11 @@
   //  CONFIG
   // ======================================================
   const HQ = { lat: 35.3207, lng: -97.4929 }; // Moore HQ
+
+  // ✅ NEW (Option A): pull fairness origin from live status (fallback HQ)
+  const STATUS_API = "https://bigred-status-updater.bigredtransportation.workers.dev/status";
+  let fairnessOrigin = { ...HQ };
+  let driverOriginLoaded = false;
 
   // ✅ Request page (correct, with .html)
   const REQUEST_PAGE = "/rider/ride-request.html";
@@ -323,6 +327,23 @@
   }
 
   // ======================================================
+  // ✅ NEW (Option A): fetch live origin for fairness fee
+  // ======================================================
+  async function fetchDriverOrigin() {
+    try {
+      const res = await fetch(STATUS_API, { cache: "no-store" });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data && data.location && typeof data.location.lat === "number" && typeof data.location.lng === "number") {
+        fairnessOrigin = { lat: data.location.lat, lng: data.location.lng };
+        driverOriginLoaded = true;
+      }
+    } catch (e) {
+      // silent fallback to HQ
+    }
+  }
+
+  // ======================================================
   //  STATE
   // ======================================================
   let mode = "now";
@@ -382,6 +403,9 @@
       const dEl2 = document.getElementById("dropoff");
       if (dEl2 && !String(dEl2.value||"").trim()) dEl2.value = incoming;
     }
+
+    // ✅ NEW: fetch live driver origin for fairness logic (non-blocking)
+    fetchDriverOrigin();
 
     applyAutoRateLabels();
   };
@@ -575,7 +599,7 @@
   }
 
   // ======================================================
-  //  FAIRNESS FEE
+  //  FAIRNESS FEE (Option A: origin = driver location if available)
   // ======================================================
   function distMi(a, b) {
     const p1 = new google.maps.LatLng(a.lat, a.lng);
@@ -586,7 +610,9 @@
   function computeFairnessFee(miles, basePlusMiles) {
     if (!pickupLatLng) return 0;
     const pickup = { lat: pickupLatLng.lat(), lng: pickupLatLng.lng() };
-    const d = distMi(HQ, pickup);
+
+    const origin = fairnessOrigin || HQ; // ✅ CHANGE
+    const d = distMi(origin, pickup);    // ✅ CHANGE
 
     let zoneFee = 0;
     if (d > 40) zoneFee = 20;
@@ -602,7 +628,8 @@
     if (!pickupLatLng) return;
 
     const pickup = { lat: pickupLatLng.lat(), lng: pickupLatLng.lng() };
-    const d = distMi(HQ, pickup);
+    const origin = fairnessOrigin || HQ; // ✅ CHANGE
+    const d = distMi(origin, pickup);    // ✅ CHANGE
 
     if (d > 40) note.innerHTML = "📍 Pickup is well outside the core metro. A travel fairness fee <em>may</em> apply depending on total trip distance.";
     else if (d > 20) note.innerHTML = "📍 Pickup is outside the central zone. A small travel fairness fee <em>may</em> apply depending on trip distance.";
@@ -619,60 +646,55 @@
   }
 
   // ======================================================
-//  CONTINUE → REQUEST PAGE (PWA-safe + full handoff)
-// ======================================================
-function continueToRequestFromLastFare() {
-  const q = window.lastFare;
-  if (!q) return;
+  //  CONTINUE → REQUEST PAGE (PWA-safe + full handoff)
+  // ======================================================
+  function continueToRequestFromLastFare() {
+    const q = window.lastFare;
+    if (!q) return;
 
-  // Build ONE payload of ride details we can reuse for either path
-  const rideParams = new URLSearchParams();
+    // Build ONE payload of ride details we can reuse for either path
+    const rideParams = new URLSearchParams();
 
-  if (q.pickup)  rideParams.set("pickup", q.pickup);
-  if (q.dropoff) rideParams.set("dropoff", q.dropoff);
+    if (q.pickup)  rideParams.set("pickup", q.pickup);
+    if (q.dropoff) rideParams.set("dropoff", q.dropoff);
 
-  (q.stops || []).slice(0, 3).forEach(s => rideParams.append("stop", s));
+    (q.stops || []).slice(0, 3).forEach(s => rideParams.append("stop", s));
 
-  if (q.mode)       rideParams.set("mode", q.mode);
-  if (q.reserveDate) rideParams.set("reserveDate", q.reserveDate);
-  if (q.reserveTime) rideParams.set("reserveTime", q.reserveTime);
-  if (q.planBy)     rideParams.set("planBy", q.planBy);
+    if (q.mode)       rideParams.set("mode", q.mode);
+    if (q.reserveDate) rideParams.set("reserveDate", q.reserveDate);
+    if (q.reserveTime) rideParams.set("reserveTime", q.reserveTime);
+    if (q.planBy)     rideParams.set("planBy", q.planBy);
 
-  // Payment + estimate detail
-  if (q.pay)        rideParams.set("payment", q.pay);
-  if (q.total != null)   rideParams.set("estimate", String(q.total));
-  if (q.miles != null)   rideParams.set("miles", String(q.miles));
-  if (q.minutes != null) rideParams.set("minutes", String(q.minutes));
+    // Payment + estimate detail
+    if (q.pay)        rideParams.set("payment", q.pay);
+    if (q.total != null)   rideParams.set("estimate", String(q.total));
+    if (q.miles != null)   rideParams.set("miles", String(q.miles));
+    if (q.minutes != null) rideParams.set("minutes", String(q.minutes));
 
-  // Helpful origin marker
-  rideParams.set("from", "estimate");
+    // Helpful origin marker
+    rideParams.set("from", "estimate");
 
-  const riderName = getRiderName();
+    const riderName = getRiderName();
 
-  // If not "soft logged in" yet → go to rider-login with ALL ride details included
-  // so rider-login can forward everything cleanly to ride-request.
-  if (!riderName) {
-    // Keep your existing storage handoff too (belt + suspenders)
+    // If not "soft logged in" yet → go to rider-login with ALL ride details included
+    if (!riderName) {
+      if (q.pickup)  stashPickupHandoff(q.pickup);
+      if (q.dropoff) stashDropoffHandoff(q.dropoff);
+
+      const next = new URLSearchParams();
+      next.set("next", "ride-request");
+
+      for (const [k, v] of rideParams.entries()) next.append(k, v);
+
+      window.location.href = RIDER_DETAILS_PAGE + "?" + next.toString();
+      return;
+    }
+
     if (q.pickup)  stashPickupHandoff(q.pickup);
     if (q.dropoff) stashDropoffHandoff(q.dropoff);
 
-    const next = new URLSearchParams();
-    next.set("next", "ride-request");
-
-    // ✅ include the full ride details on the login hop
-    // rider-login should preserve/forward these params
-    for (const [k, v] of rideParams.entries()) next.append(k, v);
-
-    window.location.href = RIDER_DETAILS_PAGE + "?" + next.toString();
-    return;
+    window.location.href = REQUEST_PAGE + "?" + rideParams.toString();
   }
-
-  // Already has riderName → go straight to request with full ride details
-  if (q.pickup)  stashPickupHandoff(q.pickup);
-  if (q.dropoff) stashDropoffHandoff(q.dropoff);
-
-  window.location.href = REQUEST_PAGE + "?" + rideParams.toString();
-}
 
   // ======================================================
   //  CALCULATE FARE
@@ -681,6 +703,11 @@ function continueToRequestFromLastFare() {
     const pickup = document.getElementById("pickup").value.trim();
     const dropoff = document.getElementById("dropoff").value.trim();
     if (!pickup || !dropoff) { alert("Please enter both pickup and drop-off."); return; }
+
+    // ✅ NEW: ensure driver origin is loaded before fairness calc (Option A)
+    if (!driverOriginLoaded) {
+      await fetchDriverOrigin();
+    }
 
     const waypoints = stopInputs
       .map(id => {
