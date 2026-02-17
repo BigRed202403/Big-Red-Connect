@@ -1199,22 +1199,22 @@
     return google.maps.geometry.spherical.computeDistanceBetween(p1, p2) / 1609.34;
   }
 
-  function computeFairnessFee(miles, basePlusMiles) {
-    if (!pickupLatLng) return 0;
-
-    const pickup = { lat: pickupLatLng.lat(), lng: pickupLatLng.lng() };
-    const origin = fairnessOrigin || HQ;
-    const d = distMi(origin, pickup);
-
-    let zoneFee = 0;
-    if (d > 40) zoneFee = 20;
-    else if (d > 20) zoneFee = 10;
-
-    if (zoneFee > 0) {
-      if (miles > 20 || basePlusMiles >= 25) zoneFee = 0;
+      function computeFairnessFee(miles /*, basePlusMiles */) {
+      if (!pickupLatLng) return 0;
+    
+      const pickup = { lat: pickupLatLng.lat(), lng: pickupLatLng.lng() };
+      const origin = fairnessOrigin || HQ;
+      const d = distMi(origin, pickup);
+    
+      let zoneFee = 0;
+      if (d > 40) zoneFee = 20;
+      else if (d > 20) zoneFee = 10;
+    
+      // ✅ Waive only for true long trips (prevents rush base from killing it)
+      if (zoneFee > 0 && miles > 20) zoneFee = 0;
+    
+      return zoneFee;
     }
-    return zoneFee;
-  }
 
   function updateFairnessPreview() {
     const note = document.getElementById("fairness-note");
@@ -1322,7 +1322,7 @@
     // ✅ Option B: refresh live driver origin BEFORE fairness calc
     await fetchDriverOriginFromLiveGPS();
 
-    const fairnessFee = computeFairnessFee(miles, basePlusMiles);
+    const fairnessFee = computeFairnessFee(miles);
 
     const pay = document.getElementById("payment").value;
     let fare = basePlusMiles + fairnessFee;
