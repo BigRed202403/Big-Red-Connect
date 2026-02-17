@@ -12,7 +12,7 @@ const OFFLINE_FILES = [
   "/control.html",
   "/style.css",
   "/icon.png",
-  "/official_logo_Nov.png",
+  "/Official Logo.png",
 
   // Rider pages (offline-capable if you want them cached)
   "/rider/login.html",
