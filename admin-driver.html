@@ -15,7 +15,7 @@
 <meta name="theme-color" content="#000">
 <meta http-equiv="Cache-Control" content="no-store"/>
 
-<!-- ✅ Google Maps Places (Autocomplete) -->
+<!-- ✅ Google Maps Places -->
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places"></script>
 
 <!-- OneSignal v16 -->
@@ -224,7 +224,6 @@ body.modal-open{ overflow:hidden; }
       <div style="color:#888;font-size:.75rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Live Dispatch & Status</div>
     </div>
 
-    <!-- ✅ TRACKING PILL IS A TRUE TOGGLE (NOT TIED TO STATUS) -->
     <span id="livePill" class="pill offline" title="Tap to toggle GPS tracking">
       📡 Tracking: OFF
     </span>
@@ -346,9 +345,23 @@ body.modal-open{ overflow:hidden; }
         <button class="btn btn-secondary" id="btnClearManualRide" title="Clear Form">🧹 Clear</button>
       </div>
 
+      <!-- ✅ FARE ESTIMATE UI -->
+      <div class="preview-box" id="manualEstimateBox" style="margin-top:10px;">
+        <strong>Estimate</strong><br>
+        <span id="manualEstMiles">Miles: —</span><br>
+        <span id="manualEstFare">Fare: —</span><br>
+        <span style="color:#888;font-size:.75rem;">
+          Stored as metadata on create: estimateFare / estimateMiles / estimateBase.
+        </span>
+      </div>
+
+      <div class="row" style="margin-top:8px;">
+        <button class="btn btn-ghost" id="btnEstimateManual" type="button">💲 Estimate Fare</button>
+      </div>
+
       <p class="meta">
         ✅ Manual create uses: <code>POST /api/admin/bookings/manual</code> (requires <code>X-Admin-Secret</code>).<br>
-        Stores <code>metadata.manualTimeText</code>, <code>metadata.notes</code>, and <code>metadata.luggageCount</code>.
+        Stores <code>metadata.manualTimeText</code>, <code>metadata.notes</code>, <code>metadata.luggageCount</code>, and estimate fields.
       </p>
     </section>
 
@@ -554,18 +567,12 @@ const BOOKINGS_API    = "https://bigred-bookings.bigredtransportation.workers.de
 const AUTH_SECRET = "BigRedPrivateKey2025";
 const TZ          = "America/Chicago";
 const HOME_URL    = "https://bigredconnectokc.com/";
-
-/* If your rider login page uses a different path, change it here */
 const RIDER_LOGIN_BASE = `${HOME_URL}rider.html`;
 
-/* ✅ HQ fallback (user provided) */
 const HQ_LAT = 35.31810;
 const HQ_LNG = -97.49453;
+const LIVE_LOC_FRESH_MS = 15 * 60 * 1000;
 
-/* ✅ "Freshness window" for last-known location */
-const LIVE_LOC_FRESH_MS = 15 * 60 * 1000; // 15 minutes
-
-/* Status + dispatch enums */
 const DRIVER_STATUSES = [
   { value:"REQUESTED", label:"🆕 Requested" },
   { value:"ACCEPTED",  label:"✅ Accepted" },
@@ -576,7 +583,6 @@ const DRIVER_STATUSES = [
   { value:"CANCELLED", label:"✖ Cancelled" },
 ];
 
-/* Live map images */
 const LIVE_IMAGES=[
   "Official Logo.png",
   "1A5072F2-8604-4CAB-BC84-E15D86D8CE73.png",
@@ -623,21 +629,17 @@ let captionIndex=0;
 
 let gpsTimer=null;
 let gpsLastTs=null;
-
-/* ✅ kill-switch token so only one GPS loop can exist */
 let gpsRunToken = 0;
 
-let dispatchScope = localStorage.getItem("dispatchScope") || "active"; // active | all
+let dispatchScope = localStorage.getItem("dispatchScope") || "active";
 let currentStatusVal="offline";
 let currentMode = localStorage.getItem("adminDriverMode") || "admin";
 
 const bookingCache = new Map();
 let editingBookingId = null;
 
-/* ✅ Tracking toggle (not tied to status) */
 let trackingEnabled = (localStorage.getItem("trackingEnabled") === "true");
 
-/* ✅ throttle debug spam */
 let lastStatusLog = 0;
 let lastStatusJson = "";
 let lastEffLog = 0;
@@ -701,32 +703,27 @@ function safeParseMs(ts){
   const n = Date.parse(ts);
   return Number.isFinite(n) ? n : 0;
 }
-
 function setLiveLocText(lat,lng){
   if($("liveLoc")) $("liveLoc").textContent = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
 }
-
 function logEffectiveOnce(lat,lng,src,ts){
   const now = Date.now();
   const key = `${src}|${lat.toFixed(5)}|${lng.toFixed(5)}|${ts||""}`;
-  if(key === lastEffKey && (now - lastEffLog) < 60000) return; // 1/min if unchanged
+  if(key === lastEffKey && (now - lastEffLog) < 60000) return;
   lastEffKey = key;
   lastEffLog = now;
   log(`Effective Location: lat=${lat} lng=${lng} src=${src}${ts ? (" ts="+ts) : ""}`);
 }
 
 /* =========================
-   OPTION A: LIVE LOCATION FROM LOCATION WORKER (GET)
+   LOCATION WORKER GET
 ========================= */
 async function loadLiveLocation(){
   try{
     const r = await fetch(`${LOCATION_WORKER}?t=${Date.now()}`, { method:"GET" });
     if(!r.ok) return null;
-
     const data = await r.json();
 
-    // Support either shape:
-    // { lat, lng } OR { latitude, longitude } OR { location:{lat,lng} }
     const lat =
       (typeof data?.lat === "number") ? data.lat :
       (typeof data?.latitude === "number") ? data.latitude :
@@ -749,12 +746,7 @@ async function loadLiveLocation(){
 }
 
 /* =========================
-   EFFECTIVE LOCATION RULES
-   - If status = offline -> HQ
-   - Else (online/away):
-       - If worker location is fresh -> worker
-       - Else if status.location exists -> status.location
-       - Else -> HQ
+   EFFECTIVE LOCATION
 ========================= */
 function computeEffectiveLocation(statusVal, statusLoc, workerLoc){
   if(statusVal === "offline"){
@@ -783,8 +775,22 @@ function computeEffectiveLocation(statusVal, statusLoc, workerLoc){
   return { lat: HQ_LAT, lng: HQ_LNG, src: "HQ", ts: null };
 }
 
+async function refreshEffectiveLocationDisplay(statusData){
+  const statusVal = statusData?.status || currentStatusVal || "offline";
+  const statusLoc = statusData?.location || null;
+
+  let workerLoc = null;
+  try{ workerLoc = await loadLiveLocation(); }catch(e){ workerLoc = null; }
+
+  const eff = computeEffectiveLocation(statusVal, statusLoc, workerLoc);
+
+  setLiveLocText(eff.lat, eff.lng);
+  logEffectiveOnce(eff.lat, eff.lng, eff.src, eff.ts || "");
+  return eff;
+}
+
 /* =========================
-   TRACKING PILL (TOGGLE)
+   TRACKING PILL
 ========================= */
 function applyTrackingPill(){
   const pill = $("livePill");
@@ -802,56 +808,17 @@ function applyTrackingPill(){
     pill.title = "Tap to turn GPS tracking ON";
   }
 }
-
 function setTrackingEnabled(next){
   trackingEnabled = !!next;
   localStorage.setItem("trackingEnabled", trackingEnabled ? "true" : "false");
   applyTrackingPill();
-
-  // ✅ Start/stop based on CURRENT status, but toggle itself is independent
   handleGpsForStatus(currentStatusVal);
-
   showToast(trackingEnabled ? "Tracking ON" : "Tracking OFF");
-
-  // Update effective location display immediately when turning OFF
   if(!trackingEnabled){
     refreshEffectiveLocationDisplay().catch(()=>{});
   }
 }
-
-function toggleTracking(){
-  setTrackingEnabled(!trackingEnabled);
-}
-
-/* =========================
-   NOTIFY PREF (for rider cards)
-========================= */
-function normalizeNotifyPref(v){
-  const s = String(v || "").toLowerCase().trim();
-  return (s === "sms" || s === "push" || s === "both") ? s : "";
-}
-function prettyNotifyPref(v){
-  const n = normalizeNotifyPref(v);
-  if(n === "both") return "Both (SMS + Push)";
-  if(n === "sms")  return "SMS only";
-  if(n === "push") return "Push preferred";
-  return "—";
-}
-function getNotifyPrefFromBooking(b){
-  const candidates = [
-    b?.notifyPref,
-    b?.rider?.notifyPref,
-    b?.riderProfile?.notifyPref,
-    b?.metadata?.notifyPref,
-    b?.rider?.preferences?.notifyPref,
-    b?.preferences?.notifyPref
-  ];
-  for(const c of candidates){
-    const n = normalizeNotifyPref(c);
-    if(n) return n;
-  }
-  return "";
-}
+function toggleTracking(){ setTrackingEnabled(!trackingEnabled); }
 
 /* =========================
    MODE TOGGLE
@@ -861,9 +828,7 @@ function applyMode(mode){
   document.body.classList.remove("mode-admin","mode-driver");
   document.body.classList.add(currentMode==="driver" ? "mode-driver" : "mode-admin");
   const btn=$("btnModeToggle");
-  if(btn){
-    btn.textContent = currentMode==="driver" ? "🚗 Driver Mode" : "🛠 Admin Mode";
-  }
+  if(btn) btn.textContent = currentMode==="driver" ? "🚗 Driver Mode" : "🛠 Admin Mode";
   localStorage.setItem("adminDriverMode", currentMode);
 }
 
@@ -877,7 +842,7 @@ const OKC_BOUNDS = (window.google && google.maps)
     )
   : null;
 
-const __acMap = new Map(); // inputId -> Autocomplete instance
+const __acMap = new Map();
 
 function attachAutocompleteToInput(inputEl){
   if(!inputEl) return;
@@ -885,9 +850,7 @@ function attachAutocompleteToInput(inputEl){
     log("Places library not available (Google script missing or blocked).");
     return;
   }
-  if(!inputEl.id) {
-    inputEl.id = "ac_" + Math.random().toString(36).slice(2);
-  }
+  if(!inputEl.id) inputEl.id = "ac_" + Math.random().toString(36).slice(2);
   if(__acMap.has(inputEl.id)) return;
 
   const ac = new google.maps.places.Autocomplete(inputEl, {
@@ -940,33 +903,20 @@ function buildGoogleDirectionsUrl(booking){
   if(waypointsArr.length){ params.set("waypoints", waypointsArr.join("|")); }
   return `https://www.google.com/maps/dir/?${params.toString()}`;
 }
-function smsHrefWithBody(phoneDigits, body){
-  if(!phoneDigits) return "";
-  const encoded = encodeURIComponent(body || "");
-  return `sms:+1${phoneDigits}&body=${encoded}`;
-}
 function smsTemplateText(templateKey, booking){
   const riderName = (booking?.rider?.name || "").trim();
-  const pickup = (booking?.pickup?.address || "").trim();
-  const dropoff = (booking?.dropoff?.address || "").trim();
   const greet = riderName ? `Hey ${riderName} — ` : `Hey — `;
   const templates = {
     OMW: `${greet}I’m on my way now. I’ll text when I’m close.`,
     ARRIVED: `${greet}I’m here at the pickup. Where should I pull in?`,
-    CONFIRM: `${greet}Confirming pickup: ${pickup || "[pickup]"} → ${dropoff || "[dropoff]"}. You ready?`,
+    CONFIRM: `${greet}Confirming pickup and dropoff — you ready?`,
     LATE: `${greet}Running a few minutes behind — I’m still coming. I’ll update you shortly.`,
   };
   return templates[templateKey] || `${greet}I’m on my way.`;
 }
 
-/* Rider login link helper */
 function resolveRiderIdFromBooking(b){
-  const a = b?.rider?.riderId; if(a) return a;
-  const b1 = b?.riderId; if(b1) return b1;
-  const c = b?.rider?.id; if(c) return c;
-  const d = b?.rider?.external_id; if(d) return d;
-  const e = b?.rider?.externalId; if(e) return e;
-  return "";
+  return b?.rider?.riderId || b?.riderId || b?.rider?.id || b?.rider?.external_id || b?.rider?.externalId || "";
 }
 function buildRiderLoginLink(booking){
   const riderId = resolveRiderIdFromBooking(booking);
@@ -1024,7 +974,7 @@ function copyCaption(){
 }
 
 /* =========================
-   PUSH UI (BROADCAST)
+   PUSH UI
 ========================= */
 function updPrev(){
   $("pushPrevTitle").textContent = $("pushTitle").value || "Big Red Connect";
@@ -1090,36 +1040,14 @@ function autoOnlinePush(){
 }
 
 /* =========================
-   STATUS + GPS + EFFECTIVE LOCATION
+   STATUS + GPS
 ========================= */
-async function refreshEffectiveLocationDisplay(statusData){
-  // statusData optional (pass from loadStatus to avoid extra fetch)
-  const statusVal = statusData?.status || currentStatusVal || "offline";
-  const statusLoc = statusData?.location || null;
-
-  let workerLoc = null;
-
-  // Only bother pulling worker location when:
-  // - tracking is OFF (need last known)
-  // - or status is online/away (display last known / fresh)
-  try{
-    workerLoc = await loadLiveLocation();
-  }catch(e){ workerLoc = null; }
-
-  const eff = computeEffectiveLocation(statusVal, statusLoc, workerLoc);
-
-  setLiveLocText(eff.lat, eff.lng);
-  logEffectiveOnce(eff.lat, eff.lng, eff.src, eff.ts || "");
-  return eff;
-}
-
 async function loadStatus(){
   try{
     const res=await fetch(STATUS_WORKER+"/status");
     if(!res.ok) return;
     const data=await res.json();
 
-    // ✅ throttle status GET log spam (log if changed OR once per minute)
     const now = Date.now();
     const json = JSON.stringify(data);
     if (json !== lastStatusJson || (now - lastStatusLog) > 60000) {
@@ -1135,16 +1063,9 @@ async function loadStatus(){
     pill.classList.remove("online","away","offline");
 
     let label="";
-    if(statusVal==="online"){
-      label="ON THE ROAD";
-      pill.classList.add("online");
-    }else if(statusVal==="away"){
-      label="LIMITED AVAILABILITY";
-      pill.classList.add("away");
-    }else{
-      label="OFF FOR NOW";
-      pill.classList.add("offline");
-    }
+    if(statusVal==="online"){ label="ON THE ROAD"; pill.classList.add("online"); }
+    else if(statusVal==="away"){ label="LIMITED AVAILABILITY"; pill.classList.add("away"); }
+    else { label="OFF FOR NOW"; pill.classList.add("offline"); }
 
     const when=formatDateTime(data.lastUpdated);
     pill.textContent=`Status: ${label} • updated ${when}`;
@@ -1157,10 +1078,7 @@ async function loadStatus(){
       else globalVeh.value="BLACK_ACADIA";
     }
 
-    // ✅ Show effective location per rules
     await refreshEffectiveLocationDisplay(data);
-
-    // ✅ start/stop GPS per rules
     handleGpsForStatus(statusVal);
 
   }catch(e){
@@ -1172,7 +1090,6 @@ async function updateStatus(){
   const val=$("statusSelect").value;
   const message=val==="online"?"On the Road":val==="away"?"Limited Availability":"Offline";
   const wasOnline = (currentStatusVal === "online");
-
   const vehicleCode = $("globalVehicleSelect") ? $("globalVehicleSelect").value : undefined;
 
   try{
@@ -1204,21 +1121,19 @@ async function updateStatus(){
   }
 }
 
-/* ✅ GPS sends when Tracking ON AND status is online/away (offline -> stop + HQ display) */
 function handleGpsForStatus(val){
   if(trackingEnabled && (val === "online" || val === "away")) startGpsPings();
   else stopGpsPings();
 }
 
 function determineGpsInterval() {
-  let interval = 600000; // default 10m
+  let interval = 600000;
   const active = document.querySelectorAll("#listActive .card");
-  if (active.length > 0) interval = 20000; // 20s while active trips exist
+  if (active.length > 0) interval = 20000;
   if (window.__nearPickup === true) interval = 5000;
   return interval;
 }
 
-/* ✅ single-loop GPS pings (token kill-switch) */
 function startGpsPings(){
   gpsRunToken++;
   const myToken = gpsRunToken;
@@ -1229,7 +1144,6 @@ function startGpsPings(){
   async function pingOnce(){
     if (myToken !== gpsRunToken) return;
 
-    // re-check every loop
     if(!trackingEnabled || !(currentStatusVal === "online" || currentStatusVal === "away")){
       stopGpsPings();
       return;
@@ -1241,7 +1155,6 @@ function startGpsPings(){
       if (myToken !== gpsRunToken) return;
 
       const now = Date.now();
-
       $("gpsStamp").textContent = new Date().toLocaleString("en-US", { timeZone: TZ });
 
       $("gpsRate").textContent =
@@ -1271,7 +1184,6 @@ function startGpsPings(){
       .then(r => r.text())
       .then(t => {
         log("GPS PUT: " + t);
-        // ✅ No GET-after-PUT. Update UI directly from GPS coords.
         setLiveLocText(lat, lng);
         logEffectiveOnce(lat, lng, "GPS", ts);
       })
@@ -1292,7 +1204,7 @@ function startGpsPings(){
 }
 
 function stopGpsPings(){
-  gpsRunToken++; // kill any in-flight loop
+  gpsRunToken++;
   if(gpsTimer){clearTimeout(gpsTimer);gpsTimer=null;}
   gpsLastTs = null;
   if($("gpsRate")) $("gpsRate").textContent="—";
@@ -1375,6 +1287,109 @@ function clearManualRideForm(){
   if(lug) lug.value = "0";
   clearManualStops();
   syncManualLuggageVisibility();
+
+  if($("manualEstMiles")) $("manualEstMiles").textContent = "Miles: —";
+  if($("manualEstFare"))  $("manualEstFare").textContent  = "Fare: —";
+
+  // clear stored estimate draft
+  window.__manualEstimate = null;
+}
+
+/* =========================
+   MANUAL ESTIMATE → STORED STRUCTURED
+========================= */
+function money(n){
+  const x = Number(n);
+  if(!Number.isFinite(x)) return "—";
+  return "$" + x.toFixed(2);
+}
+function computeFlatRateFare(miles, baseRate){
+  const m = Math.max(0, Number(miles) || 0);
+  let total = Number(baseRate) || 0;
+
+  if(m > 10){
+    const tier1 = Math.min(m, 20) - 10;
+    total += tier1 * 1.25;
+  }
+  if(m > 20){
+    const tier2 = m - 20;
+    total += tier2 * 1.0;
+  }
+  return total;
+}
+function getManualRateBase(){
+  return manualIsAirportRide() ? 15 : 10;
+}
+async function getRouteMilesWithStops(origin, destination, stopAddrs){
+  if(!(window.google && google.maps)) throw new Error("Google Maps not available");
+
+  const ds = new google.maps.DirectionsService();
+  const waypoints = (Array.isArray(stopAddrs) ? stopAddrs : [])
+    .filter(Boolean)
+    .slice(0, 3)
+    .map(a => ({ location: a, stopover: true }));
+
+  return await new Promise((resolve, reject) => {
+    ds.route({
+      origin,
+      destination,
+      waypoints,
+      optimizeWaypoints: false,
+      travelMode: google.maps.TravelMode.DRIVING
+    }, (result, status) => {
+      if(status !== "OK" || !result?.routes?.[0]?.legs){
+        reject(new Error("Directions failed: " + status));
+        return;
+      }
+      const legs = result.routes[0].legs;
+      const meters = legs.reduce((sum, leg) => sum + (leg?.distance?.value || 0), 0);
+      const miles = meters / 1609.344;
+      resolve(miles);
+    });
+  });
+}
+
+function setManualEstimateDraft(est){
+  window.__manualEstimate = est || null;
+}
+
+async function estimateManualFare(){
+  const pickup = ($("manualPickup")?.value || "").trim();
+  const dropoff = ($("manualDropoff")?.value || "").trim();
+  const stops = getManualStopsList();
+
+  if(!pickup || !dropoff){
+    showToast("Pickup + dropoff required to estimate");
+    return null;
+  }
+
+  $("manualEstMiles").textContent = "Miles: …";
+  $("manualEstFare").textContent  = "Fare: …";
+
+  try{
+    const miles = await getRouteMilesWithStops(pickup, dropoff, stops);
+    const base = getManualRateBase();
+    const fare = computeFlatRateFare(miles, base);
+
+    $("manualEstMiles").textContent = `Miles: ${miles.toFixed(1)}`;
+    $("manualEstFare").textContent  = `Fare: ${money(fare)} (base $${base})`;
+
+    const est = {
+      estimateMiles: Number(miles.toFixed(3)),
+      estimateFare: Number(fare.toFixed(2)),
+      estimateBase: Number(base)
+    };
+
+    setManualEstimateDraft(est);
+    return est;
+  }catch(e){
+    $("manualEstMiles").textContent = "Miles: —";
+    $("manualEstFare").textContent  = "Fare: —";
+    setManualEstimateDraft(null);
+    showToast("Estimate failed");
+    log("Estimate error: " + e.message);
+    return null;
+  }
 }
 
 async function createManualRide(){
@@ -1385,7 +1400,7 @@ async function createManualRide(){
   const pickup      = ($("manualPickup").value || "").trim();
   const dropoff     = ($("manualDropoff").value || "").trim();
   const time        = ($("manualTime").value || "").trim();
-  const notes       = ($("manualNotes").value || "").trim();
+  const notesRaw    = ($("manualNotes").value || "").trim();
   const gateCode    = ($("manualGateCode").value || "").trim();
 
   const partySize = Number($("manualPassengers")?.value || "1");
@@ -1395,6 +1410,31 @@ async function createManualRide(){
   if(!rider_phone){ showToast("Rider phone required"); return; }
   if(!pickup || !dropoff){ showToast("Pickup + dropoff required"); return; }
 
+  // Notes (gate appended)
+  let notes = notesRaw;
+  if(gateCode){
+    notes = notes ? (notes + `\nGate: ${gateCode}`) : `Gate: ${gateCode}`;
+  }
+
+  // ✅ Ensure we have a draft estimate (non-fatal)
+  let est = window.__manualEstimate || null;
+  if(!est){
+    try{ est = await estimateManualFare(); }catch(e){ est = null; }
+  }
+
+  // ✅ Build metadata
+  const metadata = {
+    manualTimeText: time || "",
+    notes: notes || "",
+    luggageCount: manualIsAirportRide() ? (Number.isFinite(luggageCount) ? luggageCount : 0) : 0
+  };
+
+  if(est && Number.isFinite(est.estimateFare) && Number.isFinite(est.estimateMiles)){
+    metadata.estimateFare  = est.estimateFare;
+    metadata.estimateMiles = est.estimateMiles;
+    metadata.estimateBase  = est.estimateBase;
+  }
+
   const payload = {
     source: "MANUAL",
     rider_name,
@@ -1402,10 +1442,11 @@ async function createManualRide(){
     pickup,
     dropoff,
     time: time || "",
-    notes: (notes ? notes + (gateCode ? `\nGate: ${gateCode}` : "") : (gateCode ? `Gate: ${gateCode}` : "")),
+    notes: notes || "",
     stops: stopsText.map(a => ({ address: a })),
     partySize: Number.isFinite(partySize) ? partySize : 1,
-    luggageCount: manualIsAirportRide() ? (Number.isFinite(luggageCount) ? luggageCount : 0) : 0
+    luggageCount: metadata.luggageCount,
+    metadata
   };
 
   try{
@@ -1430,7 +1471,39 @@ async function createManualRide(){
 }
 
 /* =========================
-   DISPATCH: FETCH + RENDER + STATUS UPDATE
+   DISPATCH: ESTIMATE DISPLAY HELPERS
+========================= */
+function asNum(v){
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+function readEstimateFromBooking(b){
+  const md = b?.metadata || {};
+  const fare = asNum(md.estimateFare);
+  const miles = asNum(md.estimateMiles);
+  const base = asNum(md.estimateBase);
+
+  if(fare != null && miles != null){
+    return { fare, miles, base: (base != null ? base : null), src: "metadata" };
+  }
+
+  // Fallback: parse old "Estimate: $XX.XX (YY.Y mi, base $10)" from notes
+  const notes = String(md?.notes || "");
+  const m = notes.match(/Estimate:\s*\$?(\d+(?:\.\d+)?)\s*\((\d+(?:\.\d+)?)\s*mi,\s*base\s*\$?(\d+(?:\.\d+)?)\)/i);
+  if(m){
+    return { fare: Number(m[1]), miles: Number(m[2]), base: Number(m[3]), src: "notes" };
+  }
+  return null;
+}
+function estimateLineHtml(b){
+  const est = readEstimateFromBooking(b);
+  if(!est) return "";
+  const baseTxt = (est.base != null && Number.isFinite(est.base)) ? ` • base $${est.base}` : "";
+  return `<div class="loc-line">💲 Estimate: ${escHtml(money(est.fare))} • ${escHtml(est.miles.toFixed(1))} mi${escHtml(baseTxt)}</div>`;
+}
+
+/* =========================
+   DISPATCH: FETCH + RENDER
 ========================= */
 function fmtStops(stops){
   const arr = Array.isArray(stops) ? stops : [];
@@ -1438,7 +1511,6 @@ function fmtStops(stops){
   if(!addrs.length) return "";
   return addrs.map((a,i)=>`<div class="loc-line">🛑 Stop ${i+1}: ${escHtml(a)}</div>`).join("");
 }
-
 function statusDropdownHtml(current, bookingId){
   const opts = DRIVER_STATUSES.map(s=>{
     const sel = (s.value === current) ? "selected" : "";
@@ -1450,21 +1522,11 @@ function statusDropdownHtml(current, bookingId){
     </select>
   `;
 }
-
 function quickChipsHtml(booking){
   const directionsUrl = buildGoogleDirectionsUrl(booking);
   const directionsBtn = directionsUrl
     ? `<a class="chip primary" href="${escHtml(directionsUrl)}" target="_blank" rel="noopener">🧭 Directions</a>`
     : ``;
-
-  const smsDigits = normalizePhoneDigits(booking?.rider?.phone || "");
-
-  const smsBtns = smsDigits ? `
-    <span class="chip" data-action="copySms" data-template="CONFIRM" data-id="${escHtml(booking.id)}">💬 Confirm</span>
-    <span class="chip" data-action="copySms" data-template="OMW" data-id="${escHtml(booking.id)}">🚗 OMW</span>
-    <span class="chip" data-action="copySms" data-template="ARRIVED" data-id="${escHtml(booking.id)}">📍 Arrived</span>
-    <span class="chip" data-action="copySms" data-template="LATE" data-id="${escHtml(booking.id)}">⏱ Running Late</span>
-  ` : ``;
 
   const riderLogin = buildRiderLoginLink(booking);
   const riderBtn = riderLogin
@@ -1473,13 +1535,11 @@ function quickChipsHtml(booking){
 
   return `
     ${directionsBtn}
-    ${smsBtns}
     ${riderBtn}
     <span class="chip" data-action="copyId" data-id="${escHtml(booking.id)}">📋 Copy ID</span>
     <span class="chip" data-action="openEdit" data-id="${escHtml(booking.id)}">✏️ Edit</span>
   `;
 }
-
 function renderColumn(containerId, items){
   const box = $(containerId);
   if(!box) return;
@@ -1502,9 +1562,6 @@ function renderColumn(containerId, items){
     const manualTimeText = escHtml(b?.metadata?.manualTimeText || "");
     const notes = escHtml(b?.metadata?.notes || "");
 
-    const notifyPrefRaw = getNotifyPrefFromBooking(b);
-    const notifyPrefLabel = escHtml(prettyNotifyPref(notifyPrefRaw));
-
     return `
       <div class="card" data-id="${id}" data-action="cardTap">
         <div class="card-label-row">
@@ -1514,7 +1571,7 @@ function renderColumn(containerId, items){
 
         ${partySize ? `<div class="loc-line">👥 Party: ${partySize}</div>` : ""}
 
-        <div class="loc-line">🔔 Notify: ${notifyPrefLabel}</div>
+        ${estimateLineHtml(b)}
 
         <div class="loc-line">📍 Pickup: ${pickup || "—"}</div>
         ${fmtStops(b?.stops)}
@@ -1604,7 +1661,7 @@ async function updateBookingStatus(bookingId, newStatus){
 }
 
 /* =========================
-   EDIT MODAL (ADMIN)
+   EDIT MODAL (ADMIN) - preserves estimate metadata if present
 ========================= */
 function openEditModal(bookingId){
   const b = bookingCache.get(String(bookingId));
@@ -1650,6 +1707,8 @@ function closeEditModal(){
 async function saveEditModal(){
   if(!editingBookingId){ showToast("No booking selected"); return; }
 
+  const existing = bookingCache.get(String(editingBookingId)) || {};
+
   const rider_name = ($("editRiderName").value || "").trim();
   const rider_phone = normalizePhoneDigits(($("editRiderPhone").value || "").trim());
 
@@ -1678,6 +1737,8 @@ async function saveEditModal(){
     return;
   }
 
+  // Preserve estimate fields if they exist
+  const mdExisting = existing?.metadata || {};
   const payload = {
     pickup:  { address: pickupAddr },
     dropoff: { address: dropoffAddr },
@@ -1695,8 +1756,12 @@ async function saveEditModal(){
     }
   };
 
+  if(mdExisting.estimateFare != null) payload.metadata.estimateFare = mdExisting.estimateFare;
+  if(mdExisting.estimateMiles != null) payload.metadata.estimateMiles = mdExisting.estimateMiles;
+  if(mdExisting.estimateBase != null) payload.metadata.estimateBase = mdExisting.estimateBase;
+
   try{
-    log(`Admin edit PUT (driver endpoint) ${editingBookingId} … ${JSON.stringify(payload)}`);
+    log(`Admin edit PUT ${editingBookingId} … ${JSON.stringify(payload)}`);
 
     const r = await fetch(`${BOOKINGS_API}/api/driver/bookings/${encodeURIComponent(editingBookingId)}`,{
       method:"PUT",
@@ -1751,7 +1816,7 @@ function toggleScope(){
 }
 
 /* =========================
-   EVENT DELEGATION (DISPATCH BOARD)
+   EVENT DELEGATION
 ========================= */
 function handleDispatchClick(e){
   const target = e.target;
@@ -1778,21 +1843,6 @@ function handleDispatchClick(e){
         return;
       }
 
-      if(action === "copySms"){
-        const templateKey = chip.dataset.template || "CONFIRM";
-        const booking = bookingCache.get(String(id));
-        if(!booking){
-          showToast("Ride not found");
-          e.stopPropagation();
-          return;
-        }
-        const txt = smsTemplateText(templateKey, booking);
-        copyText(txt);
-        showToast("SMS template copied");
-        e.stopPropagation();
-        return;
-      }
-
       if(action === "openEdit"){
         if(currentMode !== "admin"){ showToast("Switch to Admin Mode to edit"); return; }
         openEditModal(id);
@@ -1814,7 +1864,6 @@ function handleDispatchClick(e){
 }
 function handleDispatchChange(e){
   const target = e.target;
-
   if(target && target.matches('select[data-action="statusChange"]')){
     const bookingId = target.getAttribute("data-id");
     const newStatus = target.value;
@@ -1846,6 +1895,8 @@ function wireButtons(){
   $("btnCreateManualRide").onclick = createManualRide;
   $("btnClearManualRide").onclick = clearManualRideForm;
 
+  $("btnEstimateManual").onclick = estimateManualFare;
+
   ["pushTitle","pushMessage","pushUrl"].forEach(id=>{
     const el=$(id);
     if(el) el.oninput=updPrev;
@@ -1866,10 +1917,8 @@ function wireButtons(){
     showToast(`Mode: ${next}`);
   };
 
-  // ✅ Tracking pill toggle
   $("livePill").addEventListener("click", toggleTracking);
 
-  // Manual stops + luggage wiring
   $("manualAddStopBtn").addEventListener("click", ()=>addManualStopField(""));
   $("manualClearStopsBtn").addEventListener("click", clearManualStops);
   ["manualPickup","manualDropoff","manualAirportToggle"].forEach(id=>{
@@ -1880,7 +1929,6 @@ function wireButtons(){
     }
   });
 
-  // digits-only UX enforcement for phone fields
   const phoneInput = $("manualRiderPhone");
   if(phoneInput){
     phoneInput.addEventListener("input", ()=>{ phoneInput.value = normalizePhoneDigits(phoneInput.value); });
@@ -1890,19 +1938,16 @@ function wireButtons(){
     editPhone.addEventListener("input", ()=>{ editPhone.value = normalizePhoneDigits(editPhone.value); });
   }
 
-  // Modal buttons
   $("editCloseBtn").onclick = closeEditModal;
   $("editCancelBtn").onclick = closeEditModal;
   $("editSaveBtn").onclick = saveEditModal;
   $("editCopyLoginLinkBtn").onclick = copyEditRiderLoginLink;
   $("editCopyDirectionsBtn").onclick = copyEditDirectionsLink;
 
-  // Click outside modal closes
   $("editOverlay").addEventListener("click",(ev)=>{
     if(ev.target === $("editOverlay")) closeEditModal();
   });
 
-  // Dispatch click delegation
   $("listNew").addEventListener("click", handleDispatchClick);
   $("listActive").addEventListener("click", handleDispatchClick);
   $("listDone").addEventListener("click", handleDispatchClick);
@@ -1911,7 +1956,6 @@ function wireButtons(){
   $("listActive").addEventListener("change", handleDispatchChange);
   $("listDone").addEventListener("change", handleDispatchChange);
 
-  // ESC closes modal
   document.addEventListener("keydown",(ev)=>{
     if(ev.key === "Escape" && $("editOverlay").classList.contains("show")) closeEditModal();
   });
@@ -1921,27 +1965,21 @@ function wireButtons(){
    BOOT
 ========================= */
 window.addEventListener("load",()=>{
-  // mode + scope
   applyMode(currentMode);
   $("btnScope").textContent = `📋 ${dispatchScope}`;
 
-  // tracking pill state
   applyTrackingPill();
 
-  // initial UI
   updPrev();
   applyTemplateToCaption("LIVE");
   setImage(0);
 
-  // load data
   loadStatus();
   loadLastCaption();
   fetchBookings();
 
-  // timers
   setInterval(fetchBookings, 20000);
 
-  // init UX
   syncManualLuggageVisibility();
   initAddressAutocomplete();
   wireButtons();
