@@ -1,3 +1,6 @@
+<!-- =========================
+FILE 2: /rider/ride-request.html (Ride Request & Estimate – Big Red Connect)
+========================= -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -39,10 +42,6 @@
     .btn-ghost { background:#000; color:#fff; border:1px solid #444; }
     .btn-secondary { background:#111; color:#fff; border:1px solid #333; }
     .btn-wide { width:100%; margin-top:12px; }
-    .ride-mode-toggle { display:flex; gap:6px; margin-bottom:10px; }
-    .btn-toggle { flex:1; padding:10px; font-size:0.9rem; border-radius:999px; border:1px solid #333; background:#000; color:#fff; }
-    .btn-toggle.active { background:var(--red); border-color:var(--red); }
-    #reserveControls { margin-top:8px; }
     #map { width:100%; height:220px; border-radius:10px; margin-top:10px; background:#050505; border:1px solid #222; }
     .notes-block p { margin:4px 0; font-size:0.8rem; }
     #airport-note, #event-note, #rushhour-note, #fairness-note { font-size:0.8rem; }
@@ -92,7 +91,6 @@
   <div class="card">
     <div class="section-title">When?</div>
 
-    <!-- ✅ CHANGE: Remove Ride Now / Reserve toggle. Always pre-arranged. -->
     <div id="reserveControls">
       <div class="input-group">
         <label for="reserveDate">Date</label>
@@ -101,7 +99,6 @@
 
       <div class="input-group">
         <label for="reserveTimeSelect">Time (15-min increments)</label>
-        <!-- ✅ CHANGE: 15-min dropdown -->
         <select id="reserveTimeSelect"></select>
         <div class="hint">Pick a time (required). This keeps every request pre-arranged and predictable.</div>
       </div>
@@ -153,7 +150,6 @@
       <div class="hint">Seatbelts for everyone. Max 6 depending on which vehicle is in service.</div>
     </div>
 
-    <!-- Luggage (Airport only) -->
     <div class="input-group" id="luggageWrap" style="display:none;">
       <label for="luggageCount">Luggage (airport rides)</label>
       <select id="luggageCount">
@@ -217,13 +213,87 @@
   // =====================================================
   const API_BOOK   = "https://bigred-bookings.bigredtransportation.workers.dev";
   const PUSH_API   = "https://bigred-push.bigredtransportation.workers.dev/push/ride-request";
-
   const HQ = { lat: 35.3207, lng: -97.4929 };
-
-  // ✅ Option B: Pull live driver origin from update-location worker (CURRENT)
   const LOCATION_API = "https://update-location.bigredtransportation.workers.dev/";
-
   let fairnessOrigin = { ...HQ };
+
+  // =====================================================
+  // STRICT INPUT RULES (place name must be selected; address must resolve)
+  // =====================================================
+  let pickupVerified = false;
+  let dropoffVerified = false;
+
+  function looksLikeAddress(s){
+    return /\d{1,6}\s+\S+/.test(String(s||"").trim());
+  }
+  function setVerified(which, ok){
+    if (which === "pickup") pickupVerified = !!ok;
+    if (which === "dropoff") dropoffVerified = !!ok;
+  }
+  function requireVerifiedOrResolvable(which){
+    const el = document.getElementById(which);
+    const text = (el?.value || "").trim();
+    if (!text) return false;
+
+    if (!looksLikeAddress(text)) {
+      const verified = (which === "pickup") ? pickupVerified : dropoffVerified;
+      if (!verified) {
+        showToast(`Select the ${which} from suggestions`);
+        el?.focus();
+        return false;
+      }
+      return true;
+    }
+    return true;
+  }
+
+  async function ensureResolvedLatLng(which){
+    const el = document.getElementById(which);
+    const text = (el?.value || "").trim();
+    if (!text) return false;
+
+    if (which === "pickup" && pickupLatLng) return true;
+    if (which === "dropoff" && dropoffLatLng) return true;
+
+    if (!looksLikeAddress(text)) return false;
+    if (!geocoder) return false;
+
+    const okcBounds = new google.maps.LatLngBounds(
+      { lat: 34.9000, lng: -98.2000 },
+      { lat: 36.0000, lng: -96.0000 }
+    );
+
+    const result = await new Promise((resolve) => {
+      geocoder.geocode({ address: text, bounds: okcBounds }, (res, stat) => {
+        if (stat !== "OK" || !res?.length) return resolve(null);
+        resolve(res[0]);
+      });
+    });
+
+    if (!result?.geometry?.location) {
+      showToast(`Confirm ${which} (pick suggestion)`);
+      el?.focus();
+      return false;
+    }
+
+    const loc = result.geometry.location;
+    const lat = loc.lat();
+    const lng = loc.lng();
+    const latlng = { lat, lng };
+
+    if (which === "pickup") {
+      pickupLatLng = loc;
+      if (pickupMarker) pickupMarker.setMap(null);
+      pickupMarker = new google.maps.Marker({ position: latlng, map, icon: { url: "http://maps.google.com/mapfiles/ms/icons/green-dot.png" } });
+    } else {
+      dropoffLatLng = loc;
+      if (dropoffMarker) dropoffMarker.setMap(null);
+      dropoffMarker = new google.maps.Marker({ position: latlng, map, icon: { url: "http://maps.google.com/mapfiles/ms/icons/red-dot.png" } });
+    }
+
+    setVerified(which, true);
+    return true;
+  }
 
   // =====================================================
   // ✅ Last Ride Cache (canonical)
@@ -247,14 +317,14 @@
   // =====================================================
   // NOTIFY PREF (v1 local-only → stamped into bookings)
   // =====================================================
-  const NOTIFY_PREF_KEY = "notifyPref"; // both | sms | push
+  const NOTIFY_PREF_KEY = "notifyPref";
   function getNotifyPref(){
     const v = String(localStorage.getItem(NOTIFY_PREF_KEY) || "both").toLowerCase();
     return (v === "sms" || v === "push" || v === "both") ? v : "both";
   }
 
   // =====================================================
-  // PLACE DISPLAY HELPERS (name + address)
+  // PLACE DISPLAY HELPERS
   // =====================================================
   function formatPlaceLine(name, address){
     const n = String(name || "").trim();
@@ -262,7 +332,6 @@
     if (n && a) return `${n} — ${a}`;
     return a || n || "";
   }
-
   function pickFirstString(...vals){
     for (const v of vals){
       if (typeof v === "string" && v.trim()) return v.trim();
@@ -274,7 +343,7 @@
   // IMPORTANT: define these BEFORE early repeat-prefill runs
   // =====================================================
   let stopInputs = [];
-  let repeatLocked = false; // ✅ prevents profile/home/handoff from overriding repeat
+  let repeatLocked = false;
 
   const PLACE_KEYS = {
     pickup: "brc_place_pickup_v1",
@@ -317,12 +386,12 @@
   document.getElementById("btnEditProfile").addEventListener("click", () => window.location.href = "/rider/profile.html");
 
   // =====================================================
-  // ✅ CHANGE: Always pre-arranged (mode fixed to "reserve")
+  // Always pre-arranged
   // =====================================================
   let mode = "reserve";
 
   // =====================================================
-  // ✅ CHANGE: 15-min time dropdown helpers (SMART DEFAULTS)
+  // 15-min time dropdown helpers (SMART DEFAULTS)
   // =====================================================
   function pad2(n){ return String(n).padStart(2,"0"); }
 
@@ -343,7 +412,6 @@
   function getSmartDefaultSchedule(now = new Date()){
     const d = new Date(now);
     d.setSeconds(0); d.setMilliseconds(0);
-
     const isLate = (d.getHours() === 23 && d.getMinutes() >= 30);
 
     if (isLate) {
@@ -368,10 +436,7 @@
     const mm = pad2(next.getMonth() + 1);
     const dd = pad2(next.getDate());
 
-    return {
-      date: `${yyyy}-${mm}-${dd}`,
-      time: `${pad2(next.getHours())}:${pad2(next.getMinutes())}`
-    };
+    return { date: `${yyyy}-${mm}-${dd}`, time: `${pad2(next.getHours())}:${pad2(next.getMinutes())}` };
   }
 
   function initDefaultScheduleIfEmpty(){
@@ -390,12 +455,11 @@
   }
 
   function getReserveTimeValue(){
-    const t = (document.getElementById("reserveTimeSelect")?.value || "").trim();
-    return t;
+    return (document.getElementById("reserveTimeSelect")?.value || "").trim();
   }
 
   // =====================================================
-  // ✅ Option B: fetch live driver origin from update-location
+  // Option B: fetch live driver origin from update-location
   // =====================================================
   async function fetchDriverOriginFromLiveGPS() {
     try {
@@ -528,11 +592,13 @@
       if (qsPickup && pEl && !String(pEl.value||"").trim()) {
         pEl.value = qsPickup;
         sessionStorage.removeItem(PLACE_KEYS.pickup);
+        setVerified("pickup", false);
       }
 
       if (qsDropoff && dEl && !String(dEl.value||"").trim()) {
         dEl.value = qsDropoff;
         sessionStorage.removeItem(PLACE_KEYS.dropoff);
+        setVerified("dropoff", false);
       }
 
       if (Array.isArray(qsStops) && qsStops.length) {
@@ -583,6 +649,7 @@
     if (!String(pickEl.value || "").trim()) {
       pickEl.value = handoff.value;
       sessionStorage.removeItem(PLACE_KEYS.pickup);
+      setVerified("pickup", false);
       showToast("Pickup carried over ✅");
     }
   }
@@ -598,6 +665,7 @@
     if (!String(dropEl.value || "").trim()) {
       dropEl.value = handoff.value;
       sessionStorage.removeItem(PLACE_KEYS.dropoff);
+      setVerified("dropoff", false);
       showToast("Drop-off carried over ✅");
     }
   }
@@ -693,6 +761,9 @@
 
     if (stored.lat && stored.lng && googleReady) {
       setMarker(which, stored.lat, stored.lng);
+      setVerified(which, true);
+    } else {
+      setVerified(which, false);
     }
     syncLuggageVisibility();
   }
@@ -704,6 +775,7 @@
     const key = which === "pickup" ? PLACE_KEYS.pickup : PLACE_KEYS.dropoff;
     el.addEventListener("input", () => {
       repeatLocked = false;
+      setVerified(which, false); // ✅ typing = unverified
       if (sessionStorage.getItem(key)) clearPlace(key);
       if (which === "pickup") pickupLatLng = null;
       if (which === "dropoff") dropoffLatLng = null;
@@ -755,6 +827,7 @@
       if (role === "pickup") {
         savePlace(PLACE_KEYS.pickup, packed);
         if (packed.lat && packed.lng) setMarker("pickup", packed.lat, packed.lng);
+        setVerified("pickup", true); // ✅ selected from suggestions
         applyAutoRateLabels();
         updateFairnessPreview();
         syncLuggageVisibility();
@@ -762,6 +835,7 @@
       } else if (role === "dropoff") {
         savePlace(PLACE_KEYS.dropoff, packed);
         if (packed.lat && packed.lng) setMarker("dropoff", packed.lat, packed.lng);
+        setVerified("dropoff", true); // ✅ selected from suggestions
         applyAutoRateLabels();
         updateFairnessPreview();
         syncLuggageVisibility();
@@ -809,7 +883,7 @@
   window.removeStop = removeStop;
 
   // =====================================================
-  // EARLY REPEAT PREFILL (authoritative overwrite)
+  // EARLY REPEAT PREFILL (unchanged)
   // =====================================================
   async function prefillFromRepeatRideIfAny_EARLY() {
     try {
@@ -829,7 +903,6 @@
       if (!repeatId) return false;
 
       setLastRideId(repeatId);
-
       repeatLocked = true;
 
       const res = await fetch(`${API_BOOK}/api/bookings/${encodeURIComponent(repeatId)}?t=${Date.now()}`, { cache: "no-store" });
@@ -843,18 +916,12 @@
       const dropoffObj = (r.dropoff && typeof r.dropoff === "object") ? r.dropoff : {};
 
       const pickupAddr = pickFirstString(
-        pickupObj.address,
-        r.pickupAddress,
-        r.pickup_address,
-        r.pickupAddr,
+        pickupObj.address, r.pickupAddress, r.pickup_address, r.pickupAddr,
         (typeof r.pickup === "string" ? r.pickup : "")
       );
 
       const dropoffAddr = pickFirstString(
-        dropoffObj.address,
-        r.dropoffAddress,
-        r.dropoff_address,
-        r.dropoffAddr,
+        dropoffObj.address, r.dropoffAddress, r.dropoff_address, r.dropoffAddr,
         (typeof r.dropoff === "string" ? r.dropoff : "")
       );
 
@@ -863,19 +930,15 @@
 
       const pEl = document.getElementById("pickup");
       const dEl = document.getElementById("dropoff");
-
       if (pEl && pickupAddr)  pEl.value = formatPlaceLine(pickupName, pickupAddr);
       if (dEl && dropoffAddr) dEl.value = formatPlaceLine(dropoffName, dropoffAddr);
 
+      // Since repeat may not include lat/lng, keep unverified unless coords exist
+      setVerified("pickup", false);
+      setVerified("dropoff", false);
+
       const gEl = document.getElementById("gateCode");
-      const gateVal = String(
-        pickupObj?.gate ||
-        pickupObj?.access ||
-        pickupObj?.notes ||
-        r.pickupGate ||
-        r.gateCode ||
-        ""
-      ).trim();
+      const gateVal = String(pickFirstString(pickupObj?.gate, pickupObj?.access, pickupObj?.notes, r.pickupGate, r.gateCode, "")).trim();
       if (gEl) gEl.value = gateVal;
 
       const pax = Number(r?.rider?.partySize ?? r?.passengers ?? 1);
@@ -919,7 +982,6 @@
       for (const s of stops) {
         const addr = pickFirstString(s?.address, s?.addr, s?.location);
         if (!addr) continue;
-
         const name = pickFirstString(s?.name, s?.stopName);
         addStopField_NoAutocomplete(formatPlaceLine(name, addr));
 
@@ -969,7 +1031,7 @@
   });
 
   // =====================================================
-  // PROFILE SUMMARY
+  // PROFILE SUMMARY (unchanged)
   // =====================================================
   function loadProfileSummary() {
     const name  = localStorage.getItem("riderName")  || "";
@@ -992,7 +1054,10 @@
 
     if (!repeatLocked) {
       const pickEl = document.getElementById("pickup");
-      if (home && pickEl && !String(pickEl.value||"").trim()) pickEl.value = home;
+      if (home && pickEl && !String(pickEl.value||"").trim()) {
+        pickEl.value = home;
+        setVerified("pickup", false);
+      }
 
       const gateEl = document.getElementById("gateCode");
       if (gate && gateEl && !String(gateEl.value||"").trim()) gateEl.value = gate;
@@ -1027,6 +1092,8 @@
 
           const packed = { address: addr, placeId: "", lat, lng, name: "", types: [] };
 
+          setVerified(which, true); // ✅ GPS = verified
+
           if (which === "pickup") {
             pickupLatLng = new google.maps.LatLng(lat, lng);
             savePlace(PLACE_KEYS.pickup, packed);
@@ -1056,7 +1123,7 @@
   document.getElementById("addStopBtn").addEventListener("click", addStopField);
 
   // =====================================================
-  // HOLIDAY / RUSH / EVENT / AIRPORT
+  // HOLIDAY / RUSH / EVENT / AIRPORT (unchanged)
   // =====================================================
   function getHolidayInfo(d) {
     if (!(d instanceof Date) || isNaN(d)) return null;
@@ -1068,12 +1135,10 @@
       const nth = Math.floor((day - 1) / 7) + 1;
       if (nth === 4) return { code: "thanksgiving", message: "🦃 Holiday base ($20) applies for Thanksgiving rides." };
     }
-
     if (m === 11 && day === 24) return { code:"christmas_eve", message:"🎄 Christmas Eve – Holiday base ($20) applies." };
     if (m === 11 && day === 25) return { code:"christmas_day", message:"🎄 Christmas Day – Holiday base ($20) applies." };
     if (m === 11 && day === 31) return { code:"nye", message:"🎉 New Year's Eve – Holiday base ($20) applies." };
     if (m === 0  && day === 1)  return { code:"nyd", message:"🎉 New Year's Day – Holiday base ($20) applies." };
-
     return null;
   }
 
@@ -1120,7 +1185,6 @@
     const dropText   = document.getElementById("dropoff").value || "";
     const pStored = loadPlace(PLACE_KEYS.pickup);
     const dStored = loadPlace(PLACE_KEYS.dropoff);
-
     return isAirportText(pickupText) || isAirportText(dropText) || isAirportPlace(pStored) || isAirportPlace(dStored);
   }
 
@@ -1171,27 +1235,15 @@
 
     syncLuggageVisibility();
 
-    if (holidayInfo) {
-      eventNote.textContent = holidayInfo.message;
-      return { baseType: "holiday", base: 20 };
-    }
-    if (event) {
-      eventNote.textContent = "📍 Special event area – Event base ($20) may apply.";
-      return { baseType: "event", base: 20 };
-    }
-    if (airport) {
-      airportNote.textContent = "✈️ Airport run – Airport base ($15) applies.";
-      return { baseType: "airport", base: 15 };
-    }
-    if (rush) {
-      rushNote.textContent = "🚦 Weekday Rush Hour (5–9 AM / 3–7 PM).";
-      return { baseType: "rush", base: 15 };
-    }
+    if (holidayInfo) { eventNote.textContent = holidayInfo.message; return { baseType: "holiday", base: 20 }; }
+    if (event) { eventNote.textContent = "📍 Special event area – Event base ($20) may apply."; return { baseType: "event", base: 20 }; }
+    if (airport) { airportNote.textContent = "✈️ Airport run – Airport base ($15) applies."; return { baseType: "airport", base: 15 }; }
+    if (rush) { rushNote.textContent = "🚦 Weekday Rush Hour (5–9 AM / 3–7 PM)."; return { baseType: "rush", base: 15 }; }
     return { baseType: "standard", base: 10 };
   }
 
   // =====================================================
-  // FAIRNESS FEE (Option B: origin = live GPS when available)
+  // FAIRNESS FEE
   // =====================================================
   function distMi(a, b) {
     const p1 = new google.maps.LatLng(a.lat, a.lng);
@@ -1199,22 +1251,20 @@
     return google.maps.geometry.spherical.computeDistanceBetween(p1, p2) / 1609.34;
   }
 
-      function computeFairnessFee(miles /*, basePlusMiles */) {
-      if (!pickupLatLng) return 0;
-    
-      const pickup = { lat: pickupLatLng.lat(), lng: pickupLatLng.lng() };
-      const origin = fairnessOrigin || HQ;
-      const d = distMi(origin, pickup);
-    
-      let zoneFee = 0;
-      if (d > 40) zoneFee = 20;
-      else if (d > 20) zoneFee = 10;
-    
-      // ✅ Waive only for true long trips (prevents rush base from killing it)
-      if (zoneFee > 0 && miles > 20) zoneFee = 0;
-    
-      return zoneFee;
-    }
+  function computeFairnessFee(miles) {
+    if (!pickupLatLng) return 0;
+
+    const pickup = { lat: pickupLatLng.lat(), lng: pickupLatLng.lng() };
+    const origin = fairnessOrigin || HQ;
+    const d = distMi(origin, pickup);
+
+    let zoneFee = 0;
+    if (d > 40) zoneFee = 20;
+    else if (d > 20) zoneFee = 10;
+
+    if (zoneFee > 0 && miles > 20) zoneFee = 0;
+    return zoneFee;
+  }
 
   function updateFairnessPreview() {
     const note = document.getElementById("fairness-note");
@@ -1246,9 +1296,7 @@
   let requestInFlight = false;
 
   function getStopsAsTextList() {
-    return stopInputs
-      .map(id => (document.getElementById(id)?.value || "").trim())
-      .filter(Boolean);
+    return stopInputs.map(id => (document.getElementById(id)?.value || "").trim()).filter(Boolean);
   }
 
   function getStopsAsObjects() {
@@ -1277,6 +1325,15 @@
     const pickup = document.getElementById("pickup").value.trim();
     const dropoff = document.getElementById("dropoff").value.trim();
     if (!pickup || !dropoff) { showToast("Enter pickup & drop-off"); return; }
+
+    // ✅ Enforce strict rules
+    if (!requireVerifiedOrResolvable("pickup")) return;
+    if (!requireVerifiedOrResolvable("dropoff")) return;
+
+    const okPick = await ensureResolvedLatLng("pickup");
+    const okDrop = await ensureResolvedLatLng("dropoff");
+    if (looksLikeAddress(pickup) && !okPick) return;
+    if (looksLikeAddress(dropoff) && !okDrop) return;
 
     const waypoints = stopInputs
       .map(id => {
@@ -1319,9 +1376,7 @@
 
     const basePlusMiles = base + mileageSub;
 
-    // ✅ Option B: refresh live driver origin BEFORE fairness calc
     await fetchDriverOriginFromLiveGPS();
-
     const fairnessFee = computeFairnessFee(miles);
 
     const pay = document.getElementById("payment").value;
@@ -1361,14 +1416,13 @@
     };
 
     document.getElementById("btnRequest").onclick = sendRequest;
-
     updateFairnessPreview();
   }
 
   document.getElementById("calcBtn").addEventListener("click", calculateFare);
 
   // =====================================================
-  // SEND REQUEST → BOOKINGS + PUSH + SMS
+  // SEND REQUEST (unchanged)
   // =====================================================
   async function sendRequest() {
     if (!lastFare) { showToast("Get an estimate first."); return; }
@@ -1563,7 +1617,6 @@
     ensureRiderId();
     loadProfileSummary();
 
-    // ✅ Option B: load live GPS origin once on init (non-blocking)
     fetchDriverOriginFromLiveGPS().finally(() => {
       syncLuggageVisibility();
       applyAutoRateLabels();
