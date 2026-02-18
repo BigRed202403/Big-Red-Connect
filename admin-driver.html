@@ -837,8 +837,10 @@ function applyMode(mode){
 ========================= */
 const OKC_BOUNDS = (window.google && google.maps)
   ? new google.maps.LatLngBounds(
-      new google.maps.LatLng(35.20, -97.80),
-      new google.maps.LatLng(35.70, -97.20)
+      // Southwest corner
+      new google.maps.LatLng(35.15, -97.75),
+      // Northeast corner (extends past Shawnee)
+      new google.maps.LatLng(35.62, -96.75)
     )
   : null;
 
