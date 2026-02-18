@@ -268,11 +268,11 @@ body.modal-open{ overflow:hidden; }
       <div class="meta">
         Last status update: <span id="statusStamp">—</span><br>
         Last GPS ping: <span id="gpsStamp">—</span> • Interval: <span id="gpsRate">—</span><br>
-        Effective location (rules-based): <span id="liveLoc">—</span><br>
+        Live location (effective): <span id="liveLoc">—</span><br>
         <span style="color:#888;">
-          ✅ GPS sends when: <strong>Status = Online or Away</strong> AND <strong>Tracking = ON</strong>.<br>
-          ✅ When <strong>Tracking = OFF</strong>, Online/Away uses last known location; Offline uses HQ.<br>
-          ✅ Effective location display is rules-based (not just raw status payload).
+          ✅ Tracking toggle is independent of status.<br>
+          ✅ GPS sends when: <strong>Tracking = ON</strong> AND <strong>Status is Online or Away</strong>.<br>
+          ✅ When Tracking is OFF: uses last known if fresh; when Status is Offline: defaults to HQ.
         </span>
       </div>
     </section>
@@ -558,9 +558,12 @@ const HOME_URL    = "https://bigredconnectokc.com/";
 /* If your rider login page uses a different path, change it here */
 const RIDER_LOGIN_BASE = `${HOME_URL}rider.html`;
 
-// ✅ HQ fallback (set to YOUR desired “offline base”)
-const HQ = { lat: 35.31810, lng: -97.49453 };
-const LIVE_LOC_FRESH_MS = 15 * 60 * 1000;
+/* ✅ HQ fallback (user provided) */
+const HQ_LAT = 35.31810;
+const HQ_LNG = -97.49453;
+
+/* ✅ "Freshness window" for last-known location */
+const LIVE_LOC_FRESH_MS = 15 * 60 * 1000; // 15 minutes
 
 /* Status + dispatch enums */
 const DRIVER_STATUSES = [
@@ -621,6 +624,9 @@ let captionIndex=0;
 let gpsTimer=null;
 let gpsLastTs=null;
 
+/* ✅ kill-switch token so only one GPS loop can exist */
+let gpsRunToken = 0;
+
 let dispatchScope = localStorage.getItem("dispatchScope") || "active"; // active | all
 let currentStatusVal="offline";
 let currentMode = localStorage.getItem("adminDriverMode") || "admin";
@@ -630,6 +636,12 @@ let editingBookingId = null;
 
 /* ✅ Tracking toggle (not tied to status) */
 let trackingEnabled = (localStorage.getItem("trackingEnabled") === "true");
+
+/* ✅ throttle debug spam */
+let lastStatusLog = 0;
+let lastStatusJson = "";
+let lastEffLog = 0;
+let lastEffKey = "";
 
 /* =========================
    SMALL UTILS
@@ -684,12 +696,23 @@ function copyText(txt){
 }
 window.copyText = copyText;
 
-function parseTs(ts){
-  const t = Date.parse(ts || "");
-  return Number.isFinite(t) ? t : null;
+function safeParseMs(ts){
+  if(!ts) return 0;
+  const n = Date.parse(ts);
+  return Number.isFinite(n) ? n : 0;
 }
-function isOnlineOrAway(){
-  return currentStatusVal === "online" || currentStatusVal === "away";
+
+function setLiveLocText(lat,lng){
+  if($("liveLoc")) $("liveLoc").textContent = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+}
+
+function logEffectiveOnce(lat,lng,src,ts){
+  const now = Date.now();
+  const key = `${src}|${lat.toFixed(5)}|${lng.toFixed(5)}|${ts||""}`;
+  if(key === lastEffKey && (now - lastEffLog) < 60000) return; // 1/min if unchanged
+  lastEffKey = key;
+  lastEffLog = now;
+  log(`Effective Location: lat=${lat} lng=${lng} src=${src}${ts ? (" ts="+ts) : ""}`);
 }
 
 /* =========================
@@ -725,30 +748,39 @@ async function loadLiveLocation(){
   }
 }
 
-/* ✅ Effective location rules:
-   - OFFLINE => HQ
-   - ONLINE/AWAY => last known (Location Worker preferred, else status.location)
-   Tracking only controls whether we keep updating the Location Worker.
-*/
-async function getEffectiveDriverLocation(statusData){
-  if(currentStatusVal === "offline"){
-    return { lat: HQ.lat, lng: HQ.lng, source: "HQ", ts: null, ageMs: null };
+/* =========================
+   EFFECTIVE LOCATION RULES
+   - If status = offline -> HQ
+   - Else (online/away):
+       - If worker location is fresh -> worker
+       - Else if status.location exists -> status.location
+       - Else -> HQ
+========================= */
+function computeEffectiveLocation(statusVal, statusLoc, workerLoc){
+  if(statusVal === "offline"){
+    return { lat: HQ_LAT, lng: HQ_LNG, src: "HQ", ts: null };
   }
 
-  const loc = await loadLiveLocation();
-  if(loc && typeof loc.lat === "number" && typeof loc.lng === "number"){
-    const t = parseTs(loc.ts);
-    const ageMs = t ? (Date.now() - t) : null;
-    return { lat: loc.lat, lng: loc.lng, source: "LOCATION_WORKER", ts: loc.ts || null, ageMs };
+  const now = Date.now();
+  const wlat = workerLoc && typeof workerLoc.lat === "number" ? workerLoc.lat : null;
+  const wlng = workerLoc && typeof workerLoc.lng === "number" ? workerLoc.lng : null;
+  const wts  = workerLoc && workerLoc.ts ? workerLoc.ts : null;
+  const wms  = safeParseMs(wts);
+
+  const workerFresh = (wlat != null && wlng != null && wms > 0 && (now - wms) <= LIVE_LOC_FRESH_MS);
+
+  if(workerFresh){
+    return { lat: wlat, lng: wlng, src: "LOCATION_WORKER", ts: wts };
   }
 
-  const slat = statusData?.location?.lat;
-  const slng = statusData?.location?.lng;
-  if(typeof slat === "number" && typeof slng === "number"){
-    return { lat: slat, lng: slng, source: "STATUS_LOCATION", ts: statusData?.lastUpdated || null, ageMs: null };
+  const slat = statusLoc && typeof statusLoc.lat === "number" ? statusLoc.lat : null;
+  const slng = statusLoc && typeof statusLoc.lng === "number" ? statusLoc.lng : null;
+
+  if(slat != null && slng != null){
+    return { lat: slat, lng: slng, src: "STATUS_FALLBACK", ts: null };
   }
 
-  return { lat: HQ.lat, lng: HQ.lng, source: "HQ_FALLBACK", ts: null, ageMs: null };
+  return { lat: HQ_LAT, lng: HQ_LNG, src: "HQ", ts: null };
 }
 
 /* =========================
@@ -776,13 +808,14 @@ function setTrackingEnabled(next){
   localStorage.setItem("trackingEnabled", trackingEnabled ? "true" : "false");
   applyTrackingPill();
 
-  // ✅ Start GPS if trackingEnabled and status is online OR away
-  if(trackingEnabled && isOnlineOrAway()){
-    startGpsPings();
-    showToast("Tracking ON");
-  }else{
-    stopGpsPings();
-    showToast("Tracking OFF");
+  // ✅ Start/stop based on CURRENT status, but toggle itself is independent
+  handleGpsForStatus(currentStatusVal);
+
+  showToast(trackingEnabled ? "Tracking ON" : "Tracking OFF");
+
+  // Update effective location display immediately when turning OFF
+  if(!trackingEnabled){
+    refreshEffectiveLocationDisplay().catch(()=>{});
   }
 }
 
@@ -1057,14 +1090,44 @@ function autoOnlinePush(){
 }
 
 /* =========================
-   STATUS + GPS
+   STATUS + GPS + EFFECTIVE LOCATION
 ========================= */
+async function refreshEffectiveLocationDisplay(statusData){
+  // statusData optional (pass from loadStatus to avoid extra fetch)
+  const statusVal = statusData?.status || currentStatusVal || "offline";
+  const statusLoc = statusData?.location || null;
+
+  let workerLoc = null;
+
+  // Only bother pulling worker location when:
+  // - tracking is OFF (need last known)
+  // - or status is online/away (display last known / fresh)
+  try{
+    workerLoc = await loadLiveLocation();
+  }catch(e){ workerLoc = null; }
+
+  const eff = computeEffectiveLocation(statusVal, statusLoc, workerLoc);
+
+  setLiveLocText(eff.lat, eff.lng);
+  logEffectiveOnce(eff.lat, eff.lng, eff.src, eff.ts || "");
+  return eff;
+}
+
 async function loadStatus(){
   try{
     const res=await fetch(STATUS_WORKER+"/status");
     if(!res.ok) return;
     const data=await res.json();
-    log("Status GET OK: "+JSON.stringify(data));
+
+    // ✅ throttle status GET log spam (log if changed OR once per minute)
+    const now = Date.now();
+    const json = JSON.stringify(data);
+    if (json !== lastStatusJson || (now - lastStatusLog) > 60000) {
+      log("Status GET OK: "+json);
+      lastStatusJson = json;
+      lastStatusLog = now;
+    }
+
     const statusVal=data.status || "offline";
     currentStatusVal = statusVal;
 
@@ -1094,17 +1157,12 @@ async function loadStatus(){
       else globalVeh.value="BLACK_ACADIA";
     }
 
-    // ✅ Effective location display (rules-based)
-    const eff = await getEffectiveDriverLocation(data);
-    let ageTxt = "";
-    if(eff.ageMs != null && Number.isFinite(eff.ageMs)){
-      ageTxt = ` • age ${Math.round(eff.ageMs/1000)}s`;
-      if(eff.ageMs > LIVE_LOC_FRESH_MS) ageTxt += " (stale)";
-    }
-    $("liveLoc").textContent = `${eff.lat.toFixed(5)}, ${eff.lng.toFixed(5)} • ${eff.source}${ageTxt}`;
-    log(`Effective Location: lat=${eff.lat} lng=${eff.lng} src=${eff.source}${eff.ts ? (" ts="+eff.ts) : ""}`);
+    // ✅ Show effective location per rules
+    await refreshEffectiveLocationDisplay(data);
 
+    // ✅ start/stop GPS per rules
     handleGpsForStatus(statusVal);
+
   }catch(e){
     log("Status error: "+e.message);
   }
@@ -1146,9 +1204,9 @@ async function updateStatus(){
   }
 }
 
-/* ✅ GPS RUNS WHEN (status online/away) AND (trackingEnabled true) */
+/* ✅ GPS sends when Tracking ON AND status is online/away (offline -> stop + HQ display) */
 function handleGpsForStatus(val){
-  if((val === "online" || val === "away") && trackingEnabled) startGpsPings();
+  if(trackingEnabled && (val === "online" || val === "away")) startGpsPings();
   else stopGpsPings();
 }
 
@@ -1160,16 +1218,19 @@ function determineGpsInterval() {
   return interval;
 }
 
+/* ✅ single-loop GPS pings (token kill-switch) */
 function startGpsPings(){
-  if (!trackingEnabled) { stopGpsPings(); return; }
-  if (!isOnlineOrAway()) { stopGpsPings(); return; }
+  gpsRunToken++;
+  const myToken = gpsRunToken;
 
   if (gpsTimer) { clearTimeout(gpsTimer); gpsTimer = null; }
   if (!("geolocation" in navigator)) { log("No geolocation support."); return; }
 
   async function pingOnce(){
-    // ✅ re-check every loop (so flipping tracking off stops immediately)
-    if(!trackingEnabled || !isOnlineOrAway()){
+    if (myToken !== gpsRunToken) return;
+
+    // re-check every loop
+    if(!trackingEnabled || !(currentStatusVal === "online" || currentStatusVal === "away")){
       stopGpsPings();
       return;
     }
@@ -1177,6 +1238,8 @@ function startGpsPings(){
     const interval = determineGpsInterval();
 
     navigator.geolocation.getCurrentPosition(pos => {
+      if (myToken !== gpsRunToken) return;
+
       const now = Date.now();
 
       $("gpsStamp").textContent = new Date().toLocaleString("en-US", { timeZone: TZ });
@@ -1190,39 +1253,49 @@ function startGpsPings(){
 
       gpsLastTs = now;
 
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+      const ts  = new Date().toISOString();
+
       fetch(LOCATION_WORKER, {
         method: "PUT",
         headers: { "Content-Type": "application/json","X-Auth-Token": AUTH_SECRET },
         body: JSON.stringify({
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
+          lat,
+          lng,
           accuracy: pos.coords.accuracy,
-          updated: new Date().toISOString()
+          updated: ts,
+          source: "admin-gps"
         })
       })
       .then(r => r.text())
       .then(t => {
         log("GPS PUT: " + t);
-        // refresh effective location display after PUT
-        loadStatus().catch(()=>{});
+        // ✅ No GET-after-PUT. Update UI directly from GPS coords.
+        setLiveLocText(lat, lng);
+        logEffectiveOnce(lat, lng, "GPS", ts);
       })
-      .catch(e => log("GPS error: " + e.message));
-
-      gpsTimer = setTimeout(pingOnce, interval);
+      .catch(e => log("GPS error: " + e.message))
+      .finally(() => {
+        if (myToken !== gpsRunToken) return;
+        gpsTimer = setTimeout(pingOnce, interval);
+      });
 
     }, err => {
       log("GPS error: " + err.message);
+      if (myToken !== gpsRunToken) return;
       gpsTimer = setTimeout(pingOnce, 60000);
-    }, { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 });
+    }, { enableHighAccuracy: true, maximumAge: 15000, timeout: 10000 });
   }
 
   pingOnce();
 }
 
 function stopGpsPings(){
+  gpsRunToken++; // kill any in-flight loop
   if(gpsTimer){clearTimeout(gpsTimer);gpsTimer=null;}
-  gpsLastTs = null;            // ✅ reset
-  $("gpsRate").textContent="—";
+  gpsLastTs = null;
+  if($("gpsRate")) $("gpsRate").textContent="—";
 }
 
 /* =========================
