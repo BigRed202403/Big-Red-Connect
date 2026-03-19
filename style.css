@@ -92,13 +92,13 @@ h2 { color:#ff1a1a; font-size:1.4em; margin-top:30px; }
   display:grid;
   grid-template-columns:repeat(2,minmax(140px,1fr));
   gap:12px;
-  max-width:520px;
+  max-width:680px;
   margin:16px auto 6px;
   padding:0 16px;
 }
 .btn {
   display:inline-block;
-  padding:12px 20px;
+  padding:14px 20px;
   border-radius:10px;
   text-decoration:none;
   font-weight:700;
@@ -113,7 +113,19 @@ h2 { color:#ff1a1a; font-size:1.4em; margin-top:30px; }
 .btn.secondary { background:linear-gradient(180deg,#333,#111); border-color:#444; }
 .btn:hover     { transform:translateY(-2px); box-shadow:0 5px 15px rgba(255,0,0,0.35); }
 .btn:active    { transform:scale(0.97); box-shadow:0 0 8px rgba(255,0,0,0.5) inset; }
-
+/* Make primary CTA full width */
+.cta-group .btn.primary {
+  grid-column: span 2;
+}
+.cta-note {
+  max-width: 680px;
+  margin: 10px auto 18px;
+  padding: 0 20px;
+  color: #ddd;
+  font-size: 1em;
+  line-height: 1.5;
+  text-align: left;
+}
 /* ==============================
    TILE GRID
 ============================== */
