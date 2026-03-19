@@ -55,35 +55,40 @@
   // Format timestamp (CT)
   // ----------------------------------
   function fmtCT(iso) {
-    const d = new Date(iso);
-    const date = new Intl.DateTimeFormat("en-US", {
-      timeZone: TZ,
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    }).format(d);
-    const time = new Intl.DateTimeFormat("en-US", {
-      timeZone: TZ,
-      hour: "numeric",
-      minute: "2-digit",
-      timeZoneName: "short",
-    }).format(d);
-    return `${date} · ${time}`;
-  }
+  const d = new Date(iso);
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: TZ,
+    month: "numeric",
+    day: "numeric",
+    year: "2-digit",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).format(d);
+}
 
   // ----------------------------------
-  // Pill rendering logic
-  // ----------------------------------
-  function renderPillContent(status, iso) {
-    const stamp = fmtCT(iso);
-    switch (status) {
-      case "online":
-        return { text: `🟢 On the road — updated ${stamp}`, cls: "online" };
-      case "away":
-        return { text: `🟡 Limited availability — updated ${stamp}`, cls: "away" };
-      default:
-        return { text: `🔴 Off for now — updated ${stamp}`, cls: "offline" };
-    }
+// Pill rendering logic
+// ----------------------------------
+function renderPillContent(status, iso) {
+  const stamp = fmtCT(iso);
+  switch (status) {
+    case "online":
+      return {
+        text: `🟢 On the road - text to plan your ride · Updated ${stamp}`,
+        cls: "online"
+      };
+    case "away":
+      return {
+        text: `🟡 Limited availability — text to check availability · Updated ${stamp}`,
+        cls: "away"
+      };
+    default:
+      return {
+        text: `🔴 Not currently driving — text to schedule ahead · Updated ${stamp}`,
+        cls: "offline"
+      };
+  }
 }
   // ----------------------------------
   // Render pill + broadcast update
