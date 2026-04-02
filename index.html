@@ -540,7 +540,7 @@
 
     try {
       debugLog("MANUAL SW: attempting register /onesignalsdkworker.js");
-      const reg = await navigator.serviceWorker.register("/onesignalsdkworker.js", { scope: "/" });
+      const reg = await navigator.serviceWorker.register("/onesignalsdkworker-v2.js", { scope: "/" });
       debugLog("MANUAL SW: success");
       debugLog("MANUAL SW scope: " + reg.scope);
       if (reg.active && reg.active.scriptURL) {
