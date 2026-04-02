@@ -41,12 +41,55 @@
     async function waitForPermission(OneSignal, timeoutMs = 15000) {
       const start = Date.now();
       while (Date.now() - start < timeoutMs) {
-        const perm = OneSignal.Notifications.permission;
+        const perm = OneSignal?.Notifications?.permission;
         if (perm === "granted" || perm === true) return "granted";
-        if (perm === "denied") return "denied";
+        if (perm === "denied" || perm === false) return "denied";
         await sleep(500);
       }
-      return OneSignal.Notifications.permission || "default";
+      return OneSignal?.Notifications?.permission || "default";
+    }
+
+    function debugLog(msg) {
+      const el = document.getElementById("debugConsole");
+      if (!el) return;
+      const line = document.createElement("div");
+      line.textContent = msg;
+      el.appendChild(line);
+      el.scrollTop = el.scrollHeight;
+    }
+
+    async function addTagsSafe(OneSignal, tagsObj) {
+      try {
+        if (OneSignal?.User?.addTags && typeof OneSignal.User.addTags === "function") {
+          await OneSignal.User.addTags(tagsObj);
+          return true;
+        }
+
+        if (OneSignal?.User?.addTag && typeof OneSignal.User.addTag === "function") {
+          for (const [k, v] of Object.entries(tagsObj)) {
+            await OneSignal.User.addTag(k, v);
+          }
+          return true;
+        }
+
+        throw new Error("No supported tag method found on OneSignal.User");
+      } catch (err) {
+        debugLog("❌ addTagsSafe failed: " + (err?.message || err));
+        throw err;
+      }
+    }
+
+    async function applyRiderBaselineTags(OneSignal) {
+      await addTagsSafe(OneSignal, { role_rider: "true" });
+      debugLog("✅ Baseline rider tag applied");
+    }
+
+    async function applyRiderLiveTags(OneSignal) {
+      await addTagsSafe(OneSignal, {
+        env: "live",
+        role_rider_live: "true"
+      });
+      debugLog("✅ Live rider tags applied");
     }
 
     /* -------------------------------------------------
@@ -55,6 +98,8 @@
     window.OneSignalDeferred = window.OneSignalDeferred || [];
     OneSignalDeferred.push(async function (OneSignal) {
       try {
+        debugLog("Initializing OneSignal...");
+
         await OneSignal.init({
           appId: "9b8bcc89-87d3-46e2-b2d0-042d1a267718",
           safari_web_id: "web.onesignal.auto.0c90051e-4735-447d-b203-75e3767d91b9",
@@ -64,23 +109,27 @@
           path: "/"
         });
 
-        // Baseline tag (kept)
-        await OneSignal.sendTag("role_rider", "true");
+        debugLog("✅ OneSignal init complete");
+
+        // Baseline tag
+        await applyRiderBaselineTags(OneSignal);
 
         // If already granted, repair live tags automatically
         const permission = OneSignal.Notifications.permission;
+        debugLog("Init permission: " + permission);
+
         if (permission === "granted" || permission === true) {
-          await OneSignal.sendTag("env", "live");
-          await OneSignal.sendTag("role_rider_live", "true");
+          await applyRiderLiveTags(OneSignal);
           console.log("[Rider] Existing permission found → env=live restored");
         }
       } catch (err) {
+        debugLog("⚠️ OneSignal init failed: " + (err?.message || err));
         console.warn("[Rider] OneSignal init failed:", err);
       }
     });
 
     /* -------------------------------------------------
-       UPDATED: Enable Alerts → Auto-tag as Rider (Live)
+       Enable Alerts → Auto-tag as Rider (Live)
        ------------------------------------------------- */
     function handleEnableAlerts() {
       debugLog("👉 Enable Alerts tapped");
@@ -97,20 +146,20 @@
             return;
           }
 
-          let permission = OneSignal.Notifications.permission;
+          const permission = OneSignal.Notifications.permission;
           debugLog("Initial permission: " + permission);
 
           if (permission === "granted" || permission === true) {
-            debugLog("Already granted → applying tags");
-            await OneSignal.sendTag("env", "live");
-            await OneSignal.sendTag("role_rider_live", "true");
+            debugLog("Already granted → applying live tags");
+            await applyRiderLiveTags(OneSignal);
             alert("You're already set — alerts are enabled!");
             return;
           }
 
           if (isIPhoneSafari()) {
             debugLog("iPhone Safari detected");
-            document.getElementById("iosAlertTip").style.display = "block";
+            const tip = document.getElementById("iosAlertTip");
+            if (tip) tip.style.display = "block";
           }
 
           debugLog("Triggering prompt...");
@@ -118,18 +167,15 @@
 
           debugLog("Waiting for permission...");
           const finalPermission = await waitForPermission(OneSignal, 15000);
-
           debugLog("Final permission: " + finalPermission);
 
           if (finalPermission === "granted" || finalPermission === true) {
             debugLog("Applying tags...");
-            await OneSignal.sendTag("env", "live");
-            await OneSignal.sendTag("role_rider_live", "true");
-
-            debugLog("✅ Tags applied successfully");
-            alert("Alerts enabled!");
+            await applyRiderBaselineTags(OneSignal);
+            await applyRiderLiveTags(OneSignal);
             console.log("[Rider] Push tags applied → env=live, role_rider_live=true");
-          } else if (finalPermission === "denied") {
+            alert("Alerts enabled!");
+          } else if (finalPermission === "denied" || finalPermission === false) {
             debugLog("❌ User denied permission");
             alert("Alerts were denied.");
           } else {
@@ -226,12 +272,12 @@
 
   <!-- Quick Actions -->
   <div class="cta-group">
-  <a href="sms:14053784024" class="btn primary">📲 Text to plan your ride</a>
-  <a href="tel:14053784024" class="btn secondary">📞 Call<br>(Voicemail Only)</a>
-  <a href="/Estimate.html" class="btn secondary">💲 Quick Estimate</a>
-</div>
+    <a href="sms:14053784024" class="btn primary">📲 Text to plan your ride</a>
+    <a href="tel:14053784024" class="btn secondary">📞 Call<br>(Voicemail Only)</a>
+    <a href="/Estimate.html" class="btn secondary">💲 Quick Estimate</a>
+  </div>
 
-<p class="cta-note">Texting works best while I’m driving — I’ll reply ASAP with availability.</p>
+  <p class="cta-note">Texting works best while I’m driving — I’ll reply ASAP with availability.</p>
 
   <!-- Notifications Section -->
   <div style="text-align:center; margin-top:18px;">
@@ -287,7 +333,7 @@
     <a href="https://www.facebook.com/share/1BWCx63CUt/?mibextid=wwXIfr" target="_blank" class="tile">👍<br>Follow on Facebook</a>
   </div>
 
-<!-- Content Sections -->
+  <!-- Content Sections -->
   <section class="info-section">
     <h2>What Big Red Connect Delivers</h2>
     <p>Veteran-owned, affordable flat-rate connections across the Oklahoma City metro — dependable, local, and built around planning ahead.</p>
@@ -340,7 +386,7 @@
   </script>
 
   <!-- Status Pill -->
-<script src="status.js?v=20260116"></script>
+  <script src="status.js?v=20260116"></script>
 
   <!-- Floating Refresh -->
   <script>
@@ -389,85 +435,76 @@
     }
   </style>
 
-<script>
-(async function () {
-  const u = new URL(location.href);
-  if (u.searchParams.get("reset") !== "1") return;
+  <script>
+  (async function () {
+    const u = new URL(location.href);
+    if (u.searchParams.get("reset") !== "1") return;
 
-  try {
-    // Unregister ALL service workers
-    if ("serviceWorker" in navigator) {
-      const regs = await navigator.serviceWorker.getRegistrations();
-      await Promise.all(regs.map(r => r.unregister()));
+    try {
+      // Unregister ALL service workers
+      if ("serviceWorker" in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map(r => r.unregister()));
+      }
+
+      // Delete ALL caches
+      if (window.caches && caches.keys) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map(k => caches.delete(k)));
+      }
+
+      // Clear storages (optional but helpful for stubborn iOS PWAs)
+      try { localStorage.clear(); } catch(e) {}
+      try { sessionStorage.clear(); } catch(e) {}
+
+      // Reload clean with cache-buster
+      location.href = "/index.html?reset_done=" + Date.now();
+    } catch (e) {
+      alert("Reset failed: " + (e && e.message ? e.message : e));
     }
+  })();
+  </script>
 
-    // Delete ALL caches
-    if (window.caches && caches.keys) {
-      const keys = await caches.keys();
-      await Promise.all(keys.map(k => caches.delete(k)));
-    }
-
-    // Clear storages (optional but helpful for stubborn iOS PWAs)
-    try { localStorage.clear(); } catch(e) {}
-    try { sessionStorage.clear(); } catch(e) {}
-
-    // Reload clean with cache-buster
-    location.href = "/index.html?reset_done=" + Date.now();
-  } catch (e) {
-    alert("Reset failed: " + (e && e.message ? e.message : e));
-  }
-})();
-</script>
-
-<!-- 🔍 Debug Console (Temporary) -->
-<div id="debugConsole" style="
-  position:fixed;
-  bottom:0;
-  left:0;
-  width:100%;
-  max-height:40%;
-  overflow:auto;
-  background:#000;
-  color:#0f0;
-  font-size:12px;
-  font-family:monospace;
-  padding:8px;
-  z-index:9999;
-  border-top:2px solid #b30000;
-">
-  <div style="color:#fff;font-weight:bold;margin-bottom:4px;">
-    Debug Console
+  <!-- 🔍 Debug Console (Temporary) -->
+  <div id="debugConsole" style="
+    position:fixed;
+    bottom:0;
+    left:0;
+    width:100%;
+    max-height:40%;
+    overflow:auto;
+    background:#000;
+    color:#0f0;
+    font-size:12px;
+    font-family:monospace;
+    padding:8px;
+    z-index:9999;
+    border-top:2px solid #b30000;
+  ">
+    <div style="color:#fff;font-weight:bold;margin-bottom:4px;">
+      Debug Console
+    </div>
   </div>
-</div>
 
-<script>
-function debugLog(msg) {
-  const el = document.getElementById("debugConsole");
-  if (!el) return;
-  const line = document.createElement("div");
-  line.textContent = msg;
-  el.appendChild(line);
-  el.scrollTop = el.scrollHeight;
-}
+  <script>
+    // Capture JS errors
+    window.onerror = function(message) {
+      debugLog("❌ ERROR: " + message);
+    };
 
-// Capture JS errors
-window.onerror = function(message, source, lineno, colno, error) {
-  debugLog("❌ ERROR: " + message);
-};
+    // Capture console logs
+    const origLog = console.log;
+    console.log = function(...args) {
+      debugLog("LOG: " + args.join(" "));
+      origLog.apply(console, args);
+    };
 
-// Capture console logs
-const origLog = console.log;
-console.log = function(...args) {
-  debugLog("LOG: " + args.join(" "));
-  origLog.apply(console, args);
-};
-
-const origWarn = console.warn;
-console.warn = function(...args) {
-  debugLog("⚠️ WARN: " + args.join(" "));
-  origWarn.apply(console, args);
-};
-</script>
+    const origWarn = console.warn;
+    console.warn = function(...args) {
+      debugLog("⚠️ WARN: " + args.join(" "));
+      origWarn.apply(console, args);
+    };
+  </script>
 
 </body>
 </html>
