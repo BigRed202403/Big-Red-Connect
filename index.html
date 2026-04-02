@@ -44,10 +44,8 @@
           path: "/"
         });
 
-        // Always apply baseline rider tag
         await OneSignal.sendTag("role_rider", "true");
 
-        // If alerts are already granted, repair live tags automatically
         const permission = OneSignal.Notifications.permission;
         if (permission === "granted" || permission === true) {
           await OneSignal.sendTag("env", "live");
@@ -59,10 +57,10 @@
       }
     });
 
-    async function handleEnableAlerts() {
-      window.OneSignalDeferred.push(async function (OneSignal) {
+    function handleEnableAlerts() {
+      window.OneSignalDeferred.push(function (OneSignal) {
         try {
-          const supported = await OneSignal.Notifications.isPushSupported();
+          const supported = OneSignal.Notifications.isPushSupported();
           if (!supported) {
             alert("This browser does not support notifications.");
             return;
@@ -71,8 +69,8 @@
           const permission = OneSignal.Notifications.permission;
 
           if (permission === "granted" || permission === true) {
-            await OneSignal.sendTag("env", "live");
-            await OneSignal.sendTag("role_rider_live", "true");
+            OneSignal.sendTag("env", "live");
+            OneSignal.sendTag("role_rider_live", "true");
             alert("You're already set — alerts are enabled!");
             return;
           }
@@ -81,20 +79,29 @@
             document.getElementById("iosAlertTip").style.display = "block";
           }
 
-          await OneSignal.Slidedown.promptPush();
+          OneSignal.Slidedown.promptPush();
 
-          const afterPermission = OneSignal.Notifications.permission;
-          if (afterPermission === "granted" || afterPermission === true) {
-            await OneSignal.sendTag("env", "live");
-            await OneSignal.sendTag("role_rider_live", "true");
-            alert("Alerts enabled!");
-            console.log("[Rider] Push tags applied → env=live, role_rider_live=true");
-          } else {
-            alert("Alerts were not enabled.");
-          }
+          setTimeout(async () => {
+            try {
+              const newPerm = OneSignal.Notifications.permission;
+
+              if (newPerm === "granted" || newPerm === true) {
+                await OneSignal.sendTag("env", "live");
+                await OneSignal.sendTag("role_rider_live", "true");
+                alert("Alerts enabled!");
+                console.log("[Rider] Push tags applied → env=live, role_rider_live=true");
+              } else {
+                alert("Alerts were not enabled.");
+              }
+            } catch (innerErr) {
+              console.warn("[Rider] Post-prompt tag apply failed:", innerErr);
+              alert("Enable alerts failed.");
+            }
+          }, 1500);
+
         } catch (err) {
           console.warn("[Rider] Enable alerts failed:", err);
-          alert("Unable to enable alerts right now.");
+          alert("Enable alerts failed.");
         }
       });
     }
@@ -154,7 +161,6 @@
       }
     }
   </script>
-
 </head>
 
 <body>
