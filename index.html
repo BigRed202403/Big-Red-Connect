@@ -82,17 +82,25 @@
        UPDATED: Enable Alerts → Auto-tag as Rider (Live)
        ------------------------------------------------- */
     function handleEnableAlerts() {
+      debugLog("👉 Enable Alerts tapped");
+
       window.OneSignalDeferred.push(async function (OneSignal) {
         try {
+          debugLog("Checking push support...");
+
           const supported = await OneSignal.Notifications.isPushSupported();
+          debugLog("Push supported: " + supported);
+
           if (!supported) {
             alert("This browser does not support notifications.");
             return;
           }
 
-          const permission = OneSignal.Notifications.permission;
+          let permission = OneSignal.Notifications.permission;
+          debugLog("Initial permission: " + permission);
 
           if (permission === "granted" || permission === true) {
+            debugLog("Already granted → applying tags");
             await OneSignal.sendTag("env", "live");
             await OneSignal.sendTag("role_rider_live", "true");
             alert("You're already set — alerts are enabled!");
@@ -100,26 +108,36 @@
           }
 
           if (isIPhoneSafari()) {
+            debugLog("iPhone Safari detected");
             document.getElementById("iosAlertTip").style.display = "block";
           }
 
-          // Open the prompt
+          debugLog("Triggering prompt...");
           await OneSignal.Slidedown.promptPush();
 
-          // Wait for iOS / OneSignal permission state to settle
+          debugLog("Waiting for permission...");
           const finalPermission = await waitForPermission(OneSignal, 15000);
 
+          debugLog("Final permission: " + finalPermission);
+
           if (finalPermission === "granted" || finalPermission === true) {
+            debugLog("Applying tags...");
             await OneSignal.sendTag("env", "live");
             await OneSignal.sendTag("role_rider_live", "true");
+
+            debugLog("✅ Tags applied successfully");
             alert("Alerts enabled!");
             console.log("[Rider] Push tags applied → env=live, role_rider_live=true");
           } else if (finalPermission === "denied") {
+            debugLog("❌ User denied permission");
             alert("Alerts were denied.");
           } else {
+            debugLog("⚠️ Permission timeout / not granted");
             alert("Alerts were not enabled.");
           }
+
         } catch (err) {
+          debugLog("❌ Exception: " + (err?.message || err));
           console.warn("[Rider] Enable alerts failed:", err);
           alert("Enable alerts failed.");
         }
@@ -398,6 +416,56 @@
     alert("Reset failed: " + (e && e.message ? e.message : e));
   }
 })();
+</script>
+
+<!-- 🔍 Debug Console (Temporary) -->
+<div id="debugConsole" style="
+  position:fixed;
+  bottom:0;
+  left:0;
+  width:100%;
+  max-height:40%;
+  overflow:auto;
+  background:#000;
+  color:#0f0;
+  font-size:12px;
+  font-family:monospace;
+  padding:8px;
+  z-index:9999;
+  border-top:2px solid #b30000;
+">
+  <div style="color:#fff;font-weight:bold;margin-bottom:4px;">
+    Debug Console
+  </div>
+</div>
+
+<script>
+function debugLog(msg) {
+  const el = document.getElementById("debugConsole");
+  if (!el) return;
+  const line = document.createElement("div");
+  line.textContent = msg;
+  el.appendChild(line);
+  el.scrollTop = el.scrollHeight;
+}
+
+// Capture JS errors
+window.onerror = function(message, source, lineno, colno, error) {
+  debugLog("❌ ERROR: " + message);
+};
+
+// Capture console logs
+const origLog = console.log;
+console.log = function(...args) {
+  debugLog("LOG: " + args.join(" "));
+  origLog.apply(console, args);
+};
+
+const origWarn = console.warn;
+console.warn = function(...args) {
+  debugLog("⚠️ WARN: " + args.join(" "));
+  origWarn.apply(console, args);
+};
 </script>
 
 </body>
