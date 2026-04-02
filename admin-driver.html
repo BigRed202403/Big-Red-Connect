@@ -54,6 +54,17 @@
         return;
       }
       await OneSignal.Slidedown.promptPush();
+
+// 🔥 FORCE subscription creation
+await OneSignal.Notifications.requestPermission();
+
+// Give iOS a moment
+await new Promise(r => setTimeout(r, 1000));
+
+// 🔥 Check subscription status
+const isSubscribed = await OneSignal.User.PushSubscription.optedIn;
+
+console.log("Subscribed:", isSubscribed);
     });
   }
 </script>
