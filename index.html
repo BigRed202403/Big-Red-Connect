@@ -504,6 +504,31 @@
       debugLog("⚠️ WARN: " + args.join(" "));
       origWarn.apply(console, args);
     };
+
+    (async function debugOriginAndSW() {
+      try {
+        debugLog("ORIGIN: " + location.origin);
+        debugLog("HREF: " + location.href);
+
+        if ("serviceWorker" in navigator) {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          if (!regs.length) {
+            debugLog("SW: none registered");
+          } else {
+            regs.forEach((reg, i) => {
+              debugLog(`SW[${i}] scope: ${reg.scope}`);
+              if (reg.active && reg.active.scriptURL) {
+                debugLog(`SW[${i}] script: ${reg.active.scriptURL}`);
+              }
+            });
+          }
+        } else {
+          debugLog("SW: serviceWorker not supported");
+        }
+      } catch (err) {
+        debugLog("SW DEBUG ERROR: " + (err?.message || err));
+      }
+    })();
   </script>
 
 </body>
