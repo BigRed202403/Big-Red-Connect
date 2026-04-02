@@ -530,6 +530,26 @@
       }
     })();
   </script>
+<script>
+(async function testManualSWRegister() {
+  if (!("serviceWorker" in navigator)) {
+    debugLog("MANUAL SW: serviceWorker not supported");
+    return;
+  }
+
+  try {
+    debugLog("MANUAL SW: attempting register /onesignalsdkworker.js");
+    const reg = await navigator.serviceWorker.register("/onesignalsdkworker.js", { scope: "/" });
+    debugLog("MANUAL SW: success");
+    debugLog("MANUAL SW scope: " + reg.scope);
+    if (reg.active && reg.active.scriptURL) {
+      debugLog("MANUAL SW script: " + reg.active.scriptURL);
+    }
+  } catch (err) {
+    debugLog("MANUAL SW ERROR: " + (err?.name || "Error") + ": " + (err?.message || err));
+  }
+})();
+</script>
 
 </body>
 </html>
