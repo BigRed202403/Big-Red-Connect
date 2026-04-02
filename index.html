@@ -101,8 +101,8 @@
         debugLog("Initializing OneSignal...");
 
         await OneSignal.init({
-          appId: "9b8bcc89-87d3-46e2-b2d0-042d1a267718",
-          safari_web_id: "web.onesignal.auto.0c90051e-4735-447d-b203-75e3767d91b9",
+          appId: "e635528e-f270-4564-afcc-da08605780b7",
+          safari_web_id: "web.onesignal.auto.017d7a1b-f1ef-4fce-a00c-21a546b5491d",
           notifyButton: { enable: false },
           serviceWorkerPath: "/onesignalsdkworker.js",
           serviceWorkerParam: { scope: "/" },
@@ -530,26 +530,27 @@
       }
     })();
   </script>
-<script>
-(async function testManualSWRegister() {
-  if (!("serviceWorker" in navigator)) {
-    debugLog("MANUAL SW: serviceWorker not supported");
-    return;
-  }
 
-  try {
-    debugLog("MANUAL SW: attempting register /onesignalsdkworker.js");
-    const reg = await navigator.serviceWorker.register("/onesignalsdkworker.js", { scope: "/" });
-    debugLog("MANUAL SW: success");
-    debugLog("MANUAL SW scope: " + reg.scope);
-    if (reg.active && reg.active.scriptURL) {
-      debugLog("MANUAL SW script: " + reg.active.scriptURL);
+  <script>
+  (async function testManualSWRegister() {
+    if (!("serviceWorker" in navigator)) {
+      debugLog("MANUAL SW: serviceWorker not supported");
+      return;
     }
-  } catch (err) {
-    debugLog("MANUAL SW ERROR: " + (err?.name || "Error") + ": " + (err?.message || err));
-  }
-})();
-</script>
+
+    try {
+      debugLog("MANUAL SW: attempting register /onesignalsdkworker.js");
+      const reg = await navigator.serviceWorker.register("/onesignalsdkworker.js", { scope: "/" });
+      debugLog("MANUAL SW: success");
+      debugLog("MANUAL SW scope: " + reg.scope);
+      if (reg.active && reg.active.scriptURL) {
+        debugLog("MANUAL SW script: " + reg.active.scriptURL);
+      }
+    } catch (err) {
+      debugLog("MANUAL SW ERROR: " + (err?.name || "Error") + ": " + (err?.message || err));
+    }
+  })();
+  </script>
 
 </body>
 </html>
