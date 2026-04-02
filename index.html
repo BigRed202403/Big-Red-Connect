@@ -23,14 +23,30 @@
   <!-- 🎨 Styles -->
   <link rel="stylesheet" href="style.css" />
 
-  <!-- 🔔 OneSignal Web Push SDK v16 -->
+  <!-- 🔔 OneSignal SDK -->
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 
+  <!-- ✅ FIXED ONESIGNAL BLOCK -->
   <script>
     function isIPhoneSafari() {
       return /iPhone/i.test(navigator.userAgent) &&
              !window.matchMedia('(display-mode: standalone)').matches &&
              !navigator.standalone;
+    }
+
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    async function waitForPermission(OneSignal, timeoutMs = 15000) {
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs) {
+        const perm = OneSignal.Notifications.permission;
+        if (perm === "granted" || perm === true) return "granted";
+        if (perm === "denied") return "denied";
+        await sleep(500);
+      }
+      return OneSignal.Notifications.permission || "default";
     }
 
     window.OneSignalDeferred = window.OneSignalDeferred || [];
@@ -58,9 +74,9 @@
     });
 
     function handleEnableAlerts() {
-      window.OneSignalDeferred.push(function (OneSignal) {
+      window.OneSignalDeferred.push(async function (OneSignal) {
         try {
-          const supported = OneSignal.Notifications.isPushSupported();
+          const supported = await OneSignal.Notifications.isPushSupported();
           if (!supported) {
             alert("This browser does not support notifications.");
             return;
@@ -69,8 +85,8 @@
           const permission = OneSignal.Notifications.permission;
 
           if (permission === "granted" || permission === true) {
-            OneSignal.sendTag("env", "live");
-            OneSignal.sendTag("role_rider_live", "true");
+            await OneSignal.sendTag("env", "live");
+            await OneSignal.sendTag("role_rider_live", "true");
             alert("You're already set — alerts are enabled!");
             return;
           }
@@ -79,25 +95,19 @@
             document.getElementById("iosAlertTip").style.display = "block";
           }
 
-          OneSignal.Slidedown.promptPush();
+          await OneSignal.Slidedown.promptPush();
 
-          setTimeout(async () => {
-            try {
-              const newPerm = OneSignal.Notifications.permission;
+          const finalPermission = await waitForPermission(OneSignal, 15000);
 
-              if (newPerm === "granted" || newPerm === true) {
-                await OneSignal.sendTag("env", "live");
-                await OneSignal.sendTag("role_rider_live", "true");
-                alert("Alerts enabled!");
-                console.log("[Rider] Push tags applied → env=live, role_rider_live=true");
-              } else {
-                alert("Alerts were not enabled.");
-              }
-            } catch (innerErr) {
-              console.warn("[Rider] Post-prompt tag apply failed:", innerErr);
-              alert("Enable alerts failed.");
-            }
-          }, 1500);
+          if (finalPermission === "granted" || finalPermission === true) {
+            await OneSignal.sendTag("env", "live");
+            await OneSignal.sendTag("role_rider_live", "true");
+            alert("Alerts enabled!");
+          } else if (finalPermission === "denied") {
+            alert("Alerts were denied.");
+          } else {
+            alert("Alerts were not enabled.");
+          }
 
         } catch (err) {
           console.warn("[Rider] Enable alerts failed:", err);
@@ -106,9 +116,6 @@
       });
     }
 
-    /* ------------------------------------------------------
-       LOGIN CHECKS
-       ------------------------------------------------------ */
     function isRiderLoggedIn() {
       try {
         const raw = localStorage.getItem("bigred_rider_profile_v1");
@@ -120,11 +127,6 @@
       }
     }
 
-    /* ------------------------------------------------------
-       DESTINATION HANDOFF (Index → Estimate / Ride Request)
-       - sessionStorage primary
-       - localStorage fallback
-       ------------------------------------------------------ */
     function stashDropoffHandoff(dest) {
       try { sessionStorage.setItem("brc_dropoff_handoff", dest); } catch (e) {}
       try { localStorage.setItem("brc_dropoff_handoff", dest); } catch (e) {}
@@ -156,31 +158,25 @@
         }
         window.location.href = "/rider/rider.html";
       } catch (err) {
-        console.error(err);
         window.location.href = "/rider-login.html?next=profile";
       }
     }
   </script>
+
 </head>
 
 <body>
 
-  <!-- 🌆 Hero area -->
   <div class="hero"></div>
 
-  <!-- 🚗 Main Logo -->
   <img src="Official Logo.png" alt="Big Red Connect Logo" class="main-logo" />
 
-  <!-- Tagline -->
   <p class="tagline">Veteran Owned · Flat Rate Rides · Trusted Local Driver</p>
 
-  <!-- Dynamic Status Pill -->
   <div id="status-pill" class="status status--loading">Checking status…</div>
 
-  <!-- Floating Refresh Button -->
-  <button id="refreshButton" title="Refresh Page">🔄 Refresh</button>
+  <button id="refreshButton">🔄 Refresh</button>
 
-  <!-- Quick Actions -->
   <div class="cta-group">
     <a href="sms:14053784024" class="btn primary">📲 Text to plan your ride</a>
     <a href="tel:14053784024" class="btn secondary">📞 Call<br>(Voicemail Only)</a>
@@ -189,186 +185,17 @@
 
   <p class="cta-note">Texting works best while I’m driving — I’ll reply ASAP with availability.</p>
 
-  <!-- Notifications Section -->
   <div style="text-align:center; margin-top:18px;">
-    <button onclick="handleEnableAlerts()" style="
-      background:#b30000;
-      color:white;
-      border:none;
-      padding:12px 22px;
-      font-size:1em;
-      font-weight:700;
-      border-radius:8px;
-      cursor:pointer;
-      box-shadow:0 3px 6px rgba(0,0,0,0.4);
-    ">
-      🔔 Enable Big Red Alerts
-    </button>
+    <button onclick="handleEnableAlerts()" class="btn primary">🔔 Enable Big Red Alerts</button>
 
     <p style="font-size:0.8em; color:#aaa; margin-top:6px;">
       Get live updates when Big Red is on-duty and available.
     </p>
 
-    <p id="iosAlertTip" style="
-      font-size:0.8em;
-      color:#ffcc66;
-      margin-top:10px;
-      display:none;
-    ">
-      👉 <strong>iPhone users:</strong> Tap Share → "Add to Home Screen", then reopen and tap Enable Alerts again.
+    <p id="iosAlertTip" style="display:none; color:#ffcc66;">
+      👉 iPhone: Add to Home Screen first, then enable alerts
     </p>
   </div>
-
-  <!-- Quick Destination Form -->
-  <div class="info-section" style="text-align:center; margin-top:20px;">
-    <h2>Plan Your Connection</h2>
-    <form id="quickDestination" onsubmit="goToEstimate(event)" style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
-      <input id="quickWhere" type="text" placeholder="Where are you headed?" required
-        style="flex:1;min-width:220px;max-width:420px;padding:12px;border-radius:10px;border:1px solid #333;background:#111;color:#fff;">
-      <button type="submit" class="btn primary">📅 Plan Now</button>
-    </form>
-    <p style="font-size:0.9em;color:#888;margin-top:6px;">
-      Tip: Start typing a place, business, or address.
-    </p>
-  </div>
-
-  <!-- Navigation Tiles -->
-  <div class="tile-grid">
-    <a onclick="goRequestRide()" class="tile" style="cursor:pointer;">🛷<br>Request a Ride</a>
-    <a href="live.html" class="tile">🗺️<br>Driver Map</a>
-    <a href="reviews.html" class="tile">⭐<br>Rider Reviews</a>
-    <a href="faq.html" class="tile">ℹ️<br>FAQ & Info</a>
-    <a onclick="goMyProfile()" class="tile" style="cursor:pointer;">👤<br>My Profile</a>
-    <a href="https://www.facebook.com/share/1BWCx63CUt/?mibextid=wwXIfr" target="_blank" class="tile">👍<br>Follow on Facebook</a>
-  </div>
-
-  <!-- Content Sections -->
-  <section class="info-section">
-    <h2>What Big Red Connect Delivers</h2>
-    <p>Veteran-owned, affordable flat-rate connections across the Oklahoma City metro — dependable, local, and built around planning ahead.</p>
-    <ul>
-      <li>Work, school, and everyday appointments</li>
-      <li>Airport and Tinker AFB connections</li>
-      <li>Evening plans and weekend events</li>
-      <li>Concerts, casinos, and special occasions</li>
-    </ul>
-  </section>
-  
-  <section class="info-section">
-    <h2>Why Choose Red</h2>
-    <ul>
-      <li>Veteran Owned. Affordable. Local. Trusted.</li>
-      <li>Simple flat-rate pricing — predictable every time.</li>
-      <li>One consistent, reliable driver — no app roulette.</li>
-    </ul>
-  </section>
-
-  <section class="info-section">
-    <h2>What Riders Say</h2>
-    <div class="review-card">
-      ⭐⭐⭐⭐⭐ "Always dependable."
-      <br><strong>— Alex, Norman</strong>
-    </div>
-    <div class="review-card">
-      ⭐⭐⭐⭐⭐ "My go-to for nights out."
-      <br><strong>— Taylor, OKC</strong>
-    </div>
-    <p><a href="reviews.html">More reviews →</a></p>
-  </section>
-
-  <footer>
-    <p>Questions? Text <strong>"RED"</strong> to (405) 378-4024.</p>
-    <p><a href="faq.html">FAQ</a> | <a href="reviews.html">Leave a Review</a></p>
-    <p>&copy; 2025 Big Red Connect</p>
-  </footer>
-
-  <!-- Google Places -->
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places"></script>
-  <script>
-    function initQuickSearch() {
-      new google.maps.places.Autocomplete(
-        document.getElementById("quickWhere"),
-        { fields: ["formatted_address", "name"] }
-      );
-    }
-    window.addEventListener("load", initQuickSearch);
-  </script>
-
-  <!-- Status Pill -->
-  <script src="status.js?v=20260116"></script>
-
-  <!-- Floating Refresh -->
-  <script>
-    const refreshBtn = document.getElementById("refreshButton");
-    let refreshTimeout;
-
-    function showRefreshButton(){ refreshBtn.classList.add("visible"); }
-    function hideRefreshButton(){
-      refreshBtn.classList.remove("visible");
-      clearTimeout(refreshTimeout);
-      refreshTimeout = setTimeout(showRefreshButton, 30000);
-    }
-
-    refreshBtn.addEventListener("click", () => {
-      hideRefreshButton();
-      location.reload(true);
-    });
-
-    window.addEventListener("load", () => {
-      refreshTimeout = setTimeout(showRefreshButton, 30000);
-    });
-  </script>
-
-  <style>
-    #refreshButton {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background: #b30000;
-      color:#fff;
-      border:none;
-      border-radius:6px;
-      padding:10px 16px;
-      font-size:0.95em;
-      font-weight:700;
-      cursor:pointer;
-      box-shadow:0 2px 6px rgba(0,0,0,0.4);
-      opacity:0;
-      pointer-events:none;
-      transition:opacity .5s;
-      z-index:10;
-    }
-    #refreshButton.visible {
-      opacity:1;
-      pointer-events:auto;
-    }
-  </style>
-
-  <script>
-  (async function () {
-    const u = new URL(location.href);
-    if (u.searchParams.get("reset") !== "1") return;
-
-    try {
-      if ("serviceWorker" in navigator) {
-        const regs = await navigator.serviceWorker.getRegistrations();
-        await Promise.all(regs.map(r => r.unregister()));
-      }
-
-      if (window.caches && caches.keys) {
-        const keys = await caches.keys();
-        await Promise.all(keys.map(k => caches.delete(k)));
-      }
-
-      try { localStorage.clear(); } catch(e) {}
-      try { sessionStorage.clear(); } catch(e) {}
-
-      location.href = "/index.html?reset_done=" + Date.now();
-    } catch (e) {
-      alert("Reset failed: " + (e && e.message ? e.message : e));
-    }
-  })();
-  </script>
 
 </body>
 </html>
