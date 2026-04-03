@@ -1,7 +1,7 @@
 {
   "name": "BR Admin/Driver App",
   "short_name": "Admin/Driver Big Red",
-  "start_url": "admin-driver.html",
+  "start_url": "/admin-driver.html",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#000000",
