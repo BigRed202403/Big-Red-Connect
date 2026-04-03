@@ -1,6 +1,6 @@
 {
   "name": "Big Red Connect",
-  "short_name": "Big Red",
+  "short_name": "Big Red Connect",
   "start_url": "index.html",
   "display": "standalone",
   "background_color": "#000000",
