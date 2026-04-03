@@ -34,56 +34,172 @@
              !navigator.standalone;
     }
 
+    function isStandalonePWA() {
+      return window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+    }
+
+    function setPushStatus(msg) {
+      const el = document.getElementById("pushStatusLine");
+      if (el) el.textContent = msg;
+    }
+
+    function setPushDebug(obj) {
+      const el = document.getElementById("pushDebug");
+      if (!el) return;
+      if (typeof obj === "string") {
+        el.textContent = obj;
+      } else {
+        try {
+          el.textContent = JSON.stringify(obj, null, 2);
+        } catch {
+          el.textContent = String(obj);
+        }
+      }
+    }
+
+    async function refreshPushDebug(OneSignal, extra = {}) {
+      try {
+        const permission = OneSignal.Notifications.permission;
+        const optedIn = OneSignal.User.PushSubscription.optedIn;
+        const subscriptionId = OneSignal.User.PushSubscription.id;
+        const token = OneSignal.User.PushSubscription.token;
+        const externalId = OneSignal.User.externalId;
+
+        setPushDebug({
+          permission,
+          optedIn,
+          subscriptionId,
+          token,
+          externalId,
+          isStandalone: isStandalonePWA(),
+          userAgent: navigator.userAgent,
+          ...extra
+        });
+      } catch (err) {
+        setPushDebug({
+          debugError: String(err),
+          isStandalone: isStandalonePWA(),
+          userAgent: navigator.userAgent,
+          ...extra
+        });
+      }
+    }
+
     /* -------------------------------------------------
        OneSignal Initialization (Rider Mode)
        ------------------------------------------------- */
     window.OneSignalDeferred = window.OneSignalDeferred || [];
     OneSignalDeferred.push(async function (OneSignal) {
-      await OneSignal.init({
-        appId: "9b8bcc89-87d3-46e2-b2d0-042d1a267718",
-        safari_web_id: "web.onesignal.auto.0c90051e-4735-447d-b203-75e3767d91b9",
-        notifyButton: { enable: false },
-        serviceWorkerPath: "/OneSignalSDKWorker.js",
-        path: "/"
-      });
+      try {
+        setPushStatus("Initializing push system...");
 
-      // Baseline tag (kept)
-      await OneSignal.sendTag("role_rider", "true");
+        await OneSignal.init({
+          appId: "9b8bcc89-87d3-46e2-b2d0-042d1a267718",
+          safari_web_id: "web.onesignal.auto.0c90051e-4735-447d-b203-75e3767d91b9",
+          notifyButton: { enable: false },
+          serviceWorkerPath: "/OneSignalSDKWorker.js",
+          serviceWorkerParam: { scope: "/" },
+          autoResubscribe: true,
+          path: "/"
+        });
+
+        OneSignal.Notifications.addEventListener("permissionChange", async function(permission) {
+          setPushStatus("Permission changed: " + permission);
+          await refreshPushDebug(OneSignal, { permissionChangeEvent: permission });
+        });
+
+        OneSignal.User.PushSubscription.addEventListener("change", async function(event) {
+          setPushStatus("Push subscription changed.");
+          await refreshPushDebug(OneSignal, { pushSubscriptionChange: event });
+        });
+
+        await OneSignal.User.addTag("role_rider", "true");
+
+        const permission = OneSignal.Notifications.permission;
+        const optedIn = OneSignal.User.PushSubscription.optedIn;
+        const subscriptionId = OneSignal.User.PushSubscription.id;
+        const token = OneSignal.User.PushSubscription.token;
+
+        if (permission && optedIn && subscriptionId && token) {
+          setPushStatus("Push ready.");
+        } else if (permission && optedIn && (!subscriptionId || !token)) {
+          setPushStatus("Permission granted, but subscription not fully registered yet...");
+        } else {
+          setPushStatus("Push ready to be enabled.");
+        }
+
+        await refreshPushDebug(OneSignal, { phase: "init-complete" });
+      } catch (err) {
+        setPushStatus("Push init error: " + (err && err.message ? err.message : err));
+        setPushDebug({
+          initError: String(err),
+          isStandalone: isStandalonePWA(),
+          userAgent: navigator.userAgent
+        });
+      }
     });
 
     /* -------------------------------------------------
-       UPDATED: Enable Alerts → Auto-tag as Rider (Live)
+       Enable Alerts → Auto-tag as Rider (Live)
        ------------------------------------------------- */
     function handleEnableAlerts() {
       window.OneSignalDeferred.push(async function (OneSignal) {
-        const supported = await OneSignal.Notifications.isPushSupported();
-        if (!supported) {
-          alert("This browser does not support notifications.");
-          return;
+        try {
+          const supported = OneSignal.Notifications.isPushSupported();
+          if (!supported) {
+            setPushStatus("This browser does not support notifications.");
+            alert("This browser does not support notifications.");
+            await refreshPushDebug(OneSignal, { phase: "unsupported" });
+            return;
+          }
+
+          if (!isStandalonePWA()) {
+            document.getElementById("iosAlertTip").style.display = "block";
+            setPushStatus("Open from Home Screen before enabling alerts.");
+            await refreshPushDebug(OneSignal, { phase: "not-standalone" });
+            return;
+          }
+
+          const permission = OneSignal.Notifications.permission;
+
+          if (permission === true || permission === "granted") {
+            setPushStatus("Permission already granted. Finalizing registration...");
+          } else {
+            setPushStatus("Requesting notification permission...");
+            await OneSignal.Notifications.requestPermission();
+          }
+
+          await new Promise(r => setTimeout(r, 1500));
+
+          await OneSignal.User.addTag("env", "live");
+          await OneSignal.User.addTag("role_rider_live", "true");
+
+          await new Promise(r => setTimeout(r, 1500));
+
+          const optedIn = OneSignal.User.PushSubscription.optedIn;
+          const subscriptionId = OneSignal.User.PushSubscription.id;
+          const token = OneSignal.User.PushSubscription.token;
+          const finalPermission = OneSignal.Notifications.permission;
+
+          if (finalPermission && optedIn && subscriptionId && token) {
+            setPushStatus("Alerts enabled successfully.");
+            alert("Big Red alerts are enabled on this device.");
+          } else if (finalPermission && optedIn && (!subscriptionId || !token)) {
+            setPushStatus("Permission granted, but subscription not fully registered yet...");
+            alert("Permission was requested, but this device did not finish registering yet. Close the app, reopen from Home Screen, and tap Enable Alerts once more.");
+          } else {
+            setPushStatus("Notifications were not enabled.");
+          }
+
+          await refreshPushDebug(OneSignal, { phase: "post-enable" });
+        } catch (err) {
+          setPushStatus("Enable alerts error: " + (err && err.message ? err.message : err));
+          setPushDebug({
+            enableError: String(err),
+            isStandalone: isStandalonePWA(),
+            userAgent: navigator.userAgent
+          });
         }
-
-        const permission = OneSignal.Notifications.permission;
-
-        if (permission === "granted" || permission === true) {
-          // Already enabled → ensure correct tags exist
-          await OneSignal.sendTag("env", "live");
-          await OneSignal.sendTag("role_rider_live", "true");
-          alert("You're already set — alerts are enabled!");
-          return;
-        }
-
-        if (isIPhoneSafari()) {
-          document.getElementById("iosAlertTip").style.display = "block";
-        }
-
-        // This opens the push prompt
-        await OneSignal.Slidedown.promptPush();
-
-        // After permission is granted → these tags ensure the rider receives pushes
-        await OneSignal.sendTag("env", "live");
-        await OneSignal.sendTag("role_rider_live", "true");
-
-        console.log("[Rider] Push tags applied → env=live, role_rider_live=true");
       });
     }
 
@@ -119,16 +235,12 @@
       }
     }
 
-    // ✅ NEW: Go to public Estimate page first (no login required)
     function goToEstimate(e) {
       if (e) e.preventDefault();
       const dest = document.getElementById("quickWhere")?.value?.trim() || "";
       if (!dest) return;
 
-      // Store for carryover (Estimate can also read this if you want)
       stashDropoffHandoff(dest);
-
-      // Pass via querystring too (optional, but nice)
       window.location.href = "/Estimate.html?destination=" + encodeURIComponent(dest);
     }
 
@@ -168,12 +280,12 @@
 
   <!-- Quick Actions -->
   <div class="cta-group">
-  <a href="sms:14053784024" class="btn primary">📲 Text to plan your ride</a>
-  <a href="tel:14053784024" class="btn secondary">📞 Call<br>(Voicemail Only)</a>
-  <a href="/Estimate.html" class="btn secondary">💲 Quick Estimate</a>
-</div>
+    <a href="sms:14053784024" class="btn primary">📲 Text to plan your ride</a>
+    <a href="tel:14053784024" class="btn secondary">📞 Call<br>(Voicemail Only)</a>
+    <a href="/Estimate.html" class="btn secondary">💲 Quick Estimate</a>
+  </div>
 
-<p class="cta-note">Texting works best while I’m driving — I’ll reply ASAP with availability.</p>
+  <p class="cta-note">Texting works best while I’m driving — I’ll reply ASAP with availability.</p>
 
   <!-- Notifications Section -->
   <div style="text-align:center; margin-top:18px;">
@@ -203,12 +315,34 @@
     ">
       👉 <strong>iPhone users:</strong> Tap Share → "Add to Home Screen", then reopen and tap Enable Alerts again.
     </p>
+
+    <p id="pushStatusLine" style="
+      font-size:0.85em;
+      color:#aaa;
+      margin-top:10px;
+      text-align:center;
+    ">
+      Initializing push system...
+    </p>
+
+    <pre id="pushDebug" style="
+      margin:10px auto;
+      max-width:90%;
+      font-size:0.75em;
+      color:#ccc;
+      background:#111;
+      padding:10px;
+      border-radius:8px;
+      text-align:left;
+      overflow:auto;
+      white-space:pre-wrap;
+      word-break:break-word;
+    "></pre>
   </div>
 
   <!-- Quick Destination Form -->
   <div class="info-section" style="text-align:center; margin-top:20px;">
     <h2>Plan Your Connection</h2>
-    <!-- ✅ UPDATED: goes to Estimate first -->
     <form id="quickDestination" onsubmit="goToEstimate(event)" style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
       <input id="quickWhere" type="text" placeholder="Where are you headed?" required
         style="flex:1;min-width:220px;max-width:420px;padding:12px;border-radius:10px;border:1px solid #333;background:#111;color:#fff;">
@@ -229,7 +363,7 @@
     <a href="https://www.facebook.com/share/1BWCx63CUt/?mibextid=wwXIfr" target="_blank" class="tile">👍<br>Follow on Facebook</a>
   </div>
 
-<!-- Content Sections -->
+  <!-- Content Sections -->
   <section class="info-section">
     <h2>What Big Red Connect Delivers</h2>
     <p>Veteran-owned, affordable flat-rate connections across the Oklahoma City metro — dependable, local, and built around planning ahead.</p>
@@ -282,7 +416,7 @@
   </script>
 
   <!-- Status Pill -->
-<script src="status.js?v=20260116"></script>
+  <script src="status.js?v=20260116"></script>
 
   <!-- Floating Refresh -->
   <script>
@@ -331,35 +465,31 @@
     }
   </style>
 
-<script>
-(async function () {
-  const u = new URL(location.href);
-  if (u.searchParams.get("reset") !== "1") return;
+  <script>
+  (async function () {
+    const u = new URL(location.href);
+    if (u.searchParams.get("reset") !== "1") return;
 
-  try {
-    // Unregister ALL service workers
-    if ("serviceWorker" in navigator) {
-      const regs = await navigator.serviceWorker.getRegistrations();
-      await Promise.all(regs.map(r => r.unregister()));
+    try {
+      if ("serviceWorker" in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map(r => r.unregister()));
+      }
+
+      if (window.caches && caches.keys) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map(k => caches.delete(k)));
+      }
+
+      try { localStorage.clear(); } catch(e) {}
+      try { sessionStorage.clear(); } catch(e) {}
+
+      location.href = "/index.html?reset_done=" + Date.now();
+    } catch (e) {
+      alert("Reset failed: " + (e && e.message ? e.message : e));
     }
-
-    // Delete ALL caches
-    if (window.caches && caches.keys) {
-      const keys = await caches.keys();
-      await Promise.all(keys.map(k => caches.delete(k)));
-    }
-
-    // Clear storages (optional but helpful for stubborn iOS PWAs)
-    try { localStorage.clear(); } catch(e) {}
-    try { sessionStorage.clear(); } catch(e) {}
-
-    // Reload clean with cache-buster
-    location.href = "/index.html?reset_done=" + Date.now();
-  } catch (e) {
-    alert("Reset failed: " + (e && e.message ? e.message : e));
-  }
-})();
-</script>
+  })();
+  </script>
 
 </body>
 </html>
