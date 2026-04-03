@@ -27,69 +27,143 @@
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 
   <script>
-    /* Utility: Detect iPhone Safari */
     function isIPhoneSafari() {
       return /iPhone/i.test(navigator.userAgent) &&
              !window.matchMedia('(display-mode: standalone)').matches &&
              !navigator.standalone;
     }
 
-    /* -------------------------------------------------
-       OneSignal Initialization (Rider Mode)
-       ------------------------------------------------- */
-    window.OneSignalDeferred = window.OneSignalDeferred || [];
-    OneSignalDeferred.push(async function (OneSignal) {
-      await OneSignal.init({
-        appId: "9b8bcc89-87d3-46e2-b2d0-042d1a267718",
-        safari_web_id: "web.onesignal.auto.0c90051e-4735-447d-b203-75e3767d91b9",
-        notifyButton: { enable: false },
-        serviceWorkerPath: "/onesignalsdkworker.js?v=3",
-        path: "/"
-      });
+    function isIOSStandaloneApp() {
+      return window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+    }
 
-      // Baseline tag (kept)
-      await OneSignal.sendTag("role_rider", "true");
+    function setPushStatus(msg) {
+      const el = document.getElementById("pushStatus");
+      if (el) el.textContent = msg;
+      console.log("[BRC Push]", msg);
+    }
+
+    async function applyRiderTags(OneSignal) {
+      try {
+        await OneSignal.User.addTags({
+          env: "live",
+          role_rider: "true",
+          role_rider_live: "true"
+        });
+        console.log("[BRC Push] Rider tags applied.");
+      } catch (err) {
+        console.warn("[BRC Push] Failed to apply rider tags:", err);
+      }
+    }
+
+    async function refreshPushDiagnostics(OneSignal) {
+      try {
+        const permission = OneSignal.Notifications.permission;
+        const optedIn = OneSignal.User.PushSubscription.optedIn;
+        const subId = OneSignal.User.PushSubscription.id;
+        const token = OneSignal.User.PushSubscription.token;
+
+        console.log("[BRC Push] permission:", permission);
+        console.log("[BRC Push] optedIn:", optedIn);
+        console.log("[BRC Push] subscriptionId:", subId);
+        console.log("[BRC Push] token:", token);
+
+        if (permission && optedIn && subId && token) {
+          setPushStatus("Alerts enabled on this device ✅");
+          await applyRiderTags(OneSignal);
+          return true;
+        }
+
+        if (permission && (!subId || !token || !optedIn)) {
+          setPushStatus("Permission granted, but subscription not fully registered yet…");
+          return false;
+        }
+
+        setPushStatus("Alerts not enabled on this device.");
+        return false;
+      } catch (err) {
+        console.warn("[BRC Push] Diagnostic error:", err);
+        setPushStatus("Unable to verify alert status.");
+        return false;
+      }
+    }
+
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+
+    OneSignalDeferred.push(async function (OneSignal) {
+      try {
+        OneSignal.Debug.setLogLevel("trace");
+
+        await OneSignal.init({
+          appId: "9b8bcc89-87d3-46e2-b2d0-042d1a267718",
+          safari_web_id: "web.onesignal.auto.0c90051e-4735-447d-b203-75e3767d91b9",
+          notifyButton: { enable: false },
+          serviceWorkerPath: "/OneSignalSDKWorker.js",
+          serviceWorkerParam: { scope: "/" },
+          autoResubscribe: true
+        });
+
+        console.log("[BRC Push] OneSignal initialized.");
+
+        OneSignal.Notifications.addEventListener("permissionChange", async function(permission) {
+          console.log("[BRC Push] permissionChange:", permission);
+          setTimeout(async () => {
+            await refreshPushDiagnostics(OneSignal);
+          }, 1200);
+        });
+
+        OneSignal.User.PushSubscription.addEventListener("change", async function(event) {
+          console.log("[BRC Push] Push subscription changed:", event);
+          setTimeout(async () => {
+            await refreshPushDiagnostics(OneSignal);
+          }, 1200);
+        });
+
+        await refreshPushDiagnostics(OneSignal);
+      } catch (err) {
+        console.error("[BRC Push] OneSignal init failed:", err);
+        setPushStatus("Push initialization error.");
+      }
     });
 
-    /* -------------------------------------------------
-       UPDATED: Enable Alerts → Auto-tag as Rider (Live)
-       ------------------------------------------------- */
-    function handleEnableAlerts() {
+    async function handleEnableAlerts() {
       window.OneSignalDeferred.push(async function (OneSignal) {
-        const supported = await OneSignal.Notifications.isPushSupported();
-        if (!supported) {
-          alert("This browser does not support notifications.");
-          return;
+        try {
+          const supported = OneSignal.Notifications.isPushSupported();
+          if (!supported) {
+            alert("This browser does not support notifications.");
+            setPushStatus("Push not supported on this device/browser.");
+            return;
+          }
+
+          if (!isIOSStandaloneApp() && /iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+            document.getElementById("iosAlertTip").style.display = "block";
+            setPushStatus("Install from Home Screen first, then reopen and tap Enable Alerts again.");
+            return;
+          }
+
+          setPushStatus("Requesting notification permission…");
+
+          await OneSignal.Notifications.requestPermission();
+
+          // Give iOS / Safari a moment to finish creating the subscription
+          await new Promise(resolve => setTimeout(resolve, 1800));
+
+          const ok = await refreshPushDiagnostics(OneSignal);
+
+          if (ok) {
+            alert("Big Red alerts are enabled on this device.");
+          } else {
+            alert("Permission was requested, but this device did not finish registering yet. Close the app, reopen from Home Screen, and tap Enable Alerts once more.");
+          }
+        } catch (err) {
+          console.error("[BRC Push] Enable alerts failed:", err);
+          setPushStatus("Error enabling alerts.");
+          alert("There was an error enabling alerts on this device.");
         }
-
-        const permission = OneSignal.Notifications.permission;
-
-        if (permission === "granted" || permission === true) {
-          // Already enabled → ensure correct tags exist
-          await OneSignal.sendTag("env", "live");
-          await OneSignal.sendTag("role_rider_live", "true");
-          alert("You're already set — alerts are enabled!");
-          return;
-        }
-
-        if (isIPhoneSafari()) {
-          document.getElementById("iosAlertTip").style.display = "block";
-        }
-
-        // This opens the push prompt
-        await OneSignal.Slidedown.promptPush();
-
-        // After permission is granted → these tags ensure the rider receives pushes
-        await OneSignal.sendTag("env", "live");
-        await OneSignal.sendTag("role_rider_live", "true");
-
-        console.log("[Rider] Push tags applied → env=live, role_rider_live=true");
       });
     }
 
-    /* ------------------------------------------------------
-       LOGIN CHECKS
-       ------------------------------------------------------ */
     function isRiderLoggedIn() {
       try {
         const raw = localStorage.getItem("bigred_rider_profile_v1");
@@ -101,11 +175,6 @@
       }
     }
 
-    /* ------------------------------------------------------
-       DESTINATION HANDOFF (Index → Estimate / Ride Request)
-       - sessionStorage primary
-       - localStorage fallback
-       ------------------------------------------------------ */
     function stashDropoffHandoff(dest) {
       try { sessionStorage.setItem("brc_dropoff_handoff", dest); } catch (e) {}
       try { localStorage.setItem("brc_dropoff_handoff", dest); } catch (e) {}
@@ -119,16 +188,12 @@
       }
     }
 
-    // ✅ NEW: Go to public Estimate page first (no login required)
     function goToEstimate(e) {
       if (e) e.preventDefault();
       const dest = document.getElementById("quickWhere")?.value?.trim() || "";
       if (!dest) return;
 
-      // Store for carryover (Estimate can also read this if you want)
       stashDropoffHandoff(dest);
-
-      // Pass via querystring too (optional, but nice)
       window.location.href = "/Estimate.html?destination=" + encodeURIComponent(dest);
     }
 
@@ -146,7 +211,6 @@
       }
     }
   </script>
-
 </head>
 
 <body>
@@ -168,12 +232,12 @@
 
   <!-- Quick Actions -->
   <div class="cta-group">
-  <a href="sms:14053784024" class="btn primary">📲 Text to plan your ride</a>
-  <a href="tel:14053784024" class="btn secondary">📞 Call<br>(Voicemail Only)</a>
-  <a href="/Estimate.html" class="btn secondary">💲 Quick Estimate</a>
-</div>
+    <a href="sms:14053784024" class="btn primary">📲 Text to plan your ride</a>
+    <a href="tel:14053784024" class="btn secondary">📞 Call<br>(Voicemail Only)</a>
+    <a href="/Estimate.html" class="btn secondary">💲 Quick Estimate</a>
+  </div>
 
-<p class="cta-note">Texting works best while I’m driving — I’ll reply ASAP with availability.</p>
+  <p class="cta-note">Texting works best while I’m driving — I’ll reply ASAP with availability.</p>
 
   <!-- Notifications Section -->
   <div style="text-align:center; margin-top:18px;">
@@ -201,14 +265,21 @@
       margin-top:10px;
       display:none;
     ">
-      👉 <strong>iPhone users:</strong> Tap Share → "Add to Home Screen", then reopen and tap Enable Alerts again.
+      👉 <strong>iPhone/iPad users:</strong> Add to Home Screen, reopen from that icon, then tap Enable Alerts again.
+    </p>
+
+    <p id="pushStatus" style="
+      font-size:0.82em;
+      color:#ddd;
+      margin-top:10px;
+    ">
+      Alerts not enabled on this device.
     </p>
   </div>
 
   <!-- Quick Destination Form -->
   <div class="info-section" style="text-align:center; margin-top:20px;">
     <h2>Plan Your Connection</h2>
-    <!-- ✅ UPDATED: goes to Estimate first -->
     <form id="quickDestination" onsubmit="goToEstimate(event)" style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
       <input id="quickWhere" type="text" placeholder="Where are you headed?" required
         style="flex:1;min-width:220px;max-width:420px;padding:12px;border-radius:10px;border:1px solid #333;background:#111;color:#fff;">
@@ -229,7 +300,7 @@
     <a href="https://www.facebook.com/share/1BWCx63CUt/?mibextid=wwXIfr" target="_blank" class="tile">👍<br>Follow on Facebook</a>
   </div>
 
-<!-- Content Sections -->
+  <!-- Content Sections -->
   <section class="info-section">
     <h2>What Big Red Connect Delivers</h2>
     <p>Veteran-owned, affordable flat-rate connections across the Oklahoma City metro — dependable, local, and built around planning ahead.</p>
@@ -282,7 +353,7 @@
   </script>
 
   <!-- Status Pill -->
-<script src="status.js?v=20260116"></script>
+  <script src="status.js?v=20260116"></script>
 
   <!-- Floating Refresh -->
   <script>
@@ -331,35 +402,31 @@
     }
   </style>
 
-<script>
-(async function () {
-  const u = new URL(location.href);
-  if (u.searchParams.get("reset") !== "1") return;
+  <script>
+    (async function () {
+      const u = new URL(location.href);
+      if (u.searchParams.get("reset") !== "1") return;
 
-  try {
-    // Unregister ALL service workers
-    if ("serviceWorker" in navigator) {
-      const regs = await navigator.serviceWorker.getRegistrations();
-      await Promise.all(regs.map(r => r.unregister()));
-    }
+      try {
+        if ("serviceWorker" in navigator) {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(regs.map(r => r.unregister()));
+        }
 
-    // Delete ALL caches
-    if (window.caches && caches.keys) {
-      const keys = await caches.keys();
-      await Promise.all(keys.map(k => caches.delete(k)));
-    }
+        if (window.caches && caches.keys) {
+          const keys = await caches.keys();
+          await Promise.all(keys.map(k => caches.delete(k)));
+        }
 
-    // Clear storages (optional but helpful for stubborn iOS PWAs)
-    try { localStorage.clear(); } catch(e) {}
-    try { sessionStorage.clear(); } catch(e) {}
+        try { localStorage.clear(); } catch(e) {}
+        try { sessionStorage.clear(); } catch(e) {}
 
-    // Reload clean with cache-buster
-    location.href = "/index.html?reset_done=" + Date.now();
-  } catch (e) {
-    alert("Reset failed: " + (e && e.message ? e.message : e));
-  }
-})();
-</script>
+        location.href = "/index.html?reset_done=" + Date.now();
+      } catch (e) {
+        alert("Reset failed: " + (e && e.message ? e.message : e));
+      }
+    })();
+  </script>
 
 </body>
 </html>
