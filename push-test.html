@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Push Test</title>
+
+  <!-- OneSignal SDK -->
+  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+
+  <style>
+    body {
+      background: #000;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 40px 20px;
+    }
+    button {
+      background: #b30000;
+      color: #fff;
+      border: none;
+      padding: 14px 22px;
+      font-size: 16px;
+      border-radius: 8px;
+      margin-top: 20px;
+      cursor: pointer;
+    }
+    pre {
+      margin-top: 20px;
+      background: #111;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      text-align: left;
+      max-width: 400px;
+      margin-left: auto;
+      margin-right: auto;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+
+<h2>Push Test Page</h2>
+
+<button onclick="enablePush()">Enable Alerts</button>
+
+<p id="status">Initializing...</p>
+
+<pre id="debug"></pre>
+
+<script>
+function setStatus(msg) {
+  document.getElementById("status").textContent = msg;
+}
+
+function setDebug(obj) {
+  document.getElementById("debug").textContent = JSON.stringify(obj, null, 2);
+}
+
+window.OneSignalDeferred = window.OneSignalDeferred || [];
+OneSignalDeferred.push(async function(OneSignal) {
+
+  try {
+    setStatus("Initializing...");
+
+    await OneSignal.init({
+      appId: "9b8bcc89-87d3-46e2-b2d0-042d1a267718",
+      safari_web_id: "web.onesignal.auto.0c90051e-4735-447d-b203-75e3767d91b9",
+
+      notifyButton: { enable: false },
+
+      serviceWorkerPath: "push/onesignal/OneSignalSDKWorker.js",
+      serviceWorkerParam: { scope: "/push/onesignal/" }
+    });
+
+    setStatus("Ready");
+
+    updateDebug(OneSignal, { phase: "init-complete" });
+
+  } catch (e) {
+    setStatus("Init error");
+    setDebug({ error: e.message });
+  }
+});
+
+async function updateDebug(OneSignal, extra = {}) {
+  try {
+    setDebug({
+      permission: OneSignal.Notifications.permission,
+      optedIn: OneSignal.User.PushSubscription.optedIn,
+      subscriptionId: OneSignal.User.PushSubscription.id || null,
+      token: OneSignal.User.PushSubscription.token || null,
+      isStandalone: window.matchMedia("(display-mode: standalone)").matches || !!navigator.standalone,
+      userAgent: navigator.userAgent,
+      ...extra
+    });
+  } catch (e) {
+    setDebug({ debugError: e.message });
+  }
+}
+
+function enablePush() {
+  window.OneSignalDeferred.push(async function(OneSignal) {
+    try {
+      setStatus("Requesting permission...");
+      await OneSignal.Notifications.requestPermission();
+
+      setTimeout(async () => {
+        await updateDebug(OneSignal, { phase: "after-permission" });
+      }, 2000);
+
+    } catch (e) {
+      setStatus("Error");
+      setDebug({ error: e.message });
+    }
+  });
+}
+</script>
+
+</body>
+</html>
