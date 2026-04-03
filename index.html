@@ -27,139 +27,182 @@
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 
   <script>
-    function isIPhoneSafari() {
-      return /iPhone/i.test(navigator.userAgent) &&
-             !window.matchMedia('(display-mode: standalone)').matches &&
-             !navigator.standalone;
+    function isAppleMobileBrowser() {
+      const ua = navigator.userAgent || "";
+      return /iPhone|iPad|iPod/i.test(ua);
     }
 
-    function isIOSStandaloneApp() {
-      return window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+    function isStandalonePWA() {
+      return window.matchMedia("(display-mode: standalone)").matches || !!navigator.standalone;
     }
 
     function setPushStatus(msg) {
       const el = document.getElementById("pushStatus");
       if (el) el.textContent = msg;
-      console.log("[BRC Push]", msg);
     }
 
-    async function applyRiderTags(OneSignal) {
-      try {
-        await OneSignal.User.addTags({
-          env: "live",
-          role_rider: "true",
-          role_rider_live: "true"
-        });
-        console.log("[BRC Push] Rider tags applied.");
-      } catch (err) {
-        console.warn("[BRC Push] Failed to apply rider tags:", err);
-      }
+    function setPushDebug(lines) {
+      const el = document.getElementById("pushDebug");
+      if (el) el.textContent = lines.join("\n");
+    }
+
+    async function wait(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
     }
 
     async function refreshPushDiagnostics(OneSignal) {
-      try {
-        const permission = OneSignal.Notifications.permission;
-        const optedIn = OneSignal.User.PushSubscription.optedIn;
-        const subId = OneSignal.User.PushSubscription.id;
-        const token = OneSignal.User.PushSubscription.token;
+      const permission = OneSignal.Notifications.permission;
+      const optedIn = OneSignal.User?.PushSubscription?.optedIn ?? null;
+      const subId = OneSignal.User?.PushSubscription?.id ?? null;
+      const token = OneSignal.User?.PushSubscription?.token ?? null;
+      const externalId = OneSignal.User?.externalId ?? null;
 
-        console.log("[BRC Push] permission:", permission);
-        console.log("[BRC Push] optedIn:", optedIn);
-        console.log("[BRC Push] subscriptionId:", subId);
-        console.log("[BRC Push] token:", token);
+      const debugLines = [
+        "permission: " + permission,
+        "optedIn: " + optedIn,
+        "subscriptionId: " + (subId || "null"),
+        "token: " + (token || "null"),
+        "externalId: " + (externalId || "null"),
+        "isStandalone: " + isStandalonePWA(),
+        "userAgent: " + navigator.userAgent
+      ];
 
-        if (permission && optedIn && subId && token) {
-          setPushStatus("Alerts enabled on this device ✅");
-          await applyRiderTags(OneSignal);
-          return true;
-        }
+      setPushDebug(debugLines);
+      console.log("[BRC Push Debug]", {
+        permission,
+        optedIn,
+        subId,
+        token,
+        externalId
+      });
 
-        if (permission && (!subId || !token || !optedIn)) {
-          setPushStatus("Permission granted, but subscription not fully registered yet…");
-          return false;
-        }
+      if (permission && subId && token && optedIn) {
+        setPushStatus("Alerts enabled on this device ✅");
+        return true;
+      }
 
-        setPushStatus("Alerts not enabled on this device.");
-        return false;
-      } catch (err) {
-        console.warn("[BRC Push] Diagnostic error:", err);
-        setPushStatus("Unable to verify alert status.");
+      if (permission && (!subId || !token)) {
+        setPushStatus("Permission granted, but subscription not fully registered yet…");
         return false;
       }
+
+      setPushStatus("Alerts not enabled on this device.");
+      return false;
     }
 
     window.OneSignalDeferred = window.OneSignalDeferred || [];
-
     OneSignalDeferred.push(async function (OneSignal) {
       try {
-        OneSignal.Debug.setLogLevel("trace");
-
         await OneSignal.init({
           appId: "9b8bcc89-87d3-46e2-b2d0-042d1a267718",
           safari_web_id: "web.onesignal.auto.0c90051e-4735-447d-b203-75e3767d91b9",
           notifyButton: { enable: false },
+          autoResubscribe: true,
           serviceWorkerPath: "/OneSignalSDKWorker.js",
-          serviceWorkerParam: { scope: "/" },
-          autoResubscribe: true
+          path: "/"
         });
 
-        console.log("[BRC Push] OneSignal initialized.");
+        await OneSignal.User.addTag("role_rider", "true");
 
-        OneSignal.Notifications.addEventListener("permissionChange", async function(permission) {
-          console.log("[BRC Push] permissionChange:", permission);
-          setTimeout(async () => {
-            await refreshPushDiagnostics(OneSignal);
-          }, 1200);
-        });
+        OneSignal.User.PushSubscription.addEventListener("change", async function (event) {
+          console.log("[BRC PushSubscription change]", event);
 
-        OneSignal.User.PushSubscription.addEventListener("change", async function(event) {
-          console.log("[BRC Push] Push subscription changed:", event);
-          setTimeout(async () => {
-            await refreshPushDiagnostics(OneSignal);
-          }, 1200);
+          const cur = event.current || {};
+          if (cur.id && cur.token) {
+            await OneSignal.User.addTags({
+              env: "live",
+              role_rider_live: "true"
+            });
+          }
+
+          await refreshPushDiagnostics(OneSignal);
         });
 
         await refreshPushDiagnostics(OneSignal);
       } catch (err) {
-        console.error("[BRC Push] OneSignal init failed:", err);
-        setPushStatus("Push initialization error.");
+        console.error("[BRC OneSignal init error]", err);
+        setPushStatus("Push init error: " + (err?.message || err));
+        setPushDebug([
+          "initError: " + (err?.message || String(err))
+        ]);
       }
     });
 
     async function handleEnableAlerts() {
       window.OneSignalDeferred.push(async function (OneSignal) {
         try {
-          const supported = OneSignal.Notifications.isPushSupported();
-          if (!supported) {
-            alert("This browser does not support notifications.");
-            setPushStatus("Push not supported on this device/browser.");
+          if (isAppleMobileBrowser() && !isStandalonePWA()) {
+            document.getElementById("iosAlertTip").style.display = "block";
+            setPushStatus("Install from Home Screen first, then reopen and tap Enable Alerts.");
             return;
           }
 
-          if (!isIOSStandaloneApp() && /iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-            document.getElementById("iosAlertTip").style.display = "block";
-            setPushStatus("Install from Home Screen first, then reopen and tap Enable Alerts again.");
+          const supported = OneSignal.Notifications.isPushSupported();
+          if (!supported) {
+            alert("This browser does not support notifications.");
+            setPushStatus("This device/browser does not support push.");
+            return;
+          }
+
+          const alreadyGood = await refreshPushDiagnostics(OneSignal);
+          if (alreadyGood) {
+            await OneSignal.User.addTags({
+              env: "live",
+              role_rider_live: "true"
+            });
+            alert("You're already set — alerts are enabled!");
             return;
           }
 
           setPushStatus("Requesting notification permission…");
 
-          await OneSignal.Notifications.requestPermission();
+          const accepted = await OneSignal.Notifications.requestPermission();
 
-          // Give iOS / Safari a moment to finish creating the subscription
-          await new Promise(resolve => setTimeout(resolve, 1800));
+          console.log("[BRC requestPermission result]", accepted);
 
-          const ok = await refreshPushDiagnostics(OneSignal);
+          for (let i = 0; i < 6; i++) {
+            await wait(1000);
 
-          if (ok) {
-            alert("Big Red alerts are enabled on this device.");
-          } else {
-            alert("Permission was requested, but this device did not finish registering yet. Close the app, reopen from Home Screen, and tap Enable Alerts once more.");
+            const permission = OneSignal.Notifications.permission;
+            const subId = OneSignal.User?.PushSubscription?.id ?? null;
+            const token = OneSignal.User?.PushSubscription?.token ?? null;
+            const optedIn = OneSignal.User?.PushSubscription?.optedIn ?? null;
+
+            setPushDebug([
+              "permission: " + permission,
+              "optedIn: " + optedIn,
+              "subscriptionId: " + (subId || "null"),
+              "token: " + (token || "null"),
+              "waitCycle: " + (i + 1) + "/6",
+              "isStandalone: " + isStandalonePWA(),
+              "userAgent: " + navigator.userAgent
+            ]);
+
+            if (permission && subId && token && optedIn) {
+              await OneSignal.User.addTags({
+                env: "live",
+                role_rider_live: "true"
+              });
+
+              setPushStatus("Alerts enabled on this device ✅");
+              alert("Big Red alerts are enabled on this device.");
+              return;
+            }
           }
+
+          await refreshPushDiagnostics(OneSignal);
+
+          alert(
+            "Permission was requested, but this device did not finish registering yet. " +
+            "Close the app, reopen from Home Screen, and tap Enable Alerts once more."
+          );
         } catch (err) {
-          console.error("[BRC Push] Enable alerts failed:", err);
-          setPushStatus("Error enabling alerts.");
-          alert("There was an error enabling alerts on this device.");
+          console.error("[BRC enable alerts error]", err);
+          setPushStatus("Push error: " + (err?.message || err));
+          setPushDebug([
+            "enableError: " + (err?.message || String(err))
+          ]);
+          alert("Push setup error: " + (err?.message || err));
         }
       });
     }
@@ -211,6 +254,7 @@
       }
     }
   </script>
+
 </head>
 
 <body>
@@ -265,16 +309,31 @@
       margin-top:10px;
       display:none;
     ">
-      👉 <strong>iPhone/iPad users:</strong> Add to Home Screen, reopen from that icon, then tap Enable Alerts again.
+      👉 <strong>iPhone users:</strong> Tap Share → "Add to Home Screen", then reopen and tap Enable Alerts again.
     </p>
 
     <p id="pushStatus" style="
       font-size:0.82em;
       color:#ddd;
       margin-top:10px;
+      text-align:center;
     ">
       Alerts not enabled on this device.
     </p>
+
+    <pre id="pushDebug" style="
+      font-size:0.68em;
+      color:#888;
+      text-align:left;
+      max-width:92%;
+      margin:8px auto 0;
+      white-space:pre-wrap;
+      word-break:break-word;
+      background:#111;
+      border:1px solid #222;
+      border-radius:8px;
+      padding:10px;
+    "></pre>
   </div>
 
   <!-- Quick Destination Form -->
@@ -403,29 +462,29 @@
   </style>
 
   <script>
-    (async function () {
-      const u = new URL(location.href);
-      if (u.searchParams.get("reset") !== "1") return;
+  (async function () {
+    const u = new URL(location.href);
+    if (u.searchParams.get("reset") !== "1") return;
 
-      try {
-        if ("serviceWorker" in navigator) {
-          const regs = await navigator.serviceWorker.getRegistrations();
-          await Promise.all(regs.map(r => r.unregister()));
-        }
-
-        if (window.caches && caches.keys) {
-          const keys = await caches.keys();
-          await Promise.all(keys.map(k => caches.delete(k)));
-        }
-
-        try { localStorage.clear(); } catch(e) {}
-        try { sessionStorage.clear(); } catch(e) {}
-
-        location.href = "/index.html?reset_done=" + Date.now();
-      } catch (e) {
-        alert("Reset failed: " + (e && e.message ? e.message : e));
+    try {
+      if ("serviceWorker" in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map(r => r.unregister()));
       }
-    })();
+
+      if (window.caches && caches.keys) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map(k => caches.delete(k)));
+      }
+
+      try { localStorage.clear(); } catch(e) {}
+      try { sessionStorage.clear(); } catch(e) {}
+
+      location.href = "/index.html?reset_done=" + Date.now();
+    } catch (e) {
+      alert("Reset failed: " + (e && e.message ? e.message : e));
+    }
+  })();
   </script>
 
 </body>
