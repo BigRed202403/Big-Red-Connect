@@ -30,8 +30,12 @@
     /* Utility: Detect iPhone Safari */
     function isIPhoneSafari() {
       return /iPhone/i.test(navigator.userAgent) &&
-             !window.matchMedia('(display-mode: standalone)').matches &&
+             !window.matchMedia("(display-mode: standalone)").matches &&
              !navigator.standalone;
+    }
+
+    function isStandalonePWA() {
+      return window.matchMedia("(display-mode: standalone)").matches || !!navigator.standalone;
     }
 
     function setPushStatus(msg) {
@@ -58,18 +62,64 @@
           subscriptionId,
           token,
           externalId,
-          isStandalone: window.matchMedia('(display-mode: standalone)').matches || !!navigator.standalone,
+          isStandalone: isStandalonePWA(),
           userAgent: navigator.userAgent,
           ...extra
         });
       } catch (e) {
         setPushDebug({
           debugError: e.message,
-          isStandalone: window.matchMedia('(display-mode: standalone)').matches || !!navigator.standalone,
+          isStandalone: isStandalonePWA(),
           userAgent: navigator.userAgent,
           ...extra
         });
       }
+    }
+
+    async function applyLiveRiderTags(OneSignal) {
+      await OneSignal.User.addTags({
+        env: "live",
+        role_rider: "true",
+        role_rider_live: "true"
+      });
+    }
+
+    async function startBackgroundSubscriptionWatcher(OneSignal) {
+      if (OneSignal.Notifications.permission !== true) return;
+
+      let attempts = 0;
+
+      const interval = setInterval(async () => {
+        attempts++;
+
+        try {
+          const subId = OneSignal.User.PushSubscription.id;
+          const token = OneSignal.User.PushSubscription.token;
+
+          if (subId && token) {
+            await applyLiveRiderTags(OneSignal);
+            setPushStatus("Push fully enabled on this device.");
+            await refreshPushDebug(OneSignal, { phase: "background-complete" });
+            clearInterval(interval);
+            return;
+          }
+
+          await refreshPushDebug(OneSignal, {
+            phase: "background-waiting",
+            attempts
+          });
+        } catch (err) {
+          await refreshPushDebug(OneSignal, {
+            phase: "background-error",
+            attempts,
+            watcherError: err.message
+          });
+        }
+
+        if (attempts > 10) {
+          clearInterval(interval);
+        }
+      }, 2000);
     }
 
     /* -------------------------------------------------
@@ -96,15 +146,11 @@
           if (permission === true) {
             try {
               await new Promise(r => setTimeout(r, 1500));
-              await OneSignal.User.addTags({
-                env: "live",
-                role_rider: "true",
-                role_rider_live: "true"
-              });
               setPushStatus("Permission granted. Finalizing registration...");
-              await refreshPushDebug(OneSignal, { phase: "permission-granted-tags-applied" });
+              await refreshPushDebug(OneSignal, { phase: "permission-granted" });
+              await startBackgroundSubscriptionWatcher(OneSignal);
             } catch (tagErr) {
-              setPushStatus("Permission granted, but tag update failed.");
+              setPushStatus("Permission granted, but follow-up failed.");
               await refreshPushDebug(OneSignal, { tagError: tagErr.message });
             }
           }
@@ -120,10 +166,7 @@
         const token = OneSignal.User.PushSubscription.token || null;
 
         if (permission === true && optedIn && subscriptionId && token) {
-          await OneSignal.User.addTags({
-            env: "live",
-            role_rider_live: "true"
-          });
+          await applyLiveRiderTags(OneSignal);
           setPushStatus("Push is fully enabled on this device.");
         } else if (permission === true) {
           setPushStatus("Permission already granted. Finalizing registration...");
@@ -133,11 +176,16 @@
 
         await refreshPushDebug(OneSignal, { phase: "init-complete" });
 
+        // 🔁 Background subscription watcher for delayed iOS PWA registration
+        if (OneSignal.Notifications.permission === true) {
+          await startBackgroundSubscriptionWatcher(OneSignal);
+        }
+
       } catch (e) {
         setPushStatus("Push init error: " + e.message);
         setPushDebug({
           initError: e.toString(),
-          isStandalone: window.matchMedia('(display-mode: standalone)').matches || !!navigator.standalone,
+          isStandalone: isStandalonePWA(),
           userAgent: navigator.userAgent
         });
       }
@@ -165,11 +213,7 @@
           const token = OneSignal.User.PushSubscription.token || null;
 
           if (permission === true && optedIn && subscriptionId && token) {
-            await OneSignal.User.addTags({
-              env: "live",
-              role_rider: "true",
-              role_rider_live: "true"
-            });
+            await applyLiveRiderTags(OneSignal);
             setPushStatus("You're already set — alerts are enabled.");
             await refreshPushDebug(OneSignal, { phase: "already-fully-enabled" });
             return;
@@ -188,11 +232,7 @@
           const tokenAfter = OneSignal.User.PushSubscription.token || null;
 
           if (permissionAfter === true && optedInAfter && subscriptionIdAfter && tokenAfter) {
-            await OneSignal.User.addTags({
-              env: "live",
-              role_rider: "true",
-              role_rider_live: "true"
-            });
+            await applyLiveRiderTags(OneSignal);
             setPushStatus("Push fully enabled on this device.");
             await refreshPushDebug(OneSignal, { phase: "prompt-success" });
             alert("Alerts enabled successfully.");
@@ -210,12 +250,7 @@
               const token = OneSignal.User.PushSubscription.token;
 
               if (subId && token) {
-                await OneSignal.User.addTags({
-                  env: "live",
-                  role_rider: "true",
-                  role_rider_live: "true"
-                });
-
+                await applyLiveRiderTags(OneSignal);
                 setPushStatus("Push fully enabled on this device.");
                 await refreshPushDebug(OneSignal, { phase: "subscription-complete" });
                 return;
@@ -224,6 +259,8 @@
 
             setPushStatus("Permission granted. Notifications will activate shortly.");
             await refreshPushDebug(OneSignal, { phase: "delayed-subscription" });
+
+            await startBackgroundSubscriptionWatcher(OneSignal);
             return;
           }
 
@@ -269,7 +306,6 @@
       }
     }
 
-    // ✅ Go to public Estimate page first (no login required)
     function goToEstimate(e) {
       if (e) e.preventDefault();
       const dest = document.getElementById("quickWhere")?.value?.trim() || "";
@@ -293,7 +329,6 @@
       }
     }
   </script>
-
 </head>
 
 <body>
