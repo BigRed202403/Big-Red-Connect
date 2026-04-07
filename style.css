@@ -1,6 +1,6 @@
 /* ==========================================================
    BIG RED CONNECT – Global Stylesheet
-   Version: October 2025 (Unified + Fixed Calculator Layout)
+   Version: April 2026 (Homepage Ticker + Availability Stack)
 ========================================================== */
 
 /* ==============================
@@ -30,14 +30,26 @@ h1, h2, h3, p {
    TOP BAR (secondary pages)
 ============================== */
 .topbar {
-  display:flex;justify-content:flex-start;align-items:center;
-  gap:10px;padding:10px 14px;background:#0b0b0b;border-bottom:1px solid #111;
-  position:sticky;top:0;z-index:1000;
+  display:flex;
+  justify-content:flex-start;
+  align-items:center;
+  gap:10px;
+  padding:10px 14px;
+  background:#0b0b0b;
+  border-bottom:1px solid #111;
+  position:sticky;
+  top:0;
+  z-index:1000;
 }
 .home-link {
-  display:inline-block;padding:8px 12px;border-radius:8px;text-decoration:none;
+  display:inline-block;
+  padding:8px 12px;
+  border-radius:8px;
+  text-decoration:none;
   background:linear-gradient(180deg, var(--red), var(--red-dark));
-  border:1px solid var(--red); color:#fff; font-weight:700;
+  border:1px solid var(--red);
+  color:#fff;
+  font-weight:700;
   box-shadow:0 2px 8px rgba(255,0,0,.25);
 }
 
@@ -66,20 +78,46 @@ h1, h2, h3, p {
 h1 { color:#ff1a1a; font-size:2em; margin-top:10px; letter-spacing:0.5px; }
 h2 { color:#ff1a1a; font-size:1.4em; margin-top:30px; }
 .section-title { margin-bottom:10px; }
-.tagline { color:#ccc; font-size:1em; margin-bottom:20px; }
+.tagline {
+  color:#ccc;
+  font-size:1em;
+  margin-bottom:14px;
+}
 .hint { color:#888; font-size:.9em; margin-top:6px; }
 
 /* ==============================
-   STATUS PILL
+   HOMEPAGE TICKER
+============================== */
+.ticker {
+  background: #111;
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 8px 12px;
+  border-top: 1px solid #222;
+  border-bottom: 1px solid #222;
+  text-align: center;
+  max-width: 680px;
+  margin: 0 auto 10px;
+}
+.ticker.hidden {
+  display: none;
+}
+
+/* ==============================
+   STATUS / AVAILABILITY PILL
 ============================== */
 .status {
   display:inline-block;
   padding:10px 16px;
   border-radius:25px;
   font-size:0.95em;
-  margin:15px auto 20px;
+  margin:10px auto 20px;
   text-align:center;
   max-width:90%;
+}
+.status--loading {
+  opacity: 0.8;
 }
 .status.online  { background:rgba(76,175,80,0.15); color:#4CAF50; border:1px solid #4CAF50; }
 .status.away    { background:rgba(255,204,0,0.15); color:#ffcc00; border:1px solid #ffcc00; }
@@ -113,6 +151,7 @@ h2 { color:#ff1a1a; font-size:1.4em; margin-top:30px; }
 .btn.secondary { background:linear-gradient(180deg,#333,#111); border-color:#444; }
 .btn:hover     { transform:translateY(-2px); box-shadow:0 5px 15px rgba(255,0,0,0.35); }
 .btn:active    { transform:scale(0.97); box-shadow:0 0 8px rgba(255,0,0,0.5) inset; }
+
 /* Make primary CTA full width */
 .cta-group .btn.primary {
   grid-column: span 2;
@@ -126,6 +165,7 @@ h2 { color:#ff1a1a; font-size:1.4em; margin-top:30px; }
   line-height: 1.5;
   text-align: left;
 }
+
 /* ==============================
    TILE GRID
 ============================== */
@@ -148,7 +188,11 @@ h2 { color:#ff1a1a; font-size:1.4em; margin-top:30px; }
   transition:all .2s ease;
   box-shadow:0 2px 6px rgba(255,0,0,0.1);
 }
-.tile:hover { transform:translateY(-2px); border-color:var(--red); box-shadow:0 0 10px rgba(255,0,0,0.28); }
+.tile:hover {
+  transform:translateY(-2px);
+  border-color:var(--red);
+  box-shadow:0 0 10px rgba(255,0,0,0.28);
+}
 
 /* ==============================
    INFO SECTIONS
@@ -193,7 +237,10 @@ h2 { color:#ff1a1a; font-size:1.4em; margin-top:30px; }
   border-radius:10px;
   margin:20px 0 25px;
 }
-#airport-note,#event-note,#rushhour-note,#fairness-note {
+#airport-note,
+#event-note,
+#rushhour-note,
+#fairness-note {
   text-align:left;
   color:#ccc;
   font-size:0.95em;
@@ -223,19 +270,39 @@ h2 { color:#ff1a1a; font-size:1.4em; margin-top:30px; }
 /* ==============================
    FOOTER
 ============================== */
-footer { margin:40px 0 30px; font-size:0.85em; color:#aaa; }
-footer a { color:var(--red); text-decoration:none; }
-footer a:hover { text-decoration:underline; }
+footer {
+  margin:40px 0 30px;
+  font-size:0.85em;
+  color:#aaa;
+}
+footer a {
+  color:var(--red);
+  text-decoration:none;
+}
+footer a:hover {
+  text-decoration:underline;
+}
 
 /* ==============================
    RESPONSIVE
 ============================== */
 @media (max-width:600px) {
-  h1{font-size:1.7em;}
-  .main-logo{width:180px;margin-top:-20px;}
-  .info-section{padding:15px;margin:15px;}
-  #map{height:220px;}
-  .btn{width:100%;font-size:1em;}
+  h1 { font-size:1.7em; }
+  .main-logo { width:180px; margin-top:-20px; }
+  .info-section { padding:15px; margin:15px; }
+  #map { height:220px; }
+  .btn { width:100%; font-size:1em; }
+
+  .ticker {
+    font-size: 0.86rem;
+    padding: 8px 10px;
+    margin: 0 12px 10px;
+  }
+
+  .status {
+    max-width: calc(100% - 24px);
+    margin: 10px 12px 18px;
+  }
 }
 
 /* ==============================
@@ -256,7 +323,11 @@ footer a:hover { text-decoration:underline; }
   color:#c00;
   background:transparent;
 }
-.btn-toggle.active { background:#c00; color:#fff; border-color:#c00; }
+.btn-toggle.active {
+  background:#c00;
+  color:#fff;
+  border-color:#c00;
+}
 
 /* Button stack separation */
 #useLocPickup,
@@ -278,7 +349,6 @@ footer a:hover { text-decoration:underline; }
    Bigger form fields (iPhone-friendly)
    Applies to Quick Estimate + Ride Request
 =================================== */
-
 .info-section input,
 .info-section select,
 .info-section textarea {
