@@ -352,13 +352,13 @@
           (!data.expires || Date.now() < Date.parse(data.expires));
 
         if (!isActive) {
-          bar.style.display = "none";
+          bar.classList.add("hidden");
           text.textContent = "";
           return;
         }
 
         text.textContent = data.message.trim();
-        bar.style.display = "block";
+        bar.classList.remove("hidden");
       } catch (e) {
         console.log("Ticker load error:", e);
       }
@@ -368,19 +368,6 @@
 
 <body>
 
-  <!-- Homepage Ticker -->
-  <div id="tickerBar" style="
-    display:none;
-    background:#111;
-    border-bottom:1px solid #b30000;
-    color:#fff;
-    font-size:.85rem;
-    padding:8px 10px;
-    text-align:center;
-  ">
-    <span id="tickerText"></span>
-  </div>
-
   <!-- 🌆 Hero area -->
   <div class="hero"></div>
 
@@ -389,6 +376,11 @@
 
   <!-- Tagline -->
   <p class="tagline">Veteran Owned · Flat Rate Rides · Trusted Local Driver</p>
+
+  <!-- Homepage Ticker -->
+  <div id="tickerBar" class="ticker hidden">
+    <span id="tickerText"></span>
+  </div>
 
   <!-- Dynamic Status Pill -->
   <div id="status-pill" class="status status--loading">Checking status…</div>
@@ -559,6 +551,23 @@
   </script>
 
   <style>
+    .ticker {
+      background: #111;
+      color: #fff;
+      font-weight: 600;
+      font-size: 0.9rem;
+      padding: 8px 12px;
+      border-top: 1px solid #222;
+      border-bottom: 1px solid #222;
+      text-align: center;
+      max-width: 680px;
+      margin: 0 auto 10px;
+    }
+
+    .ticker.hidden {
+      display: none;
+    }
+
     #refreshButton {
       position: fixed;
       bottom: 20px;
