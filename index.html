@@ -325,44 +325,6 @@
         window.location.href = "/rider-login.html?next=profile";
       }
     }
-
-    /* ------------------------------------------------------
-       HOMEPAGE TICKER
-       ------------------------------------------------------ */
-    const TICKER_WORKER = "https://homepage-ticker.bigredtransportation.workers.dev/";
-
-    async function loadTicker() {
-      try {
-        const res = await fetch(TICKER_WORKER + "?t=" + Date.now(), {
-          cache: "no-store"
-        });
-        if (!res.ok) return;
-
-        const data = await res.json();
-        const bar = document.getElementById("tickerBar");
-        const text = document.getElementById("tickerText");
-
-        if (!bar || !text) return;
-
-        const isActive =
-          data &&
-          data.active === true &&
-          typeof data.message === "string" &&
-          data.message.trim().length > 0 &&
-          (!data.expires || Date.now() < Date.parse(data.expires));
-
-        if (!isActive) {
-          bar.classList.add("hidden");
-          text.textContent = "";
-          return;
-        }
-
-        text.textContent = data.message.trim();
-        bar.classList.remove("hidden");
-      } catch (e) {
-        console.log("Ticker load error:", e);
-      }
-    }
   </script>
 </head>
 
@@ -382,8 +344,8 @@
     <span id="tickerText"></span>
   </div>
 
-  <!-- Dynamic Status Pill -->
-  <div id="status-pill" class="status status--loading">Checking status…</div>
+  <!-- Availability Pill -->
+  <div id="status-pill" class="status status--loading">Checking availability…</div>
 
   <!-- Floating Refresh Button -->
   <button id="refreshButton" title="Refresh Page">🔄 Refresh</button>
@@ -520,13 +482,8 @@
     window.addEventListener("load", initQuickSearch);
   </script>
 
-  <!-- Status Pill -->
-  <script src="status.js?v=20260116"></script>
-
-  <!-- Homepage Ticker Load -->
-  <script>
-    window.addEventListener("load", loadTicker);
-  </script>
+  <!-- Status + Ticker -->
+  <script src="status.js?v=20260407"></script>
 
   <!-- Floating Refresh -->
   <script>
@@ -551,23 +508,6 @@
   </script>
 
   <style>
-    .ticker {
-      background: #111;
-      color: #fff;
-      font-weight: 600;
-      font-size: 0.9rem;
-      padding: 8px 12px;
-      border-top: 1px solid #222;
-      border-bottom: 1px solid #222;
-      text-align: center;
-      max-width: 680px;
-      margin: 0 auto 10px;
-    }
-
-    .ticker.hidden {
-      display: none;
-    }
-
     #refreshButton {
       position: fixed;
       bottom: 20px;
