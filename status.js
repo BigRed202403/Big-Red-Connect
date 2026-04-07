@@ -1,16 +1,12 @@
 // ===============================
 // Big Red Connect — status.js
-// Fast Sync Version (Patched for KV Worker Dec 2025)
+// Availability Pill + Homepage Ticker
 // ===============================
 (function () {
   const TZ = "America/Chicago";
-
-  // NEW: Your KV-powered Cloudflare Worker
   const CLOUD_URL = "https://bigred-status-updater.bigredtransportation.workers.dev/status";
+  const TICKER_URL = "https://homepage-ticker.bigredtransportation.workers.dev/";
 
-  // ----------------------------------
-  // Local cache setup (for quick load)
-  // ----------------------------------
   let lastKnownStatus = localStorage.getItem("bigred_status") || "offline";
 
   // ----------------------------------
@@ -27,7 +23,6 @@
 
       const j = await res.json();
 
-      // ✅ Prefer explicit status from KV Worker
       if (j && typeof j.status === "string") {
         return {
           status: j.status.toLowerCase(),
@@ -35,7 +30,6 @@
         };
       }
 
-      // ↩️ Fallback: derive from boolean "online" if present
       if ("online" in j) {
         return {
           status: j.online ? "online" : "offline",
@@ -44,10 +38,34 @@
       }
 
       throw new Error("Unrecognized payload format");
-
     } catch (e) {
       console.warn("⚠️ Worker fetch failed, defaulting offline:", e);
-      return { status: "offline", iso: new Date().toISOString() };
+      return {
+        status: "offline",
+        iso: new Date().toISOString()
+      };
+    }
+  }
+
+  // ----------------------------------
+  // Read homepage ticker from ticker worker
+  // ----------------------------------
+  async function readTicker() {
+    try {
+      const res = await fetch(`${TICKER_URL}?t=${Date.now()}`, {
+        cache: "no-store",
+        headers: { "Accept": "application/json" },
+      });
+
+      if (!res.ok) throw new Error("Ticker fetch failed");
+      return await res.json();
+    } catch (e) {
+      console.warn("⚠️ Ticker fetch failed:", e);
+      return {
+        active: false,
+        message: "",
+        expires: ""
+      };
     }
   }
 
@@ -55,46 +73,79 @@
   // Format timestamp (CT)
   // ----------------------------------
   function fmtCT(iso) {
-  const d = new Date(iso);
-  return new Intl.DateTimeFormat("en-US", {
-    timeZone: TZ,
-    month: "numeric",
-    day: "numeric",
-    year: "2-digit",
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  }).format(d);
-}
+    const d = new Date(iso);
+    return new Intl.DateTimeFormat("en-US", {
+      timeZone: TZ,
+      month: "numeric",
+      day: "numeric",
+      year: "2-digit",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    }).format(d);
+  }
 
   // ----------------------------------
-// Pill rendering logic
-// ----------------------------------
-function renderPillContent(status, iso) {
-  const stamp = fmtCT(iso);
-  switch (status) {
-    case "online":
-      return {
-        text: `🟢 On the road - text to plan your ride · Updated ${stamp}`,
-        cls: "online"
-      };
-    case "away":
-      return {
-        text: `🟡 Limited availability — text to check availability · Updated ${stamp}`,
-        cls: "away"
-      };
-    default:
-      return {
-        text: `🔴 Not currently driving — text to schedule ahead · Updated ${stamp}`,
-        cls: "offline"
-      };
-  }
-}
+  // Availability pill copy
   // ----------------------------------
-  // Render pill + broadcast update
+  function renderPillContent(status, iso) {
+    const stamp = fmtCT(iso);
+
+    switch (status) {
+      case "online":
+        return {
+          text: `🟢 Available — text to line it up · Updated ${stamp}`,
+          cls: "online"
+        };
+      case "away":
+        return {
+          text: `🟡 Limited availability — text to check · Updated ${stamp}`,
+          cls: "away"
+        };
+      default:
+        return {
+          text: `🔴 Not available right now — text to plan ahead · Updated ${stamp}`,
+          cls: "offline"
+        };
+    }
+  }
+
+  // ----------------------------------
+  // Render homepage ticker
+  // ----------------------------------
+  function renderTicker(tickerData) {
+    const bar = document.getElementById("tickerBar");
+    const text = document.getElementById("tickerText");
+
+    if (!bar || !text) return;
+
+    const isActive =
+      tickerData &&
+      tickerData.active === true &&
+      typeof tickerData.message === "string" &&
+      tickerData.message.trim().length > 0 &&
+      (!tickerData.expires || Date.now() < Date.parse(tickerData.expires));
+
+    if (!isActive) {
+      bar.classList.add("hidden");
+      text.textContent = "";
+      return;
+    }
+
+    text.textContent = tickerData.message.trim();
+    bar.classList.remove("hidden");
+  }
+
+  // ----------------------------------
+  // Render pill + ticker
   // ----------------------------------
   async function renderPill() {
-    const { status, iso } = await readStatus();
+    const [statusData, tickerData] = await Promise.all([
+      readStatus(),
+      readTicker()
+    ]);
+
+    const { status, iso } = statusData;
 
     const pill = document.getElementById("status-pill");
     if (pill) {
@@ -104,14 +155,15 @@ function renderPillContent(status, iso) {
       pill.classList.add(cls);
     }
 
-    // Save to cache
+    renderTicker(tickerData);
+
     localStorage.setItem("bigred_status", status);
 
-    // Notify all other scripts (live.html listens for this)
-    const event = new CustomEvent("statusUpdated", { detail: status });
+    const event = new CustomEvent("statusUpdated", {
+      detail: { status, iso, tickerData }
+    });
     document.dispatchEvent(event);
 
-    // Log transitions
     if (status !== lastKnownStatus) {
       console.log(`🔄 Status changed: ${lastKnownStatus} → ${status}`);
       lastKnownStatus = status;
@@ -119,10 +171,10 @@ function renderPillContent(status, iso) {
   }
 
   // ----------------------------------
-  // Auto-refresh (fast)
+  // Auto-refresh
   // ----------------------------------
   function scheduleAutoRefresh() {
-    setInterval(renderPill, 5000); // every 5 seconds
+    setInterval(renderPill, 5000);
   }
 
   // ----------------------------------
