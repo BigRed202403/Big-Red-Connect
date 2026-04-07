@@ -174,7 +174,6 @@
 
         await refreshPushDebug(OneSignal, { phase: "init-complete" });
 
-        // 🔁 Background subscription watcher for delayed iOS PWA registration
         if (OneSignal.Notifications.permission === true) {
           await startBackgroundSubscriptionWatcher(OneSignal);
         }
@@ -326,10 +325,61 @@
         window.location.href = "/rider-login.html?next=profile";
       }
     }
+
+    /* ------------------------------------------------------
+       HOMEPAGE TICKER
+       ------------------------------------------------------ */
+    const TICKER_WORKER = "https://homepage-ticker.bigredtransportation.workers.dev/";
+
+    async function loadTicker() {
+      try {
+        const res = await fetch(TICKER_WORKER + "?t=" + Date.now(), {
+          cache: "no-store"
+        });
+        if (!res.ok) return;
+
+        const data = await res.json();
+        const bar = document.getElementById("tickerBar");
+        const text = document.getElementById("tickerText");
+
+        if (!bar || !text) return;
+
+        const isActive =
+          data &&
+          data.active === true &&
+          typeof data.message === "string" &&
+          data.message.trim().length > 0 &&
+          (!data.expires || Date.now() < Date.parse(data.expires));
+
+        if (!isActive) {
+          bar.style.display = "none";
+          text.textContent = "";
+          return;
+        }
+
+        text.textContent = data.message.trim();
+        bar.style.display = "block";
+      } catch (e) {
+        console.log("Ticker load error:", e);
+      }
+    }
   </script>
 </head>
 
 <body>
+
+  <!-- Homepage Ticker -->
+  <div id="tickerBar" style="
+    display:none;
+    background:#111;
+    border-bottom:1px solid #b30000;
+    color:#fff;
+    font-size:.85rem;
+    padding:8px 10px;
+    text-align:center;
+  ">
+    <span id="tickerText"></span>
+  </div>
 
   <!-- 🌆 Hero area -->
   <div class="hero"></div>
@@ -480,6 +530,11 @@
 
   <!-- Status Pill -->
   <script src="status.js?v=20260116"></script>
+
+  <!-- Homepage Ticker Load -->
+  <script>
+    window.addEventListener("load", loadTicker);
+  </script>
 
   <!-- Floating Refresh -->
   <script>
