@@ -1,6 +1,6 @@
 /* ==========================================================
    BIG RED CONNECT – Global Stylesheet
-   Version: April 2026 (Homepage Ticker + Availability Stack)
+   Version: April 2026 (Clean + Stable + Animated Ticker)
 ========================================================== */
 
 /* ==============================
@@ -11,50 +11,23 @@
   --red-dark:#9a0000;
 }
 * { box-sizing: border-box; }
+
 body {
   margin: 0;
   font-family: "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", sans-serif;
   background-color: #000;
   color: #fff;
   text-align: center;
-  padding: 0;
 }
+
 h1, h2, h3, p {
   margin: 0 auto 10px;
   max-width: 600px;
   line-height: 1.5;
 }
-.smallnote { font-size:.8em;color:#777;margin-top:10px;line-height:1.4; }
 
 /* ==============================
-   TOP BAR (secondary pages)
-============================== */
-.topbar {
-  display:flex;
-  justify-content:flex-start;
-  align-items:center;
-  gap:10px;
-  padding:10px 14px;
-  background:#0b0b0b;
-  border-bottom:1px solid #111;
-  position:sticky;
-  top:0;
-  z-index:1000;
-}
-.home-link {
-  display:inline-block;
-  padding:8px 12px;
-  border-radius:8px;
-  text-decoration:none;
-  background:linear-gradient(180deg, var(--red), var(--red-dark));
-  border:1px solid var(--red);
-  color:#fff;
-  font-weight:700;
-  box-shadow:0 2px 8px rgba(255,0,0,.25);
-}
-
-/* ==============================
-   HERO + LOGO HEADER
+   HERO + LOGO
 ============================== */
 .hero {
   background-image: url("1A5072F2-8604-4CAB-BC84-E15D86D8CE73.png");
@@ -65,32 +38,26 @@ h1, h2, h3, p {
   border-radius: 0 0 15px 15px;
   box-shadow: 0 4px 20px rgba(255, 0, 0, 0.15);
 }
-.hero.small { display:none; }
 
-.logo-header { text-align:center; margin:18px 0 6px 0; }
-.logo-header img { width:200px; max-width:80%; height:auto; }
-
-.main-logo { width:220px; margin-top:-40px; }
+.main-logo {
+  width: 220px;
+  margin-top: -40px;
+}
 
 /* ==============================
-   HEADINGS + TAGLINE
+   TAGLINE
 ============================== */
-h1 { color:#ff1a1a; font-size:2em; margin-top:10px; letter-spacing:0.5px; }
-h2 { color:#ff1a1a; font-size:1.4em; margin-top:30px; }
-.section-title { margin-bottom:10px; }
 .tagline {
   color:#ccc;
   font-size:1em;
   margin-bottom:14px;
 }
-.hint { color:#888; font-size:.9em; margin-top:6px; }
 
 /* ==============================
-   HOMEPAGE TICKER
+   HOMEPAGE TICKER (FIXED)
 ============================== */
 .ticker {
   background: #111;
-  color: #fff;
   border-top: 1px solid #222;
   border-bottom: 1px solid #222;
   max-width: 680px;
@@ -111,8 +78,8 @@ h2 { color:#ff1a1a; font-size:1.4em; margin-top:30px; }
   display: flex;
   width: max-content;
   align-items: center;
-  white-space: nowrap;
   gap: 16px;
+  white-space: nowrap;
   padding: 8px 0;
   animation: ticker-scroll 14s linear infinite;
   will-change: transform;
@@ -128,36 +95,20 @@ h2 { color:#ff1a1a; font-size:1.4em; margin-top:30px; }
 .ticker-sep {
   flex: 0 0 auto;
   color: #777;
-  font-size: 0.9rem;
 }
 
 @keyframes ticker-scroll {
-  0% {
-    transform: translateX(100%);
-  }
-  100% {
-    transform: translateX(-100%);
-  }
+  0%   { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
 }
 
-.ticker:hover .ticker-track,
-.ticker:active .ticker-track {
+.ticker:active .ticker-track,
+.ticker:hover .ticker-track {
   animation-play-state: paused;
 }
 
-@media (max-width:600px) {
-  .ticker {
-    margin: 0 12px 10px;
-  }
-
-  .ticker-text,
-  .ticker-sep {
-    font-size: 0.86rem;
-  }
-}
-
 /* ==============================
-   STATUS / AVAILABILITY PILL
+   AVAILABILITY PILL
 ============================== */
 .status {
   display:inline-block;
@@ -165,15 +116,28 @@ h2 { color:#ff1a1a; font-size:1.4em; margin-top:30px; }
   border-radius:25px;
   font-size:0.95em;
   margin:10px auto 20px;
-  text-align:center;
   max-width:90%;
 }
-.status--loading {
-  opacity: 0.8;
+
+.status--loading { opacity: 0.8; }
+
+.status.online  {
+  background:rgba(76,175,80,0.15);
+  color:#4CAF50;
+  border:1px solid #4CAF50;
 }
-.status.online  { background:rgba(76,175,80,0.15); color:#4CAF50; border:1px solid #4CAF50; }
-.status.away    { background:rgba(255,204,0,0.15); color:#ffcc00; border:1px solid #ffcc00; }
-.status.offline { background:rgba(255,68,68,0.15); color:#ff4c4c; border:1px solid #ff4c4c; }
+
+.status.away {
+  background:rgba(255,204,0,0.15);
+  color:#ffcc00;
+  border:1px solid #ffcc00;
+}
+
+.status.offline {
+  background:rgba(255,68,68,0.15);
+  color:#ff4c4c;
+  border:1px solid #ff4c4c;
+}
 
 /* ==============================
    BUTTONS
@@ -183,39 +147,38 @@ h2 { color:#ff1a1a; font-size:1.4em; margin-top:30px; }
   grid-template-columns:repeat(2,minmax(140px,1fr));
   gap:12px;
   max-width:680px;
-  margin:16px auto 6px;
+  margin:16px auto;
   padding:0 16px;
 }
+
 .btn {
-  display:inline-block;
-  padding:14px 20px;
+  padding:14px;
   border-radius:10px;
   text-decoration:none;
   font-weight:700;
   color:#fff;
   transition:all .2s ease;
-  box-shadow:0 3px 10px rgba(255,0,0,.2);
-  position:relative;
-  overflow:hidden;
-  border:1px solid transparent;
 }
-.btn.primary   { background:linear-gradient(180deg,var(--red),var(--red-dark)); border-color:var(--red); }
-.btn.secondary { background:linear-gradient(180deg,#333,#111); border-color:#444; }
-.btn:hover     { transform:translateY(-2px); box-shadow:0 5px 15px rgba(255,0,0,0.35); }
-.btn:active    { transform:scale(0.97); box-shadow:0 0 8px rgba(255,0,0,0.5) inset; }
 
-/* Make primary CTA full width */
+.btn.primary {
+  background:linear-gradient(180deg,var(--red),var(--red-dark));
+}
+
+.btn.secondary {
+  background:#222;
+  border:1px solid #444;
+}
+
 .cta-group .btn.primary {
   grid-column: span 2;
 }
+
 .cta-note {
-  max-width: 680px;
-  margin: 10px auto 18px;
-  padding: 0 20px;
-  color: #ddd;
-  font-size: 1em;
-  line-height: 1.5;
-  text-align: left;
+  max-width:680px;
+  margin:10px auto 18px;
+  padding:0 20px;
+  color:#ddd;
+  text-align:left;
 }
 
 /* ==============================
@@ -226,24 +189,17 @@ h2 { color:#ff1a1a; font-size:1.4em; margin-top:30px; }
   grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
   gap:14px;
   max-width:680px;
-  margin:24px auto 10px;
+  margin:24px auto;
   padding:0 18px;
 }
+
 .tile {
   background:#111;
   border:1px solid #222;
   border-radius:10px;
-  padding:18px 12px;
-  color:#fff;
+  padding:18px;
   text-decoration:none;
-  font-size:0.95em;
-  transition:all .2s ease;
-  box-shadow:0 2px 6px rgba(255,0,0,0.1);
-}
-.tile:hover {
-  transform:translateY(-2px);
-  border-color:var(--red);
-  box-shadow:0 0 10px rgba(255,0,0,0.28);
+  color:#fff;
 }
 
 /* ==============================
@@ -256,67 +212,6 @@ h2 { color:#ff1a1a; font-size:1.4em; margin-top:30px; }
   margin:25px auto;
   max-width:650px;
   text-align:left;
-  box-shadow:0 2px 10px rgba(255,0,0,0.15);
-}
-.info-section.centered { text-align:center; }
-.info-section h2 { text-align:center; }
-.info-section ul { text-align:left; padding-left:20px; }
-.info-section li { margin-bottom:8px; }
-
-/* ==============================
-   CALCULATOR + MAP
-============================== */
-.calculator label {
-  display:block;
-  text-align:left;
-  font-weight:600;
-  margin:12px auto 6px;
-  max-width:600px;
-}
-.calculator input,
-.calculator select {
-  width:100%;
-  padding:12px;
-  border:1px solid #333;
-  border-radius:8px;
-  background:#111;
-  color:#fff;
-  margin-bottom:12px;
-}
-#map {
-  height:260px;
-  border:2px solid var(--red);
-  border-radius:10px;
-  margin:20px 0 25px;
-}
-#airport-note,
-#event-note,
-#rushhour-note,
-#fairness-note {
-  text-align:left;
-  color:#ccc;
-  font-size:0.95em;
-  margin:6px auto;
-  max-width:600px;
-}
-#airport-note { color:#ffcc00; font-weight:600; }
-#event-note  { color:#ffcc00; }
-#result {
-  background:#111;
-  border:1px solid var(--red);
-  border-radius:12px;
-  padding:18px;
-  margin-top:22px;
-  text-align:left;
-  max-width:600px;
-  margin-inline:auto;
-}
-#result .total {
-  font-size:1.6em;
-  color:#ff4444;
-  font-weight:800;
-  text-align:center;
-  margin:0 0 8px;
 }
 
 /* ==============================
@@ -327,105 +222,36 @@ footer {
   font-size:0.85em;
   color:#aaa;
 }
-footer a {
-  color:var(--red);
-  text-decoration:none;
-}
-footer a:hover {
-  text-decoration:underline;
-}
 
 /* ==============================
-   RESPONSIVE
+   MOBILE OPTIMIZATION
 ============================== */
 @media (max-width:600px) {
-  h1 { font-size:1.7em; }
   .main-logo { width:180px; margin-top:-20px; }
-  .info-section { padding:15px; margin:15px; }
-  #map { height:220px; }
-  .btn { width:100%; font-size:1em; }
 
   .ticker {
-    font-size: 0.86rem;
-    padding: 8px 10px;
     margin: 0 12px 10px;
   }
 
   .status {
-    max-width: calc(100% - 24px);
     margin: 10px 12px 18px;
+  }
+
+  .btn {
+    width:100%;
   }
 }
 
 /* ==============================
-   FARE CALCULATOR FIXES
+   INPUT FIELD SIZE (iPhone fix)
 ============================== */
-.ride-mode-toggle {
-  display:flex;
-  gap:12px;
-  justify-content:center;
-  margin:15px 0 18px;
-}
-.btn-toggle {
-  flex:1;
-  min-width:130px;
-  padding:10px 16px;
-  border-radius:10px;
-  border:1px solid #c00;
-  color:#c00;
-  background:transparent;
-}
-.btn-toggle.active {
-  background:#c00;
-  color:#fff;
-  border-color:#c00;
-}
-
-/* Button stack separation */
-#useLocPickup,
-#useLocDrop,
-#addStopBtn {
-  display:block;
-  width:100%;
-  margin-top:14px;
-  margin-bottom:18px;
-}
-#addStopBtn {
-  background:linear-gradient(180deg,#a30000,#7a0000);
-  border:1px solid #ff1a1a;
-  color:#fff;
-  font-weight:700;
-}
-
-/* ================================
-   Bigger form fields (iPhone-friendly)
-   Applies to Quick Estimate + Ride Request
-=================================== */
 .info-section input,
 .info-section select,
 .info-section textarea {
-  font-size: 18px;
-  line-height: 1.2;
-  padding: 14px 12px;
+  font-size:18px;
+  padding:14px 12px;
 }
 
-/* Make placeholders readable too */
-.info-section input::placeholder,
-.info-section textarea::placeholder {
-  font-size: 18px;
-  opacity: 0.7;
-}
-
-/* Optional: make dropdown text match */
-.info-section select option {
-  font-size: 18px;
-}
-
-/* Prevent iOS from shrinking/zooming weirdness */
 html {
   -webkit-text-size-adjust: 100%;
 }
-
-/* Additional spacing tweaks */
-#dropoff { margin-top:12px; }
-.info-section.calculator { padding-bottom:28px; }
