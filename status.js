@@ -114,27 +114,31 @@
   // Render homepage ticker
   // ----------------------------------
   function renderTicker(tickerData) {
-    const bar = document.getElementById("tickerBar");
-    const text = document.getElementById("tickerText");
+  const bar = document.getElementById("tickerBar");
+  const text = document.getElementById("tickerText");
+  const textClone = document.getElementById("tickerTextClone");
 
-    if (!bar || !text) return;
+  if (!bar || !text || !textClone) return;
 
-    const isActive =
-      tickerData &&
-      tickerData.active === true &&
-      typeof tickerData.message === "string" &&
-      tickerData.message.trim().length > 0 &&
-      (!tickerData.expires || Date.now() < Date.parse(tickerData.expires));
+  const isActive =
+    tickerData &&
+    tickerData.active === true &&
+    typeof tickerData.message === "string" &&
+    tickerData.message.trim().length > 0 &&
+    (!tickerData.expires || Date.now() < Date.parse(tickerData.expires));
 
-    if (!isActive) {
-      bar.classList.add("hidden");
-      text.textContent = "";
-      return;
-    }
-
-    text.textContent = tickerData.message.trim();
-    bar.classList.remove("hidden");
+  if (!isActive) {
+    bar.classList.add("hidden");
+    text.textContent = "";
+    textClone.textContent = "";
+    return;
   }
+
+  const msg = tickerData.message.trim();
+  text.textContent = msg;
+  textClone.textContent = msg;
+  bar.classList.remove("hidden");
+}
 
   // ----------------------------------
   // Render pill + ticker
