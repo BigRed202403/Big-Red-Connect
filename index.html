@@ -340,9 +340,16 @@
   <p class="tagline">Veteran Owned · Flat Rate Rides · Trusted Local Driver</p>
 
   <!-- Homepage Ticker -->
-  <div id="tickerBar" class="ticker hidden">
-    <span id="tickerText"></span>
+  <div id="tickerBar" class="ticker hidden" aria-live="polite">
+  <div class="ticker-viewport">
+    <div id="tickerTrack" class="ticker-track">
+      <span id="tickerText" class="ticker-text"></span>
+      <span class="ticker-sep">•</span>
+      <span id="tickerTextClone" class="ticker-text"></span>
+      <span class="ticker-sep">•</span>
+    </div>
   </div>
+</div>
 
   <!-- Availability Pill -->
   <div id="status-pill" class="status status--loading">Checking availability…</div>
