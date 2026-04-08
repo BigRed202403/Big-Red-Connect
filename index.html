@@ -43,10 +43,8 @@
       if (el) el.textContent = msg;
     }
 
-    function setPushDebug(obj) {
-      const el = document.getElementById("pushDebug");
-      if (el) el.textContent = JSON.stringify(obj, null, 2);
-    }
+    /* Debug disabled on public page */
+    function setPushDebug(obj) {}
 
     async function refreshPushDebug(OneSignal, extra = {}) {
       try {
@@ -341,15 +339,15 @@
 
   <!-- Homepage Ticker -->
   <div id="tickerBar" class="ticker hidden" aria-live="polite">
-  <div class="ticker-viewport">
-    <div id="tickerTrack" class="ticker-track">
-      <span id="tickerText" class="ticker-text"></span>
-      <span class="ticker-sep">•</span>
-      <span id="tickerTextClone" class="ticker-text"></span>
-      <span class="ticker-sep">•</span>
+    <div class="ticker-viewport">
+      <div id="tickerTrack" class="ticker-track">
+        <span id="tickerText" class="ticker-text"></span>
+        <span class="ticker-sep">•</span>
+        <span id="tickerTextClone" class="ticker-text"></span>
+        <span class="ticker-sep">•</span>
+      </div>
     </div>
   </div>
-</div>
 
   <!-- Availability Pill -->
   <div id="status-pill" class="status status--loading">Checking availability…</div>
@@ -398,20 +396,6 @@
     <p id="pushStatus" style="font-size:0.8em; color:#aaa; margin-top:10px;">
       Initializing push…
     </p>
-
-    <pre id="pushDebug" style="
-      margin:10px auto 0;
-      max-width:90%;
-      text-align:left;
-      background:#111;
-      color:#bbb;
-      border:1px solid #222;
-      border-radius:8px;
-      padding:10px;
-      font-size:0.72em;
-      white-space:pre-wrap;
-      word-break:break-word;
-    "></pre>
   </div>
 
   <!-- Quick Destination Form -->
