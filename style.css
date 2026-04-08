@@ -98,7 +98,7 @@ h1, h2, h3, p {
 }
 
 @keyframes ticker-scroll {
-  0%   { transform: translateX(40%); }
+  0%   { transform: translateX(20%); }
   100% { transform: translateX(-100%); }
 }
 
