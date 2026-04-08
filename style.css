@@ -81,7 +81,7 @@ h1, h2, h3, p {
   gap: 16px;
   white-space: nowrap;
   padding: 8px 0;
-  animation: ticker-scroll 14s linear infinite;
+  animation: ticker-scroll 30s linear infinite;
   will-change: transform;
 }
 
