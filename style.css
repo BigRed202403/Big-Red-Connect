@@ -91,17 +91,74 @@ h2 { color:#ff1a1a; font-size:1.4em; margin-top:30px; }
 .ticker {
   background: #111;
   color: #fff;
-  font-weight: 600;
-  font-size: 0.9rem;
-  padding: 8px 12px;
   border-top: 1px solid #222;
   border-bottom: 1px solid #222;
-  text-align: center;
   max-width: 680px;
   margin: 0 auto 10px;
+  overflow: hidden;
 }
+
 .ticker.hidden {
   display: none;
+}
+
+.ticker-viewport {
+  overflow: hidden;
+  width: 100%;
+}
+
+.ticker-track {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  white-space: nowrap;
+  padding: 8px 0;
+  padding-left: 100%;
+  will-change: transform;
+  animation: tickerMarquee 18s linear infinite;
+}
+
+.ticker-text {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #fff;
+}
+
+.ticker-sep {
+  color: #777;
+  font-size: 0.9rem;
+}
+
+@keyframes tickerMarquee {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.ticker:active .ticker-track {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ticker-track {
+    animation: none;
+    padding-left: 0;
+  }
+}
+
+@media (max-width:600px) {
+  .ticker {
+    margin: 0 12px 10px;
+  }
+
+  .ticker-track {
+    padding: 8px 0;
+    padding-left: 100%;
+  }
+
+  .ticker-text,
+  .ticker-sep {
+    font-size: 0.86rem;
+  }
 }
 
 /* ==============================
