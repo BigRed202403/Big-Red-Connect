@@ -52,17 +52,10 @@
         return;
       }
       await OneSignal.Slidedown.promptPush();
-
-// 🔥 FORCE subscription creation
-await OneSignal.Notifications.requestPermission();
-
-// Give iOS a moment
-await new Promise(r => setTimeout(r, 1000));
-
-// 🔥 Check subscription status
-const isSubscribed = await OneSignal.User.PushSubscription.optedIn;
-
-console.log("Subscribed:", isSubscribed);
+      await OneSignal.Notifications.requestPermission();
+      await new Promise(r => setTimeout(r, 1000));
+      const isSubscribed = await OneSignal.User.PushSubscription.optedIn;
+      console.log("Subscribed:", isSubscribed);
     });
   }
 </script>
@@ -95,7 +88,7 @@ section{background:var(--panel);border:1px solid var(--border);border-radius:8px
 section h2{margin:4px 0 8px;font-size:1rem;border-bottom:1px solid #222;padding-bottom:4px;}
 .meta{font-size:.78rem;color:var(--muted);margin-top:4px;line-height:1.15rem;}
 select,button,input,textarea{font-family:inherit;}
-select,button,input[type=text],input[type=url]{padding:7px 9px;border-radius:6px;border:none;margin:4px 0;font-weight:600;font-size:.85rem;}
+select,button,input[type=text],input[type=url],input[type=datetime-local]{padding:7px 9px;border-radius:6px;border:none;margin:4px 0;font-weight:600;font-size:.85rem;}
 textarea{width:100%;min-height:90px;background:#111;color:#fff;border:1px solid var(--red);border-radius:6px;padding:8px;resize:vertical;font-size:.85rem;}
 .row{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:6px 0;}
 .preview-box{margin-top:6px;padding:8px;border-radius:6px;border:1px dashed #444;background:#050505;font-size:.8rem;color:#ddd;line-height:1.2rem;}
@@ -130,6 +123,37 @@ body.mode-admin .driver-only{display:none;}
 .minihint{font-size:.72rem;color:#888;margin-top:2px;line-height:1.1rem;}
 .stop-row{display:flex;gap:6px;align-items:center;margin:6px 0;}
 .stop-row input{flex:1;min-width:180px;}
+
+.ticker-preview{
+  background:#0a0a0a;
+  border:1px solid #2a2a2a;
+  border-radius:8px;
+  overflow:hidden;
+  margin-top:8px;
+}
+.ticker-preview-bar{
+  background:#111;
+  border-top:1px solid #222;
+  border-bottom:1px solid #222;
+  color:#fff;
+  font-weight:600;
+  font-size:.86rem;
+  padding:8px 10px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.ticker-status-chip{
+  display:inline-block;
+  padding:3px 8px;
+  border-radius:999px;
+  font-size:.72rem;
+  border:1px solid #444;
+  background:#111;
+  color:#ddd;
+}
+.ticker-status-chip.live{border-color:#1d6f42;color:#90f0b2;}
+.ticker-status-chip.off{border-color:#666;color:#bbb;}
 
 @media (max-width:520px){
   .header-left img{height:34px;}
@@ -354,7 +378,6 @@ body.modal-open{ overflow:hidden; }
         <button class="btn btn-secondary" id="btnClearManualRide" title="Clear Form">🧹 Clear</button>
       </div>
 
-      <!-- ✅ FARE ESTIMATE UI -->
       <div class="preview-box" id="manualEstimateBox" style="margin-top:10px;">
         <strong>Estimate</strong><br>
         <span id="manualEstMiles">Miles: —</span><br>
@@ -411,6 +434,52 @@ body.modal-open{ overflow:hidden; }
       </div>
 
       <p class="meta">Sends a push notification to all riders tagged <code>env = "live"</code>.</p>
+    </section>
+
+    <section class="admin-only" style="margin-top:12px;">
+      <h2>Homepage Ticker</h2>
+
+      <div class="row">
+        <label class="smalllabel" for="tickerActiveToggle" style="margin:0;">Ticker active?</label>
+        <select id="tickerActiveToggle" style="min-width:160px;">
+          <option value="true">Yes</option>
+          <option value="false" selected>No</option>
+        </select>
+
+        <label class="smalllabel" for="tickerExpires" style="margin:0;">Expires (optional)</label>
+        <input id="tickerExpires" type="datetime-local" style="min-width:220px;">
+      </div>
+
+      <label style="font-size:.8rem;color:#ccc;">Ticker message</label>
+      <textarea id="tickerMessage" placeholder="🚗 Big Red is LIVE across OKC tonight"></textarea>
+
+      <div class="row">
+        <button class="btn btn-ghost" id="tickerPresetLive" type="button">LIVE</button>
+        <button class="btn btn-ghost" id="tickerPresetAirport" type="button">AIRPORT</button>
+        <button class="btn btn-ghost" id="tickerPresetWeekend" type="button">WEEKEND</button>
+        <button class="btn btn-ghost" id="tickerPresetCampus" type="button">CAMPUS</button>
+        <button class="btn btn-ghost" id="tickerPresetOffline" type="button">OFFLINE</button>
+      </div>
+
+      <div class="ticker-preview">
+        <div class="preview-box" style="border:none;background:transparent;margin:0;">
+          <strong>Current ticker state</strong><br>
+          <span id="tickerStateBadge" class="ticker-status-chip off">Inactive</span>
+          <span id="tickerExpiresText" style="color:#888;font-size:.75rem;"></span>
+        </div>
+        <div class="ticker-preview-bar" id="tickerPreviewText">No ticker message set.</div>
+      </div>
+
+      <div class="row" style="margin-top:8px;">
+        <button class="btn btn-primary" id="saveTickerBtn" title="Save Ticker">💾 Save Ticker</button>
+        <button class="btn btn-secondary" id="clearTickerBtn" title="Clear Ticker">🧹 Clear Ticker</button>
+        <button class="btn btn-ghost" id="reloadTickerBtn" title="Reload Ticker">🔄 Reload</button>
+      </div>
+
+      <p class="meta">
+        Controls the homepage ticker at <code>homepage-ticker.bigredtransportation.workers.dev</code>.<br>
+        Leave expires blank for manual control. Setting inactive hides the ticker immediately.
+      </p>
     </section>
 
     <section class="admin-only" style="margin-top:12px;">
@@ -571,6 +640,7 @@ const STATUS_WORKER   = "https://bigred-status-updater.bigredtransportation.work
 const LOCATION_WORKER = "https://update-location.bigredtransportation.workers.dev";
 const POST_WORKER     = "https://post-to-live-beta.bigredtransportation.workers.dev";
 const PUSH_WORKER     = "https://bigred-push.bigredtransportation.workers.dev";
+const TICKER_WORKER   = "https://homepage-ticker.bigredtransportation.workers.dev";
 const BOOKINGS_API    = "https://bigred-bookings.bigredtransportation.workers.dev";
 
 const AUTH_SECRET = "BigRedPrivateKey2025";
@@ -629,6 +699,14 @@ const TEMPLATES={
   OFFLINE:{title:"Big Red is Offline",message:"🔴 Big Red is offline — text RED for next run info."}
 };
 const CAPTION_KEYS=["LIVE","AIRPORT","WEEKEND","CAMPUS","OFFLINE"];
+
+const TICKER_PRESETS = {
+  LIVE: "🚗 Big Red is LIVE across OKC tonight",
+  AIRPORT: "✈️ Airport runs are open — text ahead and line it up",
+  WEEKEND: "🍻 Going out tonight? Line up your ride before things get busy",
+  CAMPUS: "🎓 Campus traffic stacks fast late — text ahead and set it up",
+  OFFLINE: "🔴 Big Red is offline right now — text ahead for the next run"
+};
 
 /* =========================
    STATE
@@ -722,6 +800,29 @@ function logEffectiveOnce(lat,lng,src,ts){
   lastEffKey = key;
   lastEffLog = now;
   log(`Effective Location: lat=${lat} lng=${lng} src=${src}${ts ? (" ts="+ts) : ""}`);
+}
+function toDatetimeLocalValue(iso){
+  if(!iso) return "";
+  try{
+    const d = new Date(iso);
+    const pad = (n)=>String(n).padStart(2,"0");
+    const year = d.getFullYear();
+    const month = pad(d.getMonth()+1);
+    const day = pad(d.getDate());
+    const hour = pad(d.getHours());
+    const min = pad(d.getMinutes());
+    return `${year}-${month}-${day}T${hour}:${min}`;
+  }catch(e){
+    return "";
+  }
+}
+function fromDatetimeLocalValue(v){
+  if(!v) return "";
+  try{
+    return new Date(v).toISOString();
+  }catch(e){
+    return "";
+  }
 }
 
 /* =========================
@@ -846,9 +947,7 @@ function applyMode(mode){
 ========================= */
 const OKC_BOUNDS = (window.google && google.maps)
   ? new google.maps.LatLngBounds(
-      // Southwest corner
       new google.maps.LatLng(35.15, -97.75),
-      // Northeast corner (extends past Shawnee)
       new google.maps.LatLng(35.62, -96.75)
     )
   : null;
@@ -982,6 +1081,142 @@ async function postToLive(){
 function copyCaption(){
   navigator.clipboard.writeText(captionBox().value)
     .then(()=>showToast("Copied"),()=>showToast("Copy failed"));
+}
+
+/* =========================
+   HOMEPAGE TICKER
+========================= */
+function updateTickerPreview(){
+  const msg = ($("tickerMessage")?.value || "").trim();
+  const active = ($("tickerActiveToggle")?.value === "true");
+  const expiresVal = $("tickerExpires")?.value || "";
+  const expiresIso = fromDatetimeLocalValue(expiresVal);
+
+  const badge = $("tickerStateBadge");
+  const preview = $("tickerPreviewText");
+  const expiresText = $("tickerExpiresText");
+
+  if(badge){
+    badge.textContent = active ? "Active" : "Inactive";
+    badge.className = active ? "ticker-status-chip live" : "ticker-status-chip off";
+  }
+
+  if(preview){
+    preview.textContent = msg || "No ticker message set.";
+  }
+
+  if(expiresText){
+    expiresText.textContent = expiresIso ? ` • Expires ${formatDateTime(expiresIso)}` : "";
+  }
+}
+
+function setTickerPreset(key){
+  if(!TICKER_PRESETS[key]) return;
+  $("tickerMessage").value = TICKER_PRESETS[key];
+  $("tickerActiveToggle").value = "true";
+  updateTickerPreview();
+}
+
+async function loadTicker(){
+  try{
+    const r = await fetch(`${TICKER_WORKER}/?t=${Date.now()}`, {
+      method:"GET",
+      headers:{ "Accept":"application/json" }
+    });
+    if(!r.ok) throw new Error(`Ticker GET failed (${r.status})`);
+    const data = await r.json();
+
+    $("tickerActiveToggle").value = data.active ? "true" : "false";
+    $("tickerMessage").value = data.message || "";
+    $("tickerExpires").value = toDatetimeLocalValue(data.expires || "");
+    updateTickerPreview();
+
+    log("Ticker GET OK: " + JSON.stringify(data));
+  }catch(e){
+    log("Ticker load error: " + e.message);
+  }
+}
+
+async function saveTicker(){
+  const active = $("tickerActiveToggle").value === "true";
+  const message = ($("tickerMessage").value || "").trim();
+  const expires = fromDatetimeLocalValue($("tickerExpires").value || "");
+
+  if(active && !message){
+    showToast("Ticker message required when active");
+    return;
+  }
+
+  const payload = {
+    active,
+    message,
+    expires,
+    timestamp: new Date().toISOString()
+  };
+
+  try{
+    log("Ticker PUT … " + JSON.stringify(payload));
+    const r = await fetch(TICKER_WORKER, {
+      method:"PUT",
+      headers:{
+        "Content-Type":"application/json",
+        "X-Admin-Secret": AUTH_SECRET
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const txt = await r.text();
+    log(`Ticker PUT response ${r.status}: ${txt}`);
+
+    if(!r.ok){
+      showToast("Ticker save failed");
+      return;
+    }
+
+    showToast("Ticker saved");
+    loadTicker();
+  }catch(e){
+    log("Ticker save error: " + e.message);
+    showToast("Ticker save error");
+  }
+}
+
+async function clearTicker(){
+  const payload = {
+    active: false,
+    message: "",
+    expires: "",
+    timestamp: new Date().toISOString()
+  };
+
+  try{
+    log("Ticker clear PUT … " + JSON.stringify(payload));
+    const r = await fetch(TICKER_WORKER, {
+      method:"PUT",
+      headers:{
+        "Content-Type":"application/json",
+        "X-Admin-Secret": AUTH_SECRET
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const txt = await r.text();
+    log(`Ticker clear response ${r.status}: ${txt}`);
+
+    if(!r.ok){
+      showToast("Ticker clear failed");
+      return;
+    }
+
+    $("tickerActiveToggle").value = "false";
+    $("tickerMessage").value = "";
+    $("tickerExpires").value = "";
+    updateTickerPreview();
+    showToast("Ticker cleared");
+  }catch(e){
+    log("Ticker clear error: " + e.message);
+    showToast("Ticker clear error");
+  }
 }
 
 /* =========================
@@ -1302,7 +1537,6 @@ function clearManualRideForm(){
   if($("manualEstMiles")) $("manualEstMiles").textContent = "Miles: —";
   if($("manualEstFare"))  $("manualEstFare").textContent  = "Fare: —";
 
-  // clear stored estimate draft
   window.__manualEstimate = null;
 }
 
@@ -1421,19 +1655,16 @@ async function createManualRide(){
   if(!rider_phone){ showToast("Rider phone required"); return; }
   if(!pickup || !dropoff){ showToast("Pickup + dropoff required"); return; }
 
-  // Notes (gate appended)
   let notes = notesRaw;
   if(gateCode){
     notes = notes ? (notes + `\nGate: ${gateCode}`) : `Gate: ${gateCode}`;
   }
 
-  // ✅ Ensure we have a draft estimate (non-fatal)
   let est = window.__manualEstimate || null;
   if(!est){
     try{ est = await estimateManualFare(); }catch(e){ est = null; }
   }
 
-  // ✅ Build metadata
   const metadata = {
     manualTimeText: time || "",
     notes: notes || "",
@@ -1498,7 +1729,6 @@ function readEstimateFromBooking(b){
     return { fare, miles, base: (base != null ? base : null), src: "metadata" };
   }
 
-  // Fallback: parse old "Estimate: $XX.XX (YY.Y mi, base $10)" from notes
   const notes = String(md?.notes || "");
   const m = notes.match(/Estimate:\s*\$?(\d+(?:\.\d+)?)\s*\((\d+(?:\.\d+)?)\s*mi,\s*base\s*\$?(\d+(?:\.\d+)?)\)/i);
   if(m){
@@ -1672,7 +1902,7 @@ async function updateBookingStatus(bookingId, newStatus){
 }
 
 /* =========================
-   EDIT MODAL (ADMIN) - preserves estimate metadata if present
+   EDIT MODAL
 ========================= */
 function openEditModal(bookingId){
   const b = bookingCache.get(String(bookingId));
@@ -1748,7 +1978,6 @@ async function saveEditModal(){
     return;
   }
 
-  // Preserve estimate fields if they exist
   const mdExisting = existing?.metadata || {};
   const payload = {
     pickup:  { address: pickupAddr },
@@ -1908,9 +2137,27 @@ function wireButtons(){
 
   $("btnEstimateManual").onclick = estimateManualFare;
 
+  $("saveTickerBtn").onclick = saveTicker;
+  $("clearTickerBtn").onclick = clearTicker;
+  $("reloadTickerBtn").onclick = loadTicker;
+
+  $("tickerPresetLive").onclick = ()=>setTickerPreset("LIVE");
+  $("tickerPresetAirport").onclick = ()=>setTickerPreset("AIRPORT");
+  $("tickerPresetWeekend").onclick = ()=>setTickerPreset("WEEKEND");
+  $("tickerPresetCampus").onclick = ()=>setTickerPreset("CAMPUS");
+  $("tickerPresetOffline").onclick = ()=>setTickerPreset("OFFLINE");
+
   ["pushTitle","pushMessage","pushUrl"].forEach(id=>{
     const el=$(id);
     if(el) el.oninput=updPrev;
+  });
+
+  ["tickerActiveToggle","tickerMessage","tickerExpires"].forEach(id=>{
+    const el=$(id);
+    if(el){
+      el.addEventListener("input", updateTickerPreview);
+      el.addEventListener("change", updateTickerPreview);
+    }
   });
 
   $("btnRefreshPage").onclick = ()=>location.reload(true);
@@ -1987,12 +2234,14 @@ window.addEventListener("load",()=>{
 
   loadStatus();
   loadLastCaption();
+  loadTicker();
   fetchBookings();
 
   setInterval(fetchBookings, 20000);
 
   syncManualLuggageVisibility();
   initAddressAutocomplete();
+  updateTickerPreview();
   wireButtons();
 });
 </script>
