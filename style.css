@@ -136,7 +136,7 @@ h2 {
   gap: 16px;
   white-space: nowrap;
   padding: 8px 0;
-  animation: ticker-scroll 30s linear infinite;
+  animation: ticker-scroll 35s linear infinite;
   will-change: transform;
 }
 .homepage .ticker-text {
@@ -149,8 +149,8 @@ h2 {
   font-size: 0.9rem;
 }
 @keyframes ticker-scroll {
-  from { transform: translateX(0); }
-  to   { transform: translateX(-50%); }
+  from { transform: translateX(20); }
+  to   { transform: translateX(-100%); }
 }
 .homepage .ticker:active .ticker-track {
   animation-play-state: paused;
