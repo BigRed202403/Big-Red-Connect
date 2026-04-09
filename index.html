@@ -27,7 +27,6 @@
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 
   <script>
-    /* Utility: Detect iPhone Safari */
     function isIPhoneSafari() {
       return /iPhone/i.test(navigator.userAgent) &&
              !window.matchMedia("(display-mode: standalone)").matches &&
@@ -43,8 +42,10 @@
       if (el) el.textContent = msg;
     }
 
-    /* Debug disabled on public page */
-    function setPushDebug(obj) {}
+    function setPushDebug(obj) {
+      const el = document.getElementById("pushDebug");
+      if (el) el.textContent = JSON.stringify(obj, null, 2);
+    }
 
     async function refreshPushDebug(OneSignal, extra = {}) {
       try {
@@ -120,9 +121,6 @@
       }, 2000);
     }
 
-    /* -------------------------------------------------
-       OneSignal Initialization (Rider Mode)
-       ------------------------------------------------- */
     window.OneSignalDeferred = window.OneSignalDeferred || [];
     OneSignalDeferred.push(async function (OneSignal) {
       try {
@@ -186,9 +184,6 @@
       }
     });
 
-    /* -------------------------------------------------
-       Enable Alerts → Auto-tag as Rider (Live)
-       ------------------------------------------------- */
     function handleEnableAlerts() {
       window.OneSignalDeferred.push(async function (OneSignal) {
         try {
@@ -269,9 +264,6 @@
       });
     }
 
-    /* ------------------------------------------------------
-       LOGIN CHECKS
-       ------------------------------------------------------ */
     function isRiderLoggedIn() {
       try {
         const raw = localStorage.getItem("bigred_rider_profile_v1");
@@ -283,11 +275,6 @@
       }
     }
 
-    /* ------------------------------------------------------
-       DESTINATION HANDOFF (Index → Estimate / Ride Request)
-       - sessionStorage primary
-       - localStorage fallback
-       ------------------------------------------------------ */
     function stashDropoffHandoff(dest) {
       try { sessionStorage.setItem("brc_dropoff_handoff", dest); } catch (e) {}
       try { localStorage.setItem("brc_dropoff_handoff", dest); } catch (e) {}
@@ -326,18 +313,14 @@
   </script>
 </head>
 
-<body>
+<body class="homepage">
 
-  <!-- 🌆 Hero area -->
   <div class="hero"></div>
 
-  <!-- 🚗 Main Logo -->
   <img src="Official Logo.png" alt="Big Red Connect Logo" class="main-logo" />
 
-  <!-- Tagline -->
   <p class="tagline">Veteran Owned · Flat Rate Rides · Trusted Local Driver</p>
 
-  <!-- Homepage Ticker -->
   <div id="tickerBar" class="ticker hidden" aria-live="polite">
     <div class="ticker-viewport">
       <div id="tickerTrack" class="ticker-track">
@@ -349,13 +332,10 @@
     </div>
   </div>
 
-  <!-- Availability Pill -->
   <div id="status-pill" class="status status--loading">Checking availability…</div>
 
-  <!-- Floating Refresh Button -->
   <button id="refreshButton" title="Refresh Page">🔄 Refresh</button>
 
-  <!-- Quick Actions -->
   <div class="cta-group">
     <a href="sms:14053784024" class="btn primary">📲 Text to plan your ride</a>
     <a href="tel:14053784024" class="btn secondary">📞 Call<br>(Voicemail Only)</a>
@@ -364,7 +344,6 @@
 
   <p class="cta-note">Texting works best while I’m driving — I’ll reply ASAP with availability.</p>
 
-  <!-- Notifications Section -->
   <div style="text-align:center; margin-top:18px;">
     <button onclick="handleEnableAlerts()" style="
       background:#b30000;
@@ -398,7 +377,6 @@
     </p>
   </div>
 
-  <!-- Quick Destination Form -->
   <div class="info-section" style="text-align:center; margin-top:20px;">
     <h2>Plan Your Connection</h2>
     <form id="quickDestination" onsubmit="goToEstimate(event)" style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
@@ -411,7 +389,6 @@
     </p>
   </div>
 
-  <!-- Navigation Tiles -->
   <div class="tile-grid">
     <a onclick="goRequestRide()" class="tile" style="cursor:pointer;">🛷<br>Request a Ride</a>
     <a href="live.html" class="tile">🗺️<br>Driver Map</a>
@@ -421,7 +398,6 @@
     <a href="https://www.facebook.com/share/1BWCx63CUt/?mibextid=wwXIfr" target="_blank" class="tile">👍<br>Follow on Facebook</a>
   </div>
 
-  <!-- Content Sections -->
   <section class="info-section">
     <h2>What Big Red Connect Delivers</h2>
     <p>Veteran-owned, affordable flat-rate connections across the Oklahoma City metro — dependable, local, and built around planning ahead.</p>
@@ -461,7 +437,6 @@
     <p>&copy; 2025 Big Red Connect</p>
   </footer>
 
-  <!-- Google Places -->
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places"></script>
   <script>
     function initQuickSearch() {
@@ -473,10 +448,8 @@
     window.addEventListener("load", initQuickSearch);
   </script>
 
-  <!-- Status + Ticker -->
   <script src="status.js?v=20260407"></script>
 
-  <!-- Floating Refresh -->
   <script>
     const refreshBtn = document.getElementById("refreshButton");
     let refreshTimeout;
