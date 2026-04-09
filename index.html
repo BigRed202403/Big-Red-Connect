@@ -42,39 +42,6 @@
       if (el) el.textContent = msg;
     }
 
-    function setPushDebug(obj) {
-      const el = document.getElementById("pushDebug");
-      if (el) el.textContent = JSON.stringify(obj, null, 2);
-    }
-
-    async function refreshPushDebug(OneSignal, extra = {}) {
-      try {
-        const permission = OneSignal.Notifications.permission;
-        const optedIn = OneSignal.User.PushSubscription.optedIn;
-        const subscriptionId = OneSignal.User.PushSubscription.id || null;
-        const token = OneSignal.User.PushSubscription.token || null;
-        const externalId = OneSignal.User.externalId || null;
-
-        setPushDebug({
-          permission,
-          optedIn,
-          subscriptionId,
-          token,
-          externalId,
-          isStandalone: isStandalonePWA(),
-          userAgent: navigator.userAgent,
-          ...extra
-        });
-      } catch (e) {
-        setPushDebug({
-          debugError: e.message,
-          isStandalone: isStandalonePWA(),
-          userAgent: navigator.userAgent,
-          ...extra
-        });
-      }
-    }
-
     async function applyLiveRiderTags(OneSignal) {
       await OneSignal.User.addTags({
         env: "live",
@@ -98,21 +65,11 @@
           if (subId && token) {
             await applyLiveRiderTags(OneSignal);
             setPushStatus("Push fully enabled on this device.");
-            await refreshPushDebug(OneSignal, { phase: "background-complete" });
             clearInterval(interval);
             return;
           }
-
-          await refreshPushDebug(OneSignal, {
-            phase: "background-waiting",
-            attempts
-          });
         } catch (err) {
-          await refreshPushDebug(OneSignal, {
-            phase: "background-error",
-            attempts,
-            watcherError: err.message
-          });
+          console.warn("Background subscription watcher error:", err);
         }
 
         if (attempts > 10) {
@@ -135,17 +92,14 @@
 
         OneSignal.Notifications.addEventListener("permissionChange", async function(permission) {
           setPushStatus("Permission changed: " + permission);
-          await refreshPushDebug(OneSignal, { permissionChangeEvent: permission });
 
           if (permission === true) {
             try {
               await new Promise(r => setTimeout(r, 1500));
               setPushStatus("Permission granted. Finalizing registration...");
-              await refreshPushDebug(OneSignal, { phase: "permission-granted" });
               await startBackgroundSubscriptionWatcher(OneSignal);
             } catch (tagErr) {
               setPushStatus("Permission granted, but follow-up failed.");
-              await refreshPushDebug(OneSignal, { tagError: tagErr.message });
             }
           }
         });
@@ -168,19 +122,12 @@
           setPushStatus("Push ready to be enabled.");
         }
 
-        await refreshPushDebug(OneSignal, { phase: "init-complete" });
-
         if (OneSignal.Notifications.permission === true) {
           await startBackgroundSubscriptionWatcher(OneSignal);
         }
 
       } catch (e) {
         setPushStatus("Push init error: " + e.message);
-        setPushDebug({
-          initError: e.toString(),
-          isStandalone: isStandalonePWA(),
-          userAgent: navigator.userAgent
-        });
       }
     });
 
@@ -205,13 +152,10 @@
           if (permission === true && optedIn && subscriptionId && token) {
             await applyLiveRiderTags(OneSignal);
             setPushStatus("You're already set — alerts are enabled.");
-            await refreshPushDebug(OneSignal, { phase: "already-fully-enabled" });
             return;
           }
 
           setPushStatus("Requesting notification permission...");
-          await refreshPushDebug(OneSignal, { phase: "before-prompt" });
-
           await OneSignal.Notifications.requestPermission();
 
           await new Promise(r => setTimeout(r, 2000));
@@ -224,14 +168,12 @@
           if (permissionAfter === true && optedInAfter && subscriptionIdAfter && tokenAfter) {
             await applyLiveRiderTags(OneSignal);
             setPushStatus("Push fully enabled on this device.");
-            await refreshPushDebug(OneSignal, { phase: "prompt-success" });
             alert("Alerts enabled successfully.");
             return;
           }
 
           if (permissionAfter === true) {
             setPushStatus("Permission granted — finalizing device registration...");
-            await refreshPushDebug(OneSignal, { phase: "waiting-for-subscription" });
 
             for (let i = 0; i < 5; i++) {
               await new Promise(r => setTimeout(r, 1500));
@@ -242,24 +184,19 @@
               if (subId && token) {
                 await applyLiveRiderTags(OneSignal);
                 setPushStatus("Push fully enabled on this device.");
-                await refreshPushDebug(OneSignal, { phase: "subscription-complete" });
                 return;
               }
             }
 
             setPushStatus("Permission granted. Notifications will activate shortly.");
-            await refreshPushDebug(OneSignal, { phase: "delayed-subscription" });
-
             await startBackgroundSubscriptionWatcher(OneSignal);
             return;
           }
 
           setPushStatus("Notifications were not enabled.");
-          await refreshPushDebug(OneSignal, { phase: "permission-denied-or-dismissed" });
 
         } catch (err) {
           setPushStatus("Enable failed: " + err.message);
-          await refreshPushDebug(OneSignal, { enableError: err.message });
         }
       });
     }
