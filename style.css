@@ -149,7 +149,7 @@ h2 {
   font-size: 0.9rem;
 }
 @keyframes ticker-scroll {
-  from { transform: translateX(40); }
+  from { transform: translateX(70); }
   to   { transform: translateX(-100%); }
 }
 .homepage .ticker:active .ticker-track {
