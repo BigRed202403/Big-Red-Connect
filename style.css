@@ -136,7 +136,7 @@ h2 {
   gap: 16px;
   white-space: nowrap;
   padding: 8px 0;
-  animation: ticker-scroll 18s linear infinite;
+  animation: ticker-scroll 40s linear infinite;
   will-change: transform;
 }
 .homepage .ticker-text {
