@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
 <title>Big Red Admin / Driver Console</title>
 
 <link rel="apple-touch-icon" href="Official Logo.png">
@@ -15,8 +15,10 @@
 <meta name="theme-color" content="#000">
 <meta http-equiv="Cache-Control" content="no-store"/>
 
+<!-- ✅ Google Maps Places -->
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places"></script>
 
+<!-- OneSignal v16 -->
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <script>
   window.OneSignalDeferred = window.OneSignalDeferred || [];
@@ -61,135 +63,176 @@
 <style>
 :root{--red:#b30000;--bg:#000;--panel:#111;--muted:#aaa;--border:#222;}
 *{box-sizing:border-box;}
-body{background:var(--bg);color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;margin:0;}
-header{background:var(--panel);display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:2px solid var(--red);position:sticky;top:0;z-index:20;flex-wrap:wrap;gap:8px;}
+html{-webkit-text-size-adjust:100%; height:100%;}
+body{background:var(--bg);color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;margin:0;padding:0;min-height:100vh;line-height:1.4;}
+
+header{background:var(--panel);display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:2px solid var(--red);position:sticky;top:0;z-index:20;flex-wrap:wrap;gap:10px;}
 .header-left{display:flex;align-items:center;gap:10px;font-size:.9rem;min-width:0;flex:1 1 260px;}
-.header-left img{height:40px;border-radius:4px;}
+.header-left img{height:42px;border-radius:4px;object-fit:contain;}
 .header-right{display:flex;gap:8px;align-items:center;justify-content:flex-end;flex:1 1 260px;flex-wrap:wrap;}
-.pill{padding:3px 10px;border-radius:999px;font-weight:700;font-size:.8rem;white-space:nowrap;cursor:pointer;user-select:none;}
+.pill{padding:4px 12px;border-radius:999px;font-weight:700;font-size:.82rem;white-space:nowrap;cursor:pointer;user-select:none;}
 .pill.online{background:#064;}
 .pill.away{background:#665500;}
 .pill.offline{background:#400;}
-.btn{padding:6px 10px;border-radius:8px;border:none;cursor:pointer;font-weight:600;font-size:.85rem;}
+.btn{padding:8px 12px;border-radius:8px;border:none;cursor:pointer;font-weight:600;font-size:.86rem;min-height:44px;display:inline-flex;align-items:center;justify-content:center;}
 .btn-primary{background:var(--red);color:#fff;}
 .btn-secondary{background:#000;color:#fff;border:1px solid var(--red);}
 .btn-ghost{background:#111;color:#fff;border:1px solid #444;}
-h1{text-align:center;margin:14px 0 4px;color:var(--red);font-size:1.4rem;}
-.tagline{text-align:center;color:#ddd;margin:0 0 10px;font-size:.9rem;}
-#status-pill{margin:10px auto 12px;padding:8px 14px;border-radius:18px;display:inline-block;min-width:260px;font-size:.85rem;background:#222;border:1px solid #333;}
+h1{text-align:center;margin:14px 0 4px;color:var(--red);font-size:1.35rem;}
+.tagline{text-align:center;color:#ddd;margin:0 0 12px;font-size:.9rem;}
+
+#status-pill{margin:12px auto 14px;padding:9px 16px;border-radius:20px;display:inline-block;min-width:260px;font-size:.86rem;background:#222;border:1px solid #333;max-width:92vw;}
 #status-pill.online{background:#064;}
 #status-pill.away{background:#665500;}
 #status-pill.offline{background:#400;}
 
-.layout{
-  display:grid;
-  grid-template-columns:1fr;
-  gap:14px;
-  max-width:1400px;
-  margin:0 auto 20px;
-  padding:0 10px 18px;
-}
-.layout > div{min-width:0;}
-@media(min-width:1180px){
-  .layout{grid-template-columns:.95fr 1.55fr;}
-}
-
-section{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:12px;margin:0;min-width:0;}
-section h2{margin:4px 0 8px;font-size:1rem;border-bottom:1px solid #222;padding-bottom:4px;}
-.meta{font-size:.78rem;color:var(--muted);margin-top:4px;line-height:1.15rem;}
+.layout{display:grid;grid-template-columns:1fr;gap:16px;max-width:1200px;margin:0 auto 24px;padding:0 12px 20px;}
+section{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px;margin:0;}
+section h2{margin:6px 0 10px;font-size:1.05rem;border-bottom:1px solid #222;padding-bottom:6px;}
+.meta{font-size:.8rem;color:var(--muted);margin-top:8px;line-height:1.3;}
 select,button,input,textarea{font-family:inherit;}
-select,button,input[type=text],input[type=url],input[type=datetime-local]{padding:7px 9px;border-radius:6px;border:none;margin:4px 0;font-weight:600;font-size:.85rem;}
-textarea{width:100%;min-height:90px;background:#111;color:#fff;border:1px solid var(--red);border-radius:6px;padding:8px;resize:vertical;font-size:.85rem;}
-.row{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:6px 0;}
-.preview-box{margin-top:6px;padding:8px;border-radius:6px;border:1px dashed #444;background:#050505;font-size:.8rem;color:#ddd;line-height:1.2rem;}
+select,button,input[type=text],input[type=url],input[type=datetime-local]{padding:9px 11px;border-radius:8px;border:none;margin:4px 0;font-weight:600;font-size:.86rem;min-height:44px;}
+textarea{width:100%;min-height:100px;background:#111;color:#fff;border:1px solid var(--red);border-radius:8px;padding:10px;resize:vertical;font-size:.86rem;}
+.row{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin:8px 0;}
+.preview-box{margin-top:8px;padding:10px;border-radius:8px;border:1px dashed #444;background:#050505;font-size:.82rem;color:#ddd;line-height:1.3;}
 
+/* Image box - optimized for mobile & iPad */
 .img-box{
   width:100%;
-  max-width:420px;
-  margin:8px auto 4px;
+  max-width:100%;
+  margin:12px auto 8px;
   border:2px solid var(--red);
-  border-radius:6px;
-  padding:6px;
+  border-radius:10px;
+  padding:8px;
   background:#000;
+  overflow:hidden;
 }
 .img-box img{
   display:block;
   width:100%;
-  max-height:220px;
+  max-height:260px;
   object-fit:contain;
   border-radius:6px;
   margin:0 auto;
 }
-@media (max-width:700px){
-  .img-box{max-width:100%;}
-  .img-box img{max-height:none;}
-}
 
-.grid-dispatch{
-  display:grid;
-  grid-template-columns:1fr;
-  gap:8px;
-  min-width:0;
-}
-@media(min-width:850px){
-  .grid-dispatch{grid-template-columns:repeat(3,minmax(0,1fr));}
-}
-.column{background:#000;border-radius:8px;border:1px solid #222;overflow:hidden;min-width:0;}
-.col-header{padding:8px 10px;border-bottom:1px solid #222;font-weight:700;font-size:.8rem;display:flex;justify-content:space-between;align-items:center;gap:6px;}
-.col-body{max-height:60vh;overflow-y:auto;padding:8px;}
-.empty-text{text-align:center;color:#777;padding:18px 6px;font-size:.8rem;}
-.card{background:#111;border:1px solid #333;border-radius:8px;padding:8px;margin-bottom:8px;font-size:.78rem;overflow-wrap:anywhere;}
+/* Dispatch grid */
+.grid-dispatch{display:grid;grid-template-columns:1fr;gap:12px;}
+.column{background:#000;border-radius:10px;border:1px solid #222;overflow:hidden;}
+.col-header{padding:10px 12px;border-bottom:1px solid #222;font-weight:700;font-size:.85rem;display:flex;justify-content:space-between;align-items:center;}
+.col-body{max-height:55vh;overflow-y:auto;padding:10px;}
+.empty-text{text-align:center;color:#777;padding:20px 8px;font-size:.82rem;}
+.card{background:#111;border:1px solid #333;border-radius:10px;padding:10px;margin-bottom:10px;font-size:.8rem;}
 .card:hover{border-color:#555;}
-.card-label-row{display:flex;justify-content:space-between;margin-bottom:4px;gap:8px;flex-wrap:wrap;}
-.badge{padding:2px 6px;border-radius:999px;font-size:.65rem;border:1px solid #666;white-space:nowrap;}
-.loc-line{margin:3px 0;font-size:.76rem;overflow-wrap:anywhere;}
-.eta-line{margin-top:3px;font-size:.75rem;color:#ccc;overflow-wrap:anywhere;}
-.card-footer{border-top:1px solid #222;margin-top:6px;padding-top:6px;display:flex;justify-content:space-between;align-items:flex-start;gap:6px;flex-wrap:wrap;}
-.status-dropdown{background:#111;color:#fff;border:1px solid #333;padding:4px;border-radius:6px;font-size:.75rem;max-width:100%;}
-.chip{padding:3px 7px;border-radius:999px;border:1px solid #444;background:#111;color:#eee;font-size:.7rem;cursor:pointer;text-decoration:none;display:inline-block;}
+.card-label-row{display:flex;justify-content:space-between;margin-bottom:6px;gap:8px;}
+.badge{padding:3px 8px;border-radius:999px;font-size:.7rem;border:1px solid #666;white-space:nowrap;}
+.loc-line{margin:4px 0;font-size:.78rem;}
+.eta-line{margin-top:4px;font-size:.76rem;color:#ccc;}
+.card-footer{border-top:1px solid #222;margin-top:8px;padding-top:8px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap;}
+.status-dropdown{background:#111;color:#fff;border:1px solid #333;padding:6px 8px;border-radius:8px;font-size:.78rem;}
+.chip{padding:4px 9px;border-radius:999px;border:1px solid #444;background:#111;color:#eee;font-size:.72rem;cursor:pointer;text-decoration:none;display:inline-block;}
 .chip.primary{border-color:var(--red);color:#ffdada;}
 .chip.warn{border-color:#996600;color:#ffe3b0;}
 .chip.danger{border-color:#aa2222;color:#ffb9b9;}
-#toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#111;color:#fff;border:1px solid var(--red);padding:8px 16px;border-radius:16px;opacity:0;pointer-events:none;transition:opacity .35s;z-index:50;font-size:.8rem;max-width:92vw;text-align:center;}
+
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#111;color:#fff;border:1px solid var(--red);padding:10px 18px;border-radius:999px;opacity:0;pointer-events:none;transition:opacity .35s;z-index:999;font-size:.85rem;max-width:92vw;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.6);}
 #toast.show{opacity:1;}
-#debugLog{font-family:monospace;font-size:.72rem;color:#0f0;background:#000;padding:6px;max-height:220px;overflow:auto;border-top:1px solid #222;margin:0 auto 18px;max-width:1400px;}
+#debugLog{font-family:monospace;font-size:.72rem;color:#0f0;background:#000;padding:8px;max-height:220px;overflow:auto;border-top:1px solid #222;margin:0 auto 20px;max-width:1200px;}
 
 body.mode-driver .admin-only{display:none;}
 body.mode-admin .driver-only{display:none;}
 
-.smalllabel{font-size:.8rem;color:#ccc;display:block;margin-top:6px;}
-.minihint{font-size:.72rem;color:#888;margin-top:2px;line-height:1.1rem;}
-.stop-row{display:flex;gap:6px;align-items:center;margin:6px 0;}
-.stop-row input{flex:1;min-width:180px;}
-
-.ticker-preview{background:#0a0a0a;border:1px solid #2a2a2a;border-radius:8px;overflow:hidden;margin-top:8px;}
-.ticker-preview-bar{background:#111;border-top:1px solid #222;border-bottom:1px solid #222;color:#fff;font-weight:600;font-size:.86rem;padding:8px 10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.ticker-status-chip{display:inline-block;padding:3px 8px;border-radius:999px;font-size:.72rem;border:1px solid #444;background:#111;color:#ddd;}
-.ticker-status-chip.live{border-color:#1d6f42;color:#90f0b2;}
-.ticker-status-chip.off{border-color:#666;color:#bbb;}
-
+/* Mobile */
 @media (max-width:520px){
-  .header-left img{height:34px;}
-  .btn{padding:8px 10px;font-size:.78rem;border-radius:10px;}
-  #livePill{padding:3px 8px;font-size:.72rem;}
-  .header-left div div:nth-child(2){display:none;}
+  header{padding:8px 10px;}
+  .header-left img{height:36px;}
+  .btn{padding:8px 10px;font-size:.82rem;}
+  h1{font-size:1.25rem;}
+  section{padding:12px;}
+  .layout{gap:12px;padding:0 10px 16px;}
+  .img-box img{max-height:220px;}
+  .col-body{max-height:48vh;}
 }
-.header-left > div{max-width:160px;min-width:0;}
 
-.modalOverlay{position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;z-index:999;padding:16px;overflow:auto;-webkit-overflow-scrolling:touch;}
-.modalOverlay.show{display:flex;}
-.modalBox{width:min(760px,96vw);background:#0b0b0b;border:1px solid #333;border-radius:12px;padding:12px;box-shadow:0 18px 40px rgba(0,0,0,.55);max-height:calc(100vh - 32px);overflow:auto;-webkit-overflow-scrolling:touch;}
-.modalTop{position:sticky;top:0;background:#0b0b0b;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:10px;padding-bottom:10px;border-bottom:1px solid #222;margin-bottom:10px;}
-body.modal-open{overflow:hidden;}
-.modalTitle{font-weight:800;font-size:.95rem;}
-.modalClose{background:#111;border:1px solid #444;color:#fff;border-radius:10px;padding:8px 10px;cursor:pointer;font-weight:700;}
-.modalGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+/* Tablet / iPad */
+@media (min-width:521px) and (max-width:1024px){
+  .layout{gap:18px;padding:0 16px 24px;}
+  section{padding:16px;}
+  .grid-dispatch{grid-template-columns:repeat(2,1fr);}
+  .img-box img{max-height:280px;}
+}
+
+/* Desktop */
+@media (min-width:1025px){
+  .layout{grid-template-columns:1.05fr 1.35fr;}
+  .grid-dispatch{grid-template-columns:repeat(3,1fr);}
+}
+
+/* Modal improvements */
+.modalOverlay{
+  position:fixed; inset:0;
+  background:rgba(0,0,0,.8);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:999;
+  padding:12px;
+  overflow:auto;
+  -webkit-overflow-scrolling:touch;
+}
+.modalOverlay.show{ display:flex; }
+
+.modalBox{
+  width:min(780px, 96vw);
+  background:#0b0b0b;
+  border:1px solid #333;
+  border-radius:14px;
+  padding:16px;
+  box-shadow: 0 20px 50px rgba(0,0,0,.7);
+  max-height: calc(100vh - 24px);
+  overflow:auto;
+  -webkit-overflow-scrolling:touch;
+}
+.modalTop{
+  position:sticky;
+  top:0;
+  background:#0b0b0b;
+  z-index:10;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding-bottom:12px;
+  border-bottom:1px solid #222;
+  margin-bottom:12px;
+}
+.modalTitle{font-weight:800;font-size:1.05rem;}
+.modalClose{background:#111;border:1px solid #444;color:#fff;border-radius:10px;padding:8px 14px;cursor:pointer;font-weight:700;min-height:44px;}
+.modalGrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
 @media (max-width:720px){.modalGrid{grid-template-columns:1fr;}}
-.modalBox label{font-size:.78rem;color:#bbb;display:block;margin:2px 0 4px;}
-.modalBox input,.modalBox select,.modalBox textarea{width:100%;border-radius:10px;border:1px solid #333;background:#000;color:#fff;padding:10px;font-weight:600;font-size:.85rem;}
-.modalActions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;margin-top:10px;border-top:1px solid #222;padding-top:10px;}
+.modalBox label{font-size:.8rem;color:#bbb;display:block;margin:4px 0 6px;}
+.modalBox input, .modalBox select, .modalBox textarea{
+  width:100%;
+  border-radius:10px;
+  border:1px solid #333;
+  background:#000;
+  color:#fff;
+  padding:10px 12px;
+  font-weight:600;
+  font-size:.88rem;
+  min-height:44px;
+}
+.modalActions{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+  margin-top:14px;
+  border-top:1px solid #222;
+  padding-top:14px;
+}
 .btn-danger{background:#400;color:#fff;border:1px solid var(--red);}
-.btn-small{padding:6px 10px;font-size:.8rem;border-radius:10px;}
+.btn-small{padding:7px 12px;font-size:.82rem;border-radius:10px;min-height:42px;}
 </style>
 </head>
 
@@ -198,10 +241,13 @@ body.modal-open{overflow:hidden;}
   <div class="header-left">
     <a href="index.html"><img src="Official Logo.png" alt="Big Red Connect logo"></a>
     <div>
-      <div style="font-weight:700;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Big Red Admin / Driver</div>
-      <div style="color:#888;font-size:.75rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Live Dispatch & Status</div>
+      <div style="font-weight:700;font-size:.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Big Red Admin / Driver</div>
+      <div style="color:#888;font-size:.78rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Live Dispatch & Status</div>
     </div>
-    <span id="livePill" class="pill offline" title="Tap to toggle GPS tracking">📡 Tracking: OFF</span>
+
+    <span id="livePill" class="pill offline" title="Tap to toggle GPS tracking">
+      📡 Tracking: OFF
+    </span>
   </div>
   <div class="header-right">
     <button class="btn btn-secondary" id="btnModeToggle" title="Toggle Admin/Driver">🛠 Admin Mode</button>
@@ -221,6 +267,7 @@ body.modal-open{overflow:hidden;}
   <div>
     <section>
       <h2>Driving Status & GPS</h2>
+
       <div class="row">
         <select id="statusSelect">
           <option value="online">🟢 On the Road</option>
@@ -229,6 +276,7 @@ body.modal-open{overflow:hidden;}
         </select>
         <button class="btn btn-primary" id="updateStatusBtn" title="Save Status">💾 Save</button>
       </div>
+
       <div class="row">
         <label for="globalVehicleSelect" style="font-size:.8rem;color:#ccc;">Active Vehicle</label>
         <select id="globalVehicleSelect" class="status-dropdown" style="min-width:220px;">
@@ -236,6 +284,7 @@ body.modal-open{overflow:hidden;}
           <option value="BIG_RED">Big Red (Red Silverado)</option>
         </select>
       </div>
+
       <div class="meta">
         Last status update: <span id="statusStamp">—</span><br>
         Last GPS ping: <span id="gpsStamp">—</span> • Interval: <span id="gpsRate">—</span><br>
@@ -250,57 +299,86 @@ body.modal-open{overflow:hidden;}
 
     <section class="admin-only" style="margin-top:12px;">
       <h2>Create Ride (Manual)</h2>
+
       <div class="row">
         <input id="manualRiderName" type="text" placeholder="Rider name (optional)" style="flex:1;min-width:180px;">
         <input id="manualRiderPhone" type="text" placeholder="Rider phone (required)" style="flex:1;min-width:180px;">
       </div>
+
       <div class="row">
         <label class="smalllabel" for="manualPassengers" style="margin:0;">Passengers</label>
         <select id="manualPassengers" style="min-width:140px;">
-          <option value="1" selected>1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option>
+          <option value="1" selected>1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+          <option value="6">6</option>
         </select>
+
         <label class="smalllabel" for="manualAirportToggle" style="margin:0;">Airport ride?</label>
         <select id="manualAirportToggle" style="min-width:160px;">
-          <option value="auto" selected>AUTO-detect</option><option value="yes">Yes</option><option value="no">No</option>
+          <option value="auto" selected>AUTO-detect</option>
+          <option value="yes">Yes</option>
+          <option value="no">No</option>
         </select>
       </div>
+
       <span class="smalllabel">Pickup</span>
       <input id="manualPickup" type="text" placeholder="Pickup address">
+
       <span class="smalllabel">Gate Code / Access (optional)</span>
       <input id="manualGateCode" type="text" placeholder="Gate code, building, apartment…">
+
       <div class="minihint">Stops are optional (up to 3). Add them in order.</div>
       <div id="manualStopsWrap"></div>
       <div class="row">
         <button class="btn btn-secondary" id="manualAddStopBtn" type="button">➕ Add Stop</button>
         <button class="btn btn-ghost" id="manualClearStopsBtn" type="button">🧹 Clear Stops</button>
       </div>
+
       <span class="smalllabel">Dropoff</span>
       <input id="manualDropoff" type="text" placeholder="Dropoff address">
+
       <div class="row" id="manualLuggageRow" style="display:none;">
         <label class="smalllabel" for="manualLuggageCount" style="margin:0;">Luggage</label>
         <select id="manualLuggageCount" style="min-width:160px;">
-          <option value="0" selected>0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6+</option>
+          <option value="0" selected>0</option>
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+          <option value="6">6+</option>
         </select>
         <div class="minihint" style="margin:0;">Shown when airport ride is detected / forced.</div>
       </div>
+
       <div class="row">
         <input id="manualTime" type="text" placeholder="Time (optional) e.g., 1/11 10:15 PM" style="flex:1;min-width:220px;">
       </div>
+
       <label style="font-size:.8rem;color:#ccc;">Notes (optional)</label>
       <textarea id="manualNotes" placeholder="Extra context…"></textarea>
+
       <div class="row" style="margin-top:8px;">
         <button class="btn btn-primary" id="btnCreateManualRide" title="Create Ride">➕ Create</button>
         <button class="btn btn-secondary" id="btnClearManualRide" title="Clear Form">🧹 Clear</button>
       </div>
+
       <div class="preview-box" id="manualEstimateBox" style="margin-top:10px;">
         <strong>Estimate</strong><br>
         <span id="manualEstMiles">Miles: —</span><br>
         <span id="manualEstFare">Fare: —</span><br>
-        <span style="color:#888;font-size:.75rem;">Stored as metadata on create: estimateFare / estimateMiles / estimateBase.</span>
+        <span style="color:#888;font-size:.75rem;">
+          Stored as metadata on create: estimateFare / estimateMiles / estimateBase.
+        </span>
       </div>
+
       <div class="row" style="margin-top:8px;">
         <button class="btn btn-ghost" id="btnEstimateManual" type="button">💲 Estimate Fare</button>
       </div>
+
       <p class="meta">
         ✅ Manual create uses: <code>POST /api/admin/bookings/manual</code> (requires <code>X-Admin-Secret</code>).<br>
         Stores <code>metadata.manualTimeText</code>, <code>metadata.notes</code>, <code>metadata.luggageCount</code>, and estimate fields.
@@ -309,43 +387,60 @@ body.modal-open{overflow:hidden;}
 
     <section class="admin-only" style="margin-top:12px;">
       <h2>Broadcast Push Alerts (Riders)</h2>
+
       <div class="row">
         <select id="pushTemplate" style="flex:1;min-width:220px;">
-          <option value="LIVE">🚗 LIVE — Ready to Roll</option><option value="AIRPORT">✈️ Airport Runs</option><option value="WEEKEND">🍻 Weekend Night Run</option><option value="CAMPUS">🅿️ Campus Corner Late Night</option><option value="OFFLINE">🔴 Going Offline</option><option value="CUSTOM">✏️ Custom Only</option>
+          <option value="LIVE">🚗 LIVE — Ready to Roll</option>
+          <option value="AIRPORT">✈️ Airport Runs</option>
+          <option value="WEEKEND">🍻 Weekend Night Run</option>
+          <option value="CAMPUS">🅿️ Campus Corner Late Night</option>
+          <option value="OFFLINE">🔴 Going Offline</option>
+          <option value="CUSTOM">✏️ Custom Only</option>
         </select>
         <button class="btn btn-ghost" id="pushApplyTemplate" title="Apply Template">Apply</button>
       </div>
+
       <label style="font-size:.8rem;color:#ccc;">Title</label>
       <input id="pushTitle" type="text" placeholder="Big Red Connect"/>
+
       <label style="font-size:.8rem;color:#ccc;">Message</label>
       <textarea id="pushMessage" placeholder="Enter broadcast message"></textarea>
+
       <label style="font-size:.8rem;color:#ccc;">Tap-through Link (optional)</label>
       <input id="pushUrl" type="url" placeholder="https://bigredconnectokc.com/"/>
+
       <div class="preview-box">
         <strong>Preview</strong><br>
         <span id="pushPrevTitle">Big Red Connect</span><br>
         <span id="pushPrevMessage">Message will appear here.</span><br>
         <span style="color:#888;font-size:.75rem;">Link: <span id="pushPrevUrl">https://bigredconnectokc.com/</span></span>
       </div>
+
       <div class="row" style="margin-top:8px;">
         <button class="btn btn-primary" id="sendBroadcastPush" title="Send Broadcast">📢 Send</button>
         <button class="btn btn-secondary" id="clearPush" title="Clear Push Fields">🧹 Clear</button>
       </div>
+
       <p class="meta">Sends a push notification to all riders tagged <code>env = "live"</code>.</p>
     </section>
 
     <section class="admin-only" style="margin-top:12px;">
       <h2>Homepage Ticker</h2>
+
       <div class="row">
         <label class="smalllabel" for="tickerActiveToggle" style="margin:0;">Ticker active?</label>
         <select id="tickerActiveToggle" style="min-width:160px;">
-          <option value="true">Yes</option><option value="false" selected>No</option>
+          <option value="true">Yes</option>
+          <option value="false" selected>No</option>
         </select>
+
         <label class="smalllabel" for="tickerExpires" style="margin:0;">Expires (optional)</label>
         <input id="tickerExpires" type="datetime-local" style="min-width:220px;">
       </div>
+
       <label style="font-size:.8rem;color:#ccc;">Ticker message</label>
       <textarea id="tickerMessage" placeholder="🚗 Big Red is LIVE across OKC tonight"></textarea>
+
       <div class="row">
         <button class="btn btn-ghost" id="tickerPresetLive" type="button">LIVE</button>
         <button class="btn btn-ghost" id="tickerPresetAirport" type="button">AIRPORT</button>
@@ -353,6 +448,7 @@ body.modal-open{overflow:hidden;}
         <button class="btn btn-ghost" id="tickerPresetCampus" type="button">CAMPUS</button>
         <button class="btn btn-ghost" id="tickerPresetOffline" type="button">OFFLINE</button>
       </div>
+
       <div class="ticker-preview">
         <div class="preview-box" style="border:none;background:transparent;margin:0;">
           <strong>Current ticker state</strong><br>
@@ -361,11 +457,13 @@ body.modal-open{overflow:hidden;}
         </div>
         <div class="ticker-preview-bar" id="tickerPreviewText">No ticker message set.</div>
       </div>
+
       <div class="row" style="margin-top:8px;">
         <button class="btn btn-primary" id="saveTickerBtn" title="Save Ticker">💾 Save Ticker</button>
         <button class="btn btn-secondary" id="clearTickerBtn" title="Clear Ticker">🧹 Clear Ticker</button>
         <button class="btn btn-ghost" id="reloadTickerBtn" title="Reload Ticker">🔄 Reload</button>
       </div>
+
       <p class="meta">
         Controls the homepage ticker at <code>homepage-ticker.bigredtransportation.workers.dev</code>.<br>
         Leave expires blank for manual control. Setting inactive hides the ticker immediately.
@@ -374,24 +472,30 @@ body.modal-open{overflow:hidden;}
 
     <section class="admin-only" style="margin-top:12px;">
       <h2>Live Map — Image & Caption</h2>
+
       <div class="img-box">
         <img id="statusImage" src="" alt="Live status image">
       </div>
+
       <div class="row">
         <button id="prevImage" class="btn btn-ghost" title="Previous Image">⬅ Image</button>
         <button id="nextImage" class="btn btn-ghost" title="Next Image">Image ➡</button>
       </div>
+
       <div class="row">
         <button id="prevCaption" class="btn btn-ghost" title="Previous Caption">⬅ Caption</button>
         <button id="nextCaption" class="btn btn-ghost" title="Next Caption">Caption ➡</button>
         <button id="resetCaption" class="btn btn-secondary" title="Reset Caption">Reset</button>
       </div>
+
       <label style="font-size:.8rem;color:#ccc;">Caption</label>
       <textarea id="captionBox">Loading…</textarea>
+
       <div class="row" style="margin-top:8px;">
         <button class="btn btn-secondary" id="copyBtn" title="Copy Caption">📋 Copy</button>
         <button class="btn btn-primary" id="postToLive" title="Post To Live Map">📢 Post</button>
       </div>
+
       <p class="meta">Updates the live map worker.</p>
     </section>
   </div>
@@ -399,24 +503,29 @@ body.modal-open{overflow:hidden;}
   <div>
     <section>
       <h2>Driver Dispatch Board</h2>
+
       <div class="row" style="justify-content:space-between;">
         <button class="btn btn-ghost" id="btnDispatchRefresh" title="Refresh Dispatch">🔄 Refresh</button>
         <button class="btn btn-secondary" id="btnScope" title="Toggle Scope">📋 active</button>
       </div>
+
       <div class="grid-dispatch">
         <div class="column">
           <div class="col-header">🆕 New Requests <span id="countNew">0</span></div>
           <div class="col-body" id="listNew"><div class="empty-text">None</div></div>
         </div>
+
         <div class="column">
           <div class="col-header">🚦 Active Trips <span id="countActive">0</span></div>
           <div class="col-body" id="listActive"><div class="empty-text">None</div></div>
         </div>
+
         <div class="column">
           <div class="col-header">✅ Completed <span id="countDone">0</span></div>
           <div class="col-body" id="listDone"><div class="empty-text">None</div></div>
         </div>
       </div>
+
       <p class="meta">
         Tap a card to open details. Use the status dropdown to move rides.<br>
         Admin mode also allows editing ride details + sending rider notifications on status changes.
@@ -434,30 +543,74 @@ body.modal-open{overflow:hidden;}
       <div class="modalTitle" id="editTitle">Edit Ride</div>
       <button class="modalClose" id="editCloseBtn">✖ Close</button>
     </div>
+
     <div class="modalGrid">
-      <div><label>Ride ID</label><input id="editRideId" type="text" readonly></div>
-      <div><label>Status (display only)</label><input id="editRideStatus" type="text" readonly></div>
-      <div><label>Rider Name</label><input id="editRiderName" type="text" placeholder="Rider name"></div>
-      <div><label>Rider Phone</label><input id="editRiderPhone" type="text" placeholder="4055551234"></div>
+      <div>
+        <label>Ride ID</label>
+        <input id="editRideId" type="text" readonly>
+      </div>
+      <div>
+        <label>Status (display only)</label>
+        <input id="editRideStatus" type="text" readonly>
+      </div>
+
+      <div>
+        <label>Rider Name</label>
+        <input id="editRiderName" type="text" placeholder="Rider name">
+      </div>
+      <div>
+        <label>Rider Phone</label>
+        <input id="editRiderPhone" type="text" placeholder="4055551234">
+      </div>
+
       <div>
         <label>Passengers</label>
         <select id="editPartySize">
-          <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option>
+          <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+          <option value="4">4</option><option value="5">5</option><option value="6">6</option>
         </select>
       </div>
+
       <div>
         <label>Luggage Count</label>
         <select id="editLuggageCount">
-          <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6+</option>
+          <option value="0">0</option><option value="1">1</option><option value="2">2</option>
+          <option value="3">3</option><option value="4">4</option><option value="5">5</option>
+          <option value="6">6+</option>
         </select>
       </div>
-      <div style="grid-column:1/-1;"><label>Pickup Address</label><input id="editPickup" type="text" placeholder="Pickup address"></div>
-      <div style="grid-column:1/-1;"><label>Stops (one per line, optional)</label><textarea id="editStops" placeholder="Stop 1&#10;Stop 2&#10;Stop 3"></textarea></div>
-      <div style="grid-column:1/-1;"><label>Dropoff Address</label><input id="editDropoff" type="text" placeholder="Dropoff address"></div>
-      <div style="grid-column:1/-1;"><label>Scheduled For (optional ISO string)</label><input id="editScheduledFor" type="text" placeholder="2026-01-11T22:15:00-06:00"></div>
-      <div style="grid-column:1/-1;"><label>Notes (metadata.notes)</label><textarea id="editNotes" placeholder="Notes…"></textarea></div>
-      <div style="grid-column:1/-1;"><label>Manual Time Text (metadata.manualTimeText)</label><input id="editManualTimeText" type="text" placeholder="1/11 10:15 PM"></div>
+
+      <div style="grid-column:1/-1;">
+        <label>Pickup Address</label>
+        <input id="editPickup" type="text" placeholder="Pickup address">
+      </div>
+
+      <div style="grid-column:1/-1;">
+        <label>Stops (one per line, optional)</label>
+        <textarea id="editStops" placeholder="Stop 1&#10;Stop 2&#10;Stop 3"></textarea>
+      </div>
+
+      <div style="grid-column:1/-1;">
+        <label>Dropoff Address</label>
+        <input id="editDropoff" type="text" placeholder="Dropoff address">
+      </div>
+
+      <div style="grid-column:1/-1;">
+        <label>Scheduled For (optional ISO string)</label>
+        <input id="editScheduledFor" type="text" placeholder="2026-01-11T22:15:00-06:00">
+      </div>
+
+      <div style="grid-column:1/-1;">
+        <label>Notes (metadata.notes)</label>
+        <textarea id="editNotes" placeholder="Notes…"></textarea>
+      </div>
+
+      <div style="grid-column:1/-1;">
+        <label>Manual Time Text (metadata.manualTimeText)</label>
+        <input id="editManualTimeText" type="text" placeholder="1/11 10:15 PM">
+      </div>
     </div>
+
     <div class="modalActions">
       <button class="btn btn-secondary btn-small" id="editCopyLoginLinkBtn">🔗 Copy Rider Login Link</button>
       <button class="btn btn-secondary btn-small" id="editCopyDirectionsBtn">🧭 Copy Directions Link</button>
@@ -468,6 +621,9 @@ body.modal-open{overflow:hidden;}
 </div>
 
 <script>
+/* =========================
+   CONFIG
+========================= */
 const STATUS_WORKER   = "https://bigred-status-updater.bigredtransportation.workers.dev";
 const LOCATION_WORKER = "https://update-location.bigredtransportation.workers.dev";
 const POST_WORKER     = "https://post-to-live-beta.bigredtransportation.workers.dev";
@@ -540,22 +696,33 @@ const TICKER_PRESETS = {
   OFFLINE: "🔴 Big Red is offline right now — text ahead for the next run"
 };
 
+/* =========================
+   STATE
+========================= */
 let imgIndex=0;
 let captionIndex=0;
+
 let gpsTimer=null;
 let gpsLastTs=null;
 let gpsRunToken = 0;
+
 let dispatchScope = localStorage.getItem("dispatchScope") || "active";
 let currentStatusVal="offline";
 let currentMode = localStorage.getItem("adminDriverMode") || "admin";
+
 const bookingCache = new Map();
 let editingBookingId = null;
+
 let trackingEnabled = (localStorage.getItem("trackingEnabled") === "true");
+
 let lastStatusLog = 0;
 let lastStatusJson = "";
 let lastEffLog = 0;
 let lastEffKey = "";
 
+/* =========================
+   SMALL UTILS
+========================= */
 function $(id){ return document.getElementById(id); }
 
 function showToast(msg){
@@ -646,6 +813,9 @@ function fromDatetimeLocalValue(v){
   }
 }
 
+/* =========================
+   LOCATION WORKER GET
+========================= */
 async function loadLiveLocation(){
   try{
     const r = await fetch(`${LOCATION_WORKER}?t=${Date.now()}`, { method:"GET" });
@@ -673,6 +843,9 @@ async function loadLiveLocation(){
   }
 }
 
+/* =========================
+   EFFECTIVE LOCATION
+========================= */
 function computeEffectiveLocation(statusVal, statusLoc, workerLoc){
   if(statusVal === "offline"){
     return { lat: HQ_LAT, lng: HQ_LNG, src: "HQ", ts: null };
@@ -714,6 +887,9 @@ async function refreshEffectiveLocationDisplay(statusData){
   return eff;
 }
 
+/* =========================
+   TRACKING PILL
+========================= */
 function applyTrackingPill(){
   const pill = $("livePill");
   if(!pill) return;
@@ -742,6 +918,9 @@ function setTrackingEnabled(next){
 }
 function toggleTracking(){ setTrackingEnabled(!trackingEnabled); }
 
+/* =========================
+   MODE TOGGLE
+========================= */
 function applyMode(mode){
   currentMode = (mode === "driver") ? "driver" : "admin";
   document.body.classList.remove("mode-admin","mode-driver");
@@ -751,6 +930,9 @@ function applyMode(mode){
   localStorage.setItem("adminDriverMode", currentMode);
 }
 
+/* =========================
+   PLACES AUTOCOMPLETE
+========================= */
 const OKC_BOUNDS = (window.google && google.maps)
   ? new google.maps.LatLngBounds(
       new google.maps.LatLng(35.15, -97.75),
@@ -802,6 +984,9 @@ function initAddressAutocomplete(){
   document.querySelectorAll('input[id^="manualStop_"]').forEach(attachAutocompleteToInput);
 }
 
+/* =========================
+   DIRECTIONS + SMS HELPERS
+========================= */
 function buildGoogleDirectionsUrl(booking){
   const origin = (booking?.pickup?.address || "").trim();
   const destination = (booking?.dropoff?.address || "").trim();
@@ -839,6 +1024,9 @@ function buildRiderLoginLink(booking){
   return u.toString();
 }
 
+/* =========================
+   LIVE IMAGES + CAPTIONS
+========================= */
 function setImage(idx){
   if(!LIVE_IMAGES.length) return;
   imgIndex=(idx+LIVE_IMAGES.length)%LIVE_IMAGES.length;
@@ -883,6 +1071,9 @@ function copyCaption(){
     .then(()=>showToast("Copied"),()=>showToast("Copy failed"));
 }
 
+/* =========================
+   HOMEPAGE TICKER
+========================= */
 function updateTickerPreview(){
   const msg = ($("tickerMessage")?.value || "").trim();
   const active = ($("tickerActiveToggle")?.value === "true");
@@ -1016,6 +1207,9 @@ async function clearTicker(){
   }
 }
 
+/* =========================
+   PUSH UI
+========================= */
 function updPrev(){
   $("pushPrevTitle").textContent = $("pushTitle").value || "Big Red Connect";
   $("pushPrevMessage").textContent = $("pushMessage").value || "Message will appear here.";
@@ -1079,6 +1273,9 @@ function autoOnlinePush(){
   sendPush(payload);
 }
 
+/* =========================
+   STATUS + GPS
+========================= */
 async function loadStatus(){
   try{
     const res=await fetch(STATUS_WORKER+"/status");
@@ -1247,6 +1444,9 @@ function stopGpsPings(){
   if($("gpsRate")) $("gpsRate").textContent="—";
 }
 
+/* =========================
+   MANUAL CREATE (STOPS + LUGGAGE)
+========================= */
 let manualStopIds = [];
 
 function isAirportText(s){
@@ -1328,6 +1528,9 @@ function clearManualRideForm(){
   window.__manualEstimate = null;
 }
 
+/* =========================
+   MANUAL ESTIMATE → STORED STRUCTURED
+========================= */
 function money(n){
   const x = Number(n);
   if(!Number.isFinite(x)) return "—";
@@ -1497,6 +1700,9 @@ async function createManualRide(){
   }
 }
 
+/* =========================
+   DISPATCH: ESTIMATE DISPLAY HELPERS
+========================= */
 function asNum(v){
   const n = Number(v);
   return Number.isFinite(n) ? n : null;
@@ -1525,6 +1731,9 @@ function estimateLineHtml(b){
   return `<div class="loc-line">💲 Estimate: ${escHtml(money(est.fare))} • ${escHtml(est.miles.toFixed(1))} mi${escHtml(baseTxt)}</div>`;
 }
 
+/* =========================
+   DISPATCH: FETCH + RENDER
+========================= */
 function fmtStops(stops){
   const arr = Array.isArray(stops) ? stops : [];
   const addrs = arr.map(x => (x?.address || "").trim()).filter(Boolean);
@@ -1680,6 +1889,9 @@ async function updateBookingStatus(bookingId, newStatus){
   }
 }
 
+/* =========================
+   EDIT MODAL
+========================= */
 function openEditModal(bookingId){
   const b = bookingCache.get(String(bookingId));
   if(!b){ showToast("Booking not found"); return; }
@@ -1820,6 +2032,9 @@ function copyEditDirectionsLink(){
   copyText(link);
 }
 
+/* =========================
+   SCOPE TOGGLE
+========================= */
 function toggleScope(){
   dispatchScope = (dispatchScope === "active") ? "all" : "active";
   localStorage.setItem("dispatchScope", dispatchScope);
@@ -1828,6 +2043,9 @@ function toggleScope(){
   showToast(`Scope: ${dispatchScope}`);
 }
 
+/* =========================
+   EVENT DELEGATION
+========================= */
 function handleDispatchClick(e){
   const target = e.target;
 
@@ -1882,6 +2100,9 @@ function handleDispatchChange(e){
   }
 }
 
+/* =========================
+   WIRE BUTTONS
+========================= */
 function wireButtons(){
   $("updateStatusBtn").onclick = updateStatus;
 
@@ -1986,6 +2207,9 @@ function wireButtons(){
   });
 }
 
+/* =========================
+   BOOT
+========================= */
 window.addEventListener("load",()=>{
   applyMode(currentMode);
   $("btnScope").textContent = `📋 ${dispatchScope}`;
