@@ -491,8 +491,8 @@ FILE 1: /rider/estimate.html (Estimate – Big Red Connect)
     const d = distMi(origin, pickup);
 
     let zoneFee = 0;
-    if (d > 40) zoneFee = 20;
-    else if (d > 20) zoneFee = 10;
+    if (d > 15) zoneFee = 20;
+    else if (d > 10) zoneFee = 10;
 
     // fairness rule: no travel fee on long trips that already cover it
     if (zoneFee > 0 && miles > 20) zoneFee = 0;
