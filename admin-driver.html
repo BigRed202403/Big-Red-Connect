@@ -90,10 +90,18 @@ h1{text-align:center;margin:14px 0 4px;color:var(--red);font-size:1.35rem;}
 section{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px;margin:0;}
 section h2{margin:6px 0 10px;font-size:1.05rem;border-bottom:1px solid #222;padding-bottom:6px;}
 .meta{font-size:.8rem;color:var(--muted);margin-top:8px;line-height:1.3;}
+.minihint{font-size:.76rem;color:#888;margin:4px 0 6px;}
+.smalllabel{font-size:.8rem;color:#ccc;display:inline-block;margin-top:6px;}
 select,button,input,textarea{font-family:inherit;}
 select,button,input[type=text],input[type=url],input[type=datetime-local]{padding:9px 11px;border-radius:8px;border:none;margin:4px 0;font-weight:600;font-size:.86rem;min-height:44px;}
+input[type=text],input[type=url],input[type=datetime-local]{background:#fff;color:#000;}
 textarea{width:100%;min-height:100px;background:#111;color:#fff;border:1px solid var(--red);border-radius:8px;padding:10px;resize:vertical;font-size:.86rem;}
 .row{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin:8px 0;}
+.input-with-button{display:flex;gap:8px;align-items:center;width:100%;flex-wrap:wrap;}
+.input-with-button input{flex:1 1 260px;min-width:0;}
+.input-with-button .btn{flex:0 0 auto;}
+.stop-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:6px 0;}
+.stop-row input{flex:1 1 240px;min-width:0;}
 .preview-box{margin-top:8px;padding:10px;border-radius:8px;border:1px dashed #444;background:#050505;font-size:.82rem;color:#ddd;line-height:1.3;}
 
 /* Image box - optimized for mobile & iPad */
@@ -135,6 +143,11 @@ textarea{width:100%;min-height:100px;background:#111;color:#fff;border:1px solid
 .chip.warn{border-color:#996600;color:#ffe3b0;}
 .chip.danger{border-color:#aa2222;color:#ffb9b9;}
 
+.ticker-status-chip{display:inline-block;padding:3px 8px;border-radius:999px;border:1px solid #444;font-size:.72rem;margin-right:4px;}
+.ticker-status-chip.live{border-color:#0a5;color:#baffd8;}
+.ticker-status-chip.off{border-color:#555;color:#aaa;}
+.ticker-preview-bar{margin-top:6px;padding:8px 10px;border-radius:8px;border:1px solid #333;background:#000;color:#fff;font-size:.82rem;}
+
 #toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#111;color:#fff;border:1px solid var(--red);padding:10px 18px;border-radius:999px;opacity:0;pointer-events:none;transition:opacity .35s;z-index:999;font-size:.85rem;max-width:92vw;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.6);}
 #toast.show{opacity:1;}
 #debugLog{font-family:monospace;font-size:.72rem;color:#0f0;background:#000;padding:8px;max-height:220px;overflow:auto;border-top:1px solid #222;margin:0 auto 20px;max-width:1200px;}
@@ -152,6 +165,7 @@ body.mode-admin .driver-only{display:none;}
   .layout{gap:12px;padding:0 10px 16px;}
   .img-box img{max-height:220px;}
   .col-body{max-height:48vh;}
+  .input-with-button .btn{width:100%;}
 }
 
 /* Tablet / iPad */
@@ -325,7 +339,10 @@ body.mode-admin .driver-only{display:none;}
       </div>
 
       <span class="smalllabel">Pickup</span>
-      <input id="manualPickup" type="text" placeholder="Pickup address">
+      <div class="input-with-button">
+        <input id="manualPickup" type="text" placeholder="Pickup address">
+        <button class="btn btn-secondary" id="manualUseLocPickup" type="button">📍 Use My Location</button>
+      </div>
 
       <span class="smalllabel">Gate Code / Access (optional)</span>
       <input id="manualGateCode" type="text" placeholder="Gate code, building, apartment…">
@@ -338,7 +355,10 @@ body.mode-admin .driver-only{display:none;}
       </div>
 
       <span class="smalllabel">Dropoff</span>
-      <input id="manualDropoff" type="text" placeholder="Dropoff address">
+      <div class="input-with-button">
+        <input id="manualDropoff" type="text" placeholder="Dropoff address">
+        <button class="btn btn-secondary" id="manualUseLocDropoff" type="button">📍 Use My Location</button>
+      </div>
 
       <div class="row" id="manualLuggageRow" style="display:none;">
         <label class="smalllabel" for="manualLuggageCount" style="margin:0;">Luggage</label>
@@ -369,9 +389,11 @@ body.mode-admin .driver-only{display:none;}
       <div class="preview-box" id="manualEstimateBox" style="margin-top:10px;">
         <strong>Estimate</strong><br>
         <span id="manualEstMiles">Miles: —</span><br>
+        <span id="manualEstBase">Base: —</span><br>
+        <span id="manualEstTravelFee">Extended Coverage: —</span><br>
         <span id="manualEstFare">Fare: —</span><br>
         <span style="color:#888;font-size:.75rem;">
-          Stored as metadata on create: estimateFare / estimateMiles / estimateBase.
+          Stored as metadata on create: estimateFare / estimateMiles / estimateBase / estimateTravelFee.
         </span>
       </div>
 
@@ -381,7 +403,8 @@ body.mode-admin .driver-only{display:none;}
 
       <p class="meta">
         ✅ Manual create uses: <code>POST /api/admin/bookings/manual</code> (requires <code>X-Admin-Secret</code>).<br>
-        Stores <code>metadata.manualTimeText</code>, <code>metadata.notes</code>, <code>metadata.luggageCount</code>, and estimate fields.
+        ✅ Extended coverage is based on driver effective location → pickup: $10 if pickup is over 10 miles away; $20 if over 15 miles away.<br>
+        ✅ Long trips over 20 miles waive the extended coverage fee because mileage already covers the relocation.
       </p>
     </section>
 
@@ -640,6 +663,13 @@ const HQ_LAT = 35.31810;
 const HQ_LNG = -97.49453;
 const LIVE_LOC_FRESH_MS = 15 * 60 * 1000;
 
+// Extended coverage is based on the driver's effective location to pickup.
+const EXTENDED_COVERAGE_TIER_1_MI = 10;
+const EXTENDED_COVERAGE_TIER_2_MI = 15;
+const EXTENDED_COVERAGE_TIER_1_FEE = 10;
+const EXTENDED_COVERAGE_TIER_2_FEE = 20;
+const EXTENDED_COVERAGE_WAIVE_TRIP_OVER_MI = 20;
+
 const DRIVER_STATUSES = [
   { value:"REQUESTED", label:"🆕 Requested" },
   { value:"ACCEPTED",  label:"✅ Accepted" },
@@ -813,6 +843,39 @@ function fromDatetimeLocalValue(v){
   }
 }
 
+function asNum(v){
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
+function money(n){
+  const x = Number(n);
+  if(!Number.isFinite(x)) return "—";
+  return "$" + x.toFixed(2);
+}
+
+function haversineMiles(a, b){
+  if(!a || !b) return 0;
+  const lat1 = Number(a.lat);
+  const lng1 = Number(a.lng);
+  const lat2 = Number(b.lat);
+  const lng2 = Number(b.lng);
+  if(!Number.isFinite(lat1) || !Number.isFinite(lng1) || !Number.isFinite(lat2) || !Number.isFinite(lng2)) return 0;
+
+  const R = 3958.7613;
+  const toRad = deg => deg * Math.PI / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const s1 = Math.sin(dLat / 2);
+  const s2 = Math.sin(dLng / 2);
+  const q =
+    s1 * s1 +
+    Math.cos(toRad(lat1)) *
+    Math.cos(toRad(lat2)) *
+    s2 * s2;
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(q)));
+}
+
 /* =========================
    LOCATION WORKER GET
 ========================= */
@@ -887,6 +950,12 @@ async function refreshEffectiveLocationDisplay(statusData){
   return eff;
 }
 
+async function getDriverEffectiveLocationForPricing(){
+  let workerLoc = null;
+  try{ workerLoc = await loadLiveLocation(); }catch(e){ workerLoc = null; }
+  return computeEffectiveLocation(currentStatusVal || "offline", null, workerLoc);
+}
+
 /* =========================
    TRACKING PILL
 ========================= */
@@ -931,7 +1000,7 @@ function applyMode(mode){
 }
 
 /* =========================
-   PLACES AUTOCOMPLETE
+   PLACES AUTOCOMPLETE + GEOLOCATION HELPERS
 ========================= */
 const OKC_BOUNDS = (window.google && google.maps)
   ? new google.maps.LatLngBounds(
@@ -967,10 +1036,14 @@ function attachAutocompleteToInput(inputEl){
       const nameLower = name.toLowerCase();
       const addrLower = addr.toLowerCase();
       inputEl.value = addrLower.startsWith(nameLower) ? addr : `${name}, ${addr}`;
-      return;
+    } else if (addr) {
+      inputEl.value = addr;
+    } else if (name) {
+      inputEl.value = name;
     }
-    if (addr) { inputEl.value = addr; return; }
-    if (name) { inputEl.value = name; return; }
+
+    syncManualLuggageVisibility();
+    setManualEstimateDraft(null);
   });
 
   __acMap.set(inputEl.id, ac);
@@ -982,6 +1055,42 @@ function initAddressAutocomplete(){
   attachAutocompleteToInput($("editPickup"));
   attachAutocompleteToInput($("editDropoff"));
   document.querySelectorAll('input[id^="manualStop_"]').forEach(attachAutocompleteToInput);
+}
+
+function geocoderInstance(){
+  if(!(window.google && google.maps)) return null;
+  return new google.maps.Geocoder();
+}
+
+function useBrowserLocationForInput(inputId){
+  const input = $(inputId);
+  if(!input){ showToast("Location input not found"); return; }
+  if(!navigator.geolocation){ showToast("Location not supported"); return; }
+  const geocoder = geocoderInstance();
+  if(!geocoder){ showToast("Google Maps not ready"); return; }
+
+  showToast("Getting location…");
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+      geocoder.geocode({ location:{ lat, lng } }, (results, status) => {
+        if(status === "OK" && results && results[0]){
+          input.value = results[0].formatted_address;
+        }else{
+          input.value = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+        }
+        syncManualLuggageVisibility();
+        setManualEstimateDraft(null);
+        showToast("Location added");
+      });
+    },
+    err => {
+      showToast("Unable to get location");
+      log("Manual use-location error: " + err.message);
+    },
+    { enableHighAccuracy:true, maximumAge:8000, timeout:10000 }
+  );
 }
 
 /* =========================
@@ -1445,7 +1554,7 @@ function stopGpsPings(){
 }
 
 /* =========================
-   MANUAL CREATE (STOPS + LUGGAGE)
+   MANUAL CREATE (STOPS + LUGGAGE + EXTENDED COVERAGE)
 ========================= */
 let manualStopIds = [];
 
@@ -1486,18 +1595,22 @@ function addManualStopField(initialValue=""){
   div.id = "row_" + id;
   div.innerHTML = `
     <input id="${id}" type="text" placeholder="Stop ${manualStopIds.length} address" value="${escHtml(String(initialValue||""))}">
+    <button type="button" class="btn btn-secondary btn-small" title="Use My Location" onclick="useBrowserLocationForInput('${id}')">📍</button>
     <button type="button" class="btn btn-ghost" title="Remove Stop" onclick="removeManualStop('${id}')">✖</button>
   `;
   wrap.appendChild(div);
 
   attachAutocompleteToInput($(id));
+  $(id)?.addEventListener("input", () => setManualEstimateDraft(null));
 }
 function removeManualStop(id){
   const row = $("row_" + id);
   if(row) row.remove();
   manualStopIds = manualStopIds.filter(x => x !== id);
+  setManualEstimateDraft(null);
 }
 window.removeManualStop = removeManualStop;
+window.useBrowserLocationForInput = useBrowserLocationForInput;
 
 function clearManualStops(){
   manualStopIds.slice().forEach(id => removeManualStop(id));
@@ -1523,6 +1636,8 @@ function clearManualRideForm(){
   syncManualLuggageVisibility();
 
   if($("manualEstMiles")) $("manualEstMiles").textContent = "Miles: —";
+  if($("manualEstBase")) $("manualEstBase").textContent = "Base: —";
+  if($("manualEstTravelFee")) $("manualEstTravelFee").textContent = "Extended Coverage: —";
   if($("manualEstFare"))  $("manualEstFare").textContent  = "Fare: —";
 
   window.__manualEstimate = null;
@@ -1531,29 +1646,49 @@ function clearManualRideForm(){
 /* =========================
    MANUAL ESTIMATE → STORED STRUCTURED
 ========================= */
-function money(n){
-  const x = Number(n);
-  if(!Number.isFinite(x)) return "—";
-  return "$" + x.toFixed(2);
-}
-function computeFlatRateFare(miles, baseRate){
+function computeMileageSubtotal(miles){
   const m = Math.max(0, Number(miles) || 0);
-  let total = Number(baseRate) || 0;
+  let subtotal = 0;
 
   if(m > 10){
     const tier1 = Math.min(m, 20) - 10;
-    total += tier1 * 1.25;
+    subtotal += tier1 * 1.25;
   }
   if(m > 20){
     const tier2 = m - 20;
-    total += tier2 * 1.0;
+    subtotal += tier2 * 1.0;
   }
-  return total;
+  return subtotal;
 }
+
+function computeFlatRateFare(miles, baseRate, travelFee = 0){
+  return (Number(baseRate) || 0) + computeMileageSubtotal(miles) + (Number(travelFee) || 0);
+}
+
 function getManualRateBase(){
   return manualIsAirportRide() ? 15 : 10;
 }
-async function getRouteMilesWithStops(origin, destination, stopAddrs){
+
+function computeExtendedCoverageFee(driverOrigin, pickupPoint, tripMiles){
+  const d = haversineMiles(driverOrigin, pickupPoint);
+  let fee = 0;
+
+  if(d > EXTENDED_COVERAGE_TIER_2_MI) fee = EXTENDED_COVERAGE_TIER_2_FEE;
+  else if(d > EXTENDED_COVERAGE_TIER_1_MI) fee = EXTENDED_COVERAGE_TIER_1_FEE;
+
+  if(fee > 0 && Number(tripMiles) > EXTENDED_COVERAGE_WAIVE_TRIP_OVER_MI){
+    fee = 0;
+  }
+
+  return {
+    fee,
+    driverToPickupMiles: d,
+    origin: driverOrigin || null,
+    pickup: pickupPoint || null
+  };
+}
+
+async function getRouteDetailsWithStops(origin, destination, stopAddrs){
   if(!(window.google && google.maps)) throw new Error("Google Maps not available");
 
   const ds = new google.maps.DirectionsService();
@@ -1574,12 +1709,38 @@ async function getRouteMilesWithStops(origin, destination, stopAddrs){
         reject(new Error("Directions failed: " + status));
         return;
       }
+
       const legs = result.routes[0].legs;
       const meters = legs.reduce((sum, leg) => sum + (leg?.distance?.value || 0), 0);
+      const seconds = legs.reduce((sum, leg) => sum + (leg?.duration?.value || 0), 0);
       const miles = meters / 1609.344;
-      resolve(miles);
+
+      const firstLeg = legs[0];
+      const lastLeg = legs[legs.length - 1];
+
+      const pickupPoint = firstLeg?.start_location
+        ? { lat: firstLeg.start_location.lat(), lng: firstLeg.start_location.lng() }
+        : null;
+
+      const dropoffPoint = lastLeg?.end_location
+        ? { lat: lastLeg.end_location.lat(), lng: lastLeg.end_location.lng() }
+        : null;
+
+      resolve({
+        miles,
+        minutes: seconds / 60,
+        meters,
+        seconds,
+        pickupPoint,
+        dropoffPoint
+      });
     });
   });
+}
+
+async function getRouteMilesWithStops(origin, destination, stopAddrs){
+  const details = await getRouteDetailsWithStops(origin, destination, stopAddrs);
+  return details.miles;
 }
 
 function setManualEstimateDraft(est){
@@ -1597,26 +1758,51 @@ async function estimateManualFare(){
   }
 
   $("manualEstMiles").textContent = "Miles: …";
+  $("manualEstBase").textContent = "Base: …";
+  $("manualEstTravelFee").textContent = "Extended Coverage: …";
   $("manualEstFare").textContent  = "Fare: …";
 
   try{
-    const miles = await getRouteMilesWithStops(pickup, dropoff, stops);
+    const route = await getRouteDetailsWithStops(pickup, dropoff, stops);
+    const driverOrigin = await getDriverEffectiveLocationForPricing();
+
+    const miles = route.miles;
     const base = getManualRateBase();
-    const fare = computeFlatRateFare(miles, base);
+    const mileageSubtotal = computeMileageSubtotal(miles);
+    const coverage = computeExtendedCoverageFee(driverOrigin, route.pickupPoint, miles);
+    const fare = computeFlatRateFare(miles, base, coverage.fee);
 
     $("manualEstMiles").textContent = `Miles: ${miles.toFixed(1)}`;
-    $("manualEstFare").textContent  = `Fare: ${money(fare)} (base $${base})`;
+    $("manualEstBase").textContent = `Base: $${base}`;
+    $("manualEstTravelFee").textContent =
+      `Extended Coverage: ${money(coverage.fee)} (${coverage.driverToPickupMiles.toFixed(1)} mi from effective driver location)`;
+    $("manualEstFare").textContent =
+      `Fare: ${money(fare)} (base $${base} + mileage ${money(mileageSubtotal)}${coverage.fee ? " + coverage " + money(coverage.fee) : ""})`;
 
     const est = {
       estimateMiles: Number(miles.toFixed(3)),
+      estimateMinutes: Number(route.minutes.toFixed(1)),
       estimateFare: Number(fare.toFixed(2)),
-      estimateBase: Number(base)
+      estimateBase: Number(base),
+      estimateMileageSubtotal: Number(mileageSubtotal.toFixed(2)),
+      estimateTravelFee: Number(coverage.fee.toFixed(2)),
+      estimateDriverToPickupMiles: Number(coverage.driverToPickupMiles.toFixed(3)),
+      estimatePricingOrigin: {
+        lat: Number(driverOrigin.lat),
+        lng: Number(driverOrigin.lng),
+        src: driverOrigin.src || null,
+        ts: driverOrigin.ts || null
+      },
+      estimatePickupPoint: route.pickupPoint,
+      estimateDropoffPoint: route.dropoffPoint
     };
 
     setManualEstimateDraft(est);
     return est;
   }catch(e){
     $("manualEstMiles").textContent = "Miles: —";
+    $("manualEstBase").textContent = "Base: —";
+    $("manualEstTravelFee").textContent = "Extended Coverage: —";
     $("manualEstFare").textContent  = "Fare: —";
     setManualEstimateDraft(null);
     showToast("Estimate failed");
@@ -1660,9 +1846,16 @@ async function createManualRide(){
   };
 
   if(est && Number.isFinite(est.estimateFare) && Number.isFinite(est.estimateMiles)){
-    metadata.estimateFare  = est.estimateFare;
+    metadata.estimateFare = est.estimateFare;
     metadata.estimateMiles = est.estimateMiles;
-    metadata.estimateBase  = est.estimateBase;
+    metadata.estimateMinutes = est.estimateMinutes;
+    metadata.estimateBase = est.estimateBase;
+    metadata.estimateMileageSubtotal = est.estimateMileageSubtotal;
+    metadata.estimateTravelFee = est.estimateTravelFee || 0;
+    metadata.estimateDriverToPickupMiles = est.estimateDriverToPickupMiles || 0;
+    metadata.estimatePricingOrigin = est.estimatePricingOrigin || null;
+    metadata.estimatePickupPoint = est.estimatePickupPoint || null;
+    metadata.estimateDropoffPoint = est.estimateDropoffPoint || null;
   }
 
   const payload = {
@@ -1703,24 +1896,27 @@ async function createManualRide(){
 /* =========================
    DISPATCH: ESTIMATE DISPLAY HELPERS
 ========================= */
-function asNum(v){
-  const n = Number(v);
-  return Number.isFinite(n) ? n : null;
-}
 function readEstimateFromBooking(b){
   const md = b?.metadata || {};
   const fare = asNum(md.estimateFare);
   const miles = asNum(md.estimateMiles);
   const base = asNum(md.estimateBase);
+  const travelFee = asNum(md.estimateTravelFee);
 
   if(fare != null && miles != null){
-    return { fare, miles, base: (base != null ? base : null), src: "metadata" };
+    return {
+      fare,
+      miles,
+      base: (base != null ? base : null),
+      travelFee: (travelFee != null ? travelFee : 0),
+      src: "metadata"
+    };
   }
 
   const notes = String(md?.notes || "");
   const m = notes.match(/Estimate:\s*\$?(\d+(?:\.\d+)?)\s*\((\d+(?:\.\d+)?)\s*mi,\s*base\s*\$?(\d+(?:\.\d+)?)\)/i);
   if(m){
-    return { fare: Number(m[1]), miles: Number(m[2]), base: Number(m[3]), src: "notes" };
+    return { fare: Number(m[1]), miles: Number(m[2]), base: Number(m[3]), travelFee:0, src: "notes" };
   }
   return null;
 }
@@ -1728,7 +1924,8 @@ function estimateLineHtml(b){
   const est = readEstimateFromBooking(b);
   if(!est) return "";
   const baseTxt = (est.base != null && Number.isFinite(est.base)) ? ` • base $${est.base}` : "";
-  return `<div class="loc-line">💲 Estimate: ${escHtml(money(est.fare))} • ${escHtml(est.miles.toFixed(1))} mi${escHtml(baseTxt)}</div>`;
+  const travelTxt = (est.travelFee != null && Number(est.travelFee) > 0) ? ` • coverage ${money(est.travelFee)}` : "";
+  return `<div class="loc-line">💲 Estimate: ${escHtml(money(est.fare))} • ${escHtml(est.miles.toFixed(1))} mi${escHtml(baseTxt)}${escHtml(travelTxt)}</div>`;
 }
 
 /* =========================
@@ -1986,7 +2183,14 @@ async function saveEditModal(){
 
   if(mdExisting.estimateFare != null) payload.metadata.estimateFare = mdExisting.estimateFare;
   if(mdExisting.estimateMiles != null) payload.metadata.estimateMiles = mdExisting.estimateMiles;
+  if(mdExisting.estimateMinutes != null) payload.metadata.estimateMinutes = mdExisting.estimateMinutes;
   if(mdExisting.estimateBase != null) payload.metadata.estimateBase = mdExisting.estimateBase;
+  if(mdExisting.estimateMileageSubtotal != null) payload.metadata.estimateMileageSubtotal = mdExisting.estimateMileageSubtotal;
+  if(mdExisting.estimateTravelFee != null) payload.metadata.estimateTravelFee = mdExisting.estimateTravelFee;
+  if(mdExisting.estimateDriverToPickupMiles != null) payload.metadata.estimateDriverToPickupMiles = mdExisting.estimateDriverToPickupMiles;
+  if(mdExisting.estimatePricingOrigin != null) payload.metadata.estimatePricingOrigin = mdExisting.estimatePricingOrigin;
+  if(mdExisting.estimatePickupPoint != null) payload.metadata.estimatePickupPoint = mdExisting.estimatePickupPoint;
+  if(mdExisting.estimateDropoffPoint != null) payload.metadata.estimateDropoffPoint = mdExisting.estimateDropoffPoint;
 
   try{
     log(`Admin edit PUT ${editingBookingId} … ${JSON.stringify(payload)}`);
@@ -2167,11 +2371,15 @@ function wireButtons(){
 
   $("manualAddStopBtn").addEventListener("click", ()=>addManualStopField(""));
   $("manualClearStopsBtn").addEventListener("click", clearManualStops);
+
+  $("manualUseLocPickup").addEventListener("click", () => useBrowserLocationForInput("manualPickup"));
+  $("manualUseLocDropoff").addEventListener("click", () => useBrowserLocationForInput("manualDropoff"));
+
   ["manualPickup","manualDropoff","manualAirportToggle"].forEach(id=>{
     const el = $(id);
     if(el){
-      el.addEventListener("input", syncManualLuggageVisibility);
-      el.addEventListener("change", syncManualLuggageVisibility);
+      el.addEventListener("input", () => { syncManualLuggageVisibility(); setManualEstimateDraft(null); });
+      el.addEventListener("change", () => { syncManualLuggageVisibility(); setManualEstimateDraft(null); });
     }
   });
 
