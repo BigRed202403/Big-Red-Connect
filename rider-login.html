@@ -2,6 +2,7 @@
      rider/login.html  (SOFT-COPY UPDATE)
      - Same functionality
      - Friendlier wording (no "login required" vibe)
+     - UPDATED: Links OneSignal external_id to riderId for ride-status pushes
      ========================================================= -->
 <!DOCTYPE html>
 <html lang="en">
@@ -14,6 +15,80 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/official_logo.jpeg">
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#000000">
+
+  <!-- 🔔 OneSignal Web Push SDK v16 -->
+  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+
+  <script>
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+
+    OneSignalDeferred.push(async function(OneSignal) {
+      try {
+        await OneSignal.init({
+          appId: "9b8bcc89-87d3-46e2-b2d0-042d1a267718",
+          safari_web_id: "web.onesignal.auto.0c90051e-4735-447d-b203-75e3767d91b9",
+          notifyButton: { enable: false },
+          serviceWorkerPath: "/onesignalsdkworker.js?v=3",
+          path: "/"
+        });
+
+        console.log("[Rider Login] OneSignal initialized.");
+      } catch (e) {
+        console.warn("[Rider Login] OneSignal init failed:", e);
+      }
+    });
+
+    async function addRiderTagsSafe(OneSignal) {
+      const tags = {
+        env: "live",
+        role_rider: "true",
+        role_rider_live: "true"
+      };
+
+      if (OneSignal?.User?.addTags && typeof OneSignal.User.addTags === "function") {
+        await OneSignal.User.addTags(tags);
+        return;
+      }
+
+      if (OneSignal?.User?.addTag && typeof OneSignal.User.addTag === "function") {
+        await OneSignal.User.addTag("env", "live");
+        await OneSignal.User.addTag("role_rider", "true");
+        await OneSignal.User.addTag("role_rider_live", "true");
+        return;
+      }
+
+      if (typeof OneSignal.sendTag === "function") {
+        await OneSignal.sendTag("env", "live");
+        await OneSignal.sendTag("role_rider", "true");
+        await OneSignal.sendTag("role_rider_live", "true");
+      }
+    }
+
+    async function linkOneSignalToRider(riderId) {
+      if (!riderId) return;
+
+      try {
+        window.OneSignalDeferred = window.OneSignalDeferred || [];
+
+        await new Promise((resolve) => {
+          OneSignalDeferred.push(async function(OneSignal) {
+            try {
+              await OneSignal.login(riderId);
+              await addRiderTagsSafe(OneSignal);
+
+              console.log("[Rider Login] OneSignal linked to riderId:", riderId);
+            } catch (e) {
+              console.warn("[Rider Login] OneSignal rider link failed:", e);
+            } finally {
+              resolve();
+            }
+          });
+        });
+      } catch (e) {
+        console.warn("[Rider Login] OneSignal link wrapper failed:", e);
+      }
+    }
+  </script>
 
   <style>
     body { margin:0; background:#000; color:#fff; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; padding-bottom:40px; }
@@ -185,6 +260,8 @@
       localStorage.setItem("riderId", riderId);
       localStorage.setItem("riderName", name);
       localStorage.setItem("riderPhone", phone);
+
+      await linkOneSignalToRider(riderId);
 
       await claimManualRidesForThisPhone();
 
