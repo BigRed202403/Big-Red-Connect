@@ -5,182 +5,46 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Rider Hub – Big Red Connect</title>
 
-  <!-- PWA / Icons -->
   <link rel="apple-touch-icon" href="/official_logo.jpeg">
   <link rel="icon" type="image/png" sizes="192x192" href="/official_logo.jpeg">
   <meta name="theme-color" content="#000"/>
 
-  <!-- OneSignal SDK -->
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 
   <style>
-    body {
-      margin:0;
-      background:#000;
-      color:#fff;
-      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-    }
-    header {
-      background:#000;
-      padding:12px;
-      border-bottom:2px solid #b30000;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      position:sticky;
-      top:0;
-      z-index:50;
-    }
+    body { margin:0; background:#000; color:#fff; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
+    header { background:#000; padding:12px; border-bottom:2px solid #b30000; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; z-index:50; }
     .logo { height:42px; }
-    .header-left {
-      display:flex;
-      align-items:center;
-      gap:10px;
-    }
-    .header-title {
-      font-weight:700;
-      font-size:1rem;
-    }
-    #menuBtn {
-      font-size:1.6rem;
-      background:none;
-      border:none;
-      color:white;
-      cursor:pointer;
-    }
-    #menuPanel {
-      display:none;
-      flex-direction:column;
-      background:#111;
-      border-bottom:2px solid #b30000;
-    }
-    #menuPanel a {
-      padding:16px;
-      color:#fff;
-      text-decoration:none;
-      border-bottom:1px solid #222;
-      font-size:1rem;
-    }
+    .header-left { display:flex; align-items:center; gap:10px; }
+    .header-title { font-weight:700; font-size:1rem; }
+    #menuBtn { font-size:1.6rem; background:none; border:none; color:white; cursor:pointer; }
+    #menuPanel { display:none; flex-direction:column; background:#111; border-bottom:2px solid #b30000; }
+    #menuPanel.open { display:flex; }
+    #menuPanel a { padding:16px; color:#fff; text-decoration:none; border-bottom:1px solid #222; font-size:1rem; }
     #menuPanel a:hover { background:#222; }
 
-    .container {
-      padding:20px;
-      text-align:center;
-    }
+    .container { padding:20px; text-align:center; }
     h1 { font-size:1.5rem; }
-    .welcome {
-      color:#bbb;
-      margin-bottom:12px;
-      font-size:.95rem;
-    }
+    .welcome { color:#bbb; margin-bottom:12px; font-size:.95rem; }
 
-    .btn {
-      display:block;
-      width:100%;
-      max-width:340px;
-      margin:12px auto;
-      padding:18px;
-      background:#b30000;
-      color:#fff;
-      text-decoration:none;
-      font-size:1.15rem;
-      border-radius:12px;
-      font-weight:700;
-      border:none;
-      cursor:pointer;
-    }
-    .btn-secondary {
-      background:#111;
-      border:1px solid #333;
-    }
+    .btn { display:block; width:100%; max-width:340px; margin:12px auto; padding:18px; background:#b30000; color:#fff; text-decoration:none; font-size:1.15rem; border-radius:12px; font-weight:700; border:none; cursor:pointer; }
+    .btn-secondary { background:#111; border:1px solid #333; }
 
-    .card {
-      max-width:340px;
-      margin:0 auto 16px;
-      background:#111;
-      border:1px solid #333;
-      border-radius:12px;
-      padding:14px;
-      text-align:left;
-    }
-    .card-title {
-      font-weight:800;
-      font-size:1.05rem;
-      margin-bottom:6px;
-      display:flex;
-      align-items:center;
-      gap:8px;
-    }
-    .card-sub {
-      color:#bbb;
-      font-size:.9rem;
-      margin-bottom:10px;
-      line-height:1.25rem;
-    }
-    .card .btn {
-      margin:0;
-      max-width:none;
-      text-align:center;
-      padding:14px;
-      font-size:1rem;
-      border-radius:10px;
-    }
+    .card { max-width:340px; margin:0 auto 16px; background:#111; border:1px solid #333; border-radius:12px; padding:14px; text-align:left; }
+    .card-title { font-weight:800; font-size:1.05rem; margin-bottom:6px; display:flex; align-items:center; gap:8px; }
+    .card-sub { color:#bbb; font-size:.9rem; margin-bottom:10px; line-height:1.25rem; }
+    .card .btn { margin:0; max-width:none; text-align:center; padding:14px; font-size:1rem; border-radius:10px; }
 
-    .helper {
-      max-width:340px;
-      margin:0 auto 16px;
-      background:#0b0b0b;
-      border:1px solid #222;
-      border-radius:12px;
-      padding:14px;
-      text-align:left;
-    }
-    .helper h2{
-      margin:0 0 6px;
-      font-size:1rem;
-      color:#fff;
-    }
-    .helper p{
-      margin:0 0 10px;
-      color:#bbb;
-      font-size:.9rem;
-      line-height:1.25rem;
-    }
-    .pillline{
-      max-width:340px;
-      margin:0 auto 12px;
-      font-size:.85rem;
-      color:#ddd;
-      padding:10px 12px;
-      border-radius:999px;
-      border:1px solid #222;
-      background:#090909;
-      text-align:center;
-    }
+    .helper { max-width:340px; margin:0 auto 16px; background:#0b0b0b; border:1px solid #222; border-radius:12px; padding:14px; text-align:left; }
+    .helper h2{ margin:0 0 6px; font-size:1rem; color:#fff; }
+    .helper p{ margin:0 0 10px; color:#bbb; font-size:.9rem; line-height:1.25rem; }
+    .pillline{ max-width:340px; margin:0 auto 12px; font-size:.85rem; color:#ddd; padding:10px 12px; border-radius:999px; border:1px solid #222; background:#090909; text-align:center; }
     .pillline.ok{ border-color:#1f6; }
     .pillline.warn{ border-color:#ffcc00; }
     .pillline.bad{ border-color:#b30000; }
-    .mini{
-      font-size:.82rem;
-      color:#bbb;
-    }
-    .steps{
-      margin:8px 0 0;
-      padding-left:18px;
-      color:#ccc;
-      font-size:.9rem;
-      line-height:1.3rem;
-    }
-
-    .btn-smallish{
-      padding:12px 14px;
-      font-size:1rem;
-      border-radius:10px;
-      width:auto;
-      max-width:none;
-      margin:0;
-      display:inline-block;
-    }
+    .mini{ font-size:.82rem; color:#bbb; }
+    .steps{ margin:8px 0 0; padding-left:18px; color:#ccc; font-size:.9rem; line-height:1.3rem; }
+    .btn-smallish{ padding:12px 14px; font-size:1rem; border-radius:10px; width:auto; max-width:none; margin:0; display:inline-block; }
   </style>
 </head>
 
@@ -191,7 +55,7 @@
     <a href="/index.html"><img src="/official_logo.jpeg" class="logo" alt="Big Red Connect"></a>
     <div class="header-title">Rider Hub</div>
   </div>
-  <button id="menuBtn">☰</button>
+  <button id="menuBtn" type="button">☰</button>
 </header>
 
 <nav id="menuPanel">
@@ -239,6 +103,201 @@
 </div>
 
 <script src="/rider/session-guard.js"></script>
+
+<script>
+const BOOKINGS_API = "https://bigred-bookings.bigredtransportation.workers.dev";
+
+function getProfile(){
+  try {
+    return JSON.parse(localStorage.getItem("bigred_rider_profile_v1") || "{}");
+  } catch {
+    return {};
+  }
+}
+
+function isStandalone(){
+  return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+}
+
+function setAlertsPill(text, cls){
+  const pill = document.getElementById("alertsPill");
+  if (!pill) return;
+  pill.classList.remove("ok","warn","bad");
+  if (cls) pill.classList.add(cls);
+  pill.textContent = text;
+}
+
+async function addRiderTagsSafe(OneSignal){
+  const tags = {
+    env: "live",
+    role_rider: "true",
+    role_rider_live: "true"
+  };
+
+  if (OneSignal?.User?.addTags) {
+    await OneSignal.User.addTags(tags);
+    return;
+  }
+
+  if (OneSignal?.User?.addTag) {
+    await OneSignal.User.addTag("env", "live");
+    await OneSignal.User.addTag("role_rider", "true");
+    await OneSignal.User.addTag("role_rider_live", "true");
+    return;
+  }
+
+  if (typeof OneSignal.sendTag === "function") {
+    await OneSignal.sendTag("env", "live");
+    await OneSignal.sendTag("role_rider", "true");
+    await OneSignal.sendTag("role_rider_live", "true");
+  }
+}
+
+async function initOneSignalHub(){
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+
+  OneSignalDeferred.push(async function(OneSignal){
+    try {
+      await OneSignal.init({
+        appId: "9b8bcc89-87d3-46e2-b2d0-042d1a267718",
+        safari_web_id: "web.onesignal.auto.0c90051e-4735-447d-b203-75e3767d91b9",
+        notifyButton: { enable:false },
+        serviceWorkerPath: "/onesignalsdkworker.js?v=3",
+        path: "/"
+      });
+
+      const profile = getProfile();
+      if (profile.riderId) {
+        await OneSignal.login(profile.riderId);
+        await addRiderTagsSafe(OneSignal);
+      }
+
+      const supported = await OneSignal.Notifications.isPushSupported();
+      if (!supported) {
+        setAlertsPill("🔕 Alerts: not supported on this device", "bad");
+        return;
+      }
+
+      const permission = OneSignal.Notifications.permission;
+      if (permission === "granted" || permission === true) {
+        setAlertsPill("🔔 Alerts: enabled", "ok");
+        document.getElementById("alertsHelper").style.display = "none";
+      } else if (permission === "denied" || permission === false) {
+        setAlertsPill("🔕 Alerts: blocked", "bad");
+        document.getElementById("alertsHelper").style.display = "none";
+      } else {
+        setAlertsPill("🔔 Alerts: not enabled", "warn");
+        document.getElementById("alertsHelper").style.display = "block";
+      }
+    } catch (e) {
+      console.warn("[Rider Hub] OneSignal init/check failed:", e);
+      setAlertsPill("🔔 Alerts: unable to check", "warn");
+    }
+  });
+}
+
+function enableAlertsFromHub(){
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+
+  OneSignalDeferred.push(async function(OneSignal){
+    try {
+      const supported = await OneSignal.Notifications.isPushSupported();
+      if (!supported) {
+        setAlertsPill("🔕 Alerts: not supported on this device", "bad");
+        return;
+      }
+
+      await OneSignal.Slidedown.promptPush();
+
+      const profile = getProfile();
+      if (profile.riderId) {
+        await OneSignal.login(profile.riderId);
+        await addRiderTagsSafe(OneSignal);
+      }
+
+      const permission = OneSignal.Notifications.permission;
+      if (permission === "granted" || permission === true) {
+        setAlertsPill("🔔 Alerts: enabled", "ok");
+        document.getElementById("alertsHelper").style.display = "none";
+      } else {
+        setAlertsPill("🔔 Alerts: not enabled", "warn");
+      }
+    } catch (e) {
+      console.warn("[Rider Hub] enable alerts failed:", e);
+      setAlertsPill("🔔 Alerts: unable to enable", "warn");
+    }
+  });
+}
+
+async function loadActiveRide(){
+  const profile = getProfile();
+  const riderId = profile.riderId || localStorage.getItem("riderId") || "";
+  const phone = (profile.phone || localStorage.getItem("riderPhone") || "").replace(/\D/g,"");
+
+  if (!riderId && !phone) return;
+
+  try {
+    const params = new URLSearchParams();
+    if (riderId) params.set("riderId", riderId);
+    if (phone) params.set("phone", phone);
+
+    const res = await fetch(`${BOOKINGS_API}/api/rider/bookings?${params.toString()}`);
+    if (!res.ok) return;
+
+    const data = await res.json();
+    const bookings = Array.isArray(data.bookings) ? data.bookings : [];
+    const active = bookings.find(b => ["REQUESTED","ACCEPTED","ENROUTE","ARRIVED","PICKED_UP"].includes(String(b.status || "").toUpperCase()));
+
+    if (!active) return;
+
+    document.getElementById("activeRideCard").style.display = "block";
+    document.getElementById("activeRideDetails").textContent =
+      `${active.status || "Ride"} • ${active.pickup?.address || "Pickup"} → ${active.dropoff?.address || "Dropoff"}`;
+    document.getElementById("openMyRideBtn").href = `/rider/myride.html?id=${encodeURIComponent(active.id)}`;
+  } catch (e) {
+    console.warn("[Rider Hub] active ride load failed:", e);
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const profile = getProfile();
+
+  if (profile.name) {
+    document.getElementById("welcomeName").textContent = `Hi, ${profile.name}.`;
+  }
+
+  document.getElementById("menuBtn").addEventListener("click", () => {
+    document.getElementById("menuPanel").classList.toggle("open");
+  });
+
+  document.getElementById("logoutBtn").addEventListener("click", (e) => {
+    e.preventDefault();
+    localStorage.removeItem("bigred_rider_profile_v1");
+    localStorage.removeItem("riderId");
+    localStorage.removeItem("riderName");
+    localStorage.removeItem("riderPhone");
+    location.href = "/index.html";
+  });
+
+  document.getElementById("enableAlertsBtn").addEventListener("click", enableAlertsFromHub);
+
+  document.getElementById("a2hsDismissBtn").addEventListener("click", () => {
+    document.getElementById("a2hsHelper").style.display = "none";
+    localStorage.setItem("brc_a2hs_dismissed", "true");
+  });
+
+  if (!isStandalone() && localStorage.getItem("brc_a2hs_dismissed") !== "true") {
+    document.getElementById("a2hsHelper").style.display = "block";
+  }
+
+  document.getElementById("repeatLastRideBtn").addEventListener("click", () => {
+    location.href = "/rider/ride-request.html?repeat=last";
+  });
+
+  initOneSignalHub();
+  loadActiveRide();
+});
+</script>
 
 </body>
 </html>
