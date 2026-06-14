@@ -191,7 +191,16 @@ async function initOneSignalHub(){
       }
     } catch (e) {
       console.warn("[Rider Hub] OneSignal init/check failed:", e);
-      setAlertsPill("🔔 Alerts: unable to check", "warn");
+
+      if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+        setAlertsPill("🔔 Alerts: enabled", "ok");
+        document.getElementById("alertsHelper").style.display = "none";
+      } else if (typeof Notification !== "undefined" && Notification.permission === "denied") {
+        setAlertsPill("🔕 Alerts: blocked", "bad");
+        document.getElementById("alertsHelper").style.display = "none";
+      } else {
+        setAlertsPill("🔔 Alerts: check from Home page", "warn");
+      }
     }
   });
 }
@@ -224,7 +233,13 @@ function enableAlertsFromHub(){
       }
     } catch (e) {
       console.warn("[Rider Hub] enable alerts failed:", e);
-      setAlertsPill("🔔 Alerts: unable to enable", "warn");
+
+      if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+        setAlertsPill("🔔 Alerts: enabled", "ok");
+        document.getElementById("alertsHelper").style.display = "none";
+      } else {
+        setAlertsPill("🔔 Alerts: unable to enable", "warn");
+      }
     }
   });
 }
