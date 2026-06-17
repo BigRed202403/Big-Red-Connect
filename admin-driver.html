@@ -15,10 +15,8 @@
 <meta name="theme-color" content="#000">
 <meta http-equiv="Cache-Control" content="no-store"/>
 
-<!-- ✅ Google Maps Places -->
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places"></script>
 
-<!-- OneSignal v16 -->
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <script>
   window.OneSignalDeferred = window.OneSignalDeferred || [];
@@ -104,7 +102,27 @@ textarea{width:100%;min-height:100px;background:#111;color:#fff;border:1px solid
 .stop-row input{flex:1 1 240px;min-width:0;}
 .preview-box{margin-top:8px;padding:10px;border-radius:8px;border:1px dashed #444;background:#050505;font-size:.82rem;color:#ddd;line-height:1.3;}
 
-/* Image box - optimized for mobile & iPad */
+.audio-grid{
+  display:grid;
+  grid-template-columns:repeat(2, minmax(0, 1fr));
+  gap:10px;
+  width:100%;
+}
+.audio-btn{
+  width:100%;
+  min-height:58px;
+  padding:10px 12px;
+  font-size:.86rem;
+  line-height:1.2;
+  border-radius:10px;
+  white-space:normal;
+}
+#bigRedAudioPlayer{
+  width:100%;
+  margin-top:10px;
+  display:none;
+}
+
 .img-box{
   width:100%;
   max-width:100%;
@@ -124,7 +142,6 @@ textarea{width:100%;min-height:100px;background:#111;color:#fff;border:1px solid
   margin:0 auto;
 }
 
-/* Dispatch grid */
 .grid-dispatch{display:grid;grid-template-columns:1fr;gap:12px;}
 .column{background:#000;border-radius:10px;border:1px solid #222;overflow:hidden;}
 .col-header{padding:10px 12px;border-bottom:1px solid #222;font-weight:700;font-size:.85rem;display:flex;justify-content:space-between;align-items:center;}
@@ -155,7 +172,6 @@ textarea{width:100%;min-height:100px;background:#111;color:#fff;border:1px solid
 body.mode-driver .admin-only{display:none;}
 body.mode-admin .driver-only{display:none;}
 
-/* Mobile */
 @media (max-width:520px){
   header{padding:8px 10px;}
   .header-left img{height:36px;}
@@ -166,9 +182,10 @@ body.mode-admin .driver-only{display:none;}
   .img-box img{max-height:220px;}
   .col-body{max-height:48vh;}
   .input-with-button .btn{width:100%;}
+  .audio-grid{grid-template-columns:1fr;}
+  .audio-btn{min-height:52px;font-size:.84rem;}
 }
 
-/* Tablet / iPad */
 @media (min-width:521px) and (max-width:1024px){
   .layout{gap:18px;padding:0 16px 24px;}
   section{padding:16px;}
@@ -176,13 +193,11 @@ body.mode-admin .driver-only{display:none;}
   .img-box img{max-height:280px;}
 }
 
-/* Desktop */
 @media (min-width:1025px){
   .layout{grid-template-columns:1.05fr 1.35fr;}
   .grid-dispatch{grid-template-columns:repeat(3,1fr);}
 }
 
-/* Modal improvements */
 .modalOverlay{
   position:fixed; inset:0;
   background:rgba(0,0,0,.8);
@@ -309,6 +324,25 @@ body.mode-admin .driver-only{display:none;}
           ✅ When Tracking is OFF: uses last known if fresh; when Status is Offline: defaults to HQ.
         </span>
       </div>
+    </section>
+
+    <section class="driver-only" style="margin-top:12px;">
+      <h2>🔴 Big Red Audio Panel</h2>
+
+      <div class="audio-grid">
+        <button class="btn btn-primary audio-btn" onclick="playBigRedClip('welcome')">🎙️ Welcome Aboard</button>
+        <button class="btn btn-secondary audio-btn" onclick="playBigRedClip('who')">🎙️ Who Is Big Red?</button>
+        <button class="btn btn-secondary audio-btn" onclick="playBigRedClip('planning')">🎙️ Planning Ahead</button>
+        <button class="btn btn-primary audio-btn" onclick="playBigRedClip('arrival')">🎙️ Arrival / End Ride</button>
+        <button class="btn btn-ghost audio-btn" onclick="playBigRedClip('airport')">✈️ Airport Thank You</button>
+        <button class="btn btn-ghost audio-btn" onclick="stopBigRedClip()">⏹ Stop</button>
+      </div>
+
+      <audio id="bigRedAudioPlayer" preload="auto"></audio>
+
+      <p class="meta">
+        Manual driver soundboard. Tap once to play through the iPad / Bluetooth audio.
+      </p>
     </section>
 
     <section class="admin-only" style="margin-top:12px;">
@@ -644,9 +678,6 @@ body.mode-admin .driver-only{display:none;}
 </div>
 
 <script>
-/* =========================
-   CONFIG
-========================= */
 const STATUS_WORKER   = "https://bigred-status-updater.bigredtransportation.workers.dev";
 const LOCATION_WORKER = "https://update-location.bigredtransportation.workers.dev";
 const POST_WORKER     = "https://post-to-live-beta.bigredtransportation.workers.dev";
@@ -663,12 +694,19 @@ const HQ_LAT = 35.31810;
 const HQ_LNG = -97.49453;
 const LIVE_LOC_FRESH_MS = 15 * 60 * 1000;
 
-// Extended coverage is based on the driver's effective location to pickup.
 const EXTENDED_COVERAGE_TIER_1_MI = 10;
 const EXTENDED_COVERAGE_TIER_2_MI = 15;
 const EXTENDED_COVERAGE_TIER_1_FEE = 10;
 const EXTENDED_COVERAGE_TIER_2_FEE = 20;
 const EXTENDED_COVERAGE_WAIVE_TRIP_OVER_MI = 20;
+
+const BIG_RED_AUDIO_CLIPS = {
+  welcome: "Welcome%20Aboard%202.MOV",
+  who: "Who%20Is%20Big%20Red%20Connect.MOV",
+  planning: "Planning%20Ahead.MOV",
+  arrival: "Destination%20Arrival%202.MOV",
+  airport: "Airport%20Thank%20You.MOV"
+};
 
 const DRIVER_STATUSES = [
   { value:"REQUESTED", label:"🆕 Requested" },
@@ -726,9 +764,6 @@ const TICKER_PRESETS = {
   OFFLINE: "🔴 Big Red is offline right now — text ahead for the next run"
 };
 
-/* =========================
-   STATE
-========================= */
 let imgIndex=0;
 let captionIndex=0;
 
@@ -750,9 +785,6 @@ let lastStatusJson = "";
 let lastEffLog = 0;
 let lastEffKey = "";
 
-/* =========================
-   SMALL UTILS
-========================= */
 function $(id){ return document.getElementById(id); }
 
 function showToast(msg){
@@ -762,12 +794,49 @@ function showToast(msg){
   t.classList.add("show");
   setTimeout(()=>t.classList.remove("show"),2000);
 }
+
+function playBigRedClip(key){
+  const player = $("bigRedAudioPlayer");
+  const src = BIG_RED_AUDIO_CLIPS[key];
+
+  if(!player || !src){
+    showToast("Audio clip not found");
+    return;
+  }
+
+  player.style.display = "block";
+  player.pause();
+  player.src = src;
+  player.currentTime = 0;
+
+  player.play()
+    .then(() => showToast("Playing audio"))
+    .catch(err => {
+      console.warn("Audio play error:", err);
+      showToast("Tap again to play");
+    });
+}
+
+function stopBigRedClip(){
+  const player = $("bigRedAudioPlayer");
+  if(!player) return;
+
+  player.pause();
+  player.currentTime = 0;
+  player.removeAttribute("src");
+  player.load();
+  player.style.display = "none";
+
+  showToast("Audio stopped");
+}
+
 function log(msg){
   const box=$("debugLog");
   if(!box) return;
   const time=new Date().toLocaleTimeString("en-US",{hour12:false});
   box.innerHTML=`[${time}] ${msg}<br>`+box.innerHTML;
 }
+
 function formatDateTime(iso){
   if(!iso) return "—";
   try{
@@ -778,6 +847,7 @@ function formatDateTime(iso){
     });
   }catch(e){ return iso; }
 }
+
 function escHtml(s){
   return String(s ?? "")
     .replace(/&/g,"&amp;")
@@ -786,6 +856,7 @@ function escHtml(s){
     .replace(/"/g,"&quot;")
     .replace(/'/g,"&#39;");
 }
+
 function digitsOnly(v){ return String(v||"").replace(/\D/g,""); }
 function normalizePhoneDigits(raw){
   let d = digitsOnly(raw);
@@ -876,9 +947,6 @@ function haversineMiles(a, b){
   return 2 * R * Math.asin(Math.min(1, Math.sqrt(q)));
 }
 
-/* =========================
-   LOCATION WORKER GET
-========================= */
 async function loadLiveLocation(){
   try{
     const r = await fetch(`${LOCATION_WORKER}?t=${Date.now()}`, { method:"GET" });
@@ -906,9 +974,6 @@ async function loadLiveLocation(){
   }
 }
 
-/* =========================
-   EFFECTIVE LOCATION
-========================= */
 function computeEffectiveLocation(statusVal, statusLoc, workerLoc){
   if(statusVal === "offline"){
     return { lat: HQ_LAT, lng: HQ_LNG, src: "HQ", ts: null };
@@ -956,9 +1021,6 @@ async function getDriverEffectiveLocationForPricing(){
   return computeEffectiveLocation(currentStatusVal || "offline", null, workerLoc);
 }
 
-/* =========================
-   TRACKING PILL
-========================= */
 function applyTrackingPill(){
   const pill = $("livePill");
   if(!pill) return;
@@ -987,9 +1049,6 @@ function setTrackingEnabled(next){
 }
 function toggleTracking(){ setTrackingEnabled(!trackingEnabled); }
 
-/* =========================
-   MODE TOGGLE
-========================= */
 function applyMode(mode){
   currentMode = (mode === "driver") ? "driver" : "admin";
   document.body.classList.remove("mode-admin","mode-driver");
@@ -999,9 +1058,6 @@ function applyMode(mode){
   localStorage.setItem("adminDriverMode", currentMode);
 }
 
-/* =========================
-   PLACES AUTOCOMPLETE + GEOLOCATION HELPERS
-========================= */
 const OKC_BOUNDS = (window.google && google.maps)
   ? new google.maps.LatLngBounds(
       new google.maps.LatLng(35.15, -97.75),
@@ -1093,9 +1149,6 @@ function useBrowserLocationForInput(inputId){
   );
 }
 
-/* =========================
-   DIRECTIONS + SMS HELPERS
-========================= */
 function buildGoogleDirectionsUrl(booking){
   const origin = (booking?.pickup?.address || "").trim();
   const destination = (booking?.dropoff?.address || "").trim();
@@ -1133,9 +1186,6 @@ function buildRiderLoginLink(booking){
   return u.toString();
 }
 
-/* =========================
-   LIVE IMAGES + CAPTIONS
-========================= */
 function setImage(idx){
   if(!LIVE_IMAGES.length) return;
   imgIndex=(idx+LIVE_IMAGES.length)%LIVE_IMAGES.length;
@@ -1180,9 +1230,6 @@ function copyCaption(){
     .then(()=>showToast("Copied"),()=>showToast("Copy failed"));
 }
 
-/* =========================
-   HOMEPAGE TICKER
-========================= */
 function updateTickerPreview(){
   const msg = ($("tickerMessage")?.value || "").trim();
   const active = ($("tickerActiveToggle")?.value === "true");
@@ -1316,9 +1363,6 @@ async function clearTicker(){
   }
 }
 
-/* =========================
-   PUSH UI
-========================= */
 function updPrev(){
   $("pushPrevTitle").textContent = $("pushTitle").value || "Big Red Connect";
   $("pushPrevMessage").textContent = $("pushMessage").value || "Message will appear here.";
@@ -1382,9 +1426,6 @@ function autoOnlinePush(){
   sendPush(payload);
 }
 
-/* =========================
-   STATUS + GPS
-========================= */
 async function loadStatus(){
   try{
     const res=await fetch(STATUS_WORKER+"/status");
@@ -1553,9 +1594,6 @@ function stopGpsPings(){
   if($("gpsRate")) $("gpsRate").textContent="—";
 }
 
-/* =========================
-   MANUAL CREATE (STOPS + LUGGAGE + EXTENDED COVERAGE)
-========================= */
 let manualStopIds = [];
 
 function isAirportText(s){
@@ -1643,9 +1681,6 @@ function clearManualRideForm(){
   window.__manualEstimate = null;
 }
 
-/* =========================
-   MANUAL ESTIMATE → STORED STRUCTURED
-========================= */
 function computeMileageSubtotal(miles){
   const m = Math.max(0, Number(miles) || 0);
   let subtotal = 0;
@@ -1893,9 +1928,6 @@ async function createManualRide(){
   }
 }
 
-/* =========================
-   DISPATCH: ESTIMATE DISPLAY HELPERS
-========================= */
 function readEstimateFromBooking(b){
   const md = b?.metadata || {};
   const fare = asNum(md.estimateFare);
@@ -1928,9 +1960,6 @@ function estimateLineHtml(b){
   return `<div class="loc-line">💲 Estimate: ${escHtml(money(est.fare))} • ${escHtml(est.miles.toFixed(1))} mi${escHtml(baseTxt)}${escHtml(travelTxt)}</div>`;
 }
 
-/* =========================
-   DISPATCH: FETCH + RENDER
-========================= */
 function fmtStops(stops){
   const arr = Array.isArray(stops) ? stops : [];
   const addrs = arr.map(x => (x?.address || "").trim()).filter(Boolean);
@@ -2086,9 +2115,6 @@ async function updateBookingStatus(bookingId, newStatus){
   }
 }
 
-/* =========================
-   EDIT MODAL
-========================= */
 function openEditModal(bookingId){
   const b = bookingCache.get(String(bookingId));
   if(!b){ showToast("Booking not found"); return; }
@@ -2236,9 +2262,6 @@ function copyEditDirectionsLink(){
   copyText(link);
 }
 
-/* =========================
-   SCOPE TOGGLE
-========================= */
 function toggleScope(){
   dispatchScope = (dispatchScope === "active") ? "all" : "active";
   localStorage.setItem("dispatchScope", dispatchScope);
@@ -2247,9 +2270,6 @@ function toggleScope(){
   showToast(`Scope: ${dispatchScope}`);
 }
 
-/* =========================
-   EVENT DELEGATION
-========================= */
 function handleDispatchClick(e){
   const target = e.target;
 
@@ -2304,9 +2324,6 @@ function handleDispatchChange(e){
   }
 }
 
-/* =========================
-   WIRE BUTTONS
-========================= */
 function wireButtons(){
   $("updateStatusBtn").onclick = updateStatus;
 
@@ -2415,9 +2432,6 @@ function wireButtons(){
   });
 }
 
-/* =========================
-   BOOT
-========================= */
 window.addEventListener("load",()=>{
   applyMode(currentMode);
   $("btnScope").textContent = `📋 ${dispatchScope}`;
