@@ -330,13 +330,17 @@ body.mode-admin .driver-only{display:none;}
       <h2>🔴 Big Red Audio Panel</h2>
 
       <div class="audio-grid">
-        <button class="btn btn-primary audio-btn" onclick="playBigRedClip('welcome')">🎙️ Welcome Aboard</button>
-        <button class="btn btn-secondary audio-btn" onclick="playBigRedClip('who')">🎙️ Who Is Big Red?</button>
-        <button class="btn btn-secondary audio-btn" onclick="playBigRedClip('planning')">🎙️ Planning Ahead</button>
-        <button class="btn btn-primary audio-btn" onclick="playBigRedClip('arrival')">🎙️ Arrival / End Ride</button>
-        <button class="btn btn-ghost audio-btn" onclick="playBigRedClip('airport')">✈️ Airport Thank You</button>
-        <button class="btn btn-ghost audio-btn" onclick="stopBigRedClip()">⏹ Stop</button>
-      </div>
+  <button class="btn btn-primary audio-btn" onclick="playBigRedClip('welcome')">🎙️ Welcome Aboard</button>
+  <button class="btn btn-secondary audio-btn" onclick="playBigRedClip('who')">🎙️ Who Is Big Red?</button>
+  <button class="btn btn-secondary audio-btn" onclick="playBigRedClip('why')">🎙️ Why Choose Red?</button>
+  <button class="btn btn-secondary audio-btn" onclick="playBigRedClip('saveLong')">📱 Save To Home Screen</button>
+  <button class="btn btn-secondary audio-btn" onclick="playBigRedClip('firststop')">🛑 First Stop</button>
+  <button class="btn btn-ghost audio-btn" onclick="playBigRedClip('airport')">✈️ Airport Thank You</button>
+  <button class="btn btn-primary audio-btn" onclick="playBigRedClip('arrival')">🏁 Arrival / End Ride</button>
+  <button class="btn btn-ghost audio-btn" onclick="stopBigRedClip()">⏹ Stop</button>
+</div>
+
+
 
       <audio id="bigRedAudioPlayer" preload="auto"></audio>
 
@@ -703,9 +707,11 @@ const EXTENDED_COVERAGE_WAIVE_TRIP_OVER_MI = 20;
 const BIG_RED_AUDIO_CLIPS = {
   welcome: "Welcome%20Aboard%202.MOV",
   who: "Who%20Is%20Big%20Red%20Connect.MOV",
-  planning: "Planning%20Ahead.MOV",
-  arrival: "Destination%20Arrival%202.MOV",
-  airport: "Airport%20Thank%20You.MOV"
+  why: "Why%20Choose%20Red%3F.MOV",
+  saveLong: "Save%20To%20Home%20Screen%20(Long).MOV",
+  firststop: "First%20Stop.MOV",
+  airport: "Airport%20Thank%20You.MOV",
+  arrival: "Destination%20Arrival%202.MOV"
 };
 
 const DRIVER_STATUSES = [
