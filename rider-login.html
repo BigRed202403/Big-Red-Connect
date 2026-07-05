@@ -1,8 +1,9 @@
 <!-- =========================================================
-     rider/login.html  (SOFT-COPY UPDATE)
-     - Same functionality
-     - Friendlier wording (no "login required" vibe)
-     - UPDATED: Links OneSignal external_id to riderId for ride-status pushes
+     rider/login.html  (STABILITY UPDATE)
+     - Friendlier wording
+     - Links OneSignal external_id to riderId for ride-status pushes
+     - FIXED: Continue button no longer hangs if OneSignal is slow/blocked
+     - FIXED: Button shows progress and resets on errors
      ========================================================= -->
 <!DOCTYPE html>
 <html lang="en">
@@ -70,19 +71,15 @@
       try {
         window.OneSignalDeferred = window.OneSignalDeferred || [];
 
-        await new Promise((resolve) => {
-          OneSignalDeferred.push(async function(OneSignal) {
-            try {
-              await OneSignal.login(riderId);
-              await addRiderTagsSafe(OneSignal);
+        OneSignalDeferred.push(async function(OneSignal) {
+          try {
+            await OneSignal.login(riderId);
+            await addRiderTagsSafe(OneSignal);
 
-              console.log("[Rider Login] OneSignal linked to riderId:", riderId);
-            } catch (e) {
-              console.warn("[Rider Login] OneSignal rider link failed:", e);
-            } finally {
-              resolve();
-            }
-          });
+            console.log("[Rider Login] OneSignal linked to riderId:", riderId);
+          } catch (e) {
+            console.warn("[Rider Login] OneSignal rider link failed:", e);
+          }
         });
       } catch (e) {
         console.warn("[Rider Login] OneSignal link wrapper failed:", e);
@@ -91,18 +88,110 @@
   </script>
 
   <style>
-    body { margin:0; background:#000; color:#fff; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; padding-bottom:40px; }
-    header { padding:15px 12px; display:flex; align-items:center; gap:12px; border-bottom:2px solid #b30000; background:#000; position:sticky; top:0; z-index:20; }
-    header img { height:46px; cursor:pointer; }
-    h1 { text-align:center; margin:25px 10px 10px; font-size:1.44rem; font-weight:700; }
-    .sub { text-align:center; margin:0 16px 14px; color:#aaa; font-size:.95rem; line-height:1.35; }
-    .box { background:#111; border:1px solid #222; border-radius:10px; margin:12px; padding:18px; }
-    label { display:block; margin-top:14px; font-size:.85rem; color:#bbb; }
-    input { width:100%; padding:12px; font-size:1rem; margin-top:6px; border-radius:8px; border:1px solid #333; background:#000; color:#fff; }
-    button { width:calc(100% - 24px); margin:18px 12px 0 12px; padding:14px; font-size:1rem; text-align:center; background:#b30000; color:#fff; border:none; border-radius:10px; font-weight:700; cursor:pointer; }
-    button:disabled { opacity:0.6; cursor:not-allowed; }
-    #toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#111; border:1px solid #b30000; padding:12px 18px; border-radius:999px; opacity:0; transition:.25s; pointer-events:none; z-index:50; }
-    #toast.show { opacity:1; }
+    body {
+      margin: 0;
+      background: #000;
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      padding-bottom: 40px;
+    }
+
+    header {
+      padding: 15px 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 2px solid #b30000;
+      background: #000;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+
+    header img {
+      height: 46px;
+      cursor: pointer;
+    }
+
+    h1 {
+      text-align: center;
+      margin: 25px 10px 10px;
+      font-size: 1.44rem;
+      font-weight: 700;
+    }
+
+    .sub {
+      text-align: center;
+      margin: 0 16px 14px;
+      color: #aaa;
+      font-size: .95rem;
+      line-height: 1.35;
+    }
+
+    .box {
+      background: #111;
+      border: 1px solid #222;
+      border-radius: 10px;
+      margin: 12px;
+      padding: 18px;
+    }
+
+    label {
+      display: block;
+      margin-top: 14px;
+      font-size: .85rem;
+      color: #bbb;
+    }
+
+    input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 12px;
+      font-size: 1rem;
+      margin-top: 6px;
+      border-radius: 8px;
+      border: 1px solid #333;
+      background: #000;
+      color: #fff;
+    }
+
+    button {
+      width: calc(100% - 24px);
+      margin: 18px 12px 0 12px;
+      padding: 14px;
+      font-size: 1rem;
+      text-align: center;
+      background: #b30000;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    #toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #111;
+      border: 1px solid #b30000;
+      padding: 12px 18px;
+      border-radius: 999px;
+      opacity: 0;
+      transition: .25s;
+      pointer-events: none;
+      z-index: 50;
+    }
+
+    #toast.show {
+      opacity: 1;
+    }
   </style>
 </head>
 
@@ -119,14 +208,14 @@
 <p class="sub">Add your name and number so Big Red knows who you are and can confirm your request.</p>
 
 <div class="box">
-  <label>Your Name</label>
+  <label for="name">Your Name</label>
   <input id="name" placeholder="John Doe" autocomplete="name">
 
-  <label>Mobile Number</label>
+  <label for="phone">Mobile Number</label>
   <input id="phone" placeholder="405-555-1234" inputmode="tel" autocomplete="tel">
 </div>
 
-<button id="btnLogin">Continue</button>
+<button id="btnLogin" type="button">Continue</button>
 <div id="toast"></div>
 
 <script>
@@ -136,61 +225,82 @@
   const qs = new URLSearchParams(location.search);
   const NEXT = (qs.get("next") || "").trim().toLowerCase();
 
-  const NEXT_DROPOFF  = (qs.get("dropoff") || "").trim();
-  const NEXT_ADDRESS  = (qs.get("address") || "").trim();
-  const NEXT_RIDE_ID  = (qs.get("id") || "").trim();
+  const NEXT_DROPOFF = (qs.get("dropoff") || "").trim();
+  const NEXT_ADDRESS = (qs.get("address") || "").trim();
+  const NEXT_RIDE_ID = (qs.get("id") || "").trim();
 
-  function showToast(msg){
-    const t=document.getElementById("toast");
-    t.textContent=msg;
+  function showToast(msg) {
+    const t = document.getElementById("toast");
+    t.textContent = msg;
     t.classList.add("show");
-    setTimeout(()=>t.classList.remove("show"),1800);
+    setTimeout(() => t.classList.remove("show"), 1800);
   }
 
-  document.getElementById("logoHome").onclick = () => location.href="/index.html";
-
-  function stashDropoffHandoff(dest){
-    if(!dest) return;
-    try { sessionStorage.setItem("brc_dropoff_handoff", dest); } catch(e){}
-    try { localStorage.setItem("brc_dropoff_handoff", dest); } catch(e){}
+  function resetButton() {
+    const btn = document.getElementById("btnLogin");
+    btn.disabled = false;
+    btn.textContent = "Continue";
   }
 
-  async function claimManualRidesForThisPhone(){
-    try{
-      const riderId  = localStorage.getItem("riderId") || "";
+  document.getElementById("logoHome").onclick = () => {
+    location.href = "/index.html";
+  };
+
+  function stashDropoffHandoff(dest) {
+    if (!dest) return;
+
+    try {
+      sessionStorage.setItem("brc_dropoff_handoff", dest);
+    } catch (e) {}
+
+    try {
+      localStorage.setItem("brc_dropoff_handoff", dest);
+    } catch (e) {}
+  }
+
+  async function claimManualRidesForThisPhone() {
+    try {
+      const riderId = localStorage.getItem("riderId") || "";
       const phoneRaw = localStorage.getItem("riderPhone") || "";
-      const phone    = phoneRaw.replace(/\D/g,"");
-      const name     = localStorage.getItem("riderName") || "";
+      const phone = phoneRaw.replace(/\D/g, "");
+      const name = localStorage.getItem("riderName") || "";
 
-      if(!riderId || !phone) return;
+      if (!riderId || !phone) return;
 
-      const resp = await fetch(`${BOOKINGS_API}/api/rider/claim-rides`,{
-        method:"POST",
-        headers:{ "Content-Type":"application/json" },
-        body: JSON.stringify({ riderId, phone, riderName: name })
+      const resp = await fetch(`${BOOKINGS_API}/api/rider/claim-rides`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          riderId,
+          phone,
+          riderName: name
+        })
       });
 
       const txt = await resp.text();
       console.log("[claim-rides]", resp.status, txt);
-    }catch(e){
+    } catch (e) {
       console.warn("claim-rides failed", e);
     }
   }
 
-  function redirectAfterLogin(){
+  function redirectAfterLogin() {
     if (NEXT === "myride") {
       const url = NEXT_RIDE_ID
-        ? ("/rider/myride.html?id=" + encodeURIComponent(NEXT_RIDE_ID))
+        ? "/rider/myride.html?id=" + encodeURIComponent(NEXT_RIDE_ID)
         : "/rider/myride.html";
+
       window.location.href = url;
       return;
     }
 
     if (NEXT === "ride-request") {
       if (NEXT_DROPOFF) stashDropoffHandoff(NEXT_DROPOFF);
+
       const url = NEXT_DROPOFF
-        ? ("/rider/ride-request.html?dropoff=" + encodeURIComponent(NEXT_DROPOFF))
+        ? "/rider/ride-request.html?dropoff=" + encodeURIComponent(NEXT_DROPOFF)
         : "/rider/ride-request.html";
+
       window.location.href = url;
       return;
     }
@@ -216,31 +326,34 @@
 
   document.getElementById("btnLogin").addEventListener("click", async () => {
     const btn = document.getElementById("btnLogin");
+
     btn.disabled = true;
+    btn.textContent = "Continuing...";
 
-    const name  = document.getElementById("name").value.trim();
-    const phone = document.getElementById("phone").value.trim().replace(/\D/g,"");
+    const name = document.getElementById("name").value.trim();
+    const phone = document.getElementById("phone").value.trim().replace(/\D/g, "");
 
-    if(!name || !phone){
-      btn.disabled = false;
+    if (!name || !phone) {
+      resetButton();
       showToast("Name & phone required");
       return;
     }
-    if(phone.length < 10){
-      btn.disabled = false;
+
+    if (phone.length < 10) {
+      resetButton();
       showToast("Invalid phone number");
       return;
     }
 
     try {
       const res = await fetch(`${PROFILE_API}/api/rider/login`, {
-        method:"POST",
-        headers:{ "Content-Type":"application/json" },
-        body:JSON.stringify({ phone })
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone })
       });
 
-      if(!res.ok){
-        btn.disabled = false;
+      if (!res.ok) {
+        resetButton();
         showToast("Unable to continue");
         return;
       }
@@ -248,33 +361,39 @@
       const data = await res.json();
       const riderId = data.riderId;
 
-      if(!riderId){
-        btn.disabled = false;
+      if (!riderId) {
+        resetButton();
         showToast("Missing riderId");
         return;
       }
 
-      const profile = { riderId, name, phone };
+      const profile = {
+        riderId,
+        name,
+        phone
+      };
 
       localStorage.setItem("bigred_rider_profile_v1", JSON.stringify(profile));
       localStorage.setItem("riderId", riderId);
       localStorage.setItem("riderName", name);
       localStorage.setItem("riderPhone", phone);
 
-      await linkOneSignalToRider(riderId);
+      // Do not await this. OneSignal can be slow/blocked and should never stop login.
+      linkOneSignalToRider(riderId).catch(() => {});
 
       await claimManualRidesForThisPhone();
 
       fetch(`${PROFILE_API}/api/rider/profile`, {
-        method:"PUT",
-        headers:{ "Content-Type":"application/json" },
-        body:JSON.stringify(profile)
-      }).catch(()=>{});
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(profile)
+      }).catch(() => {});
 
       redirectAfterLogin();
-    } catch(err){
+
+    } catch (err) {
       console.error(err);
-      btn.disabled = false;
+      resetButton();
       showToast("Connection error");
     }
   });
