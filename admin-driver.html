@@ -1086,7 +1086,7 @@ function attachAutocompleteToInput(inputEl){
 
   const ac = new google.maps.places.Autocomplete(inputEl, {
     bounds: OKC_BOUNDS || undefined,
-    strictBounds: true,
+    strictBounds: false,
     componentRestrictions: { country: "us" },
     fields: ["formatted_address","name","geometry"]
   });
