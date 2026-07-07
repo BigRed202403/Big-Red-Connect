@@ -102,7 +102,7 @@
     <select id="tripType" style="display:none;">
       <option value="10">Standard ($10 base)</option>
       <option value="15">Rush Hour ($15 base)</option>
-      <option value="15_airport">Airport ($15 base)</option>
+      <option value="20_airport">Airport ($20 base)</option>
       <option value="20">Holiday / Special Event ($20 base)</option>
     </select>
 
@@ -520,7 +520,7 @@
       document.getElementById("tripType").value = "20";
     } else if (airport) {
       baseType = "airport";
-      document.getElementById("tripType").value = "15_airport";
+      document.getElementById("tripType").value = "20_airport";
     } else if (rush) {
       baseType = "rush";
       document.getElementById("tripType").value = "15";
@@ -544,7 +544,7 @@
         "📍 Special event location detected — Event base ($20) applies.";
     } else if (baseType === "airport") {
       airportNote.innerHTML =
-        "✈️ Airport run detected — Airport base ($15) applies.";
+        "✈️ Airport run detected — Airport base ($20) applies.";
     } else if (baseType === "rush") {
       rushNote.innerHTML =
         "🚦 Weekday Rush Hour pricing (5–9 AM / 3–7 PM).";
@@ -666,7 +666,7 @@
 
     let base = 10;
     if (tripTypeValue === "15") base = 15;
-    else if (tripTypeValue === "15_airport") base = 15;
+    else if (tripTypeValue === "20_airport") base = 20;
     else if (tripTypeValue === "20") base = 20;
 
     const tier2 = Math.max(0, Math.min(10, miles - 10)) * 1.25;
