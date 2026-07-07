@@ -1237,7 +1237,7 @@ FILE 2: /rider/ride-request.html (Ride Request & Estimate – Big Red Connect)
 
     if (holidayInfo) { eventNote.textContent = holidayInfo.message; return { baseType: "holiday", base: 20 }; }
     if (event) { eventNote.textContent = "📍 Special event area – Event base ($20) may apply."; return { baseType: "event", base: 20 }; }
-    if (airport) { airportNote.textContent = "✈️ Airport run – Airport base ($15) applies."; return { baseType: "airport", base: 15 }; }
+    if (airport) { airportNote.textContent = "✈️ Airport run – Airport base ($20) applies."; return { baseType: "airport", base: 20 }; }
     if (rush) { rushNote.textContent = "🚦 Weekday Rush Hour (5–9 AM / 3–7 PM)."; return { baseType: "rush", base: 15 }; }
     return { baseType: "standard", base: 10 };
   }
