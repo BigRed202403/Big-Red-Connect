@@ -35,7 +35,7 @@
     <select id="tripType">
       <option value="10">Standard ($10 base)</option>
       <option value="15">Rush Hour ($15 base)</option>
-      <option value="15_airport">Airport ($15 base)</option>
+      <option value="20_airport">Airport ($20 base)</option>
       <option value="20">Special Event ($20 base)</option>
     </select>
 
@@ -148,7 +148,7 @@
       const airport=/airport|intl|regional|jet center|hangar/.test(dropLower)
                    && !/tinker|afb|air force|base|ang/.test(dropLower);
       document.getElementById("airport-note").innerHTML=
-        airport?"✈️ Airport ride detected — $15 base applied automatically.":"";
+        airport?"✈️ Airport ride detected — $20 base applied automatically.":"";
 
       // Calculate base & mileage tiers
       let base=airport?15:rush?15:10;
