@@ -1713,7 +1713,28 @@ function getManualRateBase(){
 }
 
 function computeExtendedCoverageFee(driverOrigin, pickupPoint, tripMiles){
-  const d = haversineMiles(driverOrigin, pickupPoint);
+  const hqOrigin = {
+    lat: HQ_LAT,
+    lng: HQ_LNG,
+    src: "HQ",
+    ts: null
+  };
+
+  const dFromHQ = haversineMiles(hqOrigin, pickupPoint);
+
+  const hasValidDriverOrigin =
+    driverOrigin &&
+    Number.isFinite(Number(driverOrigin.lat)) &&
+    Number.isFinite(Number(driverOrigin.lng));
+
+  const dFromLive = hasValidDriverOrigin
+    ? haversineMiles(driverOrigin, pickupPoint)
+    : dFromHQ;
+
+  const useLiveOrigin = hasValidDriverOrigin && dFromLive < dFromHQ;
+  const effectiveOrigin = useLiveOrigin ? driverOrigin : hqOrigin;
+  const d = Math.min(dFromHQ, dFromLive);
+
   let fee = 0;
 
   if(d > EXTENDED_COVERAGE_TIER_2_MI) fee = EXTENDED_COVERAGE_TIER_2_FEE;
@@ -1726,8 +1747,11 @@ function computeExtendedCoverageFee(driverOrigin, pickupPoint, tripMiles){
   return {
     fee,
     driverToPickupMiles: d,
-    origin: driverOrigin || null,
-    pickup: pickupPoint || null
+    origin: effectiveOrigin,
+    pickup: pickupPoint || null,
+    distanceFromHQ: dFromHQ,
+    distanceFromLive: dFromLive,
+    pricingOriginSource: useLiveOrigin ? (driverOrigin.src || "LIVE") : "HQ"
   };
 }
 
@@ -1818,7 +1842,7 @@ async function estimateManualFare(){
     $("manualEstMiles").textContent = `Miles: ${miles.toFixed(1)}`;
     $("manualEstBase").textContent = `Base: $${base}`;
     $("manualEstTravelFee").textContent =
-      `Extended Coverage: ${money(coverage.fee)} (${coverage.driverToPickupMiles.toFixed(1)} mi from effective driver location)`;
+      `Extended Coverage: ${money(coverage.fee)} (${coverage.driverToPickupMiles.toFixed(1)} mi from ${coverage.pricingOriginSource === "HQ" ? "base location" : "effective driver location"})`;
     $("manualEstFare").textContent =
       `Fare: ${money(fare)} (base $${base} + mileage ${money(mileageSubtotal)}${coverage.fee ? " + coverage " + money(coverage.fee) : ""})`;
 
@@ -1831,10 +1855,10 @@ async function estimateManualFare(){
       estimateTravelFee: Number(coverage.fee.toFixed(2)),
       estimateDriverToPickupMiles: Number(coverage.driverToPickupMiles.toFixed(3)),
       estimatePricingOrigin: {
-        lat: Number(driverOrigin.lat),
-        lng: Number(driverOrigin.lng),
-        src: driverOrigin.src || null,
-        ts: driverOrigin.ts || null
+        lat: Number(coverage.origin?.lat),
+        lng: Number(coverage.origin?.lng),
+        src: coverage.pricingOriginSource || coverage.origin?.src || null,
+        ts: coverage.origin?.ts || null
       },
       estimatePickupPoint: route.pickupPoint,
       estimateDropoffPoint: route.dropoffPoint
