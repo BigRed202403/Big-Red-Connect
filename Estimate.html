@@ -34,9 +34,9 @@ FILE 1: /rider/estimate.html (Estimate – Big Red Connect)
     .section-title { font-size:0.9rem; font-weight:700; margin-bottom:8px; border-bottom:1px solid #222; padding-bottom:4px; }
     .input-group { margin-bottom:12px; }
     label { display:block; font-size:0.8rem; color:#ccc; margin-bottom:4px; }
-    input, select { width:100%; padding:10px; background:#111; border:1px solid #333; border-radius:8px; color:#fff; font-size:0.95rem; }
+    input, select { width:100%; padding:10px; background:#111; border:1px solid #333; border-radius:8px; color:#fff; font-size:0.95rem; box-sizing:border-box; }
     .hint { font-size:0.75rem; color:var(--muted); margin-top:2px; }
-    .btn { display:inline-block; text-align:center; padding:12px; border-radius:10px; font-weight:700; font-size:0.95rem; border:none; cursor:pointer; text-decoration:none; }
+    .btn { display:inline-block; text-align:center; padding:12px; border-radius:10px; font-weight:700; font-size:0.95rem; border:none; cursor:pointer; text-decoration:none; box-sizing:border-box; }
     .btn-primary { background:var(--red); color:#fff; }
     .btn-ghost { background:#000; color:#fff; border:1px solid #444; }
     .btn-secondary { background:#111; color:#fff; border:1px solid #333; }
@@ -173,7 +173,7 @@ FILE 1: /rider/estimate.html (Estimate – Big Red Connect)
   document.getElementById("btnHub").addEventListener("click", () => window.location.href = "/rider/rider.html");
 
   // =====================================================
-  // 15-min time dropdown + smart defaults (prevents "rush by accident")
+  // 15-min time dropdown + smart defaults
   // =====================================================
   function pad2(n){ return String(n).padStart(2,"0"); }
 
@@ -209,7 +209,10 @@ FILE 1: /rider/estimate.html (Estimate – Big Red Connect)
     const mins = next.getMinutes();
     const rounded = Math.ceil((mins + 1) / 15) * 15;
     next.setMinutes(rounded);
-    if (next.getMinutes() === 60) { next.setMinutes(0); next.setHours(next.getHours()+1); }
+    if (next.getMinutes() === 60) {
+      next.setMinutes(0);
+      next.setHours(next.getHours()+1);
+    }
 
     return {
       date: `${next.getFullYear()}-${pad2(next.getMonth()+1)}-${pad2(next.getDate())}`,
@@ -225,7 +228,6 @@ FILE 1: /rider/estimate.html (Estimate – Big Red Connect)
     const dateVal = (dateEl.value || "").trim();
     const timeVal = (timeEl.value || "").trim();
 
-    // ✅ Key: never allow blank/00:00 to fall back to "now"
     if (!dateVal || !timeVal || timeVal === "00:00") {
       const smart = getSmartDefaultSchedule(new Date());
       if (!dateVal) dateEl.value = smart.date;
@@ -238,7 +240,7 @@ FILE 1: /rider/estimate.html (Estimate – Big Red Connect)
   }
 
   // =====================================================
-  // Option B: fetch live driver origin from update-location
+  // LIVE DRIVER ORIGIN
   // =====================================================
   async function fetchDriverOriginFromLiveGPS() {
     try {
@@ -258,7 +260,7 @@ FILE 1: /rider/estimate.html (Estimate – Big Red Connect)
   }
 
   // =====================================================
-  // HOLIDAY / RUSH / EVENT / AIRPORT (same rules as ride-request)
+  // HOLIDAY / RUSH / EVENT / AIRPORT
   // =====================================================
   function getHolidayInfo(d) {
     if (!(d instanceof Date) || isNaN(d)) return null;
@@ -297,11 +299,10 @@ FILE 1: /rider/estimate.html (Estimate – Big Red Connect)
   ];
 
   function getEffectiveDate() {
-    // ✅ Must be based on selected date/time only
     const dStr = document.getElementById("reserveDate").value;
     const tStr = getReserveTimeValue();
     if (dStr && tStr) return new Date(dStr + "T" + tStr + ":00");
-    return null; // ✅ do NOT fall back to "now"
+    return null;
   }
 
   function isAirportText(s) {
@@ -323,17 +324,32 @@ FILE 1: /rider/estimate.html (Estimate – Big Red Connect)
     airportNote.textContent = "";
     eventNote.textContent = "";
 
-    if (!effective) return { baseType:"standard", base:10 }; // should not happen if required
+    if (!effective) return { baseType:"standard", base:10 };
 
     const rush    = isWeekdayRushHour(effective);
     const airport = isAirportText(pickupText) || isAirportText(dropText);
     const event   = SPECIAL_EVENT_KEYWORDS.some(k => pickupText.includes(k) || dropText.includes(k));
     const holidayInfo = getHolidayInfo(effective);
 
-    if (holidayInfo) { eventNote.textContent = holidayInfo.message; return { baseType: "holiday", base: 20 }; }
-    if (event) { eventNote.textContent = "📍 Special event area – Event base ($20) may apply."; return { baseType: "event", base: 20 }; }
-    if (airport) { airportNote.textContent = "✈️ Airport run – Airport base ($20) applies."; return { baseType: "airport", base: 20 }; }
-    if (rush) { rushNote.textContent = "🚦 Weekday Rush Hour (5–9 AM / 3–7 PM)."; return { baseType: "rush", base: 15 }; }
+    if (holidayInfo) {
+      eventNote.textContent = holidayInfo.message;
+      return { baseType: "holiday", base: 20 };
+    }
+
+    if (event) {
+      eventNote.textContent = "📍 Special event area – Event base ($20) may apply.";
+      return { baseType: "event", base: 20 };
+    }
+
+    if (airport) {
+      airportNote.textContent = "✈️ Airport run – Airport base ($20) applies.";
+      return { baseType: "airport", base: 20 };
+    }
+
+    if (rush) {
+      rushNote.textContent = "🚦 Weekday Rush Hour (5–9 AM / 3–7 PM).";
+      return { baseType: "rush", base: 15 };
+    }
 
     return { baseType: "standard", base: 10 };
   }
@@ -350,11 +366,19 @@ FILE 1: /rider/estimate.html (Estimate – Big Red Connect)
     if (which === "pickup") {
       pickupLatLng = new google.maps.LatLng(lat, lng);
       if (pickupMarker) pickupMarker.setMap(null);
-      pickupMarker = new google.maps.Marker({ position: latlng, map, icon: { url: "http://maps.google.com/mapfiles/ms/icons/green-dot.png" } });
+      pickupMarker = new google.maps.Marker({
+        position: latlng,
+        map,
+        icon: { url: "http://maps.google.com/mapfiles/ms/icons/green-dot.png" }
+      });
     } else if (which === "dropoff") {
       dropoffLatLng = new google.maps.LatLng(lat, lng);
       if (dropoffMarker) dropoffMarker.setMap(null);
-      dropoffMarker = new google.maps.Marker({ position: latlng, map, icon: { url: "http://maps.google.com/mapfiles/ms/icons/red-dot.png" } });
+      dropoffMarker = new google.maps.Marker({
+        position: latlng,
+        map,
+        icon: { url: "http://maps.google.com/mapfiles/ms/icons/red-dot.png" }
+      });
     }
   }
 
@@ -377,8 +401,11 @@ FILE 1: /rider/estimate.html (Estimate – Big Red Connect)
     ac.addListener("place_changed", () => {
       const p = ac.getPlace();
       if (!p || !p.geometry || !p.geometry.location) return;
+
       const loc = p.geometry.location;
-      input.value = (p.name && p.formatted_address) ? `${p.name} — ${p.formatted_address}` : (p.formatted_address || p.name || input.value);
+      input.value = (p.name && p.formatted_address)
+        ? `${p.name} — ${p.formatted_address}`
+        : (p.formatted_address || p.name || input.value);
 
       const lat = loc.lat();
       const lng = loc.lng();
@@ -402,6 +429,7 @@ FILE 1: /rider/estimate.html (Estimate – Big Red Connect)
         { origin: pickup, destination: dropoff, travelMode: "DRIVING" },
         (r, status) => {
           if (status !== "OK" || !r?.routes?.[0]) return;
+
           directionsRenderer.setDirections(r);
           if (r.routes[0].bounds) map.fitBounds(r.routes[0].bounds);
 
@@ -447,7 +475,10 @@ FILE 1: /rider/estimate.html (Estimate – Big Red Connect)
   }
 
   function useMyLocation(which) {
-    if (!navigator.geolocation) { alert("Location services not supported."); return; }
+    if (!navigator.geolocation) {
+      alert("Location services not supported.");
+      return;
+    }
 
     navigator.geolocation.getCurrentPosition(
       pos => {
@@ -456,7 +487,10 @@ FILE 1: /rider/estimate.html (Estimate – Big Red Connect)
         const latlng = { lat, lng };
 
         geocoder.geocode({ location: latlng }, (res, stat) => {
-          const addr = (stat === "OK" && res[0]) ? res[0].formatted_address : `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+          const addr = (stat === "OK" && res[0])
+            ? res[0].formatted_address
+            : `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+
           document.getElementById(which).value = addr;
           setMarker(which, lat, lng);
 
@@ -475,7 +509,12 @@ FILE 1: /rider/estimate.html (Estimate – Big Red Connect)
   document.getElementById("useLocDrop").addEventListener("click", () => useMyLocation("dropoff"));
 
   // =====================================================
-  // FAIRNESS FEE (same rules)
+  // FAIRNESS FEE
+  // Uses whichever is closer:
+  // - HQ/base location
+  // - live driver GPS location
+  // This prevents unfair fees near base while still protecting
+  // you when already out and about.
   // =====================================================
   function distMi(a, b) {
     const p1 = new google.maps.LatLng(a.lat, a.lng);
@@ -483,19 +522,32 @@ FILE 1: /rider/estimate.html (Estimate – Big Red Connect)
     return google.maps.geometry.spherical.computeDistanceBetween(p1, p2) / 1609.34;
   }
 
+  function getEffectiveFairnessDistanceFromPickup() {
+    if (!pickupLatLng) return 0;
+
+    const pickup = {
+      lat: pickupLatLng.lat(),
+      lng: pickupLatLng.lng()
+    };
+
+    const dFromHQ = distMi(HQ, pickup);
+    const dFromLive = fairnessOrigin ? distMi(fairnessOrigin, pickup) : dFromHQ;
+
+    return Math.min(dFromHQ, dFromLive);
+  }
+
   function computeFairnessFee(miles) {
     if (!pickupLatLng) return 0;
 
-    const pickup = { lat: pickupLatLng.lat(), lng: pickupLatLng.lng() };
-    const origin = fairnessOrigin || HQ;
-    const d = distMi(origin, pickup);
+    const d = getEffectiveFairnessDistanceFromPickup();
 
     let zoneFee = 0;
     if (d > 15) zoneFee = 20;
     else if (d > 10) zoneFee = 10;
 
-    // fairness rule: no travel fee on long trips that already cover it
+    // No travel fee on longer rides that already cover positioning.
     if (zoneFee > 0 && miles > 20) zoneFee = 0;
+
     return zoneFee;
   }
 
@@ -504,37 +556,45 @@ FILE 1: /rider/estimate.html (Estimate – Big Red Connect)
     note.textContent = "";
     if (!pickupLatLng) return;
 
-    const pickup = { lat: pickupLatLng.lat(), lng: pickupLatLng.lng() };
-    const origin = fairnessOrigin || HQ;
-    const d = distMi(origin, pickup);
+    const d = getEffectiveFairnessDistanceFromPickup();
 
-    if (d > 40) note.textContent = "📍 Pickup is well outside the central metro / current driver area. A travel fairness fee may apply depending on total trip distance.";
-    else if (d > 20) note.textContent = "📍 Pickup is outside the central zone / current driver area. A small travel fairness fee may apply depending on trip distance.";
+    if (d > 40) {
+      note.textContent = "📍 Pickup is well outside the central metro / current driver area. A travel fairness fee may apply depending on total trip distance.";
+    } else if (d > 20) {
+      note.textContent = "📍 Pickup is outside the central zone / current driver area. A small travel fairness fee may apply depending on trip distance.";
+    }
   }
 
   // =====================================================
   // ESTIMATE CALC
   // =====================================================
   async function calculateEstimate() {
-    // ✅ Enforce schedule (prevents falling back to "now" = accidental rush)
     initDefaultScheduleIfEmpty();
+
     const rd = (document.getElementById("reserveDate")?.value || "").trim();
     const rt = (getReserveTimeValue() || "").trim();
-    if (!rd || !rt) { showToast("Select date & time"); return; }
 
-    const pickup = (document.getElementById("pickup").value || "").trim();
-    const dropoff = (document.getElementById("dropoff").value || "").trim();
-    if (!pickup || !dropoff) { showToast("Enter pickup & drop-off"); return; }
-
-    // Ensure pickup/dropoff latlng exist so fairness can compute
-    const okPick = await ensureResolvedLatLng("pickup");
-    const okDrop = await ensureResolvedLatLng("dropoff");
-    if (!okPick || !okDrop) {
-      alert("Please select valid pickup and drop-off locations (or use My Location).");
+    if (!rd || !rt) {
+      showToast("Select date & time");
       return;
     }
 
-    // Get route
+    const pickup = (document.getElementById("pickup").value || "").trim();
+    const dropoff = (document.getElementById("dropoff").value || "").trim();
+
+    if (!pickup || !dropoff) {
+      showToast("Enter pickup & drop-off");
+      return;
+    }
+
+    const okPick = await ensureResolvedLatLng("pickup");
+    const okDrop = await ensureResolvedLatLng("dropoff");
+
+    if (!okPick || !okDrop) {
+      alert("Please select valid pickup and drop-off locations, or use My Location.");
+      return;
+    }
+
     let route;
     try {
       route = await new Promise((resolve, reject) => {
@@ -553,31 +613,35 @@ FILE 1: /rider/estimate.html (Estimate – Big Red Connect)
 
     let miles = 0;
     let minutes = 0;
+
     route.routes[0].legs.forEach(l => {
       miles   += (l.distance?.value || 0) / 1609.34;
       minutes += (l.duration?.value || 0) / 60;
     });
+
     miles = Math.round(miles);
     minutes = Math.round(minutes);
 
-    // Base
     const rate = applyAutoRateLabels();
     const base = rate.base;
 
-    // Mileage tiers
     const tier2 = Math.max(0, Math.min(10, miles - 10)) * 1.25;
     const tier3 = Math.max(0, miles - 20) * 1.0;
     const mileageSub = tier2 + tier3;
 
     const basePlusMiles = base + mileageSub;
 
-    // ✅ Fetch origin BEFORE computing fairness fee
+    // Fetch live location first, then calculate fairness using closer of HQ/live GPS.
     await fetchDriverOriginFromLiveGPS();
     const fairnessFee = computeFairnessFee(miles);
 
     const pay = document.getElementById("payment").value;
+
     let fare = basePlusMiles + fairnessFee;
-    if (pay === "card") fare += fare * 0.033 + fare * 0.024;
+
+    if (pay === "card") {
+      fare += fare * 0.033 + fare * 0.024;
+    }
 
     const total = fare.toFixed(2);
 
@@ -610,7 +674,6 @@ FILE 1: /rider/estimate.html (Estimate – Big Red Connect)
     document.getElementById("reserveDate")?.addEventListener("change", applyAutoRateLabels);
     document.getElementById("reserveTimeSelect")?.addEventListener("change", applyAutoRateLabels);
 
-    // grab origin early (non-blocking)
     fetchDriverOriginFromLiveGPS().finally(() => {
       applyAutoRateLabels();
       updateFairnessPreview();
@@ -640,10 +703,17 @@ FILE 1: /rider/estimate.html (Estimate – Big Red Connect)
     setupAutocomplete("pickup", "pickup");
     setupAutocomplete("dropoff", "dropoff");
 
-    document.getElementById("pickup")?.addEventListener("input", () => { pickupLatLng = null; applyAutoRateLabels(); updateFairnessPreview(); });
-    document.getElementById("dropoff")?.addEventListener("input", () => { dropoffLatLng = null; applyAutoRateLabels(); });
+    document.getElementById("pickup")?.addEventListener("input", () => {
+      pickupLatLng = null;
+      applyAutoRateLabels();
+      updateFairnessPreview();
+    });
 
-    // render route when both have content
+    document.getElementById("dropoff")?.addEventListener("input", () => {
+      dropoffLatLng = null;
+      applyAutoRateLabels();
+    });
+
     document.getElementById("pickup")?.addEventListener("change", renderRouteFromInputs);
     document.getElementById("dropoff")?.addEventListener("change", renderRouteFromInputs);
 
