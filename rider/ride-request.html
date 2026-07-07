@@ -1251,33 +1251,47 @@ FILE 2: /rider/ride-request.html (Ride Request & Estimate – Big Red Connect)
     return google.maps.geometry.spherical.computeDistanceBetween(p1, p2) / 1609.34;
   }
 
-  function computeFairnessFee(miles) {
-    if (!pickupLatLng) return 0;
+  function getEffectiveFairnessDistanceFromPickup() {
+  if (!pickupLatLng) return 0;
 
-    const pickup = { lat: pickupLatLng.lat(), lng: pickupLatLng.lng() };
-    const origin = fairnessOrigin || HQ;
-    const d = distMi(origin, pickup);
+  const pickup = {
+    lat: pickupLatLng.lat(),
+    lng: pickupLatLng.lng()
+  };
 
-    let zoneFee = 0;
-    if (d > 15) zoneFee = 20;
-    else if (d > 10) zoneFee = 10;
+  const dFromHQ = distMi(HQ, pickup);
+  const dFromLive = fairnessOrigin ? distMi(fairnessOrigin, pickup) : dFromHQ;
 
-    if (zoneFee > 0 && miles > 20) zoneFee = 0;
-    return zoneFee;
+  return Math.min(dFromHQ, dFromLive);
+}
+
+function computeFairnessFee(miles) {
+  if (!pickupLatLng) return 0;
+
+  const d = getEffectiveFairnessDistanceFromPickup();
+
+  let zoneFee = 0;
+  if (d > 15) zoneFee = 20;
+  else if (d > 10) zoneFee = 10;
+
+  if (zoneFee > 0 && miles > 20) zoneFee = 0;
+
+  return zoneFee;
+}
+
+function updateFairnessPreview() {
+  const note = document.getElementById("fairness-note");
+  note.textContent = "";
+  if (!pickupLatLng) return;
+
+  const d = getEffectiveFairnessDistanceFromPickup();
+
+  if (d > 40) {
+    note.textContent = "📍 Pickup is well outside the central metro / current driver area. A travel fairness fee may apply depending on total trip distance.";
+  } else if (d > 20) {
+    note.textContent = "📍 Pickup is outside the central zone / current driver area. A small travel fairness fee may apply depending on trip distance.";
   }
-
-  function updateFairnessPreview() {
-    const note = document.getElementById("fairness-note");
-    note.textContent = "";
-    if (!pickupLatLng) return;
-
-    const pickup = { lat: pickupLatLng.lat(), lng: pickupLatLng.lng() };
-    const origin = fairnessOrigin || HQ;
-    const d = distMi(origin, pickup);
-
-    if (d > 40) note.textContent = "📍 Pickup is well outside the central metro / current driver area. A travel fairness fee may apply depending on total trip distance.";
-    else if (d > 20) note.textContent = "📍 Pickup is outside the central zone / current driver area. A small travel fairness fee may apply depending on trip distance.";
-  }
+}
 
   // =====================================================
   // ROUTE URL
