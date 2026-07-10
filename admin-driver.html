@@ -591,9 +591,11 @@ body.mode-admin .driver-only{display:none;}
       </div>
 
       <p class="meta">
-        Tap a card to open details. Use the status dropdown to move rides.<br>
-        Admin mode also allows editing ride details + sending rider notifications on status changes.
-      </p>
+  Tap a card to open details. Use the status dropdown to move rides.<br>
+  <strong>Active</strong> refreshes automatically every 60 seconds while this page is visible.<br>
+  <strong>All</strong> loads complete history once and uses manual refresh only.<br>
+  Admin mode also allows editing ride details + sending rider notifications on status changes.
+</p>
     </section>
   </div>
 </div>
@@ -728,6 +730,7 @@ const DRIVER_STATUSES = [
   { value:"PICKED_UP", label:"👋 Picked Up" },
   { value:"COMPLETED", label:"🏁 Completed" },
   { value:"CANCELLED", label:"✖ Cancelled" },
+  { value:"DECLINED",  label:"🚫 Declined" },
 ];
 
 const LIVE_IMAGES=[
@@ -784,6 +787,16 @@ let gpsLastTs=null;
 let gpsRunToken = 0;
 
 let dispatchScope = localStorage.getItem("dispatchScope") || "active";
+if(!["active","all"].includes(dispatchScope)){
+  dispatchScope = "active";
+}
+
+const DISPATCH_REFRESH_MS = 60000;
+
+let dispatchTimer = null;
+let dispatchFetchInProgress = false;
+let dispatchRefreshQueued = false;
+
 let currentStatusVal="offline";
 let currentMode = localStorage.getItem("adminDriverMode") || "admin";
 
@@ -1957,7 +1970,7 @@ async function createManualRide(){
 
     showToast("Manual ride created");
     clearManualRideForm();
-    fetchBookings();
+    refreshDispatchNow({ force: true });
   }catch(e){
     log("Manual create error: " + e.message);
     showToast("Manual create error");
@@ -2091,7 +2104,9 @@ function renderAllBookings(list){
 
   const newArr   = list.filter(b=>b.status==="REQUESTED");
   const activeArr= list.filter(b=>["ACCEPTED","ENROUTE","ARRIVED","PICKED_UP"].includes(b.status));
-  const doneArr  = list.filter(b=>["COMPLETED","CANCELLED"].includes(b.status));
+  const doneArr = list.filter(b=>
+  ["COMPLETED","CANCELLED","DECLINED"].includes(b.status)
+);
 
   renderColumn("listNew", newArr);
   renderColumn("listActive", activeArr);
@@ -2105,14 +2120,168 @@ function renderAllBookings(list){
   if(scopeBtn) scopeBtn.textContent = `📋 ${dispatchScope}`;
 }
 
-async function fetchBookings(){
+async function fetchBookings(options = {}){
+  const force = options.force === true;
+
+  /*
+   * Routine polling must not run while the page is hidden.
+   * Manual actions may use force:true.
+   */
+  if(document.hidden && !force){
+    return;
+  }
+
+  /*
+   * Never allow simultaneous dispatch requests.
+   * If something requests another refresh while one is running,
+   * queue one follow-up refresh instead of stacking requests.
+   */
+  if(dispatchFetchInProgress){
+    dispatchRefreshQueued = true;
+    return;
+  }
+
+  dispatchFetchInProgress = true;
+
   try{
-    const r=await fetch(`${BOOKINGS_API}/api/driver/bookings?scope=${encodeURIComponent(dispatchScope)}&t=${Date.now()}`);
-    const data=await r.json();
+    const url =
+      `${BOOKINGS_API}/api/driver/bookings` +
+      `?scope=${encodeURIComponent(dispatchScope)}` +
+      `&t=${Date.now()}`;
+
+    const r = await fetch(url, {
+      method: "GET",
+      headers: {
+        "Accept": "application/json"
+      },
+      cache: "no-store"
+    });
+
+    if(!r.ok){
+      throw new Error(`Bookings GET failed (${r.status})`);
+    }
+
+    const data = await r.json();
     renderAllBookings(Array.isArray(data) ? data : []);
+
+    log(
+      `Dispatch GET OK: scope=${dispatchScope} ` +
+      `rides=${Array.isArray(data) ? data.length : 0}`
+    );
   }catch(e){
     showToast("Dispatch sync failed");
-    log("Dispatch fetch error: "+e.message);
+    log("Dispatch fetch error: " + e.message);
+  }finally{
+    dispatchFetchInProgress = false;
+
+    if(dispatchRefreshQueued){
+      dispatchRefreshQueued = false;
+
+      if(!document.hidden){
+        setTimeout(() => {
+          fetchBookings({ force: true });
+        }, 0);
+      }
+    }
+  }
+}
+
+function stopDispatchPolling(){
+  if(dispatchTimer){
+    clearTimeout(dispatchTimer);
+    dispatchTimer = null;
+  }
+}
+
+function scheduleDispatchPolling(){
+  stopDispatchPolling();
+
+  /*
+   * Full history is never automatically polled.
+   * It is loaded only through a deliberate operator action.
+   */
+  if(dispatchScope !== "active"){
+    return;
+  }
+
+  if(document.hidden){
+    return;
+  }
+
+  dispatchTimer = setTimeout(async () => {
+    dispatchTimer = null;
+
+    if(
+      !document.hidden &&
+      dispatchScope === "active"
+    ){
+      await fetchBookings();
+    }
+
+    scheduleDispatchPolling();
+  }, DISPATCH_REFRESH_MS);
+}
+
+async function refreshDispatchNow(options = {}){
+  const force = options.force !== false;
+
+  await fetchBookings({ force });
+
+  /*
+   * Restart the countdown after a manual or operational refresh
+   * so another automatic request does not fire immediately after it.
+   */
+  scheduleDispatchPolling();
+}
+
+async function initializeDispatch(){
+  if(dispatchScope === "all"){
+    stopDispatchPolling();
+
+    /*
+     * A previously saved "all" scope should not silently scan the
+     * complete history when the page opens. Return to normal active
+     * operations on startup.
+     */
+    dispatchScope = "active";
+    localStorage.setItem("dispatchScope", "active");
+  }
+
+  const scopeBtn = $("btnScope");
+  if(scopeBtn){
+    scopeBtn.textContent = `📋 ${dispatchScope}`;
+  }
+
+  await fetchBookings({ force: true });
+  scheduleDispatchPolling();
+}
+
+function handleDispatchVisibilityChange(){
+  if(document.hidden){
+    stopDispatchPolling();
+    log("Dispatch polling paused: page hidden");
+    return;
+  }
+
+  if(dispatchScope === "active"){
+    log("Dispatch polling resumed: page visible");
+    refreshDispatchNow({ force: true });
+  }else{
+    /*
+     * History mode remains frozen until the operator deliberately
+     * refreshes or returns to active mode.
+     */
+    log("Dispatch remains manual: full history mode");
+  }
+}
+
+function handleDispatchPageShow(){
+  if(document.hidden){
+    return;
+  }
+
+  if(dispatchScope === "active"){
+    refreshDispatchNow({ force: true });
   }
 }
 
@@ -2138,16 +2307,16 @@ async function updateBookingStatus(bookingId, newStatus){
 
     if(!r.ok){
       showToast("Status update failed");
-      fetchBookings();
+      refreshDispatchNow({ force: true });
       return;
     }
 
     showToast("Ride updated");
-    fetchBookings();
+    refreshDispatchNow({ force: true });
   }catch(e){
     log("updateBookingStatus error: "+e.message);
     showToast("Status update error");
-    fetchBookings();
+    refreshDispatchNow({ force: true });
   }
 }
 
@@ -2276,7 +2445,7 @@ async function saveEditModal(){
 
     showToast("Saved");
     closeEditModal();
-    fetchBookings();
+    refreshDispatchNow({ force: true });
   }catch(e){
     log("saveEditModal error: "+e.message);
     showToast("Save error");
@@ -2298,12 +2467,39 @@ function copyEditDirectionsLink(){
   copyText(link);
 }
 
-function toggleScope(){
-  dispatchScope = (dispatchScope === "active") ? "all" : "active";
+async function toggleScope(){
+  if(dispatchScope === "active"){
+    /*
+     * Full-history mode:
+     * - stop automatic refreshes
+     * - perform one deliberate full-history load
+     */
+    dispatchScope = "all";
+    localStorage.setItem("dispatchScope", dispatchScope);
+
+    $("btnScope").textContent = "📋 all";
+    stopDispatchPolling();
+
+    showToast("Loading full history");
+    await fetchBookings({ force: true });
+
+    log("Dispatch scope: all history; automatic polling paused");
+    showToast("History loaded • manual refresh only");
+    return;
+  }
+
+  /*
+   * Return to routine operational dispatch.
+   */
+  dispatchScope = "active";
   localStorage.setItem("dispatchScope", dispatchScope);
-  $("btnScope").textContent = `📋 ${dispatchScope}`;
-  fetchBookings();
-  showToast(`Scope: ${dispatchScope}`);
+
+  $("btnScope").textContent = "📋 active";
+
+  showToast("Active dispatch");
+  await refreshDispatchNow({ force: true });
+
+  log("Dispatch scope: active; 60-second visible polling enabled");
 }
 
 function handleDispatchClick(e){
@@ -2407,10 +2603,18 @@ function wireButtons(){
 
   $("btnRefreshPage").onclick = ()=>location.reload(true);
 
-  $("btnDispatchRefresh").onclick = ()=>{
-    fetchBookings();
-    showToast("Dispatch refreshed");
-  };
+  $("btnDispatchRefresh").onclick = async ()=>{
+  if(dispatchScope === "all"){
+    showToast("Refreshing full history");
+    await fetchBookings({ force: true });
+    showToast("History refreshed");
+    return;
+  }
+
+  showToast("Refreshing dispatch");
+  await refreshDispatchNow({ force: true });
+  showToast("Dispatch refreshed");
+};
 
   $("btnScope").onclick = toggleScope;
 
@@ -2466,11 +2670,24 @@ function wireButtons(){
   document.addEventListener("keydown",(ev)=>{
     if(ev.key === "Escape" && $("editOverlay").classList.contains("show")) closeEditModal();
   });
+  document.addEventListener(
+  "visibilitychange",
+  handleDispatchVisibilityChange
+);
+
+window.addEventListener(
+  "pageshow",
+  handleDispatchPageShow
+);
+
+window.addEventListener(
+  "pagehide",
+  stopDispatchPolling
+);
 }
 
 window.addEventListener("load",()=>{
   applyMode(currentMode);
-  $("btnScope").textContent = `📋 ${dispatchScope}`;
 
   applyTrackingPill();
 
@@ -2478,17 +2695,16 @@ window.addEventListener("load",()=>{
   applyTemplateToCaption("LIVE");
   setImage(0);
 
-  loadStatus();
-  loadLastCaption();
-  loadTicker();
-  fetchBookings();
-
-  setInterval(fetchBookings, 20000);
-
   syncManualLuggageVisibility();
   initAddressAutocomplete();
   updateTickerPreview();
+
   wireButtons();
+
+  loadStatus();
+  loadLastCaption();
+  loadTicker();
+  initializeDispatch();
 });
 </script>
 
