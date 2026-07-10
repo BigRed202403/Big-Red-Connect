@@ -331,13 +331,14 @@ body.mode-admin .driver-only{display:none;}
 
       <div class="audio-grid">
   <button class="btn btn-primary audio-btn" onclick="playBigRedClip('welcome')">🎙️ Welcome Aboard</button>
+  <button class="btn btn-secondary audio-btn" onclick="playBigRedClip('airportWelcome')">🛬 Airport Welcome Aboard</button>
   <button class="btn btn-secondary audio-btn" onclick="playBigRedClip('who')">🎙️ Who Is Big Red?</button>
   <button class="btn btn-secondary audio-btn" onclick="playBigRedClip('why')">🎙️ Why Choose Red?</button>
   <button class="btn btn-secondary audio-btn" onclick="playBigRedClip('saveLong')">📱 Save To Home Screen (Long)</button>
   <button class="btn btn-secondary audio-btn" onclick="playBigRedClip('save')">📱 Save To Home Screen</button>
   <button class="btn btn-secondary audio-btn" onclick="playBigRedClip('think')">💭 Think Big Red</button>
   <button class="btn btn-secondary audio-btn" onclick="playBigRedClip('firststop')">🛑 First Stop</button>
-  <button class="btn btn-ghost audio-btn" onclick="playBigRedClip('airport')">✈️ Airport Thank You</button>
+  <button class="btn btn-secondary audio-btn" onclick="playBigRedClip('airportArrive')">🛫 Airport Arrival</button>
   <button class="btn btn-primary audio-btn" onclick="playBigRedClip('arrival')">🏁 Arrival / End Ride</button>
   <button class="btn btn-ghost audio-btn" onclick="stopBigRedClip()">⏹ Stop</button>
 </div>
@@ -708,13 +709,14 @@ const EXTENDED_COVERAGE_WAIVE_TRIP_OVER_MI = 20;
 
 const BIG_RED_AUDIO_CLIPS = {
   welcome: "Welcome%20Aboard%202.MOV",
+  airportWelcome: "Airport%20Welcome%20Aboard.MOV",
   who: "Who%20Is%20Big%20Red%20Connect.MOV",
   why: "Why%20Choose%20Red%3F.MOV",
   think: "Think%20Big%20Red.MOV",
   saveLong: "Save%20To%20Home%20Screen%20(Long).MOV",
   save: "Save%20To%20Home%20Screen.MOV",
   firststop: "First%20Stop.MOV",
-  airport: "Airport%20Thank%20You.MOV",
+  airportArrive: "Airport%20Arrival.MOV",
   arrival: "Destination%20Arrival%202.MOV"
 };
 
