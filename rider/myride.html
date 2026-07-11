@@ -1,9 +1,9 @@
 <!-- =========================================================
-     ✅ UPDATED: rider/myride.html
-     Changes:
-       - Prefer rider-safe list endpoint (with graceful fallback)
-       - fetchRideById() now supports BOTH { ok, booking } and raw booking
-       - Centralized JSON unwrap helper
+     UPDATED: rider/myride.html
+     - Closed rides no longer remain in Active Ride when opened by ID.
+     - COMPLETED, CANCELLED, and DECLINED rides move to Ride History.
+     - Auto-refresh uses the same open/closed classification.
+     - Re-links the current riderId to OneSignal on page load.
      ========================================================= -->
 <!DOCTYPE html>
 <html lang="en">
@@ -16,6 +16,56 @@
 <link rel="icon" type="image/png" sizes="192x192" href="/official_logo.jpeg">
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#000"/>
+
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+<script>
+window.OneSignalDeferred = window.OneSignalDeferred || [];
+
+async function addRiderTagsSafe(OneSignal){
+  const tags = { env:"live", role_rider:"true", role_rider_live:"true" };
+
+  if(OneSignal?.User?.addTags && typeof OneSignal.User.addTags === "function"){
+    await OneSignal.User.addTags(tags);
+    return;
+  }
+
+  if(OneSignal?.User?.addTag && typeof OneSignal.User.addTag === "function"){
+    await OneSignal.User.addTag("env","live");
+    await OneSignal.User.addTag("role_rider","true");
+    await OneSignal.User.addTag("role_rider_live","true");
+    return;
+  }
+
+  if(typeof OneSignal.sendTag === "function"){
+    await OneSignal.sendTag("env","live");
+    await OneSignal.sendTag("role_rider","true");
+    await OneSignal.sendTag("role_rider_live","true");
+  }
+}
+
+function relinkOneSignalRider(riderId){
+  if(!riderId) return;
+
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  OneSignalDeferred.push(async function(OneSignal){
+    try{
+      await OneSignal.init({
+        appId:"9b8bcc89-87d3-46e2-b2d0-042d1a267718",
+        safari_web_id:"web.onesignal.auto.0c90051e-4735-447d-b203-75e3767d91b9",
+        notifyButton:{ enable:false },
+        serviceWorkerPath:"/onesignalsdkworker.js?v=3",
+        path:"/"
+      });
+
+      await OneSignal.login(String(riderId));
+      await addRiderTagsSafe(OneSignal);
+      console.log("[My Ride] OneSignal linked to riderId:", riderId);
+    }catch(e){
+      console.warn("[My Ride] OneSignal relink failed:", e);
+    }
+  });
+}
+</script>
 
 <style>
 body{margin:0;background:#000;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding-bottom:60px}
@@ -79,36 +129,35 @@ h1{text-align:center;margin:16px 0;font-size:1.4rem}
 const API="https://bigred-bookings.bigredtransportation.workers.dev";
 const STATUS_API="https://bigred-status-updater.bigredtransportation.workers.dev/status";
 
-/* ✅ Repeat-last-ride cache key */
-const LS_LAST_RIDE_ID = "brc_last_ride_id_v1";
+const LS_LAST_RIDE_ID="brc_last_ride_id_v1";
+
 function setLastRideId(id){
   if(!id) return;
-  try{ localStorage.setItem(LS_LAST_RIDE_ID, String(id)); }catch(e){}
+  try{localStorage.setItem(LS_LAST_RIDE_ID,String(id));}catch(e){}
 }
 
-/* ✅ Canonical rider id */
 function getCanonicalRiderId(){
-  const raw = localStorage.getItem("bigred_rider_profile_v1");
+  const raw=localStorage.getItem("bigred_rider_profile_v1");
+
   if(raw){
     try{
-      const p = JSON.parse(raw);
-      if(p && p.riderId) return String(p.riderId);
+      const p=JSON.parse(raw);
+      if(p&&p.riderId)return String(p.riderId);
     }catch(e){}
   }
-  return String(localStorage.getItem("riderId") || "");
+
+  return String(localStorage.getItem("riderId")||"");
 }
 
-/* ✅ Unified JSON unwrap:
-   - supports raw booking OR { ok, booking } OR { booking } */
 async function safeJson(res){
-  try{ return await res.json(); }catch(e){ return null; }
+  try{return await res.json();}catch(e){return null;}
 }
+
 function unwrapBooking(payload){
-  if(!payload) return null;
-  if(payload.booking) return payload.booking;
-  if(payload.ok && payload.booking) return payload.booking;
-  // if it already looks like a booking object
-  if(payload.id && (payload.pickup || payload.dropoff || payload.status)) return payload;
+  if(!payload)return null;
+  if(payload.booking)return payload.booking;
+  if(payload.ok&&payload.booking)return payload.booking;
+  if(payload.id&&(payload.pickup||payload.dropoff||payload.status))return payload;
   return null;
 }
 
@@ -116,48 +165,62 @@ document.getElementById("menuBtn").onclick=()=>{
   const m=document.getElementById("menuPanel");
   m.style.display=m.style.display==="flex"?"none":"flex";
 };
+
 document.getElementById("logoutBtn").onclick=()=>{
+  try{
+    window.OneSignalDeferred=window.OneSignalDeferred||[];
+    OneSignalDeferred.push(async function(OneSignal){
+      try{
+        if(typeof OneSignal.logout==="function")await OneSignal.logout();
+      }catch(e){}
+    });
+  }catch(e){}
+
   localStorage.clear();
   location.href="/index.html";
 };
 
-const riderId = getCanonicalRiderId();
-const riderPhone=localStorage.getItem("riderPhone") || "";
+const riderId=getCanonicalRiderId();
+const riderPhone=localStorage.getItem("riderPhone")||"";
+
+relinkOneSignalRider(riderId);
 
 let map,driverMarker,pickupMarker,dropoffMarker,routeSvc,routeLine;
-let activeRideId = null;
-let autoTimer = null;
-let driverPollTimer = null;
+let activeRideId=null;
+let autoTimer=null;
+let driverPollTimer=null;
 
-/* =======================
-   HISTORY CLEANUP (LOCAL)
-   ======================= */
-function hiddenKey(){ return `hiddenRideIds_${riderId || "unknown"}`; }
+function hiddenKey(){return `hiddenRideIds_${riderId||"unknown"}`;}
+
 function getHiddenSet(){
   try{
-    const raw = localStorage.getItem(hiddenKey());
-    const arr = raw ? JSON.parse(raw) : [];
-    return new Set(Array.isArray(arr) ? arr : []);
-  }catch(e){ return new Set(); }
+    const raw=localStorage.getItem(hiddenKey());
+    const arr=raw?JSON.parse(raw):[];
+    return new Set(Array.isArray(arr)?arr:[]);
+  }catch(e){
+    return new Set();
+  }
 }
+
 function saveHiddenSet(set){
-  try{ localStorage.setItem(hiddenKey(), JSON.stringify(Array.from(set))); }catch(e){}
+  try{localStorage.setItem(hiddenKey(),JSON.stringify(Array.from(set)));}catch(e){}
 }
+
 function hideRideFromHistory(rideId){
-  const set = getHiddenSet();
+  const set=getHiddenSet();
   set.add(String(rideId));
   saveHiddenSet(set);
   loadRides();
 }
+
 function restoreHistory(){
-  try{ localStorage.removeItem(hiddenKey()); }catch(e){}
+  try{localStorage.removeItem(hiddenKey());}catch(e){}
   loadRides();
 }
+
 function clearHistory(list){
-  const set = getHiddenSet();
-  (list||[]).forEach(r=>{
-    if(r && r.id) set.add(String(r.id));
-  });
+  const set=getHiddenSet();
+  (list||[]).forEach(r=>{if(r&&r.id)set.add(String(r.id));});
   saveHiddenSet(set);
   loadRides();
 }
@@ -165,59 +228,68 @@ function clearHistory(list){
 function canModify(status){
   return ["REQUESTED","ACCEPTED","ENROUTE","ARRIVED"].includes(String(status||"").toUpperCase());
 }
+
 function isClosed(status){
-  const s = String(status||"").toUpperCase();
+  const s=String(status||"").toUpperCase();
   return ["COMPLETED","CANCELLED","DECLINED"].includes(s);
 }
 
 function getRideIdFromUrl(){
-  const u = new URL(location.href);
-  const id = (u.searchParams.get("id") || "").trim();
-  return id || null;
+  const u=new URL(location.href);
+  const id=String(u.searchParams.get("id")||"").trim();
+  return id||null;
 }
 
-/* ✅ Robust ride fetch (supports wrapped and unwrapped) */
 async function fetchRideById(id){
-  const res = await fetch(`${API}/api/bookings/${encodeURIComponent(id)}`);
-  if(!res.ok) return null;
-  const j = await safeJson(res);
-  return unwrapBooking(j);
+  const res=await fetch(`${API}/api/bookings/${encodeURIComponent(id)}?t=${Date.now()}`,{
+    cache:"no-store"
+  });
+
+  if(!res.ok)return null;
+  return unwrapBooking(await safeJson(res));
 }
 
-/* ✅ Prefer rider list endpoint (if deployed), fallback to legacy driver list */
 async function fetchAllMine(){
-  if(!riderId && !localStorage.getItem("riderPhone")) return [];
+  if(!riderId&&!localStorage.getItem("riderPhone"))return [];
 
-  // 1) Rider-safe endpoint (preferred)
-  // NOTE: this assumes your worker supports one of these patterns.
-  const riderListCandidates = [
-    `${API}/api/rider/bookings?riderId=${encodeURIComponent(riderId)}`,
-    `${API}/api/bookings?riderId=${encodeURIComponent(riderId)}`,
-    `${API}/api/rider/bookings?rid=${encodeURIComponent(riderId)}`
+  const candidates=[
+    `${API}/api/rider/bookings?riderId=${encodeURIComponent(riderId)}&t=${Date.now()}`,
+    `${API}/api/bookings?riderId=${encodeURIComponent(riderId)}&t=${Date.now()}`,
+    `${API}/api/rider/bookings?rid=${encodeURIComponent(riderId)}&t=${Date.now()}`
   ];
 
-  for(const url of riderListCandidates){
+  for(const url of candidates){
     try{
-      const res = await fetch(url);
+      const res=await fetch(url,{cache:"no-store"});
+
       if(res.ok){
-        const data = await safeJson(res);
-        if(Array.isArray(data)) return data;
-        if(data && Array.isArray(data.bookings)) return data.bookings;
+        const data=await safeJson(res);
+        if(Array.isArray(data))return data;
+        if(data&&Array.isArray(data.bookings))return data.bookings;
       }
     }catch(e){}
   }
 
-  // 2) Legacy fallback (only if still open)
   try{
-    const res=await fetch(`${API}/api/driver/bookings?scope=all`);
-    if(!res.ok) return [];
+    const res=await fetch(`${API}/api/driver/bookings?scope=all&t=${Date.now()}`,{
+      cache:"no-store"
+    });
+
+    if(!res.ok)return [];
+
     const all=await safeJson(res);
-    const list = Array.isArray(all) ? all : [];
-    const myPhone = String(localStorage.getItem("riderPhone") || "").replace(/\D/g,"").replace(/^1/,"");
+    const list=Array.isArray(all)?all:[];
+    const myPhone=String(localStorage.getItem("riderPhone")||"")
+      .replace(/\D/g,"")
+      .replace(/^1/,"");
+
     return list.filter(r=>{
-      const rid = String(r?.rider?.riderId || "");
-      const rph = String(r?.rider?.phone || "").replace(/\D/g,"").replace(/^1/,"");
-      return (riderId && rid === riderId) || (myPhone && rph === myPhone);
+      const rid=String(r?.rider?.riderId||"");
+      const rph=String(r?.rider?.phone||"")
+        .replace(/\D/g,"")
+        .replace(/^1/,"");
+
+      return (riderId&&rid===riderId)||(myPhone&&rph===myPhone);
     });
   }catch(e){
     return [];
@@ -225,49 +297,69 @@ async function fetchAllMine(){
 }
 
 function pickActiveRide(mine){
-  const open = (mine||[])
-    .filter(r => !isClosed(r.status))
-    .sort((a,b)=> (b.createdAt||"").localeCompare(a.createdAt||""));
-  return open[0] || null;
+  return (mine||[])
+    .filter(r=>!isClosed(r.status))
+    .sort((a,b)=>String(b.updatedAt||b.createdAt||"").localeCompare(String(a.updatedAt||a.createdAt||"")))[0]||null;
 }
+
 function pickNewestClosedRide(mine){
-  const closed = (mine||[])
-    .filter(r => isClosed(r.status))
-    .sort((a,b)=> (b.createdAt||"").localeCompare(a.createdAt||""));
-  return closed[0] || null;
+  return (mine||[])
+    .filter(r=>isClosed(r.status))
+    .sort((a,b)=>String(b.updatedAt||b.createdAt||"").localeCompare(String(a.updatedAt||a.createdAt||"")))[0]||null;
+}
+
+async function renderRideIdView(urlRide){
+  const mine=await fetchAllMine();
+
+  if(isClosed(urlRide?.status)){
+    activeRideId=null;
+    renderActive(null);
+
+    const history=mine.some(x=>String(x?.id)===String(urlRide?.id))
+      ? mine.filter(x=>isClosed(x.status))
+      : [urlRide,...mine.filter(x=>isClosed(x.status))];
+
+    renderHistory(history);
+    stopAutoRefresh();
+    return;
+  }
+
+  activeRideId=urlRide.id;
+  if(urlRide?.id)setLastRideId(urlRide.id);
+
+  renderActive(urlRide);
+  renderHistory(mine.filter(x=>isClosed(x.status)));
+  startAutoRefresh();
 }
 
 async function loadRides(){
-  const urlRideId = getRideIdFromUrl();
+  const urlRideId=getRideIdFromUrl();
+
   if(urlRideId){
-    const r = await fetchRideById(urlRideId);
-    if(r && r?.rider?.riderId === riderId){
-      activeRideId = r.id;
-      if(r?.id) setLastRideId(r.id);
-      renderActive(r);
+    const r=await fetchRideById(urlRideId);
 
-      const mine = await fetchAllMine();
-      renderHistory(mine.filter(x=>isClosed(x.status)));
-
-      startAutoRefresh();
+    if(r&&(!r?.rider?.riderId||r?.rider?.riderId===riderId)){
+      await renderRideIdView(r);
       return;
     }
   }
 
-  const mine = await fetchAllMine();
-  const active = pickActiveRide(mine);
-  activeRideId = active ? active.id : null;
+  const mine=await fetchAllMine();
+  const active=pickActiveRide(mine);
 
-  if(active?.id) setLastRideId(active.id);
-  else {
-    const newestClosed = pickNewestClosedRide(mine);
-    if(newestClosed?.id) setLastRideId(newestClosed.id);
+  activeRideId=active?active.id:null;
+
+  if(active?.id){
+    setLastRideId(active.id);
+  }else{
+    const newestClosed=pickNewestClosedRide(mine);
+    if(newestClosed?.id)setLastRideId(newestClosed.id);
   }
 
   renderActive(active);
   renderHistory(mine.filter(r=>isClosed(r.status)));
 
-  if(active) startAutoRefresh();
+  if(active)startAutoRefresh();
   else stopAutoRefresh();
 }
 
@@ -275,34 +367,39 @@ function renderActive(r){
   const box=document.getElementById("activeRide");
   const mapEl=document.getElementById("map");
 
-  if(!r){
+  if(!r||isClosed(r.status)){
     box.innerHTML=`<div class="card">No active ride found.</div>`;
     mapEl.style.display="none";
+
+    if(driverMarker)driverMarker.setMap(null);
     stopDriverPolling();
     return;
   }
 
-  const status = String(r.status||"").toUpperCase();
-  const locked = !canModify(status);
+  const status=String(r.status||"").toUpperCase();
+  const locked=!canModify(status);
 
-  if(r?.id) setLastRideId(r.id);
+  if(r?.id)setLastRideId(r.id);
 
-  const stopsLine = (Array.isArray(r.stops) && r.stops.length)
+  const stopsLine=(Array.isArray(r.stops)&&r.stops.length)
     ? `<div style="margin-top:6px;"><strong>Stops:</strong> ${r.stops.map(s=>s?.address).filter(Boolean).join(" → ")}</div>`
     : "";
 
   box.innerHTML=`
     <div class="card">
       <div class="status">Status: ${status}</div>
-      <div><strong>Pickup:</strong> ${r.pickup?.address || ""}</div>
+      <div><strong>Pickup:</strong> ${r.pickup?.address||""}</div>
       ${stopsLine}
-      <div style="margin-top:6px;"><strong>Dropoff:</strong> ${r.dropoff?.address || ""}</div>
+      <div style="margin-top:6px;"><strong>Dropoff:</strong> ${r.dropoff?.address||""}</div>
 
-      <a class="btn btn-secondary ${locked?"btn-disabled":""}" href="/rider/ride-request.html?id=${encodeURIComponent(r.id)}">
+      <a class="btn btn-secondary ${locked?"btn-disabled":""}"
+         href="/rider/ride-request.html?id=${encodeURIComponent(r.id)}">
         Edit Ride
       </a>
 
-      <button class="btn btn-secondary ${locked?"btn-disabled":""}" ${locked?"disabled":""} onclick="cancelRide('${String(r.id).replace(/'/g,"\\'")}')">
+      <button class="btn btn-secondary ${locked?"btn-disabled":""}"
+              ${locked?"disabled":""}
+              onclick="cancelRide('${String(r.id).replace(/'/g,"\\'")}')">
         Cancel Ride
       </button>
 
@@ -314,29 +411,39 @@ function renderActive(r){
 }
 
 async function cancelRide(id){
-  if(!confirm("Cancel this ride?")) return;
-  if(id) setLastRideId(id);
+  if(!confirm("Cancel this ride?"))return;
+  if(id)setLastRideId(id);
+
+  let cancelled=false;
 
   try{
-    const res = await fetch(`${API}/api/bookings/${encodeURIComponent(id)}/cancel`,{
+    const res=await fetch(`${API}/api/bookings/${encodeURIComponent(id)}/cancel`,{
       method:"POST",
       headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({ riderPhone: riderPhone || "" })
+      body:JSON.stringify({riderPhone:riderPhone||"",riderId:riderId||""})
     });
 
-    if(!res.ok){
-      await fetch(`${API}/api/driver/bookings/${encodeURIComponent(id)}`,{
+    cancelled=res.ok;
+  }catch(e){}
+
+  if(!cancelled){
+    try{
+      const fallback=await fetch(`${API}/api/driver/bookings/${encodeURIComponent(id)}`,{
         method:"PUT",
         headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({ status:"CANCELLED", metadata:{ cancelledBy:"rider" } })
+        body:JSON.stringify({
+          status:"CANCELLED",
+          metadata:{cancelledBy:"rider"}
+        })
       });
-    }
-  } catch(e){
-    await fetch(`${API}/api/driver/bookings/${encodeURIComponent(id)}`,{
-      method:"PUT",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({ status:"CANCELLED", metadata:{ cancelledBy:"rider" } })
-    });
+
+      cancelled=fallback.ok;
+    }catch(e){}
+  }
+
+  if(cancelled){
+    activeRideId=null;
+    renderActive(null);
   }
 
   await loadRides();
@@ -344,39 +451,52 @@ async function cancelRide(id){
 
 function renderHistory(list){
   const h=document.getElementById("history");
-  const hidden = getHiddenSet();
+  const hidden=getHiddenSet();
+  const unique=new Map();
 
-  const visible = (list||[]).filter(r => r && r.id && !hidden.has(String(r.id)));
+  (list||[]).forEach(r=>{
+    if(r&&r.id&&isClosed(r.status))unique.set(String(r.id),r);
+  });
+
+  const visible=Array.from(unique.values())
+    .filter(r=>!hidden.has(String(r.id)))
+    .sort((a,b)=>String(b.updatedAt||b.createdAt||"").localeCompare(String(a.updatedAt||a.createdAt||"")));
 
   if(!visible.length){
-    const hiddenCount = (list||[]).filter(r => r && r.id && hidden.has(String(r.id))).length;
-    h.innerHTML=`<div class="card">${hiddenCount ? "No visible past rides (history cleared)." : "No past rides."}</div>`;
+    const hiddenCount=Array.from(unique.values())
+      .filter(r=>hidden.has(String(r.id)))
+      .length;
+
+    h.innerHTML=`<div class="card">${hiddenCount?"No visible past rides (history cleared).":"No past rides."}</div>`;
+    document.getElementById("clearHistoryBtn").onclick=()=>{};
     return;
   }
 
-  h.innerHTML=visible.slice().reverse().map(r=>`
+  h.innerHTML=visible.map(r=>`
     <div class="card">
       <div class="status">${String(r.status||"").toUpperCase()}</div>
-      <div>${r.pickup?.address || ""} → ${r.dropoff?.address || ""}</div>
+      <div>${r.pickup?.address||""} → ${r.dropoff?.address||""}</div>
 
-      <a class="btn btn-secondary" href="/rider/ride-request.html?repeat=${encodeURIComponent(r.id)}">
+      <a class="btn btn-secondary"
+         href="/rider/ride-request.html?repeat=${encodeURIComponent(r.id)}">
         Re-Request Ride
       </a>
 
-      <button class="btn btn-danger" onclick="hideRideFromHistory('${String(r.id).replace(/'/g,"\\'")}')">
+      <button class="btn btn-danger"
+              onclick="hideRideFromHistory('${String(r.id).replace(/'/g,"\\'")}')">
         Hide From History
       </button>
     </div>
   `).join("");
 
-  document.getElementById("clearHistoryBtn").onclick = ()=>{
-    if(!confirm("Hide all past rides from your history? (You can restore them later)")) return;
-    clearHistory(list || []);
+  document.getElementById("clearHistoryBtn").onclick=()=>{
+    if(!confirm("Hide all past rides from your history? (You can restore them later)"))return;
+    clearHistory(Array.from(unique.values()));
   };
 }
 
 async function drawMap(r){
-  const mapEl = document.getElementById("map");
+  const mapEl=document.getElementById("map");
   mapEl.style.display="block";
 
   if(!map){
@@ -387,29 +507,31 @@ async function drawMap(r){
   }
 
   const geo=new google.maps.Geocoder();
-  let p1, p2;
+  let p1,p2;
+
   try{
     p1=await geo.geocode({address:r.pickup.address});
     p2=await geo.geocode({address:r.dropoff.address});
   }catch(e){
-    console.warn("Geocode failed:", e);
+    console.warn("Geocode failed:",e);
     return;
   }
-  if(!p1?.results?.[0] || !p2?.results?.[0]) return;
+
+  if(!p1?.results?.[0]||!p2?.results?.[0])return;
 
   const pickup=p1.results[0].geometry.location;
   const dropoff=p2.results[0].geometry.location;
 
   if(!pickupMarker){
     pickupMarker=new google.maps.Marker({map,position:pickup,label:"📍"});
-  } else {
+  }else{
     pickupMarker.setPosition(pickup);
     pickupMarker.setMap(map);
   }
 
   if(!dropoffMarker){
     dropoffMarker=new google.maps.Marker({map,position:dropoff,label:"🏁"});
-  } else {
+  }else{
     dropoffMarker.setPosition(dropoff);
     dropoffMarker.setMap(map);
   }
@@ -419,7 +541,7 @@ async function drawMap(r){
     destination:dropoff,
     travelMode:"DRIVING"
   },(res,s)=>{
-    if(s==="OK") routeLine.setDirections(res);
+    if(s==="OK")routeLine.setDirections(res);
   });
 
   startDriverPolling();
@@ -434,36 +556,38 @@ function stopDriverPolling(){
 
 async function pollDriver(){
   try{
-    const r = await fetch(STATUS_API);
-    if(!r.ok) throw new Error("status fetch failed");
-    const j = await safeJson(r);
+    const r=await fetch(`${STATUS_API}?t=${Date.now()}`,{cache:"no-store"});
+    if(!r.ok)throw new Error("status fetch failed");
 
-    if(!j || !j.location || typeof j.location.lat !== "number"){
-      driverPollTimer = setTimeout(pollDriver, 15000);
+    const j=await safeJson(r);
+
+    if(!j||!j.location||typeof j.location.lat!=="number"){
+      driverPollTimer=setTimeout(pollDriver,15000);
       return;
     }
 
-    const pos = { lat: j.location.lat, lng: j.location.lng };
+    const pos={lat:j.location.lat,lng:j.location.lng};
 
-    if(!map) {
-      driverPollTimer = setTimeout(pollDriver, 15000);
+    if(!map){
+      driverPollTimer=setTimeout(pollDriver,15000);
       return;
     }
 
     if(!driverMarker){
-      driverMarker = new google.maps.Marker({
+      driverMarker=new google.maps.Marker({
         map,
-        position: pos,
-        icon: "https://maps.google.com/mapfiles/kml/shapes/cabs.png"
+        position:pos,
+        icon:"https://maps.google.com/mapfiles/kml/shapes/cabs.png"
       });
-    } else {
+    }else{
       driverMarker.setPosition(pos);
+      driverMarker.setMap(map);
     }
-  } catch(e){
-    console.warn("Driver poll error:", e.message || e);
+  }catch(e){
+    console.warn("Driver poll error:",e.message||e);
   }
 
-  driverPollTimer = setTimeout(pollDriver, 15000);
+  driverPollTimer=setTimeout(pollDriver,15000);
 }
 
 function startDriverPolling(){
@@ -480,26 +604,45 @@ function stopAutoRefresh(){
 
 function startAutoRefresh(){
   stopAutoRefresh();
-  autoTimer = setInterval(async ()=>{
-    const urlRideId = getRideIdFromUrl();
+
+  autoTimer=setInterval(async()=>{
+    const urlRideId=getRideIdFromUrl();
+
     if(urlRideId){
-      const r = await fetchRideById(urlRideId);
-      if(r && r?.rider?.riderId === riderId){
-        activeRideId = r.id;
-        if(r?.id) setLastRideId(r.id);
+      const r=await fetchRideById(urlRideId);
+
+      if(r&&(!r?.rider?.riderId||r?.rider?.riderId===riderId)){
+        if(isClosed(r.status)){
+          activeRideId=null;
+          renderActive(null);
+
+          const mine=await fetchAllMine();
+          const history=mine.some(x=>String(x?.id)===String(r.id))
+            ? mine.filter(x=>isClosed(x.status))
+            : [r,...mine.filter(x=>isClosed(x.status))];
+
+          renderHistory(history);
+          stopAutoRefresh();
+          return;
+        }
+
+        activeRideId=r.id;
+        if(r?.id)setLastRideId(r.id);
+
         renderActive(r);
 
-        const mine = await fetchAllMine();
+        const mine=await fetchAllMine();
         renderHistory(mine.filter(x=>isClosed(x.status)));
         return;
       }
     }
+
     await loadRides();
-  }, 15000);
+  },15000);
 }
 
-document.getElementById("refreshBtn").onclick = async ()=>{ await loadRides(); };
-document.getElementById("restoreHistoryBtn").onclick = ()=>{ restoreHistory(); };
+document.getElementById("refreshBtn").onclick=async()=>{await loadRides();};
+document.getElementById("restoreHistoryBtn").onclick=()=>{restoreHistory();};
 
 loadRides();
 </script>
