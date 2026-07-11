@@ -102,45 +102,12 @@ textarea{width:100%;min-height:100px;background:#111;color:#fff;border:1px solid
 .stop-row input{flex:1 1 240px;min-width:0;}
 .preview-box{margin-top:8px;padding:10px;border-radius:8px;border:1px dashed #444;background:#050505;font-size:.82rem;color:#ddd;line-height:1.3;}
 
-.audio-grid{
-  display:grid;
-  grid-template-columns:repeat(2, minmax(0, 1fr));
-  gap:10px;
-  width:100%;
-}
-.audio-btn{
-  width:100%;
-  min-height:58px;
-  padding:10px 12px;
-  font-size:.86rem;
-  line-height:1.2;
-  border-radius:10px;
-  white-space:normal;
-}
-#bigRedAudioPlayer{
-  width:100%;
-  margin-top:10px;
-  display:none;
-}
+.audio-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;width:100%;}
+.audio-btn{width:100%;min-height:58px;padding:10px 12px;font-size:.86rem;line-height:1.2;border-radius:10px;white-space:normal;}
+#bigRedAudioPlayer{width:100%;margin-top:10px;display:none;}
 
-.img-box{
-  width:100%;
-  max-width:100%;
-  margin:12px auto 8px;
-  border:2px solid var(--red);
-  border-radius:10px;
-  padding:8px;
-  background:#000;
-  overflow:hidden;
-}
-.img-box img{
-  display:block;
-  width:100%;
-  max-height:260px;
-  object-fit:contain;
-  border-radius:6px;
-  margin:0 auto;
-}
+.img-box{width:100%;max-width:100%;margin:12px auto 8px;border:2px solid var(--red);border-radius:10px;padding:8px;background:#000;overflow:hidden;}
+.img-box img{display:block;width:100%;max-height:260px;object-fit:contain;border-radius:6px;margin:0 auto;}
 
 .grid-dispatch{display:grid;grid-template-columns:1fr;gap:12px;}
 .column{background:#000;border-radius:10px;border:1px solid #222;overflow:hidden;}
@@ -198,68 +165,17 @@ body.mode-admin .driver-only{display:none;}
   .grid-dispatch{grid-template-columns:repeat(3,1fr);}
 }
 
-.modalOverlay{
-  position:fixed; inset:0;
-  background:rgba(0,0,0,.8);
-  display:none;
-  align-items:center;
-  justify-content:center;
-  z-index:999;
-  padding:12px;
-  overflow:auto;
-  -webkit-overflow-scrolling:touch;
-}
-.modalOverlay.show{ display:flex; }
-
-.modalBox{
-  width:min(780px, 96vw);
-  background:#0b0b0b;
-  border:1px solid #333;
-  border-radius:14px;
-  padding:16px;
-  box-shadow: 0 20px 50px rgba(0,0,0,.7);
-  max-height: calc(100vh - 24px);
-  overflow:auto;
-  -webkit-overflow-scrolling:touch;
-}
-.modalTop{
-  position:sticky;
-  top:0;
-  background:#0b0b0b;
-  z-index:10;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-  padding-bottom:12px;
-  border-bottom:1px solid #222;
-  margin-bottom:12px;
-}
+.modalOverlay{position:fixed;inset:0;background:rgba(0,0,0,.8);display:none;align-items:center;justify-content:center;z-index:999;padding:12px;overflow:auto;-webkit-overflow-scrolling:touch;}
+.modalOverlay.show{display:flex;}
+.modalBox{width:min(780px,96vw);background:#0b0b0b;border:1px solid #333;border-radius:14px;padding:16px;box-shadow:0 20px 50px rgba(0,0,0,.7);max-height:calc(100vh - 24px);overflow:auto;-webkit-overflow-scrolling:touch;}
+.modalTop{position:sticky;top:0;background:#0b0b0b;z-index:10;display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:12px;border-bottom:1px solid #222;margin-bottom:12px;}
 .modalTitle{font-weight:800;font-size:1.05rem;}
 .modalClose{background:#111;border:1px solid #444;color:#fff;border-radius:10px;padding:8px 14px;cursor:pointer;font-weight:700;min-height:44px;}
 .modalGrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
 @media (max-width:720px){.modalGrid{grid-template-columns:1fr;}}
 .modalBox label{font-size:.8rem;color:#bbb;display:block;margin:4px 0 6px;}
-.modalBox input, .modalBox select, .modalBox textarea{
-  width:100%;
-  border-radius:10px;
-  border:1px solid #333;
-  background:#000;
-  color:#fff;
-  padding:10px 12px;
-  font-weight:600;
-  font-size:.88rem;
-  min-height:44px;
-}
-.modalActions{
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-  justify-content:flex-end;
-  margin-top:14px;
-  border-top:1px solid #222;
-  padding-top:14px;
-}
+.modalBox input,.modalBox select,.modalBox textarea{width:100%;border-radius:10px;border:1px solid #333;background:#000;color:#fff;padding:10px 12px;font-weight:600;font-size:.88rem;min-height:44px;}
+.modalActions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;margin-top:14px;border-top:1px solid #222;padding-top:14px;}
 .btn-danger{background:#400;color:#fff;border:1px solid var(--red);}
 .btn-small{padding:7px 12px;font-size:.82rem;border-radius:10px;min-height:42px;}
 </style>
@@ -273,10 +189,7 @@ body.mode-admin .driver-only{display:none;}
       <div style="font-weight:700;font-size:.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Big Red Admin / Driver</div>
       <div style="color:#888;font-size:.78rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Live Dispatch & Status</div>
     </div>
-
-    <span id="livePill" class="pill offline" title="Tap to toggle GPS tracking">
-      📡 Tracking: OFF
-    </span>
+    <span id="livePill" class="pill offline" title="Tap to toggle GPS tracking">📡 Tracking: OFF</span>
   </div>
   <div class="header-right">
     <button class="btn btn-secondary" id="btnModeToggle" title="Toggle Admin/Driver">🛠 Admin Mode</button>
@@ -288,15 +201,12 @@ body.mode-admin .driver-only{display:none;}
 <h1>Big Red Connect — Admin / Driver Console</h1>
 <p class="tagline">Veteran Owned • Affordable • Local • Trusted</p>
 
-<div style="text-align:center;">
-  <div id="status-pill" class="offline">Status: OFFLINE • loading…</div>
-</div>
+<div style="text-align:center;"><div id="status-pill" class="offline">Status: OFFLINE • loading…</div></div>
 
 <div class="layout">
   <div>
     <section>
       <h2>Driving Status & GPS</h2>
-
       <div class="row">
         <select id="statusSelect">
           <option value="online">🟢 On the Road</option>
@@ -305,7 +215,6 @@ body.mode-admin .driver-only{display:none;}
         </select>
         <button class="btn btn-primary" id="updateStatusBtn" title="Save Status">💾 Save</button>
       </div>
-
       <div class="row">
         <label for="globalVehicleSelect" style="font-size:.8rem;color:#ccc;">Active Vehicle</label>
         <select id="globalVehicleSelect" class="status-dropdown" style="min-width:220px;">
@@ -313,7 +222,6 @@ body.mode-admin .driver-only{display:none;}
           <option value="BIG_RED">Big Red (Red Silverado)</option>
         </select>
       </div>
-
       <div class="meta">
         Last status update: <span id="statusStamp">—</span><br>
         Last GPS ping: <span id="gpsStamp">—</span> • Interval: <span id="gpsRate">—</span><br>
@@ -321,137 +229,99 @@ body.mode-admin .driver-only{display:none;}
         <span style="color:#888;">
           ✅ Tracking toggle is independent of status.<br>
           ✅ GPS sends when: <strong>Tracking = ON</strong> AND <strong>Status is Online or Away</strong>.<br>
-          ✅ When Tracking is OFF: uses last known if fresh; when Status is Offline: defaults to HQ.
+          ✅ Pricing origin: <strong>Tracking ON = fresh live GPS</strong>; <strong>Tracking OFF = HQ</strong>.
         </span>
       </div>
     </section>
 
     <section class="driver-only" style="margin-top:12px;">
       <h2>🔴 Big Red Audio Panel</h2>
-
       <div class="audio-grid">
-  <button class="btn btn-primary audio-btn" onclick="playBigRedClip('welcome')">🎙️ Welcome Aboard</button>
-  <button class="btn btn-secondary audio-btn" onclick="playBigRedClip('airportWelcome')">🛬 Airport Welcome Aboard</button>
-  <button class="btn btn-secondary audio-btn" onclick="playBigRedClip('who')">🎙️ Who Is Big Red?</button>
-  <button class="btn btn-secondary audio-btn" onclick="playBigRedClip('why')">🎙️ Why Choose Red?</button>
-  <button class="btn btn-secondary audio-btn" onclick="playBigRedClip('saveLong')">📱 Save To Home Screen (Long)</button>
-  <button class="btn btn-secondary audio-btn" onclick="playBigRedClip('save')">📱 Save To Home Screen</button>
-  <button class="btn btn-secondary audio-btn" onclick="playBigRedClip('think')">💭 Think Big Red</button>
-  <button class="btn btn-secondary audio-btn" onclick="playBigRedClip('firststop')">🛑 First Stop</button>
-  <button class="btn btn-secondary audio-btn" onclick="playBigRedClip('airportArrive')">🛫 Airport Arrival</button>
-  <button class="btn btn-primary audio-btn" onclick="playBigRedClip('arrival')">🏁 Arrival / End Ride</button>
-  <button class="btn btn-ghost audio-btn" onclick="stopBigRedClip()">⏹ Stop</button>
-</div>
-
-
-
+        <button class="btn btn-primary audio-btn" onclick="playBigRedClip('welcome')">🎙️ Welcome Aboard</button>
+        <button class="btn btn-secondary audio-btn" onclick="playBigRedClip('airportWelcome')">🛬 Airport Welcome Aboard</button>
+        <button class="btn btn-secondary audio-btn" onclick="playBigRedClip('who')">🎙️ Who Is Big Red?</button>
+        <button class="btn btn-secondary audio-btn" onclick="playBigRedClip('why')">🎙️ Why Choose Red?</button>
+        <button class="btn btn-secondary audio-btn" onclick="playBigRedClip('saveLong')">📱 Save To Home Screen (Long)</button>
+        <button class="btn btn-secondary audio-btn" onclick="playBigRedClip('save')">📱 Save To Home Screen</button>
+        <button class="btn btn-secondary audio-btn" onclick="playBigRedClip('think')">💭 Think Big Red</button>
+        <button class="btn btn-secondary audio-btn" onclick="playBigRedClip('firststop')">🛑 First Stop</button>
+        <button class="btn btn-secondary audio-btn" onclick="playBigRedClip('airportArrive')">🛫 Airport Arrival</button>
+        <button class="btn btn-primary audio-btn" onclick="playBigRedClip('arrival')">🏁 Arrival / End Ride</button>
+        <button class="btn btn-ghost audio-btn" onclick="stopBigRedClip()">⏹ Stop</button>
+      </div>
       <audio id="bigRedAudioPlayer" preload="auto"></audio>
-
-      <p class="meta">
-        Manual driver soundboard. Tap once to play through the iPad / Bluetooth audio.
-      </p>
+      <p class="meta">Manual driver soundboard. Tap once to play through the iPad / Bluetooth audio.</p>
     </section>
 
     <section class="admin-only" style="margin-top:12px;">
       <h2>Create Ride (Manual)</h2>
-
       <div class="row">
         <input id="manualRiderName" type="text" placeholder="Rider name (optional)" style="flex:1;min-width:180px;">
         <input id="manualRiderPhone" type="text" placeholder="Rider phone (required)" style="flex:1;min-width:180px;">
       </div>
-
       <div class="row">
         <label class="smalllabel" for="manualPassengers" style="margin:0;">Passengers</label>
         <select id="manualPassengers" style="min-width:140px;">
-          <option value="1" selected>1</option>
-          <option value="2">2</option>
-          <option value="3">3</option>
-          <option value="4">4</option>
-          <option value="5">5</option>
-          <option value="6">6</option>
+          <option value="1" selected>1</option><option value="2">2</option><option value="3">3</option>
+          <option value="4">4</option><option value="5">5</option><option value="6">6</option>
         </select>
-
         <label class="smalllabel" for="manualAirportToggle" style="margin:0;">Airport ride?</label>
         <select id="manualAirportToggle" style="min-width:160px;">
-          <option value="auto" selected>AUTO-detect</option>
-          <option value="yes">Yes</option>
-          <option value="no">No</option>
+          <option value="auto" selected>AUTO-detect</option><option value="yes">Yes</option><option value="no">No</option>
         </select>
       </div>
-
       <span class="smalllabel">Pickup</span>
       <div class="input-with-button">
         <input id="manualPickup" type="text" placeholder="Pickup address">
         <button class="btn btn-secondary" id="manualUseLocPickup" type="button">📍 Use My Location</button>
       </div>
-
       <span class="smalllabel">Gate Code / Access (optional)</span>
       <input id="manualGateCode" type="text" placeholder="Gate code, building, apartment…">
-
       <div class="minihint">Stops are optional (up to 3). Add them in order.</div>
       <div id="manualStopsWrap"></div>
       <div class="row">
         <button class="btn btn-secondary" id="manualAddStopBtn" type="button">➕ Add Stop</button>
         <button class="btn btn-ghost" id="manualClearStopsBtn" type="button">🧹 Clear Stops</button>
       </div>
-
       <span class="smalllabel">Dropoff</span>
       <div class="input-with-button">
         <input id="manualDropoff" type="text" placeholder="Dropoff address">
         <button class="btn btn-secondary" id="manualUseLocDropoff" type="button">📍 Use My Location</button>
       </div>
-
       <div class="row" id="manualLuggageRow" style="display:none;">
         <label class="smalllabel" for="manualLuggageCount" style="margin:0;">Luggage</label>
         <select id="manualLuggageCount" style="min-width:160px;">
-          <option value="0" selected>0</option>
-          <option value="1">1</option>
-          <option value="2">2</option>
-          <option value="3">3</option>
-          <option value="4">4</option>
-          <option value="5">5</option>
-          <option value="6">6+</option>
+          <option value="0" selected>0</option><option value="1">1</option><option value="2">2</option>
+          <option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6+</option>
         </select>
         <div class="minihint" style="margin:0;">Shown when airport ride is detected / forced.</div>
       </div>
-
-      <div class="row">
-        <input id="manualTime" type="text" placeholder="Time (optional) e.g., 1/11 10:15 PM" style="flex:1;min-width:220px;">
-      </div>
-
+      <div class="row"><input id="manualTime" type="text" placeholder="Time (optional) e.g., 1/11 10:15 PM" style="flex:1;min-width:220px;"></div>
       <label style="font-size:.8rem;color:#ccc;">Notes (optional)</label>
       <textarea id="manualNotes" placeholder="Extra context…"></textarea>
-
       <div class="row" style="margin-top:8px;">
         <button class="btn btn-primary" id="btnCreateManualRide" title="Create Ride">➕ Create</button>
         <button class="btn btn-secondary" id="btnClearManualRide" title="Clear Form">🧹 Clear</button>
       </div>
-
       <div class="preview-box" id="manualEstimateBox" style="margin-top:10px;">
         <strong>Estimate</strong><br>
         <span id="manualEstMiles">Miles: —</span><br>
         <span id="manualEstBase">Base: —</span><br>
         <span id="manualEstTravelFee">Extended Coverage: —</span><br>
         <span id="manualEstFare">Fare: —</span><br>
-        <span style="color:#888;font-size:.75rem;">
-          Stored as metadata on create: estimateFare / estimateMiles / estimateBase / estimateTravelFee.
-        </span>
+        <span style="color:#888;font-size:.75rem;">Stored as metadata on create: estimateFare / estimateMiles / estimateBase / estimateTravelFee.</span>
       </div>
-
-      <div class="row" style="margin-top:8px;">
-        <button class="btn btn-ghost" id="btnEstimateManual" type="button">💲 Estimate Fare</button>
-      </div>
-
+      <div class="row" style="margin-top:8px;"><button class="btn btn-ghost" id="btnEstimateManual" type="button">💲 Estimate Fare</button></div>
       <p class="meta">
         ✅ Manual create uses: <code>POST /api/admin/bookings/manual</code> (requires <code>X-Admin-Secret</code>).<br>
-        ✅ Extended coverage is based on driver effective location → pickup: $10 if pickup is over 10 miles away; $20 if over 15 miles away.<br>
+        ✅ Extended coverage uses the selected pricing origin → pickup: $10 if pickup is over 10 miles away; $20 if over 15 miles away.<br>
+        ✅ Tracking ON uses fresh live GPS. Tracking OFF uses HQ.<br>
         ✅ Long trips over 20 miles waive the extended coverage fee because mileage already covers the relocation.
       </p>
     </section>
 
     <section class="admin-only" style="margin-top:12px;">
       <h2>Broadcast Push Alerts (Riders)</h2>
-
       <div class="row">
         <select id="pushTemplate" style="flex:1;min-width:220px;">
           <option value="LIVE">🚗 LIVE — Ready to Roll</option>
@@ -463,48 +333,35 @@ body.mode-admin .driver-only{display:none;}
         </select>
         <button class="btn btn-ghost" id="pushApplyTemplate" title="Apply Template">Apply</button>
       </div>
-
       <label style="font-size:.8rem;color:#ccc;">Title</label>
       <input id="pushTitle" type="text" placeholder="Big Red Connect"/>
-
       <label style="font-size:.8rem;color:#ccc;">Message</label>
       <textarea id="pushMessage" placeholder="Enter broadcast message"></textarea>
-
       <label style="font-size:.8rem;color:#ccc;">Tap-through Link (optional)</label>
       <input id="pushUrl" type="url" placeholder="https://bigredconnectokc.com/"/>
-
       <div class="preview-box">
         <strong>Preview</strong><br>
         <span id="pushPrevTitle">Big Red Connect</span><br>
         <span id="pushPrevMessage">Message will appear here.</span><br>
         <span style="color:#888;font-size:.75rem;">Link: <span id="pushPrevUrl">https://bigredconnectokc.com/</span></span>
       </div>
-
       <div class="row" style="margin-top:8px;">
         <button class="btn btn-primary" id="sendBroadcastPush" title="Send Broadcast">📢 Send</button>
         <button class="btn btn-secondary" id="clearPush" title="Clear Push Fields">🧹 Clear</button>
       </div>
-
       <p class="meta">Sends a push notification to all riders tagged <code>env = "live"</code>.</p>
     </section>
 
     <section class="admin-only" style="margin-top:12px;">
       <h2>Homepage Ticker</h2>
-
       <div class="row">
         <label class="smalllabel" for="tickerActiveToggle" style="margin:0;">Ticker active?</label>
-        <select id="tickerActiveToggle" style="min-width:160px;">
-          <option value="true">Yes</option>
-          <option value="false" selected>No</option>
-        </select>
-
+        <select id="tickerActiveToggle" style="min-width:160px;"><option value="true">Yes</option><option value="false" selected>No</option></select>
         <label class="smalllabel" for="tickerExpires" style="margin:0;">Expires (optional)</label>
         <input id="tickerExpires" type="datetime-local" style="min-width:220px;">
       </div>
-
       <label style="font-size:.8rem;color:#ccc;">Ticker message</label>
       <textarea id="tickerMessage" placeholder="🚗 Big Red is LIVE across OKC tonight"></textarea>
-
       <div class="row">
         <button class="btn btn-ghost" id="tickerPresetLive" type="button">LIVE</button>
         <button class="btn btn-ghost" id="tickerPresetAirport" type="button">AIRPORT</button>
@@ -512,7 +369,6 @@ body.mode-admin .driver-only{display:none;}
         <button class="btn btn-ghost" id="tickerPresetCampus" type="button">CAMPUS</button>
         <button class="btn btn-ghost" id="tickerPresetOffline" type="button">OFFLINE</button>
       </div>
-
       <div class="ticker-preview">
         <div class="preview-box" style="border:none;background:transparent;margin:0;">
           <strong>Current ticker state</strong><br>
@@ -521,45 +377,32 @@ body.mode-admin .driver-only{display:none;}
         </div>
         <div class="ticker-preview-bar" id="tickerPreviewText">No ticker message set.</div>
       </div>
-
       <div class="row" style="margin-top:8px;">
         <button class="btn btn-primary" id="saveTickerBtn" title="Save Ticker">💾 Save Ticker</button>
         <button class="btn btn-secondary" id="clearTickerBtn" title="Clear Ticker">🧹 Clear Ticker</button>
         <button class="btn btn-ghost" id="reloadTickerBtn" title="Reload Ticker">🔄 Reload</button>
       </div>
-
-      <p class="meta">
-        Controls the homepage ticker at <code>homepage-ticker.bigredtransportation.workers.dev</code>.<br>
-        Leave expires blank for manual control. Setting inactive hides the ticker immediately.
-      </p>
+      <p class="meta">Controls the homepage ticker at <code>homepage-ticker.bigredtransportation.workers.dev</code>.<br>Leave expires blank for manual control. Setting inactive hides the ticker immediately.</p>
     </section>
 
     <section class="admin-only" style="margin-top:12px;">
       <h2>Live Map — Image & Caption</h2>
-
-      <div class="img-box">
-        <img id="statusImage" src="" alt="Live status image">
-      </div>
-
+      <div class="img-box"><img id="statusImage" src="" alt="Live status image"></div>
       <div class="row">
         <button id="prevImage" class="btn btn-ghost" title="Previous Image">⬅ Image</button>
         <button id="nextImage" class="btn btn-ghost" title="Next Image">Image ➡</button>
       </div>
-
       <div class="row">
         <button id="prevCaption" class="btn btn-ghost" title="Previous Caption">⬅ Caption</button>
         <button id="nextCaption" class="btn btn-ghost" title="Next Caption">Caption ➡</button>
         <button id="resetCaption" class="btn btn-secondary" title="Reset Caption">Reset</button>
       </div>
-
       <label style="font-size:.8rem;color:#ccc;">Caption</label>
       <textarea id="captionBox">Loading…</textarea>
-
       <div class="row" style="margin-top:8px;">
         <button class="btn btn-secondary" id="copyBtn" title="Copy Caption">📋 Copy</button>
         <button class="btn btn-primary" id="postToLive" title="Post To Live Map">📢 Post</button>
       </div>
-
       <p class="meta">Updates the live map worker.</p>
     </section>
   </div>
@@ -567,35 +410,21 @@ body.mode-admin .driver-only{display:none;}
   <div>
     <section>
       <h2>Driver Dispatch Board</h2>
-
       <div class="row" style="justify-content:space-between;">
         <button class="btn btn-ghost" id="btnDispatchRefresh" title="Refresh Dispatch">🔄 Refresh</button>
         <button class="btn btn-secondary" id="btnScope" title="Toggle Scope">📋 active</button>
       </div>
-
       <div class="grid-dispatch">
-        <div class="column">
-          <div class="col-header">🆕 New Requests <span id="countNew">0</span></div>
-          <div class="col-body" id="listNew"><div class="empty-text">None</div></div>
-        </div>
-
-        <div class="column">
-          <div class="col-header">🚦 Active Trips <span id="countActive">0</span></div>
-          <div class="col-body" id="listActive"><div class="empty-text">None</div></div>
-        </div>
-
-        <div class="column">
-          <div class="col-header">✅ Completed <span id="countDone">0</span></div>
-          <div class="col-body" id="listDone"><div class="empty-text">None</div></div>
-        </div>
+        <div class="column"><div class="col-header">🆕 New Requests <span id="countNew">0</span></div><div class="col-body" id="listNew"><div class="empty-text">None</div></div></div>
+        <div class="column"><div class="col-header">🚦 Active Trips <span id="countActive">0</span></div><div class="col-body" id="listActive"><div class="empty-text">None</div></div></div>
+        <div class="column"><div class="col-header">✅ Completed <span id="countDone">0</span></div><div class="col-body" id="listDone"><div class="empty-text">None</div></div></div>
       </div>
-
       <p class="meta">
-  Tap a card to open details. Use the status dropdown to move rides.<br>
-  <strong>Active</strong> refreshes automatically every 60 seconds while this page is visible.<br>
-  <strong>All</strong> loads complete history once and uses manual refresh only.<br>
-  Admin mode also allows editing ride details + sending rider notifications on status changes.
-</p>
+        Tap a card to open details. Use the status dropdown to move rides.<br>
+        <strong>Active</strong> refreshes automatically every 60 seconds while this page is visible.<br>
+        <strong>All</strong> loads complete history once and uses manual refresh only.<br>
+        Admin mode also allows editing ride details + sending rider notifications on status changes.
+      </p>
     </section>
   </div>
 </div>
@@ -609,74 +438,26 @@ body.mode-admin .driver-only{display:none;}
       <div class="modalTitle" id="editTitle">Edit Ride</div>
       <button class="modalClose" id="editCloseBtn">✖ Close</button>
     </div>
-
     <div class="modalGrid">
-      <div>
-        <label>Ride ID</label>
-        <input id="editRideId" type="text" readonly>
-      </div>
-      <div>
-        <label>Status (display only)</label>
-        <input id="editRideStatus" type="text" readonly>
-      </div>
-
-      <div>
-        <label>Rider Name</label>
-        <input id="editRiderName" type="text" placeholder="Rider name">
-      </div>
-      <div>
-        <label>Rider Phone</label>
-        <input id="editRiderPhone" type="text" placeholder="4055551234">
-      </div>
-
+      <div><label>Ride ID</label><input id="editRideId" type="text" readonly></div>
+      <div><label>Status (display only)</label><input id="editRideStatus" type="text" readonly></div>
+      <div><label>Rider Name</label><input id="editRiderName" type="text" placeholder="Rider name"></div>
+      <div><label>Rider Phone</label><input id="editRiderPhone" type="text" placeholder="4055551234"></div>
       <div>
         <label>Passengers</label>
-        <select id="editPartySize">
-          <option value="1">1</option><option value="2">2</option><option value="3">3</option>
-          <option value="4">4</option><option value="5">5</option><option value="6">6</option>
-        </select>
+        <select id="editPartySize"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></select>
       </div>
-
       <div>
         <label>Luggage Count</label>
-        <select id="editLuggageCount">
-          <option value="0">0</option><option value="1">1</option><option value="2">2</option>
-          <option value="3">3</option><option value="4">4</option><option value="5">5</option>
-          <option value="6">6+</option>
-        </select>
+        <select id="editLuggageCount"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6+</option></select>
       </div>
-
-      <div style="grid-column:1/-1;">
-        <label>Pickup Address</label>
-        <input id="editPickup" type="text" placeholder="Pickup address">
-      </div>
-
-      <div style="grid-column:1/-1;">
-        <label>Stops (one per line, optional)</label>
-        <textarea id="editStops" placeholder="Stop 1&#10;Stop 2&#10;Stop 3"></textarea>
-      </div>
-
-      <div style="grid-column:1/-1;">
-        <label>Dropoff Address</label>
-        <input id="editDropoff" type="text" placeholder="Dropoff address">
-      </div>
-
-      <div style="grid-column:1/-1;">
-        <label>Scheduled For (optional ISO string)</label>
-        <input id="editScheduledFor" type="text" placeholder="2026-01-11T22:15:00-06:00">
-      </div>
-
-      <div style="grid-column:1/-1;">
-        <label>Notes (metadata.notes)</label>
-        <textarea id="editNotes" placeholder="Notes…"></textarea>
-      </div>
-
-      <div style="grid-column:1/-1;">
-        <label>Manual Time Text (metadata.manualTimeText)</label>
-        <input id="editManualTimeText" type="text" placeholder="1/11 10:15 PM">
-      </div>
+      <div style="grid-column:1/-1;"><label>Pickup Address</label><input id="editPickup" type="text" placeholder="Pickup address"></div>
+      <div style="grid-column:1/-1;"><label>Stops (one per line, optional)</label><textarea id="editStops" placeholder="Stop 1&#10;Stop 2&#10;Stop 3"></textarea></div>
+      <div style="grid-column:1/-1;"><label>Dropoff Address</label><input id="editDropoff" type="text" placeholder="Dropoff address"></div>
+      <div style="grid-column:1/-1;"><label>Scheduled For (optional ISO string)</label><input id="editScheduledFor" type="text" placeholder="2026-01-11T22:15:00-06:00"></div>
+      <div style="grid-column:1/-1;"><label>Notes (metadata.notes)</label><textarea id="editNotes" placeholder="Notes…"></textarea></div>
+      <div style="grid-column:1/-1;"><label>Manual Time Text (metadata.manualTimeText)</label><input id="editManualTimeText" type="text" placeholder="1/11 10:15 PM"></div>
     </div>
-
     <div class="modalActions">
       <button class="btn btn-secondary btn-small" id="editCopyLoginLinkBtn">🔗 Copy Rider Login Link</button>
       <button class="btn btn-secondary btn-small" id="editCopyDirectionsBtn">🧭 Copy Directions Link</button>
@@ -687,50 +468,50 @@ body.mode-admin .driver-only{display:none;}
 </div>
 
 <script>
-const STATUS_WORKER   = "https://bigred-status-updater.bigredtransportation.workers.dev";
-const LOCATION_WORKER = "https://update-location.bigredtransportation.workers.dev";
-const POST_WORKER     = "https://post-to-live-beta.bigredtransportation.workers.dev";
-const PUSH_WORKER     = "https://bigred-push.bigredtransportation.workers.dev";
-const TICKER_WORKER   = "https://homepage-ticker.bigredtransportation.workers.dev";
-const BOOKINGS_API    = "https://bigred-bookings.bigredtransportation.workers.dev";
+const STATUS_WORKER="https://bigred-status-updater.bigredtransportation.workers.dev";
+const LOCATION_WORKER="https://update-location.bigredtransportation.workers.dev";
+const POST_WORKER="https://post-to-live-beta.bigredtransportation.workers.dev";
+const PUSH_WORKER="https://bigred-push.bigredtransportation.workers.dev";
+const TICKER_WORKER="https://homepage-ticker.bigredtransportation.workers.dev";
+const BOOKINGS_API="https://bigred-bookings.bigredtransportation.workers.dev";
 
-const AUTH_SECRET = "BigRedPrivateKey2025";
-const TZ          = "America/Chicago";
-const HOME_URL    = "https://bigredconnectokc.com/";
-const RIDER_LOGIN_BASE = `${HOME_URL}rider.html`;
+const AUTH_SECRET="BigRedPrivateKey2025";
+const TZ="America/Chicago";
+const HOME_URL="https://bigredconnectokc.com/";
+const RIDER_LOGIN_BASE=`${HOME_URL}rider.html`;
 
-const HQ_LAT = 35.31810;
-const HQ_LNG = -97.49453;
-const LIVE_LOC_FRESH_MS = 15 * 60 * 1000;
+const HQ_LAT=35.31810;
+const HQ_LNG=-97.49453;
+const LIVE_LOC_FRESH_MS=15*60*1000;
 
-const EXTENDED_COVERAGE_TIER_1_MI = 10;
-const EXTENDED_COVERAGE_TIER_2_MI = 15;
-const EXTENDED_COVERAGE_TIER_1_FEE = 10;
-const EXTENDED_COVERAGE_TIER_2_FEE = 20;
-const EXTENDED_COVERAGE_WAIVE_TRIP_OVER_MI = 20;
+const EXTENDED_COVERAGE_TIER_1_MI=10;
+const EXTENDED_COVERAGE_TIER_2_MI=15;
+const EXTENDED_COVERAGE_TIER_1_FEE=10;
+const EXTENDED_COVERAGE_TIER_2_FEE=20;
+const EXTENDED_COVERAGE_WAIVE_TRIP_OVER_MI=20;
 
-const BIG_RED_AUDIO_CLIPS = {
-  welcome: "Welcome%20Aboard%202.MOV",
-  airportWelcome: "Airport%20Welcome%20Aboard.MOV",
-  who: "Who%20Is%20Big%20Red%20Connect.MOV",
-  why: "Why%20Choose%20Red%3F.MOV",
-  think: "Think%20Big%20Red.MOV",
-  saveLong: "Save%20To%20Home%20Screen%20(Long).MOV",
-  save: "Save%20To%20Home%20Screen.MOV",
-  firststop: "First%20Stop.MOV",
-  airportArrive: "Airport%20Arrival.MOV",
-  arrival: "Destination%20Arrival%202.MOV"
+const BIG_RED_AUDIO_CLIPS={
+  welcome:"Welcome%20Aboard%202.MOV",
+  airportWelcome:"Airport%20Welcome%20Aboard.MOV",
+  who:"Who%20Is%20Big%20Red%20Connect.MOV",
+  why:"Why%20Choose%20Red%3F.MOV",
+  think:"Think%20Big%20Red.MOV",
+  saveLong:"Save%20To%20Home%20Screen%20(Long).MOV",
+  save:"Save%20To%20Home%20Screen.MOV",
+  firststop:"First%20Stop.MOV",
+  airportArrive:"Airport%20Arrival.MOV",
+  arrival:"Destination%20Arrival%202.MOV"
 };
 
-const DRIVER_STATUSES = [
-  { value:"REQUESTED", label:"🆕 Requested" },
-  { value:"ACCEPTED",  label:"✅ Accepted" },
-  { value:"ENROUTE",   label:"🚗 Enroute" },
-  { value:"ARRIVED",   label:"📍 Arrived" },
-  { value:"PICKED_UP", label:"👋 Picked Up" },
-  { value:"COMPLETED", label:"🏁 Completed" },
-  { value:"CANCELLED", label:"✖ Cancelled" },
-  { value:"DECLINED",  label:"🚫 Declined" },
+const DRIVER_STATUSES=[
+  {value:"REQUESTED",label:"🆕 Requested"},
+  {value:"ACCEPTED",label:"✅ Accepted"},
+  {value:"ENROUTE",label:"🚗 Enroute"},
+  {value:"ARRIVED",label:"📍 Arrived"},
+  {value:"PICKED_UP",label:"👋 Picked Up"},
+  {value:"COMPLETED",label:"🏁 Completed"},
+  {value:"CANCELLED",label:"✖ Cancelled"},
+  {value:"DECLINED",label:"🚫 Declined"}
 ];
 
 const LIVE_IMAGES=[
@@ -759,7 +540,7 @@ const LIVE_IMAGES=[
   "CBB513B3-F72E-4657-B32B-256640A76D69.png",
   "D860509D-733C-4C73-B529-891C73F46329.png",
   "E6D81943-48D2-4F74-9B95-FFCD8421DD36.png",
-  "Untitled design.png",
+  "Untitled design.png"
 ];
 
 const TEMPLATES={
@@ -771,365 +552,258 @@ const TEMPLATES={
 };
 const CAPTION_KEYS=["LIVE","AIRPORT","WEEKEND","CAMPUS","OFFLINE"];
 
-const TICKER_PRESETS = {
-  LIVE: "🚗 Big Red is LIVE across OKC tonight",
-  AIRPORT: "✈️ Airport runs are open — text ahead and line it up",
-  WEEKEND: "🍻 Going out tonight? Line up your ride before things get busy",
-  CAMPUS: "🎓 Campus traffic stacks fast late — text ahead and set it up",
-  OFFLINE: "🔴 Big Red is offline right now — text ahead for the next run"
+const TICKER_PRESETS={
+  LIVE:"🚗 Big Red is LIVE across OKC tonight",
+  AIRPORT:"✈️ Airport runs are open — text ahead and line it up",
+  WEEKEND:"🍻 Going out tonight? Line up your ride before things get busy",
+  CAMPUS:"🎓 Campus traffic stacks fast late — text ahead and set it up",
+  OFFLINE:"🔴 Big Red is offline right now — text ahead for the next run"
 };
 
 let imgIndex=0;
 let captionIndex=0;
-
 let gpsTimer=null;
 let gpsLastTs=null;
-let gpsRunToken = 0;
+let gpsRunToken=0;
 
-let dispatchScope = localStorage.getItem("dispatchScope") || "active";
-if(!["active","all"].includes(dispatchScope)){
-  dispatchScope = "active";
-}
+let dispatchScope=localStorage.getItem("dispatchScope")||"active";
+if(!["active","all"].includes(dispatchScope)) dispatchScope="active";
 
-const DISPATCH_REFRESH_MS = 60000;
-
-let dispatchTimer = null;
-let dispatchFetchInProgress = false;
-let dispatchRefreshQueued = false;
-
+const DISPATCH_REFRESH_MS=60000;
+let dispatchTimer=null;
+let dispatchFetchInProgress=false;
+let dispatchRefreshQueued=false;
 let currentStatusVal="offline";
-let currentMode = localStorage.getItem("adminDriverMode") || "admin";
+let currentMode=localStorage.getItem("adminDriverMode")||"admin";
+const bookingCache=new Map();
+let editingBookingId=null;
+let trackingEnabled=(localStorage.getItem("trackingEnabled")==="true");
 
-const bookingCache = new Map();
-let editingBookingId = null;
+let lastStatusLog=0;
+let lastStatusJson="";
+let lastEffLog=0;
+let lastEffKey="";
 
-let trackingEnabled = (localStorage.getItem("trackingEnabled") === "true");
-
-let lastStatusLog = 0;
-let lastStatusJson = "";
-let lastEffLog = 0;
-let lastEffKey = "";
-
-function $(id){ return document.getElementById(id); }
-
+function $(id){return document.getElementById(id);}
 function showToast(msg){
   const t=$("toast");
-  if(!t) return;
+  if(!t)return;
   t.textContent=msg;
   t.classList.add("show");
   setTimeout(()=>t.classList.remove("show"),2000);
 }
-
 function playBigRedClip(key){
-  const player = $("bigRedAudioPlayer");
-  const src = BIG_RED_AUDIO_CLIPS[key];
-
-  if(!player || !src){
-    showToast("Audio clip not found");
-    return;
-  }
-
-  player.style.display = "block";
+  const player=$("bigRedAudioPlayer");
+  const src=BIG_RED_AUDIO_CLIPS[key];
+  if(!player||!src){showToast("Audio clip not found");return;}
+  player.style.display="block";
   player.pause();
-  player.src = src;
-  player.currentTime = 0;
-
-  player.play()
-    .then(() => showToast("Playing audio"))
-    .catch(err => {
-      console.warn("Audio play error:", err);
-      showToast("Tap again to play");
-    });
+  player.src=src;
+  player.currentTime=0;
+  player.play().then(()=>showToast("Playing audio")).catch(err=>{
+    console.warn("Audio play error:",err);
+    showToast("Tap again to play");
+  });
 }
-
 function stopBigRedClip(){
-  const player = $("bigRedAudioPlayer");
-  if(!player) return;
-
+  const player=$("bigRedAudioPlayer");
+  if(!player)return;
   player.pause();
-  player.currentTime = 0;
+  player.currentTime=0;
   player.removeAttribute("src");
   player.load();
-  player.style.display = "none";
-
+  player.style.display="none";
   showToast("Audio stopped");
 }
-
 function log(msg){
   const box=$("debugLog");
-  if(!box) return;
+  if(!box)return;
   const time=new Date().toLocaleTimeString("en-US",{hour12:false});
   box.innerHTML=`[${time}] ${msg}<br>`+box.innerHTML;
 }
-
 function formatDateTime(iso){
-  if(!iso) return "—";
+  if(!iso)return "—";
   try{
-    return new Date(iso).toLocaleString("en-US",{
-      timeZone:TZ,
-      month:"2-digit",day:"2-digit",year:"2-digit",
-      hour:"2-digit",minute:"2-digit"
-    });
-  }catch(e){ return iso; }
+    return new Date(iso).toLocaleString("en-US",{timeZone:TZ,month:"2-digit",day:"2-digit",year:"2-digit",hour:"2-digit",minute:"2-digit"});
+  }catch(e){return iso;}
 }
-
 function escHtml(s){
-  return String(s ?? "")
-    .replace(/&/g,"&amp;")
-    .replace(/</g,"&lt;")
-    .replace(/>/g,"&gt;")
-    .replace(/"/g,"&quot;")
-    .replace(/'/g,"&#39;");
+  return String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
 }
-
-function digitsOnly(v){ return String(v||"").replace(/\D/g,""); }
+function digitsOnly(v){return String(v||"").replace(/\D/g,"");}
 function normalizePhoneDigits(raw){
-  let d = digitsOnly(raw);
-  if(d.length === 11 && d.startsWith("1")) d = d.slice(1);
+  let d=digitsOnly(raw);
+  if(d.length===11&&d.startsWith("1"))d=d.slice(1);
   return d;
 }
-function captionBox(){ return $("captionBox"); }
-
+function captionBox(){return $("captionBox");}
 function copyText(txt){
-  try{
-    navigator.clipboard.writeText(txt).then(()=>showToast("Copied"),()=>showToast("Copy failed"));
-  }catch(e){
-    showToast("Copy failed");
-  }
+  try{navigator.clipboard.writeText(txt).then(()=>showToast("Copied"),()=>showToast("Copy failed"));}
+  catch(e){showToast("Copy failed");}
 }
-window.copyText = copyText;
+window.copyText=copyText;
 
 function safeParseMs(ts){
-  if(!ts) return 0;
-  const n = Date.parse(ts);
-  return Number.isFinite(n) ? n : 0;
+  if(!ts)return 0;
+  const n=Date.parse(ts);
+  return Number.isFinite(n)?n:0;
 }
 function setLiveLocText(lat,lng){
-  if($("liveLoc")) $("liveLoc").textContent = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+  if($("liveLoc"))$("liveLoc").textContent=`${lat.toFixed(5)}, ${lng.toFixed(5)}`;
 }
 function logEffectiveOnce(lat,lng,src,ts){
-  const now = Date.now();
-  const key = `${src}|${lat.toFixed(5)}|${lng.toFixed(5)}|${ts||""}`;
-  if(key === lastEffKey && (now - lastEffLog) < 60000) return;
-  lastEffKey = key;
-  lastEffLog = now;
-  log(`Effective Location: lat=${lat} lng=${lng} src=${src}${ts ? (" ts="+ts) : ""}`);
+  const now=Date.now();
+  const key=`${src}|${lat.toFixed(5)}|${lng.toFixed(5)}|${ts||""}`;
+  if(key===lastEffKey&&(now-lastEffLog)<60000)return;
+  lastEffKey=key;
+  lastEffLog=now;
+  log(`Effective Location: lat=${lat} lng=${lng} src=${src}${ts?(" ts="+ts):""}`);
 }
 function toDatetimeLocalValue(iso){
-  if(!iso) return "";
+  if(!iso)return "";
   try{
-    const d = new Date(iso);
-    const pad = (n)=>String(n).padStart(2,"0");
-    const year = d.getFullYear();
-    const month = pad(d.getMonth()+1);
-    const day = pad(d.getDate());
-    const hour = pad(d.getHours());
-    const min = pad(d.getMinutes());
-    return `${year}-${month}-${day}T${hour}:${min}`;
-  }catch(e){
-    return "";
-  }
+    const d=new Date(iso),pad=n=>String(n).padStart(2,"0");
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }catch(e){return "";}
 }
 function fromDatetimeLocalValue(v){
-  if(!v) return "";
-  try{
-    return new Date(v).toISOString();
-  }catch(e){
-    return "";
-  }
+  if(!v)return "";
+  try{return new Date(v).toISOString();}catch(e){return "";}
 }
-
 function asNum(v){
-  const n = Number(v);
-  return Number.isFinite(n) ? n : null;
+  const n=Number(v);
+  return Number.isFinite(n)?n:null;
 }
-
 function money(n){
-  const x = Number(n);
-  if(!Number.isFinite(x)) return "—";
-  return "$" + x.toFixed(2);
+  const x=Number(n);
+  if(!Number.isFinite(x))return "—";
+  return "$"+x.toFixed(2);
 }
-
-function haversineMiles(a, b){
-  if(!a || !b) return 0;
-  const lat1 = Number(a.lat);
-  const lng1 = Number(a.lng);
-  const lat2 = Number(b.lat);
-  const lng2 = Number(b.lng);
-  if(!Number.isFinite(lat1) || !Number.isFinite(lng1) || !Number.isFinite(lat2) || !Number.isFinite(lng2)) return 0;
-
-  const R = 3958.7613;
-  const toRad = deg => deg * Math.PI / 180;
-  const dLat = toRad(lat2 - lat1);
-  const dLng = toRad(lng2 - lng1);
-  const s1 = Math.sin(dLat / 2);
-  const s2 = Math.sin(dLng / 2);
-  const q =
-    s1 * s1 +
-    Math.cos(toRad(lat1)) *
-    Math.cos(toRad(lat2)) *
-    s2 * s2;
-  return 2 * R * Math.asin(Math.min(1, Math.sqrt(q)));
+function haversineMiles(a,b){
+  if(!a||!b)return 0;
+  const lat1=Number(a.lat),lng1=Number(a.lng),lat2=Number(b.lat),lng2=Number(b.lng);
+  if(![lat1,lng1,lat2,lng2].every(Number.isFinite))return 0;
+  const R=3958.7613,toRad=deg=>deg*Math.PI/180;
+  const dLat=toRad(lat2-lat1),dLng=toRad(lng2-lng1);
+  const s1=Math.sin(dLat/2),s2=Math.sin(dLng/2);
+  const q=s1*s1+Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*s2*s2;
+  return 2*R*Math.asin(Math.min(1,Math.sqrt(q)));
 }
 
 async function loadLiveLocation(){
   try{
-    const r = await fetch(`${LOCATION_WORKER}?t=${Date.now()}`, { method:"GET" });
-    if(!r.ok) return null;
-    const data = await r.json();
-
-    const lat =
-      (typeof data?.lat === "number") ? data.lat :
-      (typeof data?.latitude === "number") ? data.latitude :
-      (typeof data?.location?.lat === "number") ? data.location.lat :
-      null;
-
-    const lng =
-      (typeof data?.lng === "number") ? data.lng :
-      (typeof data?.longitude === "number") ? data.longitude :
-      (typeof data?.location?.lng === "number") ? data.location.lng :
-      null;
-
-    const ts =
-      data?.updated || data?.timestamp || data?.lastUpdated || null;
-
-    return { lat, lng, ts, raw:data };
-  }catch(e){
-    return null;
-  }
+    const r=await fetch(`${LOCATION_WORKER}?t=${Date.now()}`,{method:"GET"});
+    if(!r.ok)return null;
+    const data=await r.json();
+    const lat=typeof data?.lat==="number"?data.lat:typeof data?.latitude==="number"?data.latitude:typeof data?.location?.lat==="number"?data.location.lat:null;
+    const lng=typeof data?.lng==="number"?data.lng:typeof data?.longitude==="number"?data.longitude:typeof data?.location?.lng==="number"?data.location.lng:null;
+    const ts=data?.updated||data?.timestamp||data?.lastUpdated||null;
+    return {lat,lng,ts,raw:data};
+  }catch(e){return null;}
 }
 
-function computeEffectiveLocation(statusVal, statusLoc, workerLoc){
-  if(statusVal === "offline"){
-    return { lat: HQ_LAT, lng: HQ_LNG, src: "HQ", ts: null };
+/*
+ * Locked pricing-origin rule:
+ * - Tracking OFF always means HQ.
+ * - Tracking ON uses a fresh live location.
+ * - If tracking is ON but no fresh live location exists, fail safely to HQ.
+ * Driver availability status does not choose the pricing origin.
+ */
+function computeEffectiveLocation(statusVal,statusLoc,workerLoc){
+  const hq={lat:HQ_LAT,lng:HQ_LNG,src:"HQ",ts:null};
+
+  if(!trackingEnabled){
+    return hq;
   }
 
-  const now = Date.now();
-  const wlat = workerLoc && typeof workerLoc.lat === "number" ? workerLoc.lat : null;
-  const wlng = workerLoc && typeof workerLoc.lng === "number" ? workerLoc.lng : null;
-  const wts  = workerLoc && workerLoc.ts ? workerLoc.ts : null;
-  const wms  = safeParseMs(wts);
-
-  const workerFresh = (wlat != null && wlng != null && wms > 0 && (now - wms) <= LIVE_LOC_FRESH_MS);
+  const now=Date.now();
+  const wlat=workerLoc&&typeof workerLoc.lat==="number"?workerLoc.lat:null;
+  const wlng=workerLoc&&typeof workerLoc.lng==="number"?workerLoc.lng:null;
+  const wts=workerLoc&&workerLoc.ts?workerLoc.ts:null;
+  const wms=safeParseMs(wts);
+  const workerFresh=wlat!=null&&wlng!=null&&wms>0&&(now-wms)<=LIVE_LOC_FRESH_MS;
 
   if(workerFresh){
-    return { lat: wlat, lng: wlng, src: "LOCATION_WORKER", ts: wts };
+    return {lat:wlat,lng:wlng,src:"LOCATION_WORKER",ts:wts};
   }
 
-  const slat = statusLoc && typeof statusLoc.lat === "number" ? statusLoc.lat : null;
-  const slng = statusLoc && typeof statusLoc.lng === "number" ? statusLoc.lng : null;
-
-  if(slat != null && slng != null){
-    return { lat: slat, lng: slng, src: "STATUS_FALLBACK", ts: null };
-  }
-
-  return { lat: HQ_LAT, lng: HQ_LNG, src: "HQ", ts: null };
+  return hq;
 }
 
 async function refreshEffectiveLocationDisplay(statusData){
-  const statusVal = statusData?.status || currentStatusVal || "offline";
-  const statusLoc = statusData?.location || null;
-
-  let workerLoc = null;
-  try{ workerLoc = await loadLiveLocation(); }catch(e){ workerLoc = null; }
-
-  const eff = computeEffectiveLocation(statusVal, statusLoc, workerLoc);
-
-  setLiveLocText(eff.lat, eff.lng);
-  logEffectiveOnce(eff.lat, eff.lng, eff.src, eff.ts || "");
+  let workerLoc=null;
+  try{workerLoc=await loadLiveLocation();}catch(e){workerLoc=null;}
+  const eff=computeEffectiveLocation(statusData?.status||currentStatusVal||"offline",statusData?.location||null,workerLoc);
+  setLiveLocText(eff.lat,eff.lng);
+  logEffectiveOnce(eff.lat,eff.lng,eff.src,eff.ts||"");
   return eff;
 }
-
 async function getDriverEffectiveLocationForPricing(){
-  let workerLoc = null;
-  try{ workerLoc = await loadLiveLocation(); }catch(e){ workerLoc = null; }
-  return computeEffectiveLocation(currentStatusVal || "offline", null, workerLoc);
+  let workerLoc=null;
+  try{workerLoc=await loadLiveLocation();}catch(e){workerLoc=null;}
+  return computeEffectiveLocation(currentStatusVal||"offline",null,workerLoc);
 }
 
 function applyTrackingPill(){
-  const pill = $("livePill");
-  if(!pill) return;
-
+  const pill=$("livePill");
+  if(!pill)return;
   pill.classList.remove("online","away","offline");
-
   if(trackingEnabled){
     pill.classList.add("online");
-    pill.textContent = "📡 Tracking: ON";
-    pill.title = "Tap to turn GPS tracking OFF";
+    pill.textContent="📡 Tracking: ON";
+    pill.title="Tap to turn GPS tracking OFF";
   }else{
     pill.classList.add("offline");
-    pill.textContent = "📡 Tracking: OFF";
-    pill.title = "Tap to turn GPS tracking ON";
+    pill.textContent="📡 Tracking: OFF";
+    pill.title="Tap to turn GPS tracking ON";
   }
 }
 function setTrackingEnabled(next){
-  trackingEnabled = !!next;
-  localStorage.setItem("trackingEnabled", trackingEnabled ? "true" : "false");
+  trackingEnabled=!!next;
+  localStorage.setItem("trackingEnabled",trackingEnabled?"true":"false");
   applyTrackingPill();
   handleGpsForStatus(currentStatusVal);
-  showToast(trackingEnabled ? "Tracking ON" : "Tracking OFF");
-  if(!trackingEnabled){
-    refreshEffectiveLocationDisplay().catch(()=>{});
-  }
+  showToast(trackingEnabled?"Tracking ON":"Tracking OFF");
+  refreshEffectiveLocationDisplay().catch(()=>{});
 }
-function toggleTracking(){ setTrackingEnabled(!trackingEnabled); }
+function toggleTracking(){setTrackingEnabled(!trackingEnabled);}
 
 function applyMode(mode){
-  currentMode = (mode === "driver") ? "driver" : "admin";
+  currentMode=mode==="driver"?"driver":"admin";
   document.body.classList.remove("mode-admin","mode-driver");
-  document.body.classList.add(currentMode==="driver" ? "mode-driver" : "mode-admin");
+  document.body.classList.add(currentMode==="driver"?"mode-driver":"mode-admin");
   const btn=$("btnModeToggle");
-  if(btn) btn.textContent = currentMode==="driver" ? "🚗 Driver Mode" : "🛠 Admin Mode";
-  localStorage.setItem("adminDriverMode", currentMode);
+  if(btn)btn.textContent=currentMode==="driver"?"🚗 Driver Mode":"🛠 Admin Mode";
+  localStorage.setItem("adminDriverMode",currentMode);
 }
 
-const OKC_BOUNDS = (window.google && google.maps)
-  ? new google.maps.LatLngBounds(
-      new google.maps.LatLng(35.15, -97.75),
-      new google.maps.LatLng(35.62, -96.75)
-    )
-  : null;
-
-const __acMap = new Map();
-
+const OKC_BOUNDS=(window.google&&google.maps)?new google.maps.LatLngBounds(new google.maps.LatLng(35.15,-97.75),new google.maps.LatLng(35.62,-96.75)):null;
+const __acMap=new Map();
 function attachAutocompleteToInput(inputEl){
-  if(!inputEl) return;
-  if(!(window.google && google.maps && google.maps.places)) {
-    log("Places library not available (Google script missing or blocked).");
-    return;
-  }
-  if(!inputEl.id) inputEl.id = "ac_" + Math.random().toString(36).slice(2);
-  if(__acMap.has(inputEl.id)) return;
-
-  const ac = new google.maps.places.Autocomplete(inputEl, {
-    bounds: OKC_BOUNDS || undefined,
-    strictBounds: false,
-    componentRestrictions: { country: "us" },
-    fields: ["formatted_address","name","geometry"]
+  if(!inputEl)return;
+  if(!(window.google&&google.maps&&google.maps.places)){log("Places library not available (Google script missing or blocked).");return;}
+  if(!inputEl.id)inputEl.id="ac_"+Math.random().toString(36).slice(2);
+  if(__acMap.has(inputEl.id))return;
+  const ac=new google.maps.places.Autocomplete(inputEl,{
+    bounds:OKC_BOUNDS||undefined,
+    strictBounds:false,
+    componentRestrictions:{country:"us"},
+    fields:["formatted_address","name","geometry"]
   });
-
-  ac.addListener("place_changed", ()=>{
-    const place = ac.getPlace();
-    const name = (place?.name || "").trim();
-    const addr = (place?.formatted_address || "").trim();
-
-    if (name && addr) {
-      const nameLower = name.toLowerCase();
-      const addrLower = addr.toLowerCase();
-      inputEl.value = addrLower.startsWith(nameLower) ? addr : `${name}, ${addr}`;
-    } else if (addr) {
-      inputEl.value = addr;
-    } else if (name) {
-      inputEl.value = name;
-    }
-
+  ac.addListener("place_changed",()=>{
+    const place=ac.getPlace();
+    const name=(place?.name||"").trim();
+    const addr=(place?.formatted_address||"").trim();
+    if(name&&addr){
+      const nameLower=name.toLowerCase(),addrLower=addr.toLowerCase();
+      inputEl.value=addrLower.startsWith(nameLower)?addr:`${name}, ${addr}`;
+    }else if(addr)inputEl.value=addr;
+    else if(name)inputEl.value=name;
     syncManualLuggageVisibility();
     setManualEstimateDraft(null);
   });
-
-  __acMap.set(inputEl.id, ac);
+  __acMap.set(inputEl.id,ac);
 }
-
 function initAddressAutocomplete(){
   attachAutocompleteToInput($("manualPickup"));
   attachAutocompleteToInput($("manualDropoff"));
@@ -1137,91 +811,78 @@ function initAddressAutocomplete(){
   attachAutocompleteToInput($("editDropoff"));
   document.querySelectorAll('input[id^="manualStop_"]').forEach(attachAutocompleteToInput);
 }
-
 function geocoderInstance(){
-  if(!(window.google && google.maps)) return null;
+  if(!(window.google&&google.maps))return null;
   return new google.maps.Geocoder();
 }
-
 function useBrowserLocationForInput(inputId){
-  const input = $(inputId);
-  if(!input){ showToast("Location input not found"); return; }
-  if(!navigator.geolocation){ showToast("Location not supported"); return; }
-  const geocoder = geocoderInstance();
-  if(!geocoder){ showToast("Google Maps not ready"); return; }
-
+  const input=$(inputId);
+  if(!input){showToast("Location input not found");return;}
+  if(!navigator.geolocation){showToast("Location not supported");return;}
+  const geocoder=geocoderInstance();
+  if(!geocoder){showToast("Google Maps not ready");return;}
   showToast("Getting location…");
-  navigator.geolocation.getCurrentPosition(
-    pos => {
-      const lat = pos.coords.latitude;
-      const lng = pos.coords.longitude;
-      geocoder.geocode({ location:{ lat, lng } }, (results, status) => {
-        if(status === "OK" && results && results[0]){
-          input.value = results[0].formatted_address;
-        }else{
-          input.value = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-        }
-        syncManualLuggageVisibility();
-        setManualEstimateDraft(null);
-        showToast("Location added");
-      });
-    },
-    err => {
-      showToast("Unable to get location");
-      log("Manual use-location error: " + err.message);
-    },
-    { enableHighAccuracy:true, maximumAge:8000, timeout:10000 }
-  );
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const lat=pos.coords.latitude,lng=pos.coords.longitude;
+    geocoder.geocode({location:{lat,lng}},(results,status)=>{
+      input.value=status==="OK"&&results&&results[0]?results[0].formatted_address:`${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+      syncManualLuggageVisibility();
+      setManualEstimateDraft(null);
+      showToast("Location added");
+    });
+  },err=>{
+    showToast("Unable to get location");
+    log("Manual use-location error: "+err.message);
+  },{enableHighAccuracy:true,maximumAge:8000,timeout:10000});
 }
-
 function buildGoogleDirectionsUrl(booking){
-  const origin = (booking?.pickup?.address || "").trim();
-  const destination = (booking?.dropoff?.address || "").trim();
-  const stops = Array.isArray(booking?.stops) ? booking.stops : [];
-  if(!origin || !destination) return "";
-  const waypointsArr = stops.map(s => (s?.address || "").trim()).filter(Boolean);
-  const params = new URLSearchParams();
+  const origin=(booking?.pickup?.address||"").trim();
+  const destination=(booking?.dropoff?.address||"").trim();
+  const stops=Array.isArray(booking?.stops)?booking.stops:[];
+  if(!origin||!destination)return "";
+  const waypointsArr=stops.map(s=>(s?.address||"").trim()).filter(Boolean);
+  const params=new URLSearchParams();
   params.set("api","1");
   params.set("travelmode","driving");
-  params.set("origin", origin);
-  params.set("destination", destination);
-  if(waypointsArr.length){ params.set("waypoints", waypointsArr.join("|")); }
+  params.set("origin",origin);
+  params.set("destination",destination);
+  if(waypointsArr.length)params.set("waypoints",waypointsArr.join("|"));
   return `https://www.google.com/maps/dir/?${params.toString()}`;
 }
-function smsTemplateText(templateKey, booking){
-  const riderName = (booking?.rider?.name || "").trim();
-  const greet = riderName ? `Hey ${riderName} — ` : `Hey — `;
-  const templates = {
-    OMW: `${greet}I’m on my way now. I’ll text when I’m close.`,
-    ARRIVED: `${greet}I’m here at the pickup. Where should I pull in?`,
-    CONFIRM: `${greet}Confirming pickup and dropoff — you ready?`,
-    LATE: `${greet}Running a few minutes behind — I’m still coming. I’ll update you shortly.`,
+function smsTemplateText(templateKey,booking){
+  const riderName=(booking?.rider?.name||"").trim();
+  const greet=riderName?`Hey ${riderName} — `:"Hey — ";
+  const templates={
+    OMW:`${greet}I’m on my way now. I’ll text when I’m close.`,
+    ARRIVED:`${greet}I’m here at the pickup. Where should I pull in?`,
+    CONFIRM:`${greet}Confirming pickup and dropoff — you ready?`,
+    LATE:`${greet}Running a few minutes behind — I’m still coming. I’ll update you shortly.`
   };
-  return templates[templateKey] || `${greet}I’m on my way.`;
+  return templates[templateKey]||`${greet}I’m on my way.`;
 }
-
 function resolveRiderIdFromBooking(b){
-  return b?.rider?.riderId || b?.riderId || b?.rider?.id || b?.rider?.external_id || b?.rider?.externalId || "";
+  return b?.rider?.riderId||b?.riderId||b?.rider?.id||b?.rider?.external_id||b?.rider?.externalId||"";
 }
 function buildRiderLoginLink(booking){
-  const riderId = resolveRiderIdFromBooking(booking);
-  if(!riderId) return "";
-  const u = new URL(RIDER_LOGIN_BASE);
-  u.searchParams.set("external_id", riderId);
+  const riderId=resolveRiderIdFromBooking(booking);
+  if(!riderId)return "";
+  const u=new URL(RIDER_LOGIN_BASE);
+  u.searchParams.set("external_id",riderId);
   return u.toString();
 }
 
 function setImage(idx){
-  if(!LIVE_IMAGES.length) return;
+  if(!LIVE_IMAGES.length)return;
   imgIndex=(idx+LIVE_IMAGES.length)%LIVE_IMAGES.length;
   const img=$("statusImage");
-  if(img) img.src=LIVE_IMAGES[imgIndex];
+  if(img)img.src=LIVE_IMAGES[imgIndex];
   log("Image set: "+LIVE_IMAGES[imgIndex]);
 }
 function applyTemplateToCaption(key){
-  const t=TEMPLATES[key]; if(!t) return;
+  const t=TEMPLATES[key];
+  if(!t)return;
   captionBox().value=t.message;
-  captionIndex = Math.max(0, CAPTION_KEYS.indexOf(key));
+  captionIndex=Math.max(0,CAPTION_KEYS.indexOf(key));
 }
 function stepCaption(d){
   captionIndex=(captionIndex+d+CAPTION_KEYS.length)%CAPTION_KEYS.length;
@@ -1231,172 +892,105 @@ async function loadLastCaption(){
   try{
     const r=await fetch(POST_WORKER+"/current");
     const d=await r.json();
-    captionBox().value=d.caption || TEMPLATES.LIVE.message;
-  }catch(e){
-    captionBox().value=TEMPLATES.LIVE.message;
-  }
+    captionBox().value=d.caption||TEMPLATES.LIVE.message;
+  }catch(e){captionBox().value=TEMPLATES.LIVE.message;}
 }
 async function postToLive(){
   const c=captionBox().value.trim();
   if(!c){showToast("Caption required");return;}
-  const img=LIVE_IMAGES[imgIndex]||"";
-  const statusSel=$("statusSelect").value;
   try{
     const r=await fetch(POST_WORKER,{
       method:"POST",
-      headers:{ "Content-Type":"application/json","X-Admin-Secret":AUTH_SECRET },
-      body:JSON.stringify({caption:c,image:img,status:statusSel})
+      headers:{"Content-Type":"application/json","X-Admin-Secret":AUTH_SECRET},
+      body:JSON.stringify({caption:c,image:LIVE_IMAGES[imgIndex]||"",status:$("statusSelect").value})
     });
     showToast(r.ok?"Live map updated":"Update failed");
-  }catch(e){ showToast("Error posting live"); }
+  }catch(e){showToast("Error posting live");}
 }
 function copyCaption(){
-  navigator.clipboard.writeText(captionBox().value)
-    .then(()=>showToast("Copied"),()=>showToast("Copy failed"));
+  navigator.clipboard.writeText(captionBox().value).then(()=>showToast("Copied"),()=>showToast("Copy failed"));
 }
 
 function updateTickerPreview(){
-  const msg = ($("tickerMessage")?.value || "").trim();
-  const active = ($("tickerActiveToggle")?.value === "true");
-  const expiresVal = $("tickerExpires")?.value || "";
-  const expiresIso = fromDatetimeLocalValue(expiresVal);
-
-  const badge = $("tickerStateBadge");
-  const preview = $("tickerPreviewText");
-  const expiresText = $("tickerExpiresText");
-
+  const msg=($("tickerMessage")?.value||"").trim();
+  const active=$("tickerActiveToggle")?.value==="true";
+  const expiresIso=fromDatetimeLocalValue($("tickerExpires")?.value||"");
+  const badge=$("tickerStateBadge"),preview=$("tickerPreviewText"),expiresText=$("tickerExpiresText");
   if(badge){
-    badge.textContent = active ? "Active" : "Inactive";
-    badge.className = active ? "ticker-status-chip live" : "ticker-status-chip off";
+    badge.textContent=active?"Active":"Inactive";
+    badge.className=active?"ticker-status-chip live":"ticker-status-chip off";
   }
-
-  if(preview){
-    preview.textContent = msg || "No ticker message set.";
-  }
-
-  if(expiresText){
-    expiresText.textContent = expiresIso ? ` • Expires ${formatDateTime(expiresIso)}` : "";
-  }
+  if(preview)preview.textContent=msg||"No ticker message set.";
+  if(expiresText)expiresText.textContent=expiresIso?` • Expires ${formatDateTime(expiresIso)}`:"";
 }
-
 function setTickerPreset(key){
-  if(!TICKER_PRESETS[key]) return;
-  $("tickerMessage").value = TICKER_PRESETS[key];
-  $("tickerActiveToggle").value = "true";
+  if(!TICKER_PRESETS[key])return;
+  $("tickerMessage").value=TICKER_PRESETS[key];
+  $("tickerActiveToggle").value="true";
   updateTickerPreview();
 }
-
 async function loadTicker(){
   try{
-    const r = await fetch(`${TICKER_WORKER}/?t=${Date.now()}`, {
-      method:"GET",
-      headers:{ "Accept":"application/json" }
-    });
-    if(!r.ok) throw new Error(`Ticker GET failed (${r.status})`);
-    const data = await r.json();
-
-    $("tickerActiveToggle").value = data.active ? "true" : "false";
-    $("tickerMessage").value = data.message || "";
-    $("tickerExpires").value = toDatetimeLocalValue(data.expires || "");
+    const r=await fetch(`${TICKER_WORKER}/?t=${Date.now()}`,{method:"GET",headers:{"Accept":"application/json"}});
+    if(!r.ok)throw new Error(`Ticker GET failed (${r.status})`);
+    const data=await r.json();
+    $("tickerActiveToggle").value=data.active?"true":"false";
+    $("tickerMessage").value=data.message||"";
+    $("tickerExpires").value=toDatetimeLocalValue(data.expires||"");
     updateTickerPreview();
-
-    log("Ticker GET OK: " + JSON.stringify(data));
-  }catch(e){
-    log("Ticker load error: " + e.message);
-  }
+    log("Ticker GET OK: "+JSON.stringify(data));
+  }catch(e){log("Ticker load error: "+e.message);}
 }
-
 async function saveTicker(){
-  const active = $("tickerActiveToggle").value === "true";
-  const message = ($("tickerMessage").value || "").trim();
-  const expires = fromDatetimeLocalValue($("tickerExpires").value || "");
-
-  if(active && !message){
-    showToast("Ticker message required when active");
-    return;
-  }
-
-  const payload = {
-    active,
-    message,
-    expires,
-    timestamp: new Date().toISOString()
-  };
-
+  const active=$("tickerActiveToggle").value==="true";
+  const message=($("tickerMessage").value||"").trim();
+  const expires=fromDatetimeLocalValue($("tickerExpires").value||"");
+  if(active&&!message){showToast("Ticker message required when active");return;}
+  const payload={active,message,expires,timestamp:new Date().toISOString()};
   try{
-    log("Ticker PUT … " + JSON.stringify(payload));
-    const r = await fetch(TICKER_WORKER, {
+    log("Ticker PUT … "+JSON.stringify(payload));
+    const r=await fetch(TICKER_WORKER,{
       method:"PUT",
-      headers:{
-        "Content-Type":"application/json",
-        "X-Admin-Secret": AUTH_SECRET
-      },
-      body: JSON.stringify(payload)
+      headers:{"Content-Type":"application/json","X-Admin-Secret":AUTH_SECRET},
+      body:JSON.stringify(payload)
     });
-
-    const txt = await r.text();
+    const txt=await r.text();
     log(`Ticker PUT response ${r.status}: ${txt}`);
-
-    if(!r.ok){
-      showToast("Ticker save failed");
-      return;
-    }
-
+    if(!r.ok){showToast("Ticker save failed");return;}
     showToast("Ticker saved");
     loadTicker();
-  }catch(e){
-    log("Ticker save error: " + e.message);
-    showToast("Ticker save error");
-  }
+  }catch(e){log("Ticker save error: "+e.message);showToast("Ticker save error");}
 }
-
 async function clearTicker(){
-  const payload = {
-    active: false,
-    message: "",
-    expires: "",
-    timestamp: new Date().toISOString()
-  };
-
+  const payload={active:false,message:"",expires:"",timestamp:new Date().toISOString()};
   try{
-    log("Ticker clear PUT … " + JSON.stringify(payload));
-    const r = await fetch(TICKER_WORKER, {
+    log("Ticker clear PUT … "+JSON.stringify(payload));
+    const r=await fetch(TICKER_WORKER,{
       method:"PUT",
-      headers:{
-        "Content-Type":"application/json",
-        "X-Admin-Secret": AUTH_SECRET
-      },
-      body: JSON.stringify(payload)
+      headers:{"Content-Type":"application/json","X-Admin-Secret":AUTH_SECRET},
+      body:JSON.stringify(payload)
     });
-
-    const txt = await r.text();
+    const txt=await r.text();
     log(`Ticker clear response ${r.status}: ${txt}`);
-
-    if(!r.ok){
-      showToast("Ticker clear failed");
-      return;
-    }
-
-    $("tickerActiveToggle").value = "false";
-    $("tickerMessage").value = "";
-    $("tickerExpires").value = "";
+    if(!r.ok){showToast("Ticker clear failed");return;}
+    $("tickerActiveToggle").value="false";
+    $("tickerMessage").value="";
+    $("tickerExpires").value="";
     updateTickerPreview();
     showToast("Ticker cleared");
-  }catch(e){
-    log("Ticker clear error: " + e.message);
-    showToast("Ticker clear error");
-  }
+  }catch(e){log("Ticker clear error: "+e.message);showToast("Ticker clear error");}
 }
 
 function updPrev(){
-  $("pushPrevTitle").textContent = $("pushTitle").value || "Big Red Connect";
-  $("pushPrevMessage").textContent = $("pushMessage").value || "Message will appear here.";
-  $("pushPrevUrl").textContent = $("pushUrl").value || HOME_URL;
+  $("pushPrevTitle").textContent=$("pushTitle").value||"Big Red Connect";
+  $("pushPrevMessage").textContent=$("pushMessage").value||"Message will appear here.";
+  $("pushPrevUrl").textContent=$("pushUrl").value||HOME_URL;
 }
 function applyPushTemplate(){
   const k=$("pushTemplate").value;
-  if(k==="CUSTOM") return;
-  const t=TEMPLATES[k]; if(!t) return;
+  if(k==="CUSTOM")return;
+  const t=TEMPLATES[k];
+  if(!t)return;
   $("pushTitle").value=t.title;
   $("pushMessage").value=t.message;
   $("pushUrl").value=HOME_URL;
@@ -1414,1293 +1008,786 @@ async function sendPush(payload){
   try{
     const r=await fetch(PUSH_WORKER,{
       method:"POST",
-      headers:{ "Content-Type":"application/json","X-Admin-Secret":AUTH_SECRET },
+      headers:{"Content-Type":"application/json","X-Admin-Secret":AUTH_SECRET},
       body:JSON.stringify(payload)
     });
     const txt=await r.text();
     log("Push response: "+r.status+" "+txt);
     showToast(r.ok?"Push sent":"Push failed");
-  }catch(e){
-    log("Push error: "+e.message);
-    showToast("Push error");
-  }
+  }catch(e){log("Push error: "+e.message);showToast("Push error");}
 }
 function handlePushBroadcast(){
-  const title=$("pushTitle").value.trim() || "Big Red Connect";
+  const title=$("pushTitle").value.trim()||"Big Red Connect";
   const msg=$("pushMessage").value.trim();
-  const url=$("pushUrl").value.trim() || HOME_URL;
-  if(!msg){ showToast("Message required"); return; }
-
-  const payload = {
-    type: "broadcast",
-    title,
-    message: msg,
-    url,
-    filters: [{ field: "tag", key: "env", value: "live" }]
-  };
-  sendPush(payload);
+  const url=$("pushUrl").value.trim()||HOME_URL;
+  if(!msg){showToast("Message required");return;}
+  sendPush({type:"broadcast",title,message:msg,url,filters:[{field:"tag",key:"env",value:"live"}]});
 }
 function autoOnlinePush(){
-  const payload = {
-    type: "broadcast",
-    title: "Big Red is LIVE",
-    message: "🚗 Big Red Connect is LIVE across the metro — text RED to 405-378-4024 for a flat-rate connection.",
-    url: HOME_URL,
-    filters: [{ field: "tag", key: "env", value: "live" }]
-  };
-  sendPush(payload);
+  sendPush({
+    type:"broadcast",
+    title:"Big Red is LIVE",
+    message:"🚗 Big Red Connect is LIVE across the metro — text RED to 405-378-4024 for a flat-rate connection.",
+    url:HOME_URL,
+    filters:[{field:"tag",key:"env",value:"live"}]
+  });
 }
 
 async function loadStatus(){
   try{
     const res=await fetch(STATUS_WORKER+"/status");
-    if(!res.ok) return;
+    if(!res.ok)return;
     const data=await res.json();
-
-    const now = Date.now();
-    const json = JSON.stringify(data);
-    if (json !== lastStatusJson || (now - lastStatusLog) > 60000) {
+    const now=Date.now(),json=JSON.stringify(data);
+    if(json!==lastStatusJson||(now-lastStatusLog)>60000){
       log("Status GET OK: "+json);
-      lastStatusJson = json;
-      lastStatusLog = now;
+      lastStatusJson=json;
+      lastStatusLog=now;
     }
-
-    const statusVal=data.status || "offline";
-    currentStatusVal = statusVal;
-
+    const statusVal=data.status||"offline";
+    currentStatusVal=statusVal;
     const pill=$("status-pill");
     pill.classList.remove("online","away","offline");
-
     let label="";
-    if(statusVal==="online"){ label="ON THE ROAD"; pill.classList.add("online"); }
-    else if(statusVal==="away"){ label="LIMITED AVAILABILITY"; pill.classList.add("away"); }
-    else { label="OFF FOR NOW"; pill.classList.add("offline"); }
-
+    if(statusVal==="online"){label="ON THE ROAD";pill.classList.add("online");}
+    else if(statusVal==="away"){label="LIMITED AVAILABILITY";pill.classList.add("away");}
+    else{label="OFF FOR NOW";pill.classList.add("offline");}
     const when=formatDateTime(data.lastUpdated);
     pill.textContent=`Status: ${label} • updated ${when}`;
     $("statusStamp").textContent=when;
     $("statusSelect").value=statusVal;
-
     const globalVeh=$("globalVehicleSelect");
-    if(globalVeh){
-      if(data.vehicle && data.vehicle.code) globalVeh.value=data.vehicle.code;
-      else globalVeh.value="BLACK_ACADIA";
-    }
-
+    if(globalVeh)globalVeh.value=data.vehicle&&data.vehicle.code?data.vehicle.code:"BLACK_ACADIA";
     await refreshEffectiveLocationDisplay(data);
     handleGpsForStatus(statusVal);
-
-  }catch(e){
-    log("Status error: "+e.message);
-  }
+  }catch(e){log("Status error: "+e.message);}
 }
-
 async function updateStatus(){
   const val=$("statusSelect").value;
   const message=val==="online"?"On the Road":val==="away"?"Limited Availability":"Offline";
-  const wasOnline = (currentStatusVal === "online");
-  const vehicleCode = $("globalVehicleSelect") ? $("globalVehicleSelect").value : undefined;
-
+  const wasOnline=currentStatusVal==="online";
+  const vehicleCode=$("globalVehicleSelect")?.value;
   try{
     log("Status PUT…");
-    const payload = { status:val, online:(val==="online"), message };
-    if(vehicleCode) payload.vehicleCode = vehicleCode;
-
+    const payload={status:val,online:val==="online",message};
+    if(vehicleCode)payload.vehicleCode=vehicleCode;
     const res=await fetch(STATUS_WORKER+"/status",{
       method:"PUT",
-      headers:{ "Content-Type":"application/json","X-Auth-Token":AUTH_SECRET },
+      headers:{"Content-Type":"application/json","X-Auth-Token":AUTH_SECRET},
       body:JSON.stringify(payload)
     });
-
-    const bodyText = await res.text();
+    const bodyText=await res.text();
     log("Status PUT response: "+bodyText);
     showToast(res.ok?"Status updated":"Status update failed");
-
     if(res.ok){
-      currentStatusVal = val;
-      if(!wasOnline && val==="online"){
+      currentStatusVal=val;
+      if(!wasOnline&&val==="online"){
         log("Auto-online push trigger fired.");
         autoOnlinePush();
       }
     }
     loadStatus();
-  }catch(e){
-    log("PUT error:"+e.message);
-    showToast("Status error");
-  }
+  }catch(e){log("PUT error:"+e.message);showToast("Status error");}
 }
-
 function handleGpsForStatus(val){
-  if(trackingEnabled && (val === "online" || val === "away")) startGpsPings();
+  if(trackingEnabled&&(val==="online"||val==="away"))startGpsPings();
   else stopGpsPings();
 }
-
-function determineGpsInterval() {
-  let interval = 600000;
-  const active = document.querySelectorAll("#listActive .card");
-  if (active.length > 0) interval = 20000;
-  if (window.__nearPickup === true) interval = 5000;
+function determineGpsInterval(){
+  let interval=600000;
+  if(document.querySelectorAll("#listActive .card").length>0)interval=20000;
+  if(window.__nearPickup===true)interval=5000;
   return interval;
 }
-
 function startGpsPings(){
   gpsRunToken++;
-  const myToken = gpsRunToken;
-
-  if (gpsTimer) { clearTimeout(gpsTimer); gpsTimer = null; }
-  if (!("geolocation" in navigator)) { log("No geolocation support."); return; }
+  const myToken=gpsRunToken;
+  if(gpsTimer){clearTimeout(gpsTimer);gpsTimer=null;}
+  if(!("geolocation" in navigator)){log("No geolocation support.");return;}
 
   async function pingOnce(){
-    if (myToken !== gpsRunToken) return;
-
-    if(!trackingEnabled || !(currentStatusVal === "online" || currentStatusVal === "away")){
+    if(myToken!==gpsRunToken)return;
+    if(!trackingEnabled||!(currentStatusVal==="online"||currentStatusVal==="away")){
       stopGpsPings();
       return;
     }
-
-    const interval = determineGpsInterval();
-
-    navigator.geolocation.getCurrentPosition(pos => {
-      if (myToken !== gpsRunToken) return;
-
-      const now = Date.now();
-      $("gpsStamp").textContent = new Date().toLocaleString("en-US", { timeZone: TZ });
-
-      $("gpsRate").textContent =
-        gpsLastTs
-          ? Math.round((now - gpsLastTs) / 1000) + "s"
-          : interval >= 60000
-              ? Math.round(interval / 60000) + "m"
-              : Math.round(interval / 1000) + "s";
-
-      gpsLastTs = now;
-
-      const lat = pos.coords.latitude;
-      const lng = pos.coords.longitude;
-      const ts  = new Date().toISOString();
-
-      fetch(LOCATION_WORKER, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json","X-Auth-Token": AUTH_SECRET },
-        body: JSON.stringify({
-          lat,
-          lng,
-          accuracy: pos.coords.accuracy,
-          updated: ts,
-          source: "admin-gps"
-        })
-      })
-      .then(r => r.text())
-      .then(t => {
-        log("GPS PUT: " + t);
-        setLiveLocText(lat, lng);
-        logEffectiveOnce(lat, lng, "GPS", ts);
-      })
-      .catch(e => log("GPS error: " + e.message))
-      .finally(() => {
-        if (myToken !== gpsRunToken) return;
-        gpsTimer = setTimeout(pingOnce, interval);
+    const interval=determineGpsInterval();
+    navigator.geolocation.getCurrentPosition(pos=>{
+      if(myToken!==gpsRunToken)return;
+      const now=Date.now();
+      $("gpsStamp").textContent=new Date().toLocaleString("en-US",{timeZone:TZ});
+      $("gpsRate").textContent=gpsLastTs?Math.round((now-gpsLastTs)/1000)+"s":interval>=60000?Math.round(interval/60000)+"m":Math.round(interval/1000)+"s";
+      gpsLastTs=now;
+      const lat=pos.coords.latitude,lng=pos.coords.longitude,ts=new Date().toISOString();
+      fetch(LOCATION_WORKER,{
+        method:"PUT",
+        headers:{"Content-Type":"application/json","X-Auth-Token":AUTH_SECRET},
+        body:JSON.stringify({lat,lng,accuracy:pos.coords.accuracy,updated:ts,source:"admin-gps"})
+      }).then(r=>r.text()).then(t=>{
+        log("GPS PUT: "+t);
+        setLiveLocText(lat,lng);
+        logEffectiveOnce(lat,lng,"GPS",ts);
+      }).catch(e=>log("GPS error: "+e.message)).finally(()=>{
+        if(myToken!==gpsRunToken)return;
+        gpsTimer=setTimeout(pingOnce,interval);
       });
-
-    }, err => {
-      log("GPS error: " + err.message);
-      if (myToken !== gpsRunToken) return;
-      gpsTimer = setTimeout(pingOnce, 60000);
-    }, { enableHighAccuracy: true, maximumAge: 15000, timeout: 10000 });
+    },err=>{
+      log("GPS error: "+err.message);
+      if(myToken!==gpsRunToken)return;
+      gpsTimer=setTimeout(pingOnce,60000);
+    },{enableHighAccuracy:true,maximumAge:15000,timeout:10000});
   }
-
   pingOnce();
 }
-
 function stopGpsPings(){
   gpsRunToken++;
   if(gpsTimer){clearTimeout(gpsTimer);gpsTimer=null;}
-  gpsLastTs = null;
-  if($("gpsRate")) $("gpsRate").textContent="—";
+  gpsLastTs=null;
+  if($("gpsRate"))$("gpsRate").textContent="—";
 }
 
-let manualStopIds = [];
-
+let manualStopIds=[];
 function isAirportText(s){
-  const t = String(s||"").toLowerCase();
-  return t.includes("airport") || t.includes("will rogers");
+  const t=String(s||"").toLowerCase();
+  return t.includes("airport")||t.includes("will rogers");
 }
 function manualIsAirportRide(){
-  const toggle = ($("manualAirportToggle")?.value || "auto").toLowerCase();
-  if(toggle === "yes") return true;
-  if(toggle === "no") return false;
-  const p = $("manualPickup")?.value || "";
-  const d = $("manualDropoff")?.value || "";
-  return isAirportText(p) || isAirportText(d);
+  const toggle=($("manualAirportToggle")?.value||"auto").toLowerCase();
+  if(toggle==="yes")return true;
+  if(toggle==="no")return false;
+  return isAirportText($("manualPickup")?.value||"")||isAirportText($("manualDropoff")?.value||"");
 }
 function syncManualLuggageVisibility(){
-  const row = $("manualLuggageRow");
-  const lug = $("manualLuggageCount");
-  if(!row || !lug) return;
-  if(manualIsAirportRide()){
-    row.style.display = "flex";
-  }else{
-    row.style.display = "none";
-    lug.value = "0";
-  }
+  const row=$("manualLuggageRow"),lug=$("manualLuggageCount");
+  if(!row||!lug)return;
+  if(manualIsAirportRide())row.style.display="flex";
+  else{row.style.display="none";lug.value="0";}
 }
 function addManualStopField(initialValue=""){
-  if(manualStopIds.length >= 3){
-    showToast("Stop limit is 3");
-    return;
-  }
-  const id = "manualStop_" + Date.now() + "_" + Math.floor(Math.random()*1000);
+  if(manualStopIds.length>=3){showToast("Stop limit is 3");return;}
+  const id="manualStop_"+Date.now()+"_"+Math.floor(Math.random()*1000);
   manualStopIds.push(id);
-
-  const wrap = $("manualStopsWrap");
-  const div = document.createElement("div");
-  div.className = "stop-row";
-  div.id = "row_" + id;
-  div.innerHTML = `
+  const div=document.createElement("div");
+  div.className="stop-row";
+  div.id="row_"+id;
+  div.innerHTML=`
     <input id="${id}" type="text" placeholder="Stop ${manualStopIds.length} address" value="${escHtml(String(initialValue||""))}">
     <button type="button" class="btn btn-secondary btn-small" title="Use My Location" onclick="useBrowserLocationForInput('${id}')">📍</button>
     <button type="button" class="btn btn-ghost" title="Remove Stop" onclick="removeManualStop('${id}')">✖</button>
   `;
-  wrap.appendChild(div);
-
+  $("manualStopsWrap").appendChild(div);
   attachAutocompleteToInput($(id));
-  $(id)?.addEventListener("input", () => setManualEstimateDraft(null));
+  $(id)?.addEventListener("input",()=>setManualEstimateDraft(null));
 }
 function removeManualStop(id){
-  const row = $("row_" + id);
-  if(row) row.remove();
-  manualStopIds = manualStopIds.filter(x => x !== id);
+  $("row_"+id)?.remove();
+  manualStopIds=manualStopIds.filter(x=>x!==id);
   setManualEstimateDraft(null);
 }
-window.removeManualStop = removeManualStop;
-window.useBrowserLocationForInput = useBrowserLocationForInput;
-
+window.removeManualStop=removeManualStop;
+window.useBrowserLocationForInput=useBrowserLocationForInput;
 function clearManualStops(){
-  manualStopIds.slice().forEach(id => removeManualStop(id));
-  manualStopIds = [];
+  manualStopIds.slice().forEach(removeManualStop);
+  manualStopIds=[];
 }
 function getManualStopsList(){
-  return manualStopIds
-    .map(id => ($(id)?.value || "").trim())
-    .filter(Boolean);
+  return manualStopIds.map(id=>($(id)?.value||"").trim()).filter(Boolean);
 }
 function clearManualRideForm(){
   ["manualRiderName","manualRiderPhone","manualPickup","manualGateCode","manualDropoff","manualTime","manualNotes"].forEach(id=>{
-    const el = $(id);
-    if(el) el.value = "";
+    const el=$(id);
+    if(el)el.value="";
   });
-  const pax = $("manualPassengers");
-  if(pax) pax.value = "1";
-  const airportToggle = $("manualAirportToggle");
-  if(airportToggle) airportToggle.value = "auto";
-  const lug = $("manualLuggageCount");
-  if(lug) lug.value = "0";
+  if($("manualPassengers"))$("manualPassengers").value="1";
+  if($("manualAirportToggle"))$("manualAirportToggle").value="auto";
+  if($("manualLuggageCount"))$("manualLuggageCount").value="0";
   clearManualStops();
   syncManualLuggageVisibility();
-
-  if($("manualEstMiles")) $("manualEstMiles").textContent = "Miles: —";
-  if($("manualEstBase")) $("manualEstBase").textContent = "Base: —";
-  if($("manualEstTravelFee")) $("manualEstTravelFee").textContent = "Extended Coverage: —";
-  if($("manualEstFare"))  $("manualEstFare").textContent  = "Fare: —";
-
-  window.__manualEstimate = null;
+  $("manualEstMiles").textContent="Miles: —";
+  $("manualEstBase").textContent="Base: —";
+  $("manualEstTravelFee").textContent="Extended Coverage: —";
+  $("manualEstFare").textContent="Fare: —";
+  window.__manualEstimate=null;
 }
-
 function computeMileageSubtotal(miles){
-  const m = Math.max(0, Number(miles) || 0);
-  let subtotal = 0;
-
-  if(m > 10){
-    const tier1 = Math.min(m, 20) - 10;
-    subtotal += tier1 * 1.25;
-  }
-  if(m > 20){
-    const tier2 = m - 20;
-    subtotal += tier2 * 1.0;
-  }
+  const m=Math.max(0,Number(miles)||0);
+  let subtotal=0;
+  if(m>10)subtotal+=(Math.min(m,20)-10)*1.25;
+  if(m>20)subtotal+=(m-20)*1;
   return subtotal;
 }
-
-function computeFlatRateFare(miles, baseRate, travelFee = 0){
-  return (Number(baseRate) || 0) + computeMileageSubtotal(miles) + (Number(travelFee) || 0);
+function computeFlatRateFare(miles,baseRate,travelFee=0){
+  return (Number(baseRate)||0)+computeMileageSubtotal(miles)+(Number(travelFee)||0);
 }
-
 function getManualRateBase(){
-  return manualIsAirportRide() ? 20 : 10;
+  return manualIsAirportRide()?20:10;
 }
 
-function computeExtendedCoverageFee(driverOrigin, pickupPoint, tripMiles){
-  const hqOrigin = {
-    lat: HQ_LAT,
-    lng: HQ_LNG,
-    src: "HQ",
-    ts: null
-  };
+/*
+ * Extended coverage uses exactly one origin:
+ * the origin already selected by the tracking rule.
+ * It never substitutes HQ because HQ happens to be closer.
+ */
+function computeExtendedCoverageFee(driverOrigin,pickupPoint,tripMiles){
+  const hqOrigin={lat:HQ_LAT,lng:HQ_LNG,src:"HQ",ts:null};
+  const hasValidDriverOrigin=driverOrigin&&Number.isFinite(Number(driverOrigin.lat))&&Number.isFinite(Number(driverOrigin.lng));
+  const effectiveOrigin=hasValidDriverOrigin?driverOrigin:hqOrigin;
+  const d=haversineMiles(effectiveOrigin,pickupPoint);
+  const dFromHQ=haversineMiles(hqOrigin,pickupPoint);
+  const dFromLive=hasValidDriverOrigin?haversineMiles(driverOrigin,pickupPoint):dFromHQ;
 
-  const dFromHQ = haversineMiles(hqOrigin, pickupPoint);
+  let fee=0;
+  if(d>EXTENDED_COVERAGE_TIER_2_MI)fee=EXTENDED_COVERAGE_TIER_2_FEE;
+  else if(d>EXTENDED_COVERAGE_TIER_1_MI)fee=EXTENDED_COVERAGE_TIER_1_FEE;
 
-  const hasValidDriverOrigin =
-    driverOrigin &&
-    Number.isFinite(Number(driverOrigin.lat)) &&
-    Number.isFinite(Number(driverOrigin.lng));
-
-  const dFromLive = hasValidDriverOrigin
-    ? haversineMiles(driverOrigin, pickupPoint)
-    : dFromHQ;
-
-  const useLiveOrigin = hasValidDriverOrigin && dFromLive < dFromHQ;
-  const effectiveOrigin = useLiveOrigin ? driverOrigin : hqOrigin;
-  const d = Math.min(dFromHQ, dFromLive);
-
-  let fee = 0;
-
-  if(d > EXTENDED_COVERAGE_TIER_2_MI) fee = EXTENDED_COVERAGE_TIER_2_FEE;
-  else if(d > EXTENDED_COVERAGE_TIER_1_MI) fee = EXTENDED_COVERAGE_TIER_1_FEE;
-
-  if(fee > 0 && Number(tripMiles) > EXTENDED_COVERAGE_WAIVE_TRIP_OVER_MI){
-    fee = 0;
-  }
+  if(fee>0&&Number(tripMiles)>EXTENDED_COVERAGE_WAIVE_TRIP_OVER_MI)fee=0;
 
   return {
     fee,
-    driverToPickupMiles: d,
-    origin: effectiveOrigin,
-    pickup: pickupPoint || null,
-    distanceFromHQ: dFromHQ,
-    distanceFromLive: dFromLive,
-    pricingOriginSource: useLiveOrigin ? (driverOrigin.src || "LIVE") : "HQ"
+    driverToPickupMiles:d,
+    origin:effectiveOrigin,
+    pickup:pickupPoint||null,
+    distanceFromHQ:dFromHQ,
+    distanceFromLive:dFromLive,
+    pricingOriginSource:effectiveOrigin.src||"HQ"
   };
 }
 
-async function getRouteDetailsWithStops(origin, destination, stopAddrs){
-  if(!(window.google && google.maps)) throw new Error("Google Maps not available");
-
-  const ds = new google.maps.DirectionsService();
-  const waypoints = (Array.isArray(stopAddrs) ? stopAddrs : [])
-    .filter(Boolean)
-    .slice(0, 3)
-    .map(a => ({ location: a, stopover: true }));
-
-  return await new Promise((resolve, reject) => {
-    ds.route({
-      origin,
-      destination,
-      waypoints,
-      optimizeWaypoints: false,
-      travelMode: google.maps.TravelMode.DRIVING
-    }, (result, status) => {
-      if(status !== "OK" || !result?.routes?.[0]?.legs){
-        reject(new Error("Directions failed: " + status));
-        return;
-      }
-
-      const legs = result.routes[0].legs;
-      const meters = legs.reduce((sum, leg) => sum + (leg?.distance?.value || 0), 0);
-      const seconds = legs.reduce((sum, leg) => sum + (leg?.duration?.value || 0), 0);
-      const miles = meters / 1609.344;
-
-      const firstLeg = legs[0];
-      const lastLeg = legs[legs.length - 1];
-
-      const pickupPoint = firstLeg?.start_location
-        ? { lat: firstLeg.start_location.lat(), lng: firstLeg.start_location.lng() }
-        : null;
-
-      const dropoffPoint = lastLeg?.end_location
-        ? { lat: lastLeg.end_location.lat(), lng: lastLeg.end_location.lng() }
-        : null;
-
+async function getRouteDetailsWithStops(origin,destination,stopAddrs){
+  if(!(window.google&&google.maps))throw new Error("Google Maps not available");
+  const ds=new google.maps.DirectionsService();
+  const waypoints=(Array.isArray(stopAddrs)?stopAddrs:[]).filter(Boolean).slice(0,3).map(a=>({location:a,stopover:true}));
+  return await new Promise((resolve,reject)=>{
+    ds.route({origin,destination,waypoints,optimizeWaypoints:false,travelMode:google.maps.TravelMode.DRIVING},(result,status)=>{
+      if(status!=="OK"||!result?.routes?.[0]?.legs){reject(new Error("Directions failed: "+status));return;}
+      const legs=result.routes[0].legs;
+      const meters=legs.reduce((sum,leg)=>sum+(leg?.distance?.value||0),0);
+      const seconds=legs.reduce((sum,leg)=>sum+(leg?.duration?.value||0),0);
+      const firstLeg=legs[0],lastLeg=legs[legs.length-1];
       resolve({
-        miles,
-        minutes: seconds / 60,
+        miles:meters/1609.344,
+        minutes:seconds/60,
         meters,
         seconds,
-        pickupPoint,
-        dropoffPoint
+        pickupPoint:firstLeg?.start_location?{lat:firstLeg.start_location.lat(),lng:firstLeg.start_location.lng()}:null,
+        dropoffPoint:lastLeg?.end_location?{lat:lastLeg.end_location.lat(),lng:lastLeg.end_location.lng()}:null
       });
     });
   });
 }
-
-async function getRouteMilesWithStops(origin, destination, stopAddrs){
-  const details = await getRouteDetailsWithStops(origin, destination, stopAddrs);
-  return details.miles;
+async function getRouteMilesWithStops(origin,destination,stopAddrs){
+  return (await getRouteDetailsWithStops(origin,destination,stopAddrs)).miles;
 }
-
-function setManualEstimateDraft(est){
-  window.__manualEstimate = est || null;
-}
+function setManualEstimateDraft(est){window.__manualEstimate=est||null;}
 
 async function estimateManualFare(){
-  const pickup = ($("manualPickup")?.value || "").trim();
-  const dropoff = ($("manualDropoff")?.value || "").trim();
-  const stops = getManualStopsList();
-
-  if(!pickup || !dropoff){
-    showToast("Pickup + dropoff required to estimate");
-    return null;
-  }
-
-  $("manualEstMiles").textContent = "Miles: …";
-  $("manualEstBase").textContent = "Base: …";
-  $("manualEstTravelFee").textContent = "Extended Coverage: …";
-  $("manualEstFare").textContent  = "Fare: …";
-
+  const pickup=($("manualPickup")?.value||"").trim();
+  const dropoff=($("manualDropoff")?.value||"").trim();
+  const stops=getManualStopsList();
+  if(!pickup||!dropoff){showToast("Pickup + dropoff required to estimate");return null;}
+  $("manualEstMiles").textContent="Miles: …";
+  $("manualEstBase").textContent="Base: …";
+  $("manualEstTravelFee").textContent="Extended Coverage: …";
+  $("manualEstFare").textContent="Fare: …";
   try{
-    const route = await getRouteDetailsWithStops(pickup, dropoff, stops);
-    const driverOrigin = await getDriverEffectiveLocationForPricing();
+    const route=await getRouteDetailsWithStops(pickup,dropoff,stops);
+    const driverOrigin=await getDriverEffectiveLocationForPricing();
+    const miles=route.miles;
+    const base=getManualRateBase();
+    const mileageSubtotal=computeMileageSubtotal(miles);
+    const coverage=computeExtendedCoverageFee(driverOrigin,route.pickupPoint,miles);
+    const fare=computeFlatRateFare(miles,base,coverage.fee);
 
-    const miles = route.miles;
-    const base = getManualRateBase();
-    const mileageSubtotal = computeMileageSubtotal(miles);
-    const coverage = computeExtendedCoverageFee(driverOrigin, route.pickupPoint, miles);
-    const fare = computeFlatRateFare(miles, base, coverage.fee);
+    $("manualEstMiles").textContent=`Miles: ${miles.toFixed(1)}`;
+    $("manualEstBase").textContent=`Base: $${base}`;
+    $("manualEstTravelFee").textContent=`Extended Coverage: ${money(coverage.fee)} (${coverage.driverToPickupMiles.toFixed(1)} mi from ${coverage.pricingOriginSource==="HQ"?"base location":"live driver location"})`;
+    $("manualEstFare").textContent=`Fare: ${money(fare)} (base $${base} + mileage ${money(mileageSubtotal)}${coverage.fee?" + coverage "+money(coverage.fee):""})`;
 
-    $("manualEstMiles").textContent = `Miles: ${miles.toFixed(1)}`;
-    $("manualEstBase").textContent = `Base: $${base}`;
-    $("manualEstTravelFee").textContent =
-      `Extended Coverage: ${money(coverage.fee)} (${coverage.driverToPickupMiles.toFixed(1)} mi from ${coverage.pricingOriginSource === "HQ" ? "base location" : "effective driver location"})`;
-    $("manualEstFare").textContent =
-      `Fare: ${money(fare)} (base $${base} + mileage ${money(mileageSubtotal)}${coverage.fee ? " + coverage " + money(coverage.fee) : ""})`;
-
-    const est = {
-      estimateMiles: Number(miles.toFixed(3)),
-      estimateMinutes: Number(route.minutes.toFixed(1)),
-      estimateFare: Number(fare.toFixed(2)),
-      estimateBase: Number(base),
-      estimateMileageSubtotal: Number(mileageSubtotal.toFixed(2)),
-      estimateTravelFee: Number(coverage.fee.toFixed(2)),
-      estimateDriverToPickupMiles: Number(coverage.driverToPickupMiles.toFixed(3)),
-      estimatePricingOrigin: {
-        lat: Number(coverage.origin?.lat),
-        lng: Number(coverage.origin?.lng),
-        src: coverage.pricingOriginSource || coverage.origin?.src || null,
-        ts: coverage.origin?.ts || null
+    const est={
+      estimateMiles:Number(miles.toFixed(3)),
+      estimateMinutes:Number(route.minutes.toFixed(1)),
+      estimateFare:Number(fare.toFixed(2)),
+      estimateBase:Number(base),
+      estimateMileageSubtotal:Number(mileageSubtotal.toFixed(2)),
+      estimateTravelFee:Number(coverage.fee.toFixed(2)),
+      estimateDriverToPickupMiles:Number(coverage.driverToPickupMiles.toFixed(3)),
+      estimatePricingOrigin:{
+        lat:Number(coverage.origin?.lat),
+        lng:Number(coverage.origin?.lng),
+        src:coverage.pricingOriginSource||coverage.origin?.src||null,
+        ts:coverage.origin?.ts||null
       },
-      estimatePickupPoint: route.pickupPoint,
-      estimateDropoffPoint: route.dropoffPoint
+      estimatePickupPoint:route.pickupPoint,
+      estimateDropoffPoint:route.dropoffPoint
     };
-
     setManualEstimateDraft(est);
     return est;
   }catch(e){
-    $("manualEstMiles").textContent = "Miles: —";
-    $("manualEstBase").textContent = "Base: —";
-    $("manualEstTravelFee").textContent = "Extended Coverage: —";
-    $("manualEstFare").textContent  = "Fare: —";
+    $("manualEstMiles").textContent="Miles: —";
+    $("manualEstBase").textContent="Base: —";
+    $("manualEstTravelFee").textContent="Extended Coverage: —";
+    $("manualEstFare").textContent="Fare: —";
     setManualEstimateDraft(null);
     showToast("Estimate failed");
-    log("Estimate error: " + e.message);
+    log("Estimate error: "+e.message);
     return null;
   }
 }
 
 async function createManualRide(){
-  const rider_name  = ($("manualRiderName").value || "").trim();
-  const rider_phone_raw = ($("manualRiderPhone").value || "").trim();
-  const rider_phone = normalizePhoneDigits(rider_phone_raw);
+  const rider_name=($("manualRiderName").value||"").trim();
+  const rider_phone=normalizePhoneDigits(($("manualRiderPhone").value||"").trim());
+  const pickup=($("manualPickup").value||"").trim();
+  const dropoff=($("manualDropoff").value||"").trim();
+  const time=($("manualTime").value||"").trim();
+  const notesRaw=($("manualNotes").value||"").trim();
+  const gateCode=($("manualGateCode").value||"").trim();
+  const partySize=Number($("manualPassengers")?.value||"1");
+  const luggageCount=Number($("manualLuggageCount")?.value||"0");
+  const stopsText=getManualStopsList();
 
-  const pickup      = ($("manualPickup").value || "").trim();
-  const dropoff     = ($("manualDropoff").value || "").trim();
-  const time        = ($("manualTime").value || "").trim();
-  const notesRaw    = ($("manualNotes").value || "").trim();
-  const gateCode    = ($("manualGateCode").value || "").trim();
+  if(!rider_phone){showToast("Rider phone required");return;}
+  if(!pickup||!dropoff){showToast("Pickup + dropoff required");return;}
 
-  const partySize = Number($("manualPassengers")?.value || "1");
-  const luggageCount = Number($("manualLuggageCount")?.value || "0");
-  const stopsText = getManualStopsList();
+  let notes=notesRaw;
+  if(gateCode)notes=notes?notes+`\nGate: ${gateCode}`:`Gate: ${gateCode}`;
 
-  if(!rider_phone){ showToast("Rider phone required"); return; }
-  if(!pickup || !dropoff){ showToast("Pickup + dropoff required"); return; }
+  let est=window.__manualEstimate||null;
+  if(!est){try{est=await estimateManualFare();}catch(e){est=null;}}
 
-  let notes = notesRaw;
-  if(gateCode){
-    notes = notes ? (notes + `\nGate: ${gateCode}`) : `Gate: ${gateCode}`;
-  }
-
-  let est = window.__manualEstimate || null;
-  if(!est){
-    try{ est = await estimateManualFare(); }catch(e){ est = null; }
-  }
-
-  const metadata = {
-    manualTimeText: time || "",
-    notes: notes || "",
-    luggageCount: manualIsAirportRide() ? (Number.isFinite(luggageCount) ? luggageCount : 0) : 0
+  const metadata={
+    manualTimeText:time||"",
+    notes:notes||"",
+    luggageCount:manualIsAirportRide()?(Number.isFinite(luggageCount)?luggageCount:0):0
   };
-
-  if(est && Number.isFinite(est.estimateFare) && Number.isFinite(est.estimateMiles)){
-    metadata.estimateFare = est.estimateFare;
-    metadata.estimateMiles = est.estimateMiles;
-    metadata.estimateMinutes = est.estimateMinutes;
-    metadata.estimateBase = est.estimateBase;
-    metadata.estimateMileageSubtotal = est.estimateMileageSubtotal;
-    metadata.estimateTravelFee = est.estimateTravelFee || 0;
-    metadata.estimateDriverToPickupMiles = est.estimateDriverToPickupMiles || 0;
-    metadata.estimatePricingOrigin = est.estimatePricingOrigin || null;
-    metadata.estimatePickupPoint = est.estimatePickupPoint || null;
-    metadata.estimateDropoffPoint = est.estimateDropoffPoint || null;
+  if(est&&Number.isFinite(est.estimateFare)&&Number.isFinite(est.estimateMiles)){
+    Object.assign(metadata,{
+      estimateFare:est.estimateFare,
+      estimateMiles:est.estimateMiles,
+      estimateMinutes:est.estimateMinutes,
+      estimateBase:est.estimateBase,
+      estimateMileageSubtotal:est.estimateMileageSubtotal,
+      estimateTravelFee:est.estimateTravelFee||0,
+      estimateDriverToPickupMiles:est.estimateDriverToPickupMiles||0,
+      estimatePricingOrigin:est.estimatePricingOrigin||null,
+      estimatePickupPoint:est.estimatePickupPoint||null,
+      estimateDropoffPoint:est.estimateDropoffPoint||null
+    });
   }
 
-  const payload = {
-    source: "MANUAL",
+  const payload={
+    source:"MANUAL",
     rider_name,
     rider_phone,
     pickup,
     dropoff,
-    time: time || "",
-    notes: notes || "",
-    stops: stopsText.map(a => ({ address: a })),
-    partySize: Number.isFinite(partySize) ? partySize : 1,
-    luggageCount: metadata.luggageCount,
+    time:time||"",
+    notes:notes||"",
+    stops:stopsText.map(a=>({address:a})),
+    partySize:Number.isFinite(partySize)?partySize:1,
+    luggageCount:metadata.luggageCount,
     metadata
   };
 
   try{
-    log("Manual ride POST /api/admin/bookings/manual … " + JSON.stringify(payload));
-    const r = await fetch(`${BOOKINGS_API}/api/admin/bookings/manual`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "X-Admin-Secret": AUTH_SECRET },
-      body: JSON.stringify(payload)
+    log("Manual ride POST /api/admin/bookings/manual … "+JSON.stringify(payload));
+    const r=await fetch(`${BOOKINGS_API}/api/admin/bookings/manual`,{
+      method:"POST",
+      headers:{"Content-Type":"application/json","X-Admin-Secret":AUTH_SECRET},
+      body:JSON.stringify(payload)
     });
-
-    const txt = await r.text();
+    const txt=await r.text();
     log(`Manual ride response → ${r.status} ${txt}`);
-    if(!r.ok){ showToast("Manual create failed"); return; }
-
+    if(!r.ok){showToast("Manual create failed");return;}
     showToast("Manual ride created");
     clearManualRideForm();
-    refreshDispatchNow({ force: true });
-  }catch(e){
-    log("Manual create error: " + e.message);
-    showToast("Manual create error");
-  }
+    refreshDispatchNow({force:true});
+  }catch(e){log("Manual create error: "+e.message);showToast("Manual create error");}
 }
 
 function readEstimateFromBooking(b){
-  const md = b?.metadata || {};
-  const fare = asNum(md.estimateFare);
-  const miles = asNum(md.estimateMiles);
-  const base = asNum(md.estimateBase);
-  const travelFee = asNum(md.estimateTravelFee);
-
-  if(fare != null && miles != null){
-    return {
-      fare,
-      miles,
-      base: (base != null ? base : null),
-      travelFee: (travelFee != null ? travelFee : 0),
-      src: "metadata"
-    };
-  }
-
-  const notes = String(md?.notes || "");
-  const m = notes.match(/Estimate:\s*\$?(\d+(?:\.\d+)?)\s*\((\d+(?:\.\d+)?)\s*mi,\s*base\s*\$?(\d+(?:\.\d+)?)\)/i);
-  if(m){
-    return { fare: Number(m[1]), miles: Number(m[2]), base: Number(m[3]), travelFee:0, src: "notes" };
-  }
+  const md=b?.metadata||{};
+  const fare=asNum(md.estimateFare),miles=asNum(md.estimateMiles),base=asNum(md.estimateBase),travelFee=asNum(md.estimateTravelFee);
+  if(fare!=null&&miles!=null)return {fare,miles,base:base!=null?base:null,travelFee:travelFee!=null?travelFee:0,src:"metadata"};
+  const notes=String(md?.notes||"");
+  const m=notes.match(/Estimate:\s*\$?(\d+(?:\.\d+)?)\s*\((\d+(?:\.\d+)?)\s*mi,\s*base\s*\$?(\d+(?:\.\d+)?)\)/i);
+  if(m)return {fare:Number(m[1]),miles:Number(m[2]),base:Number(m[3]),travelFee:0,src:"notes"};
   return null;
 }
 function estimateLineHtml(b){
-  const est = readEstimateFromBooking(b);
-  if(!est) return "";
-  const baseTxt = (est.base != null && Number.isFinite(est.base)) ? ` • base $${est.base}` : "";
-  const travelTxt = (est.travelFee != null && Number(est.travelFee) > 0) ? ` • coverage ${money(est.travelFee)}` : "";
+  const est=readEstimateFromBooking(b);
+  if(!est)return "";
+  const baseTxt=est.base!=null&&Number.isFinite(est.base)?` • base $${est.base}`:"";
+  const travelTxt=est.travelFee!=null&&Number(est.travelFee)>0?` • coverage ${money(est.travelFee)}`:"";
   return `<div class="loc-line">💲 Estimate: ${escHtml(money(est.fare))} • ${escHtml(est.miles.toFixed(1))} mi${escHtml(baseTxt)}${escHtml(travelTxt)}</div>`;
 }
-
 function fmtStops(stops){
-  const arr = Array.isArray(stops) ? stops : [];
-  const addrs = arr.map(x => (x?.address || "").trim()).filter(Boolean);
-  if(!addrs.length) return "";
+  const addrs=(Array.isArray(stops)?stops:[]).map(x=>(x?.address||"").trim()).filter(Boolean);
   return addrs.map((a,i)=>`<div class="loc-line">🛑 Stop ${i+1}: ${escHtml(a)}</div>`).join("");
 }
-function statusDropdownHtml(current, bookingId){
-  const opts = DRIVER_STATUSES.map(s=>{
-    const sel = (s.value === current) ? "selected" : "";
-    return `<option value="${s.value}" ${sel}>${escHtml(s.label)}</option>`;
-  }).join("");
-  return `
-    <select class="status-dropdown" data-action="statusChange" data-id="${escHtml(bookingId)}" title="Change ride status">
-      ${opts}
-    </select>
-  `;
+function statusDropdownHtml(current,bookingId){
+  const opts=DRIVER_STATUSES.map(s=>`<option value="${s.value}" ${s.value===current?"selected":""}>${escHtml(s.label)}</option>`).join("");
+  return `<select class="status-dropdown" data-action="statusChange" data-id="${escHtml(bookingId)}" title="Change ride status">${opts}</select>`;
 }
 function quickChipsHtml(booking){
-  const directionsUrl = buildGoogleDirectionsUrl(booking);
-  const directionsBtn = directionsUrl
-    ? `<a class="chip primary" href="${escHtml(directionsUrl)}" target="_blank" rel="noopener">🧭 Directions</a>`
-    : ``;
-
-  const riderLogin = buildRiderLoginLink(booking);
-  const riderBtn = riderLogin
-    ? `<a class="chip warn" href="${escHtml(riderLogin)}" target="_blank" rel="noopener">🔐 Rider Link</a>`
-    : ``;
-
+  const directionsUrl=buildGoogleDirectionsUrl(booking);
+  const riderLogin=buildRiderLoginLink(booking);
   return `
-    ${directionsBtn}
-    ${riderBtn}
+    ${directionsUrl?`<a class="chip primary" href="${escHtml(directionsUrl)}" target="_blank" rel="noopener">🧭 Directions</a>`:""}
+    ${riderLogin?`<a class="chip warn" href="${escHtml(riderLogin)}" target="_blank" rel="noopener">🔐 Rider Link</a>`:""}
     <span class="chip" data-action="copyId" data-id="${escHtml(booking.id)}">📋 Copy ID</span>
     <span class="chip" data-action="openEdit" data-id="${escHtml(booking.id)}">✏️ Edit</span>
   `;
 }
-function renderColumn(containerId, items){
-  const box = $(containerId);
-  if(!box) return;
-
-  if(!Array.isArray(items) || items.length === 0){
-    box.innerHTML = `<div class="empty-text">None</div>`;
-    return;
-  }
-
-  box.innerHTML = items.map(b=>{
-    const id = escHtml(b?.id || "");
-    const status = escHtml(b?.status || "");
-    const riderName = escHtml(b?.rider?.name || "");
-    const riderPhone = escHtml(b?.rider?.phone || "");
-    const partySize = escHtml(b?.rider?.partySize ?? "");
-    const pickup = escHtml(b?.pickup?.address || "");
-    const dropoff = escHtml(b?.dropoff?.address || "");
-    const createdAt = b?.createdAt ? formatDateTime(b.createdAt) : "—";
-    const scheduledFor = b?.scheduledFor ? formatDateTime(b.scheduledFor) : "";
-    const manualTimeText = escHtml(b?.metadata?.manualTimeText || "");
-    const notes = escHtml(b?.metadata?.notes || "");
-
+function renderColumn(containerId,items){
+  const box=$(containerId);
+  if(!box)return;
+  if(!Array.isArray(items)||!items.length){box.innerHTML=`<div class="empty-text">None</div>`;return;}
+  box.innerHTML=items.map(b=>{
+    const id=escHtml(b?.id||"");
+    const status=escHtml(b?.status||"");
+    const riderName=escHtml(b?.rider?.name||"");
+    const riderPhone=escHtml(b?.rider?.phone||"");
+    const partySize=escHtml(b?.rider?.partySize??"");
+    const pickup=escHtml(b?.pickup?.address||"");
+    const dropoff=escHtml(b?.dropoff?.address||"");
+    const createdAt=b?.createdAt?formatDateTime(b.createdAt):"—";
+    const scheduledFor=b?.scheduledFor?formatDateTime(b.scheduledFor):"";
+    const manualTimeText=escHtml(b?.metadata?.manualTimeText||"");
+    const notes=escHtml(b?.metadata?.notes||"");
     return `
       <div class="card" data-id="${id}" data-action="cardTap">
-        <div class="card-label-row">
-          <div><strong>${riderName || "Rider"}</strong> ${riderPhone ? `• ${riderPhone}` : ""}</div>
-          <span class="badge">${status}</span>
-        </div>
-
-        ${partySize ? `<div class="loc-line">👥 Party: ${partySize}</div>` : ""}
-
+        <div class="card-label-row"><div><strong>${riderName||"Rider"}</strong> ${riderPhone?`• ${riderPhone}`:""}</div><span class="badge">${status}</span></div>
+        ${partySize?`<div class="loc-line">👥 Party: ${partySize}</div>`:""}
         ${estimateLineHtml(b)}
-
-        <div class="loc-line">📍 Pickup: ${pickup || "—"}</div>
+        <div class="loc-line">📍 Pickup: ${pickup||"—"}</div>
         ${fmtStops(b?.stops)}
-        <div class="loc-line">🏁 Dropoff: ${dropoff || "—"}</div>
-
-        ${scheduledFor ? `<div class="eta-line">🗓 Scheduled: ${escHtml(scheduledFor)}</div>` : ""}
-        ${manualTimeText ? `<div class="eta-line">⏱ Manual time: ${manualTimeText}</div>` : ""}
+        <div class="loc-line">🏁 Dropoff: ${dropoff||"—"}</div>
+        ${scheduledFor?`<div class="eta-line">🗓 Scheduled: ${escHtml(scheduledFor)}</div>`:""}
+        ${manualTimeText?`<div class="eta-line">⏱ Manual time: ${manualTimeText}</div>`:""}
         <div class="eta-line">🕒 Created: ${escHtml(createdAt)}</div>
-
-        ${notes ? `<div class="eta-line">📝 Notes: ${notes}</div>` : ""}
-
-        <div class="card-footer">
-          <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
-            ${statusDropdownHtml(b.status, b.id)}
-            ${quickChipsHtml(b)}
-          </div>
-        </div>
-      </div>
-    `;
+        ${notes?`<div class="eta-line">📝 Notes: ${notes}</div>`:""}
+        <div class="card-footer"><div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">${statusDropdownHtml(b.status,b.id)}${quickChipsHtml(b)}</div></div>
+      </div>`;
   }).join("");
 }
-
 function renderAllBookings(list){
   bookingCache.clear();
-  list.forEach(b => { if(b && b.id) bookingCache.set(String(b.id), b); });
-
-  const newArr   = list.filter(b=>b.status==="REQUESTED");
-  const activeArr= list.filter(b=>["ACCEPTED","ENROUTE","ARRIVED","PICKED_UP"].includes(b.status));
-  const doneArr = list.filter(b=>
-  ["COMPLETED","CANCELLED","DECLINED"].includes(b.status)
-);
-
-  renderColumn("listNew", newArr);
-  renderColumn("listActive", activeArr);
-  renderColumn("listDone", doneArr);
-
-  $("countNew").textContent    = newArr.length;
-  $("countActive").textContent = activeArr.length;
-  $("countDone").textContent   = doneArr.length;
-
-  const scopeBtn = $("btnScope");
-  if(scopeBtn) scopeBtn.textContent = `📋 ${dispatchScope}`;
+  list.forEach(b=>{if(b&&b.id)bookingCache.set(String(b.id),b);});
+  const newArr=list.filter(b=>b.status==="REQUESTED");
+  const activeArr=list.filter(b=>["ACCEPTED","ENROUTE","ARRIVED","PICKED_UP"].includes(b.status));
+  const doneArr=list.filter(b=>["COMPLETED","CANCELLED","DECLINED"].includes(b.status));
+  renderColumn("listNew",newArr);
+  renderColumn("listActive",activeArr);
+  renderColumn("listDone",doneArr);
+  $("countNew").textContent=newArr.length;
+  $("countActive").textContent=activeArr.length;
+  $("countDone").textContent=doneArr.length;
+  if($("btnScope"))$("btnScope").textContent=`📋 ${dispatchScope}`;
 }
-
-async function fetchBookings(options = {}){
-  const force = options.force === true;
-
-  /*
-   * Routine polling must not run while the page is hidden.
-   * Manual actions may use force:true.
-   */
-  if(document.hidden && !force){
-    return;
-  }
-
-  /*
-   * Never allow simultaneous dispatch requests.
-   * If something requests another refresh while one is running,
-   * queue one follow-up refresh instead of stacking requests.
-   */
-  if(dispatchFetchInProgress){
-    dispatchRefreshQueued = true;
-    return;
-  }
-
-  dispatchFetchInProgress = true;
-
+async function fetchBookings(options={}){
+  const force=options.force===true;
+  if(document.hidden&&!force)return;
+  if(dispatchFetchInProgress){dispatchRefreshQueued=true;return;}
+  dispatchFetchInProgress=true;
   try{
-    const url =
-      `${BOOKINGS_API}/api/driver/bookings` +
-      `?scope=${encodeURIComponent(dispatchScope)}` +
-      `&t=${Date.now()}`;
-
-    const r = await fetch(url, {
-      method: "GET",
-      headers: {
-        "Accept": "application/json"
-      },
-      cache: "no-store"
-    });
-
-    if(!r.ok){
-      throw new Error(`Bookings GET failed (${r.status})`);
-    }
-
-    const data = await r.json();
-    renderAllBookings(Array.isArray(data) ? data : []);
-
-    log(
-      `Dispatch GET OK: scope=${dispatchScope} ` +
-      `rides=${Array.isArray(data) ? data.length : 0}`
-    );
-  }catch(e){
-    showToast("Dispatch sync failed");
-    log("Dispatch fetch error: " + e.message);
-  }finally{
-    dispatchFetchInProgress = false;
-
+    const url=`${BOOKINGS_API}/api/driver/bookings?scope=${encodeURIComponent(dispatchScope)}&t=${Date.now()}`;
+    const r=await fetch(url,{method:"GET",headers:{"Accept":"application/json"},cache:"no-store"});
+    if(!r.ok)throw new Error(`Bookings GET failed (${r.status})`);
+    const data=await r.json();
+    renderAllBookings(Array.isArray(data)?data:[]);
+    log(`Dispatch GET OK: scope=${dispatchScope} rides=${Array.isArray(data)?data.length:0}`);
+  }catch(e){showToast("Dispatch sync failed");log("Dispatch fetch error: "+e.message);}
+  finally{
+    dispatchFetchInProgress=false;
     if(dispatchRefreshQueued){
-      dispatchRefreshQueued = false;
-
-      if(!document.hidden){
-        setTimeout(() => {
-          fetchBookings({ force: true });
-        }, 0);
-      }
+      dispatchRefreshQueued=false;
+      if(!document.hidden)setTimeout(()=>fetchBookings({force:true}),0);
     }
   }
 }
-
 function stopDispatchPolling(){
-  if(dispatchTimer){
-    clearTimeout(dispatchTimer);
-    dispatchTimer = null;
-  }
+  if(dispatchTimer){clearTimeout(dispatchTimer);dispatchTimer=null;}
 }
-
 function scheduleDispatchPolling(){
   stopDispatchPolling();
-
-  /*
-   * Full history is never automatically polled.
-   * It is loaded only through a deliberate operator action.
-   */
-  if(dispatchScope !== "active"){
-    return;
-  }
-
-  if(document.hidden){
-    return;
-  }
-
-  dispatchTimer = setTimeout(async () => {
-    dispatchTimer = null;
-
-    if(
-      !document.hidden &&
-      dispatchScope === "active"
-    ){
-      await fetchBookings();
-    }
-
+  if(dispatchScope!=="active"||document.hidden)return;
+  dispatchTimer=setTimeout(async()=>{
+    dispatchTimer=null;
+    if(!document.hidden&&dispatchScope==="active")await fetchBookings();
     scheduleDispatchPolling();
-  }, DISPATCH_REFRESH_MS);
+  },DISPATCH_REFRESH_MS);
 }
-
-async function refreshDispatchNow(options = {}){
-  const force = options.force !== false;
-
-  await fetchBookings({ force });
-
-  /*
-   * Restart the countdown after a manual or operational refresh
-   * so another automatic request does not fire immediately after it.
-   */
+async function refreshDispatchNow(options={}){
+  await fetchBookings({force:options.force!==false});
   scheduleDispatchPolling();
 }
-
 async function initializeDispatch(){
-  if(dispatchScope === "all"){
+  if(dispatchScope==="all"){
     stopDispatchPolling();
-
-    /*
-     * A previously saved "all" scope should not silently scan the
-     * complete history when the page opens. Return to normal active
-     * operations on startup.
-     */
-    dispatchScope = "active";
-    localStorage.setItem("dispatchScope", "active");
+    dispatchScope="active";
+    localStorage.setItem("dispatchScope","active");
   }
-
-  const scopeBtn = $("btnScope");
-  if(scopeBtn){
-    scopeBtn.textContent = `📋 ${dispatchScope}`;
-  }
-
-  await fetchBookings({ force: true });
+  if($("btnScope"))$("btnScope").textContent=`📋 ${dispatchScope}`;
+  await fetchBookings({force:true});
   scheduleDispatchPolling();
 }
-
 function handleDispatchVisibilityChange(){
   if(document.hidden){
     stopDispatchPolling();
     log("Dispatch polling paused: page hidden");
     return;
   }
-
-  if(dispatchScope === "active"){
+  if(dispatchScope==="active"){
     log("Dispatch polling resumed: page visible");
-    refreshDispatchNow({ force: true });
-  }else{
-    /*
-     * History mode remains frozen until the operator deliberately
-     * refreshes or returns to active mode.
-     */
-    log("Dispatch remains manual: full history mode");
-  }
+    refreshDispatchNow({force:true});
+  }else log("Dispatch remains manual: full history mode");
 }
-
 function handleDispatchPageShow(){
-  if(document.hidden){
-    return;
-  }
-
-  if(dispatchScope === "active"){
-    refreshDispatchNow({ force: true });
-  }
+  if(!document.hidden&&dispatchScope==="active")refreshDispatchNow({force:true});
 }
-
-async function updateBookingStatus(bookingId, newStatus){
-  if(!bookingId || !newStatus) return;
-
-  const booking = bookingCache.get(String(bookingId));
-  const prev = booking?.status;
-
+async function updateBookingStatus(bookingId,newStatus){
+  if(!bookingId||!newStatus)return;
+  const prev=bookingCache.get(String(bookingId))?.status;
   try{
     log(`Status change → ${bookingId}: ${prev} -> ${newStatus}`);
-    const r = await fetch(`${BOOKINGS_API}/api/driver/bookings/${encodeURIComponent(bookingId)}`,{
+    const r=await fetch(`${BOOKINGS_API}/api/driver/bookings/${encodeURIComponent(bookingId)}`,{
       method:"PUT",
-      headers:{
-        "Content-Type":"application/json",
-        "X-Admin-Secret": AUTH_SECRET
-      },
-      body: JSON.stringify({ status: newStatus })
+      headers:{"Content-Type":"application/json","X-Admin-Secret":AUTH_SECRET},
+      body:JSON.stringify({status:newStatus})
     });
-
-    const txt = await r.text();
+    const txt=await r.text();
     log(`Booking status PUT ${r.status}: ${txt}`);
-
-    if(!r.ok){
-      showToast("Status update failed");
-      refreshDispatchNow({ force: true });
-      return;
-    }
-
+    if(!r.ok){showToast("Status update failed");refreshDispatchNow({force:true});return;}
     showToast("Ride updated");
-    refreshDispatchNow({ force: true });
-  }catch(e){
-    log("updateBookingStatus error: "+e.message);
-    showToast("Status update error");
-    refreshDispatchNow({ force: true });
-  }
+    refreshDispatchNow({force:true});
+  }catch(e){log("updateBookingStatus error: "+e.message);showToast("Status update error");refreshDispatchNow({force:true});}
 }
-
 function openEditModal(bookingId){
-  const b = bookingCache.get(String(bookingId));
-  if(!b){ showToast("Booking not found"); return; }
-
-  editingBookingId = String(bookingId);
-
-  $("editRideId").value = b.id || "";
-  $("editRideStatus").value = b.status || "";
-
-  $("editRiderName").value  = b?.rider?.name || "";
-  $("editRiderPhone").value = normalizePhoneDigits(b?.rider?.phone || "");
-
-  $("editPartySize").value  = String(b?.rider?.partySize ?? "1");
-  $("editLuggageCount").value = String(b?.metadata?.luggageCount ?? "0");
-
-  $("editPickup").value  = b?.pickup?.address || "";
-  $("editDropoff").value = b?.dropoff?.address || "";
-
-  const stopsArr = Array.isArray(b?.stops) ? b.stops : [];
-  const stopsLines = stopsArr.map(s=> (s?.address||"").trim()).filter(Boolean).join("\n");
-  $("editStops").value = stopsLines;
-
-  $("editScheduledFor").value = b?.scheduledFor || "";
-  $("editNotes").value = b?.metadata?.notes || "";
-  $("editManualTimeText").value = b?.metadata?.manualTimeText || "";
-
+  const b=bookingCache.get(String(bookingId));
+  if(!b){showToast("Booking not found");return;}
+  editingBookingId=String(bookingId);
+  $("editRideId").value=b.id||"";
+  $("editRideStatus").value=b.status||"";
+  $("editRiderName").value=b?.rider?.name||"";
+  $("editRiderPhone").value=normalizePhoneDigits(b?.rider?.phone||"");
+  $("editPartySize").value=String(b?.rider?.partySize??"1");
+  $("editLuggageCount").value=String(b?.metadata?.luggageCount??"0");
+  $("editPickup").value=b?.pickup?.address||"";
+  $("editDropoff").value=b?.dropoff?.address||"";
+  $("editStops").value=(Array.isArray(b?.stops)?b.stops:[]).map(s=>(s?.address||"").trim()).filter(Boolean).join("\n");
+  $("editScheduledFor").value=b?.scheduledFor||"";
+  $("editNotes").value=b?.metadata?.notes||"";
+  $("editManualTimeText").value=b?.metadata?.manualTimeText||"";
   attachAutocompleteToInput($("editPickup"));
   attachAutocompleteToInput($("editDropoff"));
-
   document.body.classList.add("modal-open");
   $("editOverlay").classList.add("show");
   $("editOverlay").setAttribute("aria-hidden","false");
 }
-
 function closeEditModal(){
-  editingBookingId = null;
+  editingBookingId=null;
   $("editOverlay").classList.remove("show");
   $("editOverlay").setAttribute("aria-hidden","true");
   document.body.classList.remove("modal-open");
 }
-
 async function saveEditModal(){
-  if(!editingBookingId){ showToast("No booking selected"); return; }
-
-  const existing = bookingCache.get(String(editingBookingId)) || {};
-
-  const rider_name = ($("editRiderName").value || "").trim();
-  const rider_phone = normalizePhoneDigits(($("editRiderPhone").value || "").trim());
-
-  const pickupAddr  = ($("editPickup").value || "").trim();
-  const dropoffAddr = ($("editDropoff").value || "").trim();
-
-  const partySize = Number(($("editPartySize").value || "1"));
-  const luggageCount = Number(($("editLuggageCount").value || "0"));
-
-  const scheduledForRaw = ($("editScheduledFor").value || "").trim();
-  const notes = ($("editNotes").value || "").trim();
-  const manualTimeText = ($("editManualTimeText").value || "").trim();
-
-  const stopsLines = ($("editStops").value || "")
-    .split("\n")
-    .map(s=>s.trim())
-    .filter(Boolean)
-    .slice(0,3);
-
-  if(!pickupAddr || !dropoffAddr){
-    showToast("Pickup + dropoff required");
-    return;
-  }
-  if(rider_phone && rider_phone.length !== 10){
-    showToast("Rider phone must be 10 digits");
-    return;
-  }
-
-  const mdExisting = existing?.metadata || {};
-  const payload = {
-    pickup:  { address: pickupAddr },
-    dropoff: { address: dropoffAddr },
-    stops: stopsLines.map(a => ({ address: a })),
-    scheduledFor: scheduledForRaw ? scheduledForRaw : null,
-    rider: {
-      name: rider_name,
-      phone: rider_phone,
-      partySize: Number.isFinite(partySize) && partySize > 0 ? partySize : 1
-    },
-    metadata: {
-      notes,
-      manualTimeText,
-      luggageCount: Number.isFinite(luggageCount) ? luggageCount : 0
-    }
+  if(!editingBookingId){showToast("No booking selected");return;}
+  const existing=bookingCache.get(String(editingBookingId))||{};
+  const rider_name=($("editRiderName").value||"").trim();
+  const rider_phone=normalizePhoneDigits(($("editRiderPhone").value||"").trim());
+  const pickupAddr=($("editPickup").value||"").trim();
+  const dropoffAddr=($("editDropoff").value||"").trim();
+  const partySize=Number($("editPartySize").value||"1");
+  const luggageCount=Number($("editLuggageCount").value||"0");
+  const scheduledForRaw=($("editScheduledFor").value||"").trim();
+  const notes=($("editNotes").value||"").trim();
+  const manualTimeText=($("editManualTimeText").value||"").trim();
+  const stopsLines=($("editStops").value||"").split("\n").map(s=>s.trim()).filter(Boolean).slice(0,3);
+  if(!pickupAddr||!dropoffAddr){showToast("Pickup + dropoff required");return;}
+  if(rider_phone&&rider_phone.length!==10){showToast("Rider phone must be 10 digits");return;}
+  const mdExisting=existing?.metadata||{};
+  const payload={
+    pickup:{address:pickupAddr},
+    dropoff:{address:dropoffAddr},
+    stops:stopsLines.map(a=>({address:a})),
+    scheduledFor:scheduledForRaw||null,
+    rider:{name:rider_name,phone:rider_phone,partySize:Number.isFinite(partySize)&&partySize>0?partySize:1},
+    metadata:{notes,manualTimeText,luggageCount:Number.isFinite(luggageCount)?luggageCount:0}
   };
-
-  if(mdExisting.estimateFare != null) payload.metadata.estimateFare = mdExisting.estimateFare;
-  if(mdExisting.estimateMiles != null) payload.metadata.estimateMiles = mdExisting.estimateMiles;
-  if(mdExisting.estimateMinutes != null) payload.metadata.estimateMinutes = mdExisting.estimateMinutes;
-  if(mdExisting.estimateBase != null) payload.metadata.estimateBase = mdExisting.estimateBase;
-  if(mdExisting.estimateMileageSubtotal != null) payload.metadata.estimateMileageSubtotal = mdExisting.estimateMileageSubtotal;
-  if(mdExisting.estimateTravelFee != null) payload.metadata.estimateTravelFee = mdExisting.estimateTravelFee;
-  if(mdExisting.estimateDriverToPickupMiles != null) payload.metadata.estimateDriverToPickupMiles = mdExisting.estimateDriverToPickupMiles;
-  if(mdExisting.estimatePricingOrigin != null) payload.metadata.estimatePricingOrigin = mdExisting.estimatePricingOrigin;
-  if(mdExisting.estimatePickupPoint != null) payload.metadata.estimatePickupPoint = mdExisting.estimatePickupPoint;
-  if(mdExisting.estimateDropoffPoint != null) payload.metadata.estimateDropoffPoint = mdExisting.estimateDropoffPoint;
-
+  [
+    "estimateFare","estimateMiles","estimateMinutes","estimateBase","estimateMileageSubtotal",
+    "estimateTravelFee","estimateDriverToPickupMiles","estimatePricingOrigin","estimatePickupPoint","estimateDropoffPoint"
+  ].forEach(k=>{if(mdExisting[k]!=null)payload.metadata[k]=mdExisting[k];});
   try{
     log(`Admin edit PUT ${editingBookingId} … ${JSON.stringify(payload)}`);
-
-    const r = await fetch(`${BOOKINGS_API}/api/driver/bookings/${encodeURIComponent(editingBookingId)}`,{
+    const r=await fetch(`${BOOKINGS_API}/api/driver/bookings/${encodeURIComponent(editingBookingId)}`,{
       method:"PUT",
-      headers:{
-        "Content-Type":"application/json",
-        "X-Admin-Secret": AUTH_SECRET
-      },
-      body: JSON.stringify(payload)
+      headers:{"Content-Type":"application/json","X-Admin-Secret":AUTH_SECRET},
+      body:JSON.stringify(payload)
     });
-
-    const txt = await r.text();
+    const txt=await r.text();
     log(`Admin edit response ${r.status}: ${txt}`);
-
-    if(!r.ok){
-      showToast("Save failed");
-      return;
-    }
-
+    if(!r.ok){showToast("Save failed");return;}
     showToast("Saved");
     closeEditModal();
-    refreshDispatchNow({ force: true });
-  }catch(e){
-    log("saveEditModal error: "+e.message);
-    showToast("Save error");
-  }
+    refreshDispatchNow({force:true});
+  }catch(e){log("saveEditModal error: "+e.message);showToast("Save error");}
 }
-
 function copyEditRiderLoginLink(){
-  if(!editingBookingId){ showToast("No ride selected"); return; }
-  const b = bookingCache.get(String(editingBookingId));
-  const link = buildRiderLoginLink(b);
-  if(!link){ showToast("No riderId on this booking"); return; }
+  if(!editingBookingId){showToast("No ride selected");return;}
+  const link=buildRiderLoginLink(bookingCache.get(String(editingBookingId)));
+  if(!link){showToast("No riderId on this booking");return;}
   copyText(link);
 }
 function copyEditDirectionsLink(){
-  if(!editingBookingId){ showToast("No ride selected"); return; }
-  const b = bookingCache.get(String(editingBookingId));
-  const link = buildGoogleDirectionsUrl(b);
-  if(!link){ showToast("Missing pickup/dropoff"); return; }
+  if(!editingBookingId){showToast("No ride selected");return;}
+  const link=buildGoogleDirectionsUrl(bookingCache.get(String(editingBookingId)));
+  if(!link){showToast("Missing pickup/dropoff");return;}
   copyText(link);
 }
-
 async function toggleScope(){
-  if(dispatchScope === "active"){
-    /*
-     * Full-history mode:
-     * - stop automatic refreshes
-     * - perform one deliberate full-history load
-     */
-    dispatchScope = "all";
-    localStorage.setItem("dispatchScope", dispatchScope);
-
-    $("btnScope").textContent = "📋 all";
+  if(dispatchScope==="active"){
+    dispatchScope="all";
+    localStorage.setItem("dispatchScope",dispatchScope);
+    $("btnScope").textContent="📋 all";
     stopDispatchPolling();
-
     showToast("Loading full history");
-    await fetchBookings({ force: true });
-
+    await fetchBookings({force:true});
     log("Dispatch scope: all history; automatic polling paused");
     showToast("History loaded • manual refresh only");
     return;
   }
-
-  /*
-   * Return to routine operational dispatch.
-   */
-  dispatchScope = "active";
-  localStorage.setItem("dispatchScope", dispatchScope);
-
-  $("btnScope").textContent = "📋 active";
-
+  dispatchScope="active";
+  localStorage.setItem("dispatchScope",dispatchScope);
+  $("btnScope").textContent="📋 active";
   showToast("Active dispatch");
-  await refreshDispatchNow({ force: true });
-
+  await refreshDispatchNow({force:true});
   log("Dispatch scope: active; 60-second visible polling enabled");
 }
-
 function handleDispatchClick(e){
-  const target = e.target;
-
-  if(target && target.matches('select[data-action="statusChange"]')){
-    e.stopPropagation();
-    return;
-  }
-
-  const chip = target.closest && target.closest(".chip");
+  const target=e.target;
+  if(target&&target.matches('select[data-action="statusChange"]')){e.stopPropagation();return;}
+  const chip=target.closest&&target.closest(".chip");
   if(chip){
-    if(chip.tagName === "A" && chip.getAttribute("href")){
+    if(chip.tagName==="A"&&chip.getAttribute("href")){e.stopPropagation();return;}
+    const action=chip.dataset?.action,id=chip.dataset?.id;
+    if(action==="copyId"){copyText(id);e.stopPropagation();return;}
+    if(action==="openEdit"){
+      if(currentMode!=="admin"){showToast("Switch to Admin Mode to edit");return;}
+      openEditModal(id);
       e.stopPropagation();
       return;
     }
-
-    if(chip.dataset && chip.dataset.action){
-      const action = chip.dataset.action;
-      const id = chip.dataset.id;
-
-      if(action === "copyId"){
-        copyText(id);
-        e.stopPropagation();
-        return;
-      }
-
-      if(action === "openEdit"){
-        if(currentMode !== "admin"){ showToast("Switch to Admin Mode to edit"); return; }
-        openEditModal(id);
-        e.stopPropagation();
-        return;
-      }
-    }
-
     e.stopPropagation();
     return;
   }
-
-  const card = target.closest && target.closest(".card");
-  if(card && card.dataset && card.dataset.id){
-    if(currentMode === "admin"){
-      openEditModal(card.dataset.id);
-    }
-  }
+  const card=target.closest&&target.closest(".card");
+  if(card?.dataset?.id&&currentMode==="admin")openEditModal(card.dataset.id);
 }
 function handleDispatchChange(e){
-  const target = e.target;
-  if(target && target.matches('select[data-action="statusChange"]')){
-    const bookingId = target.getAttribute("data-id");
-    const newStatus = target.value;
-    updateBookingStatus(bookingId, newStatus);
+  const target=e.target;
+  if(target&&target.matches('select[data-action="statusChange"]')){
+    updateBookingStatus(target.getAttribute("data-id"),target.value);
     e.stopPropagation();
   }
 }
 
 function wireButtons(){
-  $("updateStatusBtn").onclick = updateStatus;
+  $("updateStatusBtn").onclick=updateStatus;
+  $("prevImage").onclick=()=>setImage(imgIndex-1);
+  $("nextImage").onclick=()=>setImage(imgIndex+1);
+  $("prevCaption").onclick=()=>stepCaption(-1);
+  $("nextCaption").onclick=()=>stepCaption(1);
+  $("resetCaption").onclick=()=>applyTemplateToCaption("LIVE");
+  $("copyBtn").onclick=copyCaption;
+  $("postToLive").onclick=postToLive;
+  $("pushApplyTemplate").onclick=applyPushTemplate;
+  $("clearPush").onclick=clearPush;
+  $("sendBroadcastPush").onclick=handlePushBroadcast;
+  $("btnCreateManualRide").onclick=createManualRide;
+  $("btnClearManualRide").onclick=clearManualRideForm;
+  $("btnEstimateManual").onclick=estimateManualFare;
+  $("saveTickerBtn").onclick=saveTicker;
+  $("clearTickerBtn").onclick=clearTicker;
+  $("reloadTickerBtn").onclick=loadTicker;
+  $("tickerPresetLive").onclick=()=>setTickerPreset("LIVE");
+  $("tickerPresetAirport").onclick=()=>setTickerPreset("AIRPORT");
+  $("tickerPresetWeekend").onclick=()=>setTickerPreset("WEEKEND");
+  $("tickerPresetCampus").onclick=()=>setTickerPreset("CAMPUS");
+  $("tickerPresetOffline").onclick=()=>setTickerPreset("OFFLINE");
 
-  $("prevImage").onclick = ()=>setImage(imgIndex-1);
-  $("nextImage").onclick = ()=>setImage(imgIndex+1);
-
-  $("prevCaption").onclick = ()=>stepCaption(-1);
-  $("nextCaption").onclick = ()=>stepCaption(1);
-  $("resetCaption").onclick = ()=>applyTemplateToCaption("LIVE");
-
-  $("copyBtn").onclick = copyCaption;
-  $("postToLive").onclick = postToLive;
-
-  $("pushApplyTemplate").onclick = applyPushTemplate;
-  $("clearPush").onclick = clearPush;
-  $("sendBroadcastPush").onclick = handlePushBroadcast;
-
-  $("btnCreateManualRide").onclick = createManualRide;
-  $("btnClearManualRide").onclick = clearManualRideForm;
-
-  $("btnEstimateManual").onclick = estimateManualFare;
-
-  $("saveTickerBtn").onclick = saveTicker;
-  $("clearTickerBtn").onclick = clearTicker;
-  $("reloadTickerBtn").onclick = loadTicker;
-
-  $("tickerPresetLive").onclick = ()=>setTickerPreset("LIVE");
-  $("tickerPresetAirport").onclick = ()=>setTickerPreset("AIRPORT");
-  $("tickerPresetWeekend").onclick = ()=>setTickerPreset("WEEKEND");
-  $("tickerPresetCampus").onclick = ()=>setTickerPreset("CAMPUS");
-  $("tickerPresetOffline").onclick = ()=>setTickerPreset("OFFLINE");
-
-  ["pushTitle","pushMessage","pushUrl"].forEach(id=>{
-    const el=$(id);
-    if(el) el.oninput=updPrev;
-  });
-
+  ["pushTitle","pushMessage","pushUrl"].forEach(id=>{if($(id))$(id).oninput=updPrev;});
   ["tickerActiveToggle","tickerMessage","tickerExpires"].forEach(id=>{
     const el=$(id);
-    if(el){
-      el.addEventListener("input", updateTickerPreview);
-      el.addEventListener("change", updateTickerPreview);
-    }
+    if(el){el.addEventListener("input",updateTickerPreview);el.addEventListener("change",updateTickerPreview);}
   });
 
-  $("btnRefreshPage").onclick = ()=>location.reload(true);
-
-  $("btnDispatchRefresh").onclick = async ()=>{
-  if(dispatchScope === "all"){
-    showToast("Refreshing full history");
-    await fetchBookings({ force: true });
-    showToast("History refreshed");
-    return;
-  }
-
-  showToast("Refreshing dispatch");
-  await refreshDispatchNow({ force: true });
-  showToast("Dispatch refreshed");
-};
-
-  $("btnScope").onclick = toggleScope;
-
-  $("btnModeToggle").onclick = ()=>{
-    const next = (currentMode==="admin") ? "driver" : "admin";
+  $("btnRefreshPage").onclick=()=>location.reload(true);
+  $("btnDispatchRefresh").onclick=async()=>{
+    if(dispatchScope==="all"){
+      showToast("Refreshing full history");
+      await fetchBookings({force:true});
+      showToast("History refreshed");
+      return;
+    }
+    showToast("Refreshing dispatch");
+    await refreshDispatchNow({force:true});
+    showToast("Dispatch refreshed");
+  };
+  $("btnScope").onclick=toggleScope;
+  $("btnModeToggle").onclick=()=>{
+    const next=currentMode==="admin"?"driver":"admin";
     applyMode(next);
     showToast(`Mode: ${next}`);
   };
-
-  $("livePill").addEventListener("click", toggleTracking);
-
-  $("manualAddStopBtn").addEventListener("click", ()=>addManualStopField(""));
-  $("manualClearStopsBtn").addEventListener("click", clearManualStops);
-
-  $("manualUseLocPickup").addEventListener("click", () => useBrowserLocationForInput("manualPickup"));
-  $("manualUseLocDropoff").addEventListener("click", () => useBrowserLocationForInput("manualDropoff"));
+  $("livePill").addEventListener("click",toggleTracking);
+  $("manualAddStopBtn").addEventListener("click",()=>addManualStopField(""));
+  $("manualClearStopsBtn").addEventListener("click",clearManualStops);
+  $("manualUseLocPickup").addEventListener("click",()=>useBrowserLocationForInput("manualPickup"));
+  $("manualUseLocDropoff").addEventListener("click",()=>useBrowserLocationForInput("manualDropoff"));
 
   ["manualPickup","manualDropoff","manualAirportToggle"].forEach(id=>{
-    const el = $(id);
+    const el=$(id);
     if(el){
-      el.addEventListener("input", () => { syncManualLuggageVisibility(); setManualEstimateDraft(null); });
-      el.addEventListener("change", () => { syncManualLuggageVisibility(); setManualEstimateDraft(null); });
+      el.addEventListener("input",()=>{syncManualLuggageVisibility();setManualEstimateDraft(null);});
+      el.addEventListener("change",()=>{syncManualLuggageVisibility();setManualEstimateDraft(null);});
     }
   });
 
-  const phoneInput = $("manualRiderPhone");
-  if(phoneInput){
-    phoneInput.addEventListener("input", ()=>{ phoneInput.value = normalizePhoneDigits(phoneInput.value); });
-  }
-  const editPhone = $("editRiderPhone");
-  if(editPhone){
-    editPhone.addEventListener("input", ()=>{ editPhone.value = normalizePhoneDigits(editPhone.value); });
-  }
+  $("manualRiderPhone")?.addEventListener("input",()=>{$("manualRiderPhone").value=normalizePhoneDigits($("manualRiderPhone").value);});
+  $("editRiderPhone")?.addEventListener("input",()=>{$("editRiderPhone").value=normalizePhoneDigits($("editRiderPhone").value);});
 
-  $("editCloseBtn").onclick = closeEditModal;
-  $("editCancelBtn").onclick = closeEditModal;
-  $("editSaveBtn").onclick = saveEditModal;
-  $("editCopyLoginLinkBtn").onclick = copyEditRiderLoginLink;
-  $("editCopyDirectionsBtn").onclick = copyEditDirectionsLink;
+  $("editCloseBtn").onclick=closeEditModal;
+  $("editCancelBtn").onclick=closeEditModal;
+  $("editSaveBtn").onclick=saveEditModal;
+  $("editCopyLoginLinkBtn").onclick=copyEditRiderLoginLink;
+  $("editCopyDirectionsBtn").onclick=copyEditDirectionsLink;
+  $("editOverlay").addEventListener("click",ev=>{if(ev.target===$("editOverlay"))closeEditModal();});
 
-  $("editOverlay").addEventListener("click",(ev)=>{
-    if(ev.target === $("editOverlay")) closeEditModal();
+  ["listNew","listActive","listDone"].forEach(id=>{
+    $(id).addEventListener("click",handleDispatchClick);
+    $(id).addEventListener("change",handleDispatchChange);
   });
 
-  $("listNew").addEventListener("click", handleDispatchClick);
-  $("listActive").addEventListener("click", handleDispatchClick);
-  $("listDone").addEventListener("click", handleDispatchClick);
-
-  $("listNew").addEventListener("change", handleDispatchChange);
-  $("listActive").addEventListener("change", handleDispatchChange);
-  $("listDone").addEventListener("change", handleDispatchChange);
-
-  document.addEventListener("keydown",(ev)=>{
-    if(ev.key === "Escape" && $("editOverlay").classList.contains("show")) closeEditModal();
+  document.addEventListener("keydown",ev=>{
+    if(ev.key==="Escape"&&$("editOverlay").classList.contains("show"))closeEditModal();
   });
-  document.addEventListener(
-  "visibilitychange",
-  handleDispatchVisibilityChange
-);
-
-window.addEventListener(
-  "pageshow",
-  handleDispatchPageShow
-);
-
-window.addEventListener(
-  "pagehide",
-  stopDispatchPolling
-);
+  document.addEventListener("visibilitychange",handleDispatchVisibilityChange);
+  window.addEventListener("pageshow",handleDispatchPageShow);
+  window.addEventListener("pagehide",stopDispatchPolling);
 }
 
 window.addEventListener("load",()=>{
   applyMode(currentMode);
-
   applyTrackingPill();
-
   updPrev();
   applyTemplateToCaption("LIVE");
   setImage(0);
-
   syncManualLuggageVisibility();
   initAddressAutocomplete();
   updateTickerPreview();
-
   wireButtons();
-
   loadStatus();
   loadLastCaption();
   loadTicker();
