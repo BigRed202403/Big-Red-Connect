@@ -1,5 +1,13 @@
 <!-- =========================
-FILE 2: /rider/ride-request.html (Ride Request & Estimate – Big Red Connect)
+FILE: /rider/ride-request.html
+Ride Request & Estimate – Big Red Connect
+
+UPDATED:
+- Travel fairness origin is status-aware.
+- OFFLINE always prices from HQ.
+- ONLINE / AWAY uses a fresh tracker location.
+- Stale or missing tracker data falls back to the status-worker location, then HQ.
+- Removed the prior Math.min(HQ, live) behavior.
 ========================= -->
 <!DOCTYPE html>
 <html lang="en">
@@ -8,70 +16,311 @@ FILE 2: /rider/ride-request.html (Ride Request & Estimate – Big Red Connect)
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Ride Request & Estimate – Big Red Connect</title>
 
-  <!-- Icons / PWA -->
   <link rel="apple-touch-icon" href="/official_logo.jpeg">
   <link rel="icon" type="image/png" sizes="192x192" href="/official_logo.jpeg">
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#000000"/>
 
-  <!-- No cache -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
   <meta http-equiv="Pragma" content="no-cache"/>
   <meta http-equiv="Expires" content="0"/>
 
   <style>
-    :root { --red:#b30000; --panel:#111; --border:#222; --muted:#aaa; }
-    body { margin:0; background:#000; color:#fff; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; padding-bottom:60px; }
-    header { padding:12px 12px; display:flex; align-items:center; gap:10px; border-bottom:2px solid var(--red); background:#000; position:sticky; top:0; z-index:20; }
-    .logo-tap { display:flex; align-items:center; gap:8px; cursor:pointer; }
-    header img { height:44px; border-radius:4px; }
-    .top-actions { margin-left:auto; display:flex; gap:6px; }
-    .btn-small { padding:8px 10px; font-size:0.8rem; }
-    h1 { text-align:center; font-size:1.4rem; margin:18px 0 4px; }
-    .subhead { text-align:center; font-size:0.85rem; color:var(--muted); margin-bottom:8px; }
-    .page { width:calc(100% - 24px); max-width:560px; margin:0 auto; }
-    .card { background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:14px; margin-top:10px; }
-    .section-title { font-size:0.9rem; font-weight:700; margin-bottom:8px; border-bottom:1px solid #222; padding-bottom:4px; }
-    .input-group { margin-bottom:12px; }
-    label { display:block; font-size:0.8rem; color:#ccc; margin-bottom:4px; }
-    input, select, textarea { width:100%; padding:10px; background:#111; border:1px solid #333; border-radius:8px; color:#fff; font-size:0.95rem; }
-    textarea { min-height:60px; resize:vertical; }
-    .hint { font-size:0.75rem; color:var(--muted); margin-top:2px; }
-    .btn { display:inline-block; text-align:center; padding:12px; border-radius:10px; font-weight:700; font-size:0.95rem; border:none; cursor:pointer; text-decoration:none; }
-    .btn-primary { background:var(--red); color:#fff; }
-    .btn-ghost { background:#000; color:#fff; border:1px solid #444; }
-    .btn-secondary { background:#111; color:#fff; border:1px solid #333; }
-    .btn-wide { width:100%; margin-top:12px; }
-    #map { width:100%; height:220px; border-radius:10px; margin-top:10px; background:#050505; border:1px solid #222; }
-    .notes-block p { margin:4px 0; font-size:0.8rem; }
-    #airport-note, #event-note, #rushhour-note, #fairness-note { font-size:0.8rem; }
+    :root {
+      --red:#b30000;
+      --panel:#111;
+      --border:#222;
+      --muted:#aaa;
+    }
+
+    * { box-sizing:border-box; }
+
+    body {
+      margin:0;
+      background:#000;
+      color:#fff;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+      padding-bottom:60px;
+    }
+
+    header {
+      padding:12px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      border-bottom:2px solid var(--red);
+      background:#000;
+      position:sticky;
+      top:0;
+      z-index:20;
+    }
+
+    .logo-tap {
+      display:flex;
+      align-items:center;
+      gap:8px;
+      cursor:pointer;
+      min-width:0;
+    }
+
+    header img {
+      height:44px;
+      border-radius:4px;
+      flex:0 0 auto;
+    }
+
+    .top-actions {
+      margin-left:auto;
+      display:flex;
+      gap:6px;
+      flex:0 0 auto;
+    }
+
+    h1 {
+      text-align:center;
+      font-size:1.4rem;
+      margin:18px 0 4px;
+    }
+
+    .subhead {
+      text-align:center;
+      font-size:.85rem;
+      color:var(--muted);
+      margin:0 12px 8px;
+    }
+
+    .page {
+      width:calc(100% - 24px);
+      max-width:560px;
+      margin:0 auto;
+    }
+
+    .card {
+      background:var(--panel);
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:14px;
+      margin-top:10px;
+    }
+
+    .section-title {
+      font-size:.9rem;
+      font-weight:700;
+      margin-bottom:8px;
+      border-bottom:1px solid #222;
+      padding-bottom:4px;
+    }
+
+    .input-group {
+      margin-bottom:12px;
+    }
+
+    label {
+      display:block;
+      font-size:.8rem;
+      color:#ccc;
+      margin-bottom:4px;
+    }
+
+    input,
+    select,
+    textarea {
+      width:100%;
+      padding:10px;
+      background:#111;
+      border:1px solid #333;
+      border-radius:8px;
+      color:#fff;
+      font-size:.95rem;
+      font-family:inherit;
+    }
+
+    input:disabled {
+      opacity:1;
+      color:#fff;
+      -webkit-text-fill-color:#fff;
+    }
+
+    textarea {
+      min-height:60px;
+      resize:vertical;
+    }
+
+    .hint {
+      font-size:.75rem;
+      color:var(--muted);
+      margin-top:3px;
+      line-height:1.35;
+    }
+
+    .btn {
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      padding:12px;
+      border-radius:10px;
+      font-weight:700;
+      font-size:.95rem;
+      border:none;
+      cursor:pointer;
+      text-decoration:none;
+      font-family:inherit;
+      min-height:44px;
+    }
+
+    .btn:disabled {
+      opacity:.65;
+      cursor:not-allowed;
+    }
+
+    .btn-primary {
+      background:var(--red);
+      color:#fff;
+    }
+
+    .btn-ghost {
+      background:#000;
+      color:#fff;
+      border:1px solid #444;
+    }
+
+    .btn-secondary {
+      background:#111;
+      color:#fff;
+      border:1px solid #333;
+    }
+
+    .btn-wide {
+      width:100%;
+      margin-top:12px;
+    }
+
+    .btn-small {
+      padding:8px 10px;
+      font-size:.8rem;
+      min-height:40px;
+    }
+
+    .stop-row {
+      display:flex;
+      gap:6px;
+      align-items:center;
+    }
+
+    .stop-row input {
+      flex:1 1 auto;
+      min-width:0;
+    }
+
+    #map {
+      width:100%;
+      height:220px;
+      border-radius:10px;
+      margin-top:10px;
+      background:#050505;
+      border:1px solid #222;
+    }
+
+    .notes-block p {
+      margin:4px 0;
+      font-size:.8rem;
+    }
+
     #airport-note { color:#9fd4ff; }
     #event-note { color:#ffd27f; }
     #rushhour-note { color:#ffb3b3; }
     #fairness-note { color:#d3b9ff; }
-    #result { margin-top:10px; padding:10px; border-radius:10px; background:#080808; border:1px solid #333; font-size:0.9rem; }
-    .total { font-size:1.3rem; font-weight:700; margin-bottom:6px; }
-    .profile-chip { font-size:0.8rem; color:var(--muted); }
-    .profile-chip strong { color:#fff; }
-    .btn-row { margin-top:16px; display:flex; flex-direction:column; gap:8px; }
-    .smallnote { font-size:0.78rem; color:var(--muted); margin-top:6px; text-align:center; }
-    .disclaimer { font-size:0.75rem; color:var(--muted); margin-top:10px; text-align:center; }
-    #toast { position:fixed; bottom:22px; left:50%; transform:translateX(-50%); background:#111; border:1px solid var(--red); padding:10px 18px; border-radius:999px; opacity:0; pointer-events:none; transition:opacity .25s; z-index:99; font-size:0.85rem; }
-    #toast.show { opacity:1; }
+
+    #result {
+      margin-top:10px;
+      padding:10px;
+      border-radius:10px;
+      background:#080808;
+      border:1px solid #333;
+      font-size:.9rem;
+      display:none;
+    }
+
+    #result p {
+      margin:6px 0;
+    }
+
+    .total {
+      font-size:1.3rem;
+      font-weight:700;
+      margin-bottom:6px;
+    }
+
+    .profile-chip {
+      font-size:.8rem;
+      color:var(--muted);
+      line-height:1.45;
+    }
+
+    .profile-chip strong {
+      color:#fff;
+    }
+
+    .btn-row {
+      margin-top:16px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+
+    .smallnote {
+      font-size:.78rem;
+      color:var(--muted);
+      margin-top:8px;
+      text-align:center;
+    }
+
+    .disclaimer {
+      font-size:.75rem;
+      color:var(--muted);
+      margin-top:10px;
+      text-align:center;
+    }
+
+    #toast {
+      position:fixed;
+      bottom:22px;
+      left:50%;
+      transform:translateX(-50%);
+      background:#111;
+      border:1px solid var(--red);
+      padding:10px 18px;
+      border-radius:999px;
+      opacity:0;
+      pointer-events:none;
+      transition:opacity .25s;
+      z-index:99;
+      font-size:.85rem;
+      max-width:92vw;
+      text-align:center;
+      box-shadow:0 4px 18px rgba(0,0,0,.65);
+    }
+
+    #toast.show {
+      opacity:1;
+    }
   </style>
 </head>
+
 <body>
 
 <header>
   <div class="logo-tap" id="logoHome">
     <img src="/official_logo.jpeg" alt="Big Red Connect logo">
     <div>
-      <div style="font-weight:700;font-size:0.92rem;">Big Red Connect</div>
-      <div style="font-size:0.78rem;color:#888;">Ride Request &amp; Estimate</div>
+      <div style="font-weight:700;font-size:.92rem;">Big Red Connect</div>
+      <div style="font-size:.78rem;color:#888;">Ride Request &amp; Estimate</div>
     </div>
   </div>
+
   <div class="top-actions">
-    <button class="btn btn-ghost btn-small" id="btnHub">Rider Hub</button>
+    <button class="btn btn-ghost btn-small" id="btnHub" type="button">Rider Hub</button>
   </div>
 </header>
 
@@ -83,37 +332,36 @@ FILE 2: /rider/ride-request.html (Ride Request & Estimate – Big Red Connect)
   <div class="card">
     <div class="section-title">You’re booking as</div>
     <div class="profile-chip" id="profileSummary">Loading profile…</div>
+
     <div class="btn-row" style="margin-top:10px;">
-      <button class="btn btn-secondary btn-small" id="btnEditProfile">Edit Profile</button>
+      <button class="btn btn-secondary btn-small" id="btnEditProfile" type="button">Edit Profile</button>
     </div>
   </div>
 
   <div class="card">
     <div class="section-title">When?</div>
 
-    <div id="reserveControls">
-      <div class="input-group">
-        <label for="reserveDate">Date</label>
-        <input id="reserveDate" type="date">
-      </div>
+    <div class="input-group">
+      <label for="reserveDate">Date</label>
+      <input id="reserveDate" type="date">
+    </div>
 
-      <div class="input-group">
-        <label for="reserveTimeSelect">Time (15-min increments)</label>
-        <select id="reserveTimeSelect"></select>
-        <div class="hint">Pick a time (required). This keeps every request pre-arranged and predictable.</div>
-      </div>
+    <div class="input-group">
+      <label for="reserveTimeSelect">Time (15-min increments)</label>
+      <select id="reserveTimeSelect"></select>
+      <div class="hint">Pick a time. This keeps every request pre-arranged and predictable.</div>
+    </div>
 
-      <div class="input-group">
-        <label for="planBy">Plan By</label>
-        <select id="planBy">
-          <option value="pickup">Pickup Time</option>
-          <option value="dropoff">Drop-off Time</option>
-        </select>
-      </div>
+    <div class="input-group">
+      <label for="planBy">Plan By</label>
+      <select id="planBy">
+        <option value="pickup">Pickup Time</option>
+        <option value="dropoff">Drop-off Time</option>
+      </select>
+    </div>
 
-      <div class="hint">
-        Rush hour auto-applies if weekday 5–9 AM or 3–7 PM. Holidays and big events may use special base rates.
-      </div>
+    <div class="hint">
+      Rush hour auto-applies if weekday 5–9 AM or 3–7 PM. Holidays and major events may use special base rates.
     </div>
   </div>
 
@@ -143,8 +391,11 @@ FILE 2: /rider/ride-request.html (Ride Request & Estimate – Big Red Connect)
     <div class="input-group">
       <label for="passengers">Passengers</label>
       <select id="passengers">
-        <option value="1">1</option><option value="2">2</option><option value="3">3</option>
-        <option value="4">4</option><option value="5">5</option>
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
         <option value="6">6</option>
       </select>
       <div class="hint">Seatbelts for everyone. Max 6 depending on which vehicle is in service.</div>
@@ -161,7 +412,7 @@ FILE 2: /rider/ride-request.html (Ride Request & Estimate – Big Red Connect)
         <option value="5">5</option>
         <option value="6">6+</option>
       </select>
-      <div class="hint">How many bags total? Helps make sure the right vehicle shows up.</div>
+      <div class="hint">How many bags total? This helps make sure the right vehicle shows up.</div>
     </div>
 
     <div id="map"></div>
@@ -192,10 +443,12 @@ FILE 2: /rider/ride-request.html (Ride Request & Estimate – Big Red Connect)
 
     <button class="btn btn-primary btn-wide" id="calcBtn" type="button">💲 Get Ride Estimate</button>
 
-    <div id="result" style="display:none;"></div>
+    <div id="result"></div>
 
     <p class="smallnote">
-      Already requested? You can <a href="/rider/myride.html" style="color:#ff6666;">track your ride</a> with your ride ID.
+      Already requested? You can
+      <a href="/rider/myride.html" style="color:#ff6666;">track your ride</a>
+      with your ride ID.
     </p>
 
     <p class="disclaimer">
@@ -213,576 +466,444 @@ FILE 2: /rider/ride-request.html (Ride Request & Estimate – Big Red Connect)
   // =====================================================
   const API_BOOK   = "https://bigred-bookings.bigredtransportation.workers.dev";
   const PUSH_API   = "https://bigred-push.bigredtransportation.workers.dev/push/ride-request";
-  const HQ = { lat: 35.3207, lng: -97.4929 };
+  const STATUS_API = "https://bigred-status-updater.bigredtransportation.workers.dev/status";
   const LOCATION_API = "https://update-location.bigredtransportation.workers.dev/";
+
+  const HQ = { lat:35.3207, lng:-97.4929 };
+  const LIVE_LOCATION_FRESH_MS = 15 * 60 * 1000;
+
   let fairnessOrigin = { ...HQ };
+  let fairnessOriginSource = "HQ";
 
   // =====================================================
-  // STRICT INPUT RULES (place name must be selected; address must resolve)
-  // =====================================================
-  let pickupVerified = false;
-  let dropoffVerified = false;
-
-  function looksLikeAddress(s){
-    return /\d{1,6}\s+\S+/.test(String(s||"").trim());
-  }
-  function setVerified(which, ok){
-    if (which === "pickup") pickupVerified = !!ok;
-    if (which === "dropoff") dropoffVerified = !!ok;
-  }
-  function requireVerifiedOrResolvable(which){
-    const el = document.getElementById(which);
-    const text = (el?.value || "").trim();
-    if (!text) return false;
-
-    if (!looksLikeAddress(text)) {
-      const verified = (which === "pickup") ? pickupVerified : dropoffVerified;
-      if (!verified) {
-        showToast(`Select the ${which} from suggestions`);
-        el?.focus();
-        return false;
-      }
-      return true;
-    }
-    return true;
-  }
-
-  async function ensureResolvedLatLng(which){
-    const el = document.getElementById(which);
-    const text = (el?.value || "").trim();
-    if (!text) return false;
-
-    if (which === "pickup" && pickupLatLng) return true;
-    if (which === "dropoff" && dropoffLatLng) return true;
-
-    if (!looksLikeAddress(text)) return false;
-    if (!geocoder) return false;
-
-    const okcBounds = new google.maps.LatLngBounds(
-      { lat: 34.9000, lng: -98.2000 },
-      { lat: 36.0000, lng: -96.0000 }
-    );
-
-    const result = await new Promise((resolve) => {
-      geocoder.geocode({ address: text, bounds: okcBounds }, (res, stat) => {
-        if (stat !== "OK" || !res?.length) return resolve(null);
-        resolve(res[0]);
-      });
-    });
-
-    if (!result?.geometry?.location) {
-      showToast(`Confirm ${which} (pick suggestion)`);
-      el?.focus();
-      return false;
-    }
-
-    const loc = result.geometry.location;
-    const lat = loc.lat();
-    const lng = loc.lng();
-    const latlng = { lat, lng };
-
-    if (which === "pickup") {
-      pickupLatLng = loc;
-      if (pickupMarker) pickupMarker.setMap(null);
-      pickupMarker = new google.maps.Marker({ position: latlng, map, icon: { url: "http://maps.google.com/mapfiles/ms/icons/green-dot.png" } });
-    } else {
-      dropoffLatLng = loc;
-      if (dropoffMarker) dropoffMarker.setMap(null);
-      dropoffMarker = new google.maps.Marker({ position: latlng, map, icon: { url: "http://maps.google.com/mapfiles/ms/icons/red-dot.png" } });
-    }
-
-    setVerified(which, true);
-    return true;
-  }
-
-  // =====================================================
-  // ✅ Last Ride Cache (canonical)
-  // =====================================================
-  const LS_LAST_RIDE_ID = "brc_last_ride_id_v1";
-  function setLastRideId(id){
-    if(!id) return;
-    try { localStorage.setItem(LS_LAST_RIDE_ID, String(id)); } catch(e) {}
-  }
-
-  // =====================================================
-  // TOAST
+  // BASIC HELPERS
   // =====================================================
   function showToast(msg) {
     const t = document.getElementById("toast");
+    if (!t) return;
     t.textContent = msg;
     t.classList.add("show");
     setTimeout(() => t.classList.remove("show"), 1800);
   }
 
-  // =====================================================
-  // NOTIFY PREF (v1 local-only → stamped into bookings)
-  // =====================================================
-  const NOTIFY_PREF_KEY = "notifyPref";
-  function getNotifyPref(){
-    const v = String(localStorage.getItem(NOTIFY_PREF_KEY) || "both").toLowerCase();
-    return (v === "sms" || v === "push" || v === "both") ? v : "both";
+  function pad2(n) {
+    return String(n).padStart(2, "0");
   }
 
-  // =====================================================
-  // PLACE DISPLAY HELPERS
-  // =====================================================
-  function formatPlaceLine(name, address){
+  function safeTimestampMs(value) {
+    if (!value) return 0;
+    const ms = Date.parse(value);
+    return Number.isFinite(ms) ? ms : 0;
+  }
+
+  function validPoint(obj) {
+    return !!obj &&
+      Number.isFinite(Number(obj.lat)) &&
+      Number.isFinite(Number(obj.lng));
+  }
+
+  function formatPhone(p) {
+    const digits = String(p || "").replace(/\D/g, "");
+    if (digits.length === 10) {
+      return `(${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6)}`;
+    }
+    return p;
+  }
+
+  function formatPlaceLine(name, address) {
     const n = String(name || "").trim();
     const a = String(address || "").trim();
     if (n && a) return `${n} — ${a}`;
     return a || n || "";
   }
-  function pickFirstString(...vals){
-    for (const v of vals){
+
+  function pickFirstString(...vals) {
+    for (const v of vals) {
       if (typeof v === "string" && v.trim()) return v.trim();
     }
     return "";
   }
 
   // =====================================================
-  // IMPORTANT: define these BEFORE early repeat-prefill runs
+  // NAV
   // =====================================================
-  let stopInputs = [];
-  let repeatLocked = false;
+  document.getElementById("logoHome").addEventListener("click", () => {
+    window.location.href = "/index.html";
+  });
 
-  const PLACE_KEYS = {
-    pickup: "brc_place_pickup_v1",
-    dropoff: "brc_place_dropoff_v1",
-    stopPrefix: "brc_place_stop_v1:"
-  };
+  document.getElementById("btnHub").addEventListener("click", () => {
+    window.location.href = "/rider/rider.html";
+  });
 
-  function savePlace(key, placeObj) { try { sessionStorage.setItem(key, JSON.stringify(placeObj)); } catch(e) {} }
-  function loadPlace(key) { try { const raw = sessionStorage.getItem(key); return raw ? JSON.parse(raw) : null; } catch(e) { return null; } }
-  function clearPlace(key) { try { sessionStorage.removeItem(key); } catch(e) {} }
+  document.getElementById("btnEditProfile").addEventListener("click", () => {
+    window.location.href = "/rider/profile.html";
+  });
 
   // =====================================================
-  // RIDER ID
+  // RIDER ID / PROFILE
   // =====================================================
+  const LS_LAST_RIDE_ID = "brc_last_ride_id_v1";
+
+  function setLastRideId(id) {
+    if (!id) return;
+    try {
+      localStorage.setItem(LS_LAST_RIDE_ID, String(id));
+    } catch (e) {}
+  }
+
   function ensureRiderId() {
     let rid = localStorage.getItem("riderId");
+
     if (!rid) {
       try {
         if (window.crypto && crypto.getRandomValues) {
           const buf = new Uint8Array(8);
           crypto.getRandomValues(buf);
-          rid = "r_" + Array.from(buf).map(b => b.toString(16).padStart(2,"0")).join("");
+          rid = "r_" + Array.from(buf)
+            .map(b => b.toString(16).padStart(2, "0"))
+            .join("");
         } else {
           rid = "r_" + Date.now().toString(36);
         }
-      } catch(e) {
+      } catch (e) {
         rid = "r_" + Date.now().toString(36);
       }
+
       localStorage.setItem("riderId", rid);
     }
+
     return rid;
   }
-  ensureRiderId();
+
+  function loadProfileSummary() {
+    const name  = localStorage.getItem("riderName") || "";
+    const phone = localStorage.getItem("riderPhone") || "";
+    const home  = localStorage.getItem("riderHome") || "";
+    const gate  = localStorage.getItem("riderGate") || "";
+    const rid   = ensureRiderId();
+
+    const summary = document.getElementById("profileSummary");
+
+    if (!name && !phone) {
+      summary.innerHTML =
+        `Not logged in. <strong><a href="/rider-login.html" style="color:#ff6666;">Tap here to log in</a></strong>.`;
+    } else {
+      const phonePretty = phone ? formatPhone(phone) : "";
+      summary.innerHTML =
+        `<span><strong>${name || "Rider"}</strong>${phonePretty ? " · " + phonePretty : ""}</span>` +
+        (home ? `<br><span>Home pickup: ${home}</span>` : "") +
+        `<br><span style="font-size:.7rem;color:#666;">Profile ID: ${rid}</span>`;
+    }
+
+    if (!repeatLocked) {
+      const pickEl = document.getElementById("pickup");
+      if (home && pickEl && !String(pickEl.value || "").trim()) {
+        pickEl.value = home;
+        setVerified("pickup", false);
+      }
+
+      const gateEl = document.getElementById("gateCode");
+      if (gate && gateEl && !String(gateEl.value || "").trim()) {
+        gateEl.value = gate;
+      }
+    }
+
+    syncLuggageVisibility();
+  }
 
   // =====================================================
-  // NAV
+  // NOTIFICATION PREFERENCE
   // =====================================================
-  document.getElementById("logoHome").addEventListener("click", () => window.location.href = "/index.html");
-  document.getElementById("btnHub").addEventListener("click", () => window.location.href = "/rider/rider.html");
-  document.getElementById("btnEditProfile").addEventListener("click", () => window.location.href = "/rider/profile.html");
+  const NOTIFY_PREF_KEY = "notifyPref";
+
+  function getNotifyPref() {
+    const v = String(localStorage.getItem(NOTIFY_PREF_KEY) || "both").toLowerCase();
+    return (v === "sms" || v === "push" || v === "both") ? v : "both";
+  }
 
   // =====================================================
-  // Always pre-arranged
+  // TIME OPTIONS
   // =====================================================
   let mode = "reserve";
 
-  // =====================================================
-  // 15-min time dropdown helpers (SMART DEFAULTS)
-  // =====================================================
-  function pad2(n){ return String(n).padStart(2,"0"); }
-
-  function build15MinOptions(selectEl){
-    if(!selectEl) return;
+  function build15MinOptions(selectEl) {
+    if (!selectEl) return;
     selectEl.innerHTML = "";
-    for(let h=0; h<24; h++){
-      for(let m=0; m<60; m+=15){
-        const v = `${pad2(h)}:${pad2(m)}`;
+
+    for (let h = 0; h < 24; h++) {
+      for (let m = 0; m < 60; m += 15) {
+        const value = `${pad2(h)}:${pad2(m)}`;
         const opt = document.createElement("option");
-        opt.value = v;
-        opt.textContent = v;
+        opt.value = value;
+        opt.textContent = value;
         selectEl.appendChild(opt);
       }
     }
   }
 
-  function getSmartDefaultSchedule(now = new Date()){
+  function getSmartDefaultSchedule(now = new Date()) {
     const d = new Date(now);
-    d.setSeconds(0); d.setMilliseconds(0);
-    const isLate = (d.getHours() === 23 && d.getMinutes() >= 30);
+    d.setSeconds(0);
+    d.setMilliseconds(0);
 
-    if (isLate) {
+    if (d.getHours() === 23 && d.getMinutes() >= 30) {
       const tomorrow = new Date(d);
       tomorrow.setDate(tomorrow.getDate() + 1);
-      const yyyy = tomorrow.getFullYear();
-      const mm = pad2(tomorrow.getMonth() + 1);
-      const dd = pad2(tomorrow.getDate());
-      return { date: `${yyyy}-${mm}-${dd}`, time: "00:15" };
+
+      return {
+        date:`${tomorrow.getFullYear()}-${pad2(tomorrow.getMonth()+1)}-${pad2(tomorrow.getDate())}`,
+        time:"00:15"
+      };
     }
 
     const next = new Date(d);
-    const mins = next.getMinutes();
-    const rounded = Math.ceil((mins + 1) / 15) * 15;
+    const rounded = Math.ceil((next.getMinutes() + 1) / 15) * 15;
     next.setMinutes(rounded);
-    if (next.getMinutes() === 60) {
-      next.setMinutes(0);
-      next.setHours(next.getHours() + 1);
-    }
 
-    const yyyy = next.getFullYear();
-    const mm = pad2(next.getMonth() + 1);
-    const dd = pad2(next.getDate());
-
-    return { date: `${yyyy}-${mm}-${dd}`, time: `${pad2(next.getHours())}:${pad2(next.getMinutes())}` };
+    return {
+      date:`${next.getFullYear()}-${pad2(next.getMonth()+1)}-${pad2(next.getDate())}`,
+      time:`${pad2(next.getHours())}:${pad2(next.getMinutes())}`
+    };
   }
 
-  function initDefaultScheduleIfEmpty(){
+  function initDefaultScheduleIfEmpty() {
     const dateEl = document.getElementById("reserveDate");
     const timeEl = document.getElementById("reserveTimeSelect");
-    if(!dateEl || !timeEl) return;
 
-    const dateVal = (dateEl.value || "").trim();
-    const timeVal = (timeEl.value || "").trim();
+    if (!dateEl || !timeEl) return;
+
+    const dateVal = String(dateEl.value || "").trim();
+    const timeVal = String(timeEl.value || "").trim();
 
     if (!dateVal || !timeVal || timeVal === "00:00") {
-      const smart = getSmartDefaultSchedule(new Date());
+      const smart = getSmartDefaultSchedule();
+
       if (!dateVal) dateEl.value = smart.date;
       if (!timeVal || timeVal === "00:00") timeEl.value = smart.time;
     }
   }
 
-  function getReserveTimeValue(){
-    return (document.getElementById("reserveTimeSelect")?.value || "").trim();
+  function getReserveTimeValue() {
+    return String(document.getElementById("reserveTimeSelect")?.value || "").trim();
   }
 
   // =====================================================
-  // Option B: fetch live driver origin from update-location
+  // PLACE STORAGE
   // =====================================================
-  async function fetchDriverOriginFromLiveGPS() {
+  let stopInputs = [];
+  let repeatLocked = false;
+  let pendingStopsToHydrate = [];
+
+  const PLACE_KEYS = {
+    pickup:"brc_place_pickup_v1",
+    dropoff:"brc_place_dropoff_v1",
+    stopPrefix:"brc_place_stop_v1:"
+  };
+
+  function savePlace(key, placeObj) {
     try {
-      const res = await fetch(LOCATION_API + "?t=" + Date.now(), { cache: "no-store" });
-      if (!res.ok) return;
+      sessionStorage.setItem(key, JSON.stringify(placeObj));
+    } catch (e) {}
+  }
 
-      const data = await res.json();
-      const lat = Number(data?.lat ?? data?.latitude);
-      const lng = Number(data?.lng ?? data?.longitude);
-
-      if (Number.isFinite(lat) && Number.isFinite(lng)) {
-        fairnessOrigin = { lat, lng };
-      }
+  function loadPlace(key) {
+    try {
+      const raw = sessionStorage.getItem(key);
+      return raw ? JSON.parse(raw) : null;
     } catch (e) {
-      console.warn("Live GPS origin fetch failed; using HQ", e);
+      return null;
     }
   }
 
-  // =====================================================
-  // HANDOFF (DROP-OFF + PICKUP) + QUERYSTRING PREFILL
-  // =====================================================
-  function readHandoffDropoff() {
+  function clearPlace(key) {
     try {
-      const u = new URL(window.location.href);
-      const qsDrop = (u.searchParams.get("dropoff") || "").trim();
-      const qsDest = (u.searchParams.get("destination") || "").trim();
-
-      if (qsDrop) return { value: qsDrop, source: "qs:dropoff" };
-      if (qsDest) return { value: qsDest, source: "qs:destination" };
-
-      const ss = (sessionStorage.getItem("brc_dropoff_handoff") || "").trim();
-      if (ss) return { value: ss, source: "sessionStorage" };
-
-      const ls = (localStorage.getItem("brc_dropoff_handoff") || "").trim();
-      if (ls) return { value: ls, source: "localStorage" };
-
-      return null;
-    } catch (e) { return null; }
-  }
-
-  function readHandoffPickup() {
-    try {
-      const u = new URL(window.location.href);
-      const qsPick = (u.searchParams.get("pickup") || "").trim();
-      if (qsPick) return { value: qsPick, source: "qs:pickup" };
-
-      const ss = (sessionStorage.getItem("brc_pickup_handoff") || "").trim();
-      if (ss) return { value: ss, source: "sessionStorage" };
-
-      const ls = (localStorage.getItem("brc_pickup_handoff") || "").trim();
-      if (ls) return { value: ls, source: "localStorage" };
-
-      return null;
-    } catch (e) { return null; }
-  }
-
-  function clearHandoffCommonParams() {
-    try {
-      sessionStorage.removeItem("brc_dropoff_handoff");
-      localStorage.removeItem("brc_dropoff_handoff");
-      sessionStorage.removeItem("brc_pickup_handoff");
-      localStorage.removeItem("brc_pickup_handoff");
-
-      const u = new URL(window.location.href);
-      [
-        "pickup","dropoff","destination",
-        "stop",
-        "mode","reserveDate","reserveTime","planBy",
-        "payment","estimate","miles","minutes",
-        "from"
-      ].forEach(k => u.searchParams.delete(k));
-
-      window.history.replaceState({}, "", u.pathname + (u.search || "") + (u.hash || ""));
+      sessionStorage.removeItem(key);
     } catch (e) {}
   }
 
   // =====================================================
-  // PREFILL FROM QUERYSTRING (Estimate → Request)
+  // ADDRESS VERIFICATION
   // =====================================================
-  let pendingStopsToHydrate = [];
+  let pickupVerified = false;
+  let dropoffVerified = false;
 
-  function addStopField_NoAutocomplete(initialValue = "") {
-    if (stopInputs.length >= 3) return;
-    const id = "stop_" + Date.now() + "_" + Math.floor(Math.random()*1000);
-    stopInputs.push(id);
-
-    const wrap = document.getElementById("stopsWrap");
-    const div = document.createElement("div");
-    div.className = "input-group";
-    div.id = "row_" + id;
-    div.innerHTML = `
-      <label>Stop ${stopInputs.length}</label>
-      <div style="display:flex;gap:6px;align-items:center;">
-        <input id="${id}" type="text" placeholder="Enter stop address or place" style="flex:1;">
-        <button type="button" class="btn btn-secondary btn-small" onclick="removeStop('${id}')">✖</button>
-      </div>
-    `;
-    wrap.appendChild(div);
-
-    const stopEl = document.getElementById(id);
-    if (stopEl) stopEl.value = initialValue;
-
-    pendingStopsToHydrate.push(id);
-    stopEl?.addEventListener("input", () => { repeatLocked = false; clearPlace(PLACE_KEYS.stopPrefix + id); });
+  function looksLikeAddress(s) {
+    return /\d{1,6}\s+\S+/.test(String(s || "").trim());
   }
 
-  function prefillFromEstimateQuery_EARLY() {
-    try {
-      if (repeatLocked) return;
-
-      const u = new URL(window.location.href);
-
-      const qsPickup  = (u.searchParams.get("pickup") || "").trim();
-      const qsDropoff = (u.searchParams.get("dropoff") || u.searchParams.get("destination") || "").trim();
-      const qsStops   = u.searchParams.getAll("stop").map(s => String(s||"").trim()).filter(Boolean);
-
-      const qsReserveDate = (u.searchParams.get("reserveDate") || "").trim();
-      const qsReserveTime = (u.searchParams.get("reserveTime") || "").trim();
-      const qsPlanBy      = (u.searchParams.get("planBy") || "").trim().toLowerCase();
-
-      const qsPayment = (u.searchParams.get("payment") || "").trim().toLowerCase();
-
-      const qsEstimate = (u.searchParams.get("estimate") || "").trim();
-      const qsMiles    = (u.searchParams.get("miles") || "").trim();
-      const qsMinutes  = (u.searchParams.get("minutes") || "").trim();
-
-      const pEl = document.getElementById("pickup");
-      const dEl = document.getElementById("dropoff");
-
-      if (qsPickup && pEl && !String(pEl.value||"").trim()) {
-        pEl.value = qsPickup;
-        sessionStorage.removeItem(PLACE_KEYS.pickup);
-        setVerified("pickup", false);
-      }
-
-      if (qsDropoff && dEl && !String(dEl.value||"").trim()) {
-        dEl.value = qsDropoff;
-        sessionStorage.removeItem(PLACE_KEYS.dropoff);
-        setVerified("dropoff", false);
-      }
-
-      if (Array.isArray(qsStops) && qsStops.length) {
-        try {
-          stopInputs.slice().forEach(id => removeStop(id));
-          stopInputs = [];
-          pendingStopsToHydrate = [];
-        } catch(e) {}
-
-        qsStops.slice(0, 3).forEach(s => addStopField_NoAutocomplete(s));
-      }
-
-      if (qsReserveDate) document.getElementById("reserveDate").value = qsReserveDate;
-      if (qsReserveTime) document.getElementById("reserveTimeSelect").value = qsReserveTime;
-      if (qsPlanBy === "pickup" || qsPlanBy === "dropoff") document.getElementById("planBy").value = qsPlanBy;
-
-      if (qsPayment === "cash" || qsPayment === "card") {
-        document.getElementById("payment").value = qsPayment;
-      }
-
-      if (qsEstimate) {
-        const ed = document.getElementById("estimateDisplay");
-        if (ed && !String(ed.value||"").trim()) ed.value = "$" + String(qsEstimate).replace(/^\$/, "");
-      }
-
-      const touched =
-        !!qsPickup || !!qsDropoff || qsStops.length ||
-        !!qsReserveDate || !!qsReserveTime || !!qsPlanBy ||
-        !!qsPayment || !!qsEstimate || !!qsMiles || !!qsMinutes;
-
-      if (touched) {
-        clearHandoffCommonParams();
-        showToast("Trip carried over ✅");
-      }
-    } catch (e) {
-      console.warn("prefillFromEstimateQuery_EARLY failed:", e);
-    }
+  function setVerified(which, ok) {
+    if (which === "pickup") pickupVerified = !!ok;
+    if (which === "dropoff") dropoffVerified = !!ok;
   }
 
-  function applyHandoffPickupIfAny() {
-    if (repeatLocked) return;
-    const handoff = readHandoffPickup();
-    if (!handoff || !handoff.value) return;
+  function requireVerifiedOrResolvable(which) {
+    const el = document.getElementById(which);
+    const text = String(el?.value || "").trim();
 
-    const pickEl = document.getElementById("pickup");
-    if (!pickEl) return;
+    if (!text) return false;
 
-    if (!String(pickEl.value || "").trim()) {
-      pickEl.value = handoff.value;
-      sessionStorage.removeItem(PLACE_KEYS.pickup);
-      setVerified("pickup", false);
-      showToast("Pickup carried over ✅");
+    if (!looksLikeAddress(text)) {
+      const verified = which === "pickup" ? pickupVerified : dropoffVerified;
+
+      if (!verified) {
+        showToast(`Select the ${which} from suggestions`);
+        el?.focus();
+        return false;
+      }
     }
-  }
 
-  function applyHandoffDropoffIfAny() {
-    if (repeatLocked) return;
-    const handoff = readHandoffDropoff();
-    if (!handoff || !handoff.value) return;
-
-    const dropEl = document.getElementById("dropoff");
-    if (!dropEl) return;
-
-    if (!String(dropEl.value || "").trim()) {
-      dropEl.value = handoff.value;
-      sessionStorage.removeItem(PLACE_KEYS.dropoff);
-      setVerified("dropoff", false);
-      showToast("Drop-off carried over ✅");
-    }
+    return true;
   }
 
   // =====================================================
-  // MAPS + AUTOCOMPLETE
+  // MAP STATE
   // =====================================================
-  let map, geocoder, directionsService, directionsRenderer;
-  let pickupLatLng = null, dropoffLatLng = null;
-  let pickupMarker = null, dropoffMarker = null;
+  let map;
+  let geocoder;
+  let directionsService;
+  let directionsRenderer;
+
+  let pickupLatLng = null;
+  let dropoffLatLng = null;
+
+  let pickupMarker = null;
+  let dropoffMarker = null;
 
   let googleReady = false;
   let pendingAutoRoute = false;
 
-  function requestAutoRouteRender() {
-    pendingAutoRoute = true;
-    if (googleReady) setTimeout(renderRouteFromCurrentInputs, 150);
-  }
+  function setMarker(which, lat, lng) {
+    const position = { lat:Number(lat), lng:Number(lng) };
 
-  function renderRouteFromCurrentInputs() {
-    try {
-      if (!googleReady || !directionsService || !directionsRenderer || !map) return;
+    if (which === "pickup") {
+      pickupLatLng = new google.maps.LatLng(position.lat, position.lng);
 
-      const pickup = (document.getElementById("pickup")?.value || "").trim();
-      const dropoff = (document.getElementById("dropoff")?.value || "").trim();
-      if (!pickup || !dropoff) return;
+      if (pickupMarker) pickupMarker.setMap(null);
 
-      const waypoints = (stopInputs || [])
-        .map(id => (document.getElementById(id)?.value || "").trim())
-        .filter(Boolean)
-        .map(v => ({ location: v, stopover: true }));
+      pickupMarker = new google.maps.Marker({
+        position,
+        map,
+        icon:{ url:"http://maps.google.com/mapfiles/ms/icons/green-dot.png" }
+      });
+    } else {
+      dropoffLatLng = new google.maps.LatLng(position.lat, position.lng);
 
-      directionsService.route(
-        { origin: pickup, destination: dropoff, waypoints, travelMode: "DRIVING" },
-        (r, status) => {
-          if (status !== "OK" || !r?.routes?.[0]) return;
+      if (dropoffMarker) dropoffMarker.setMap(null);
 
-          directionsRenderer.setDirections(r);
-          if (r.routes[0].bounds) map.fitBounds(r.routes[0].bounds);
-
-          try {
-            const legs = r.routes[0].legs || [];
-            if (!legs.length) return;
-
-            const first = legs[0];
-            const last = legs[legs.length - 1];
-
-            setMarker("pickup", first.start_location.lat(), first.start_location.lng());
-            setMarker("dropoff", last.end_location.lat(), last.end_location.lng());
-          } catch(e) {}
-        }
-      );
-    } catch (e) {
-      console.warn("renderRouteFromCurrentInputs failed:", e);
+      dropoffMarker = new google.maps.Marker({
+        position,
+        map,
+        icon:{ url:"http://maps.google.com/mapfiles/ms/icons/red-dot.png" }
+      });
     }
   }
 
-  function placeFromGoogle(p) {
-    if (!p || !p.geometry || !p.geometry.location) return null;
-    const loc = p.geometry.location;
-    const lat = typeof loc.lat === "function" ? loc.lat() : loc.lat;
-    const lng = typeof loc.lng === "function" ? loc.lng() : loc.lng;
+  async function ensureResolvedLatLng(which) {
+    const el = document.getElementById(which);
+    const text = String(el?.value || "").trim();
+
+    if (!text || !geocoder) return false;
+
+    if (which === "pickup" && pickupLatLng) return true;
+    if (which === "dropoff" && dropoffLatLng) return true;
+
+    const okcBounds = new google.maps.LatLngBounds(
+      { lat:34.9000, lng:-98.2000 },
+      { lat:36.0000, lng:-96.0000 }
+    );
+
+    const result = await new Promise(resolve => {
+      geocoder.geocode(
+        { address:text, bounds:okcBounds },
+        (results, status) => {
+          if (status !== "OK" || !results?.length) {
+            resolve(null);
+            return;
+          }
+          resolve(results[0]);
+        }
+      );
+    });
+
+    if (!result?.geometry?.location) {
+      showToast(`Confirm ${which} from the suggestions`);
+      el?.focus();
+      return false;
+    }
+
+    const loc = result.geometry.location;
+    setMarker(which, loc.lat(), loc.lng());
+    setVerified(which, true);
+
+    return true;
+  }
+
+  function placeFromGoogle(place) {
+    if (!place?.geometry?.location) return null;
+
+    const loc = place.geometry.location;
 
     return {
-      address: p.formatted_address || p.name || "",
-      placeId: p.place_id || "",
-      lat, lng,
-      name: p.name || "",
-      types: Array.isArray(p.types) ? p.types : []
+      address:place.formatted_address || place.name || "",
+      placeId:place.place_id || "",
+      lat:typeof loc.lat === "function" ? loc.lat() : loc.lat,
+      lng:typeof loc.lng === "function" ? loc.lng() : loc.lng,
+      name:place.name || "",
+      types:Array.isArray(place.types) ? place.types : []
     };
   }
 
-  function setMarker(which, lat, lng) {
-    const latlng = { lat, lng };
-    if (which === "pickup") {
-      pickupLatLng = new google.maps.LatLng(lat, lng);
-      if (pickupMarker) pickupMarker.setMap(null);
-      pickupMarker = new google.maps.Marker({ position: latlng, map, icon: { url: "http://maps.google.com/mapfiles/ms/icons/green-dot.png" } });
-    } else if (which === "dropoff") {
-      dropoffLatLng = new google.maps.LatLng(lat, lng);
-      if (dropoffMarker) dropoffMarker.setMap(null);
-      dropoffMarker = new google.maps.Marker({ position: latlng, map, icon: { url: "http://maps.google.com/mapfiles/ms/icons/red-dot.png" } });
+  function requestAutoRouteRender() {
+    pendingAutoRoute = true;
+
+    if (googleReady) {
+      setTimeout(renderRouteFromCurrentInputs, 150);
     }
   }
 
-  function hydrateFromStoredPlace(which) {
-    const key = which === "pickup" ? PLACE_KEYS.pickup : PLACE_KEYS.dropoff;
-    const stored = loadPlace(key);
-    if (!stored || !stored.address) return;
+  function renderRouteFromCurrentInputs() {
+    if (!googleReady || !directionsService || !directionsRenderer || !map) return;
 
-    const el = document.getElementById(which);
-    if (el && !String(el.value||"").trim()) el.value = formatPlaceLine(stored.name, stored.address);
+    const pickup = String(document.getElementById("pickup")?.value || "").trim();
+    const dropoff = String(document.getElementById("dropoff")?.value || "").trim();
 
-    if (stored.lat && stored.lng && googleReady) {
-      setMarker(which, stored.lat, stored.lng);
-      setVerified(which, true);
-    } else {
-      setVerified(which, false);
-    }
-    syncLuggageVisibility();
-  }
+    if (!pickup || !dropoff) return;
 
-  function attachManualTypingWatcher(which) {
-    const el = document.getElementById(which);
-    if (!el) return;
+    const waypoints = stopInputs
+      .map(id => String(document.getElementById(id)?.value || "").trim())
+      .filter(Boolean)
+      .map(location => ({ location, stopover:true }));
 
-    const key = which === "pickup" ? PLACE_KEYS.pickup : PLACE_KEYS.dropoff;
-    el.addEventListener("input", () => {
-      repeatLocked = false;
-      setVerified(which, false); // ✅ typing = unverified
-      if (sessionStorage.getItem(key)) clearPlace(key);
-      if (which === "pickup") pickupLatLng = null;
-      if (which === "dropoff") dropoffLatLng = null;
-      applyAutoRateLabels();
-      updateFairnessPreview();
-      syncLuggageVisibility();
-    });
+    directionsService.route(
+      {
+        origin:pickup,
+        destination:dropoff,
+        waypoints,
+        optimizeWaypoints:false,
+        travelMode:google.maps.TravelMode.DRIVING
+      },
+      (result, status) => {
+        if (status !== "OK" || !result?.routes?.[0]) return;
+
+        directionsRenderer.setDirections(result);
+
+        if (result.routes[0].bounds) {
+          map.fitBounds(result.routes[0].bounds);
+        }
+
+        const legs = result.routes[0].legs || [];
+
+        if (legs.length) {
+          const first = legs[0];
+          const last = legs[legs.length - 1];
+
+          setMarker("pickup", first.start_location.lat(), first.start_location.lng());
+          setMarker("dropoff", last.end_location.lat(), last.end_location.lng());
+
+          updateFairnessPreview();
+        }
+      }
+    );
   }
 
   function setupAutocomplete(id, role) {
@@ -790,363 +911,390 @@ FILE 2: /rider/ride-request.html (Ride Request & Estimate – Big Red Connect)
     if (!input) return null;
 
     const okcBounds = new google.maps.LatLngBounds(
-      { lat: 34.9000, lng: -98.2000 },
-      { lat: 36.0000, lng: -96.0000 }
+      { lat:34.9000, lng:-98.2000 },
+      { lat:36.0000, lng:-96.0000 }
     );
 
-    const options = {
-      bounds: okcBounds,
-      strictBounds: false,
-      componentRestrictions: { country: "us" },
-      fields: ["formatted_address", "geometry.location", "name", "place_id", "types"]
-    };
+    const autocomplete = new google.maps.places.Autocomplete(input, {
+      bounds:okcBounds,
+      strictBounds:false,
+      componentRestrictions:{ country:"us" },
+      fields:["formatted_address","geometry.location","name","place_id","types"]
+    });
 
-    const ac = new google.maps.places.Autocomplete(input, options);
-
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        pos => {
-          try {
-            const loc = new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude);
-            const biasBounds = new google.maps.LatLngBounds(loc, loc);
-            ac.setBounds(biasBounds);
-          } catch (e) {}
-        },
-        () => {},
-        { enableHighAccuracy:true, maximumAge:15000, timeout:8000 }
-      );
-    }
-
-    ac.addListener("place_changed", () => {
-      const p = ac.getPlace();
-      const packed = placeFromGoogle(p);
+    autocomplete.addListener("place_changed", () => {
+      const packed = placeFromGoogle(autocomplete.getPlace());
       if (!packed) return;
 
       input.value = formatPlaceLine(packed.name, packed.address);
 
       if (role === "pickup") {
         savePlace(PLACE_KEYS.pickup, packed);
-        if (packed.lat && packed.lng) setMarker("pickup", packed.lat, packed.lng);
-        setVerified("pickup", true); // ✅ selected from suggestions
+        setMarker("pickup", packed.lat, packed.lng);
+        setVerified("pickup", true);
         applyAutoRateLabels();
         updateFairnessPreview();
         syncLuggageVisibility();
         requestAutoRouteRender();
       } else if (role === "dropoff") {
         savePlace(PLACE_KEYS.dropoff, packed);
-        if (packed.lat && packed.lng) setMarker("dropoff", packed.lat, packed.lng);
-        setVerified("dropoff", true); // ✅ selected from suggestions
+        setMarker("dropoff", packed.lat, packed.lng);
+        setVerified("dropoff", true);
         applyAutoRateLabels();
         updateFairnessPreview();
         syncLuggageVisibility();
         requestAutoRouteRender();
-      } else if (role === "stop") {
+      } else {
         savePlace(PLACE_KEYS.stopPrefix + id, packed);
         requestAutoRouteRender();
       }
     });
 
-    return ac;
+    return autocomplete;
   }
 
-  function addStopField() {
-    if (stopInputs.length >= 3) { alert("Limit 3 stops."); return; }
-    const id = "stop_" + Date.now() + "_" + Math.floor(Math.random()*1000);
+  function attachManualTypingWatcher(which) {
+    const el = document.getElementById(which);
+    if (!el) return;
+
+    const key = which === "pickup" ? PLACE_KEYS.pickup : PLACE_KEYS.dropoff;
+
+    el.addEventListener("input", () => {
+      repeatLocked = false;
+      setVerified(which, false);
+      clearPlace(key);
+
+      if (which === "pickup") pickupLatLng = null;
+      if (which === "dropoff") dropoffLatLng = null;
+
+      applyAutoRateLabels();
+      updateFairnessPreview();
+      syncLuggageVisibility();
+    });
+  }
+
+  function hydrateFromStoredPlace(which) {
+    const key = which === "pickup" ? PLACE_KEYS.pickup : PLACE_KEYS.dropoff;
+    const stored = loadPlace(key);
+
+    if (!stored?.address) return;
+
+    const el = document.getElementById(which);
+
+    if (el && !String(el.value || "").trim()) {
+      el.value = formatPlaceLine(stored.name, stored.address);
+    }
+
+    if (validPoint(stored) && googleReady) {
+      setMarker(which, stored.lat, stored.lng);
+      setVerified(which, true);
+    }
+  }
+
+  // =====================================================
+  // STOPS
+  // =====================================================
+  function addStopField(initialValue = "") {
+    if (stopInputs.length >= 3) {
+      showToast("Stop limit is 3");
+      return;
+    }
+
+    const id = "stop_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
     stopInputs.push(id);
 
     const wrap = document.getElementById("stopsWrap");
     const div = document.createElement("div");
+
     div.className = "input-group";
     div.id = "row_" + id;
     div.innerHTML = `
-      <label>Stop ${stopInputs.length}</label>
-      <div style="display:flex;gap:6px;align-items:center;">
-        <input id="${id}" type="text" placeholder="Enter stop address or place" style="flex:1;">
-        <button type="button" class="btn btn-secondary btn-small" onclick="removeStop('${id}')">✖</button>
+      <label for="${id}">Stop ${stopInputs.length}</label>
+      <div class="stop-row">
+        <input id="${id}" type="text" placeholder="Enter stop address or place">
+        <button type="button" class="btn btn-secondary btn-small" data-remove-stop="${id}">✖</button>
       </div>
     `;
+
     wrap.appendChild(div);
 
-    setupAutocomplete(id, "stop");
+    const input = document.getElementById(id);
+    input.value = initialValue;
 
-    const stopEl = document.getElementById(id);
-    stopEl.addEventListener("input", () => { repeatLocked = false; clearPlace(PLACE_KEYS.stopPrefix + id); });
+    if (googleReady) {
+      setupAutocomplete(id, "stop");
+    } else {
+      pendingStopsToHydrate.push(id);
+    }
+
+    input.addEventListener("input", () => {
+      repeatLocked = false;
+      clearPlace(PLACE_KEYS.stopPrefix + id);
+      requestAutoRouteRender();
+    });
+
+    div.querySelector("[data-remove-stop]")?.addEventListener("click", () => {
+      removeStop(id);
+    });
   }
 
   function removeStop(id) {
-    const row = document.getElementById("row_" + id);
-    if (row) row.remove();
+    document.getElementById("row_" + id)?.remove();
     stopInputs = stopInputs.filter(x => x !== id);
     clearPlace(PLACE_KEYS.stopPrefix + id);
     requestAutoRouteRender();
   }
-  window.removeStop = removeStop;
 
-  // =====================================================
-  // EARLY REPEAT PREFILL (unchanged)
-  // =====================================================
-  async function prefillFromRepeatRideIfAny_EARLY() {
-    try {
-      const u = new URL(location.href);
-
-      const repeatId =
-        (u.searchParams.get("repeat") ||
-         u.searchParams.get("repeatId") ||
-         u.searchParams.get("repeat_id") ||
-         u.searchParams.get("rideId") ||
-         u.searchParams.get("ride_id") ||
-         u.searchParams.get("bookingId") ||
-         u.searchParams.get("booking_id") ||
-         u.searchParams.get("id") ||
-         "").trim();
-
-      if (!repeatId) return false;
-
-      setLastRideId(repeatId);
-      repeatLocked = true;
-
-      const res = await fetch(`${API_BOOK}/api/bookings/${encodeURIComponent(repeatId)}?t=${Date.now()}`, { cache: "no-store" });
-      if (!res.ok) { console.warn("Repeat fetch failed:", res.status); repeatLocked = false; return false; }
-
-      const raw = await res.json();
-      const r = raw?.booking || raw?.data || raw;
-      if (!r) { repeatLocked = false; return false; }
-
-      const pickupObj  = (r.pickup && typeof r.pickup === "object") ? r.pickup : {};
-      const dropoffObj = (r.dropoff && typeof r.dropoff === "object") ? r.dropoff : {};
-
-      const pickupAddr = pickFirstString(
-        pickupObj.address, r.pickupAddress, r.pickup_address, r.pickupAddr,
-        (typeof r.pickup === "string" ? r.pickup : "")
-      );
-
-      const dropoffAddr = pickFirstString(
-        dropoffObj.address, r.dropoffAddress, r.dropoff_address, r.dropoffAddr,
-        (typeof r.dropoff === "string" ? r.dropoff : "")
-      );
-
-      const pickupName  = pickFirstString(pickupObj.name,  r.pickupName,  r.pickup_name);
-      const dropoffName = pickFirstString(dropoffObj.name, r.dropoffName, r.dropoff_name);
-
-      const pEl = document.getElementById("pickup");
-      const dEl = document.getElementById("dropoff");
-      if (pEl && pickupAddr)  pEl.value = formatPlaceLine(pickupName, pickupAddr);
-      if (dEl && dropoffAddr) dEl.value = formatPlaceLine(dropoffName, dropoffAddr);
-
-      // Since repeat may not include lat/lng, keep unverified unless coords exist
-      setVerified("pickup", false);
-      setVerified("dropoff", false);
-
-      const gEl = document.getElementById("gateCode");
-      const gateVal = String(pickFirstString(pickupObj?.gate, pickupObj?.access, pickupObj?.notes, r.pickupGate, r.gateCode, "")).trim();
-      if (gEl) gEl.value = gateVal;
-
-      const pax = Number(r?.rider?.partySize ?? r?.passengers ?? 1);
-      const paxEl = document.getElementById("passengers");
-      if (paxEl && Number.isFinite(pax) && pax > 0) paxEl.value = String(Math.min(6, pax));
-
-      const lug = Number(r?.metadata?.luggageCount ?? 0);
-      const lugEl = document.getElementById("luggageCount");
-      if (lugEl && Number.isFinite(lug) && lug >= 0) lugEl.value = String(Math.min(6, lug));
-
-      try {
-        if (pickupAddr) {
-          sessionStorage.setItem(PLACE_KEYS.pickup, JSON.stringify({
-            address: pickupAddr,
-            placeId: pickupObj.placeId || pickupObj.placeID || "",
-            lat: (typeof pickupObj.lat === "number") ? pickupObj.lat : null,
-            lng: (typeof pickupObj.lng === "number") ? pickupObj.lng : null,
-            name: pickupName || "",
-            types: Array.isArray(pickupObj.types) ? pickupObj.types : []
-          }));
-        }
-        if (dropoffAddr) {
-          sessionStorage.setItem(PLACE_KEYS.dropoff, JSON.stringify({
-            address: dropoffAddr,
-            placeId: dropoffObj.placeId || dropoffObj.placeID || "",
-            lat: (typeof dropoffObj.lat === "number") ? dropoffObj.lat : null,
-            lng: (typeof dropoffObj.lng === "number") ? dropoffObj.lng : null,
-            name: dropoffName || "",
-            types: Array.isArray(dropoffObj.types) ? dropoffObj.types : []
-          }));
-        }
-      } catch(e) {}
-
-      try {
-        stopInputs.slice().forEach(id => removeStop(id));
-        stopInputs = [];
-        pendingStopsToHydrate = [];
-      } catch(e) {}
-
-      const stops = Array.isArray(r.stops) ? r.stops : [];
-      for (const s of stops) {
-        const addr = pickFirstString(s?.address, s?.addr, s?.location);
-        if (!addr) continue;
-        const name = pickFirstString(s?.name, s?.stopName);
-        addStopField_NoAutocomplete(formatPlaceLine(name, addr));
-
-        const lastId = pendingStopsToHydrate[pendingStopsToHydrate.length - 1];
-        try {
-          sessionStorage.setItem(PLACE_KEYS.stopPrefix + lastId, JSON.stringify({
-            address: addr,
-            placeId: s?.placeId || s?.placeID || "",
-            lat: (typeof s?.lat === "number") ? s.lat : null,
-            lng: (typeof s?.lng === "number") ? s.lng : null,
-            name: name || "",
-            types: Array.isArray(s?.types) ? s.types : []
-          }));
-        } catch(e) {}
-      }
-
-      ["repeat","repeatId","repeat_id","rideId","ride_id","bookingId","booking_id","id"].forEach(k => u.searchParams.delete(k));
-      history.replaceState({}, "", u.pathname + (u.search || "") + (u.hash || ""));
-
-      showToast("Ride loaded ✅");
-      syncLuggageVisibility();
-      requestAutoRouteRender();
-      return true;
-    } catch (e) {
-      console.warn("early repeat prefill failed:", e);
-      repeatLocked = false;
-      return false;
-    }
-  }
-
-  // ✅ BULLETPROOF ORDER
-  document.addEventListener("DOMContentLoaded", async () => {
-    build15MinOptions(document.getElementById("reserveTimeSelect"));
-    initDefaultScheduleIfEmpty();
-
-    document.getElementById("reserveDate")?.addEventListener("change", applyAutoRateLabels);
-    document.getElementById("reserveTimeSelect")?.addEventListener("change", applyAutoRateLabels);
-
-    const didRepeat = await prefillFromRepeatRideIfAny_EARLY();
-
-    if (!didRepeat && !repeatLocked) {
-      prefillFromEstimateQuery_EARLY();
-      applyHandoffPickupIfAny();
-      applyHandoffDropoffIfAny();
-      initDefaultScheduleIfEmpty();
-    }
-  });
-
-  // =====================================================
-  // PROFILE SUMMARY (unchanged)
-  // =====================================================
-  function loadProfileSummary() {
-    const name  = localStorage.getItem("riderName")  || "";
-    const phone = localStorage.getItem("riderPhone") || "";
-    const home  = localStorage.getItem("riderHome")  || "";
-    const gate  = localStorage.getItem("riderGate")  || "";
-
-    const rid = ensureRiderId();
-    const summary = document.getElementById("profileSummary");
-
-    if (!name && !phone) {
-      summary.innerHTML = `Not logged in. <strong><a href="/rider-login.html" style="color:#ff6666;">Tap here to log in</a></strong>.`;
-    } else {
-      const phonePretty = phone ? formatPhone(phone) : "";
-      summary.innerHTML =
-        `<span><strong>${name || "Rider"}</strong>${phonePretty ? " · " + phonePretty : ""}</span>` +
-        (home ? `<br><span>Home pickup: ${home}</span>` : "") +
-        `<br><span style="font-size:0.7rem;color:#666;">Profile ID: ${rid}</span>`;
-    }
-
-    if (!repeatLocked) {
-      const pickEl = document.getElementById("pickup");
-      if (home && pickEl && !String(pickEl.value||"").trim()) {
-        pickEl.value = home;
-        setVerified("pickup", false);
-      }
-
-      const gateEl = document.getElementById("gateCode");
-      if (gate && gateEl && !String(gateEl.value||"").trim()) gateEl.value = gate;
-    }
-
-    syncLuggageVisibility();
-  }
-
-  function formatPhone(p) {
-    const digits = String(p || "").replace(/\D/g, "");
-    if (digits.length === 10) return `(${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6)}`;
-    return p;
-  }
+  document.getElementById("addStopBtn").addEventListener("click", () => addStopField());
 
   // =====================================================
   // GEOLOCATION BUTTONS
   // =====================================================
   function useMyLocation(which) {
-    if (!navigator.geolocation) { alert("Location services not supported."); return; }
+    if (!navigator.geolocation) {
+      alert("Location services are not supported on this device.");
+      return;
+    }
+
+    if (!geocoder) {
+      showToast("Map is still loading");
+      return;
+    }
 
     navigator.geolocation.getCurrentPosition(
       pos => {
         repeatLocked = false;
+
         const lat = pos.coords.latitude;
         const lng = pos.coords.longitude;
-        const latlng = { lat, lng };
+        const position = { lat, lng };
 
-        geocoder.geocode({ location: latlng }, (res, stat) => {
-          const addr = (stat === "OK" && res[0]) ? res[0].formatted_address : `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+        geocoder.geocode({ location:position }, (results, status) => {
+          const address =
+            status === "OK" && results?.[0]
+              ? results[0].formatted_address
+              : `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+
           const input = document.getElementById(which);
-          input.value = addr;
+          input.value = address;
 
-          const packed = { address: addr, placeId: "", lat, lng, name: "", types: [] };
+          const packed = {
+            address,
+            placeId:"",
+            lat,
+            lng,
+            name:"",
+            types:[]
+          };
 
-          setVerified(which, true); // ✅ GPS = verified
+          setVerified(which, true);
+          setMarker(which, lat, lng);
 
           if (which === "pickup") {
-            pickupLatLng = new google.maps.LatLng(lat, lng);
             savePlace(PLACE_KEYS.pickup, packed);
-            if (pickupMarker) pickupMarker.setMap(null);
-            pickupMarker = new google.maps.Marker({ position: latlng, map, icon: { url: "http://maps.google.com/mapfiles/ms/icons/green-dot.png" } });
           } else {
-            dropoffLatLng = new google.maps.LatLng(lat, lng);
             savePlace(PLACE_KEYS.dropoff, packed);
-            if (dropoffMarker) dropoffMarker.setMap(null);
-            dropoffMarker = new google.maps.Marker({ position: latlng, map, icon: { url: "http://maps.google.com/mapfiles/ms/icons/red-dot.png" } });
           }
 
-          map.panTo(latlng);
+          map.panTo(position);
           applyAutoRateLabels();
           updateFairnessPreview();
           syncLuggageVisibility();
           requestAutoRouteRender();
         });
       },
-      err => alert("Unable to get location: " + err.message),
-      { enableHighAccuracy:true, maximumAge:8000, timeout:8000 }
+      err => {
+        alert("Unable to get location: " + err.message);
+      },
+      {
+        enableHighAccuracy:true,
+        maximumAge:8000,
+        timeout:10000
+      }
     );
   }
 
   document.getElementById("useLocPickup").addEventListener("click", () => useMyLocation("pickup"));
   document.getElementById("useLocDrop").addEventListener("click", () => useMyLocation("dropoff"));
-  document.getElementById("addStopBtn").addEventListener("click", addStopField);
 
   // =====================================================
-  // HOLIDAY / RUSH / EVENT / AIRPORT (unchanged)
+  // STATUS-AWARE PRICING ORIGIN
+  // =====================================================
+  function readStatusLocation(statusData) {
+    const candidates = [
+      statusData?.location,
+      statusData?.currentLocation,
+      statusData?.driverLocation
+    ];
+
+    for (const candidate of candidates) {
+      if (validPoint(candidate)) {
+        return {
+          lat:Number(candidate.lat),
+          lng:Number(candidate.lng)
+        };
+      }
+    }
+
+    return null;
+  }
+
+  function readTrackerLocation(data) {
+    const lat = Number(
+      data?.lat ??
+      data?.latitude ??
+      data?.location?.lat
+    );
+
+    const lng = Number(
+      data?.lng ??
+      data?.longitude ??
+      data?.location?.lng
+    );
+
+    const timestamp =
+      data?.updated ??
+      data?.timestamp ??
+      data?.lastUpdated ??
+      data?.location?.updated ??
+      null;
+
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+
+    return {
+      lat,
+      lng,
+      timestamp
+    };
+  }
+
+  async function fetchStatusData() {
+    try {
+      const res = await fetch(STATUS_API + "?t=" + Date.now(), {
+        cache:"no-store"
+      });
+
+      if (!res.ok) return null;
+      return await res.json();
+    } catch (e) {
+      console.warn("Status fetch failed:", e);
+      return null;
+    }
+  }
+
+  async function fetchTrackerData() {
+    try {
+      const res = await fetch(LOCATION_API + "?t=" + Date.now(), {
+        cache:"no-store"
+      });
+
+      if (!res.ok) return null;
+      return await res.json();
+    } catch (e) {
+      console.warn("Tracker fetch failed:", e);
+      return null;
+    }
+  }
+
+  async function resolveFairnessOrigin() {
+    fairnessOrigin = { ...HQ };
+    fairnessOriginSource = "HQ";
+
+    const statusData = await fetchStatusData();
+    const status = String(statusData?.status || "offline").toLowerCase();
+
+    if (status === "offline") {
+      return fairnessOrigin;
+    }
+
+    if (status !== "online" && status !== "away") {
+      return fairnessOrigin;
+    }
+
+    const trackerRaw = await fetchTrackerData();
+    const tracker = readTrackerLocation(trackerRaw);
+
+    if (tracker) {
+      const trackerMs = safeTimestampMs(tracker.timestamp);
+      const isFresh =
+        trackerMs > 0 &&
+        Date.now() - trackerMs <= LIVE_LOCATION_FRESH_MS;
+
+      if (isFresh) {
+        fairnessOrigin = {
+          lat:tracker.lat,
+          lng:tracker.lng
+        };
+        fairnessOriginSource = "LIVE_TRACKER";
+        return fairnessOrigin;
+      }
+    }
+
+    const statusLocation = readStatusLocation(statusData);
+
+    if (statusLocation) {
+      fairnessOrigin = statusLocation;
+      fairnessOriginSource = "STATUS_FALLBACK";
+    }
+
+    return fairnessOrigin;
+  }
+
+  // Retains the former function name so existing page calls remain compatible.
+  async function fetchDriverOriginFromLiveGPS() {
+    return resolveFairnessOrigin();
+  }
+
+  // =====================================================
+  // RATE LABELS
   // =====================================================
   function getHolidayInfo(d) {
     if (!(d instanceof Date) || isNaN(d)) return null;
-    const m = d.getMonth();
-    const day = d.getDate();
+
+    const month = d.getMonth();
+    const date = d.getDate();
     const weekday = d.getDay();
 
-    if (m === 10 && weekday === 4) {
-      const nth = Math.floor((day - 1) / 7) + 1;
-      if (nth === 4) return { code: "thanksgiving", message: "🦃 Holiday base ($20) applies for Thanksgiving rides." };
+    if (month === 10 && weekday === 4) {
+      const nth = Math.floor((date - 1) / 7) + 1;
+
+      if (nth === 4) {
+        return {
+          code:"thanksgiving",
+          message:"🦃 Holiday base ($20) applies for Thanksgiving rides."
+        };
+      }
     }
-    if (m === 11 && day === 24) return { code:"christmas_eve", message:"🎄 Christmas Eve – Holiday base ($20) applies." };
-    if (m === 11 && day === 25) return { code:"christmas_day", message:"🎄 Christmas Day – Holiday base ($20) applies." };
-    if (m === 11 && day === 31) return { code:"nye", message:"🎉 New Year's Eve – Holiday base ($20) applies." };
-    if (m === 0  && day === 1)  return { code:"nyd", message:"🎉 New Year's Day – Holiday base ($20) applies." };
+
+    if (month === 11 && date === 24) {
+      return { code:"christmas_eve", message:"🎄 Christmas Eve – Holiday base ($20) applies." };
+    }
+
+    if (month === 11 && date === 25) {
+      return { code:"christmas_day", message:"🎄 Christmas Day – Holiday base ($20) applies." };
+    }
+
+    if (month === 11 && date === 31) {
+      return { code:"nye", message:"🎉 New Year's Eve – Holiday base ($20) applies." };
+    }
+
+    if (month === 0 && date === 1) {
+      return { code:"nyd", message:"🎉 New Year's Day – Holiday base ($20) applies." };
+    }
+
     return null;
   }
 
   function isWeekdayRushHour(d) {
     const day = d.getDay();
-    const h = d.getHours();
+    const hour = d.getHours();
+
     if (day === 0 || day === 6) return false;
-    return (h >= 5 && h < 9) || (h >= 15 && h < 19);
+
+    return (
+      (hour >= 5 && hour < 9) ||
+      (hour >= 15 && hour < 19)
+    );
   }
 
   const SPECIAL_EVENT_KEYWORDS = [
@@ -1162,44 +1310,63 @@ FILE 2: /rider/ride-request.html (Ride Request & Estimate – Big Red Connect)
   ];
 
   function getEffectiveDate() {
-    const dStr = document.getElementById("reserveDate").value;
-    const tStr = getReserveTimeValue();
-    if (dStr && tStr) return new Date(dStr + "T" + tStr + ":00");
+    const date = document.getElementById("reserveDate").value;
+    const time = getReserveTimeValue();
+
+    if (date && time) {
+      return new Date(`${date}T${time}:00`);
+    }
+
     return new Date();
   }
 
-  function isAirportText(s) {
-    const t = String(s || "").toLowerCase();
-    return t.includes("airport") || t.includes("will rogers");
+  function isAirportText(value) {
+    const text = String(value || "").toLowerCase();
+    return text.includes("airport") || text.includes("will rogers");
   }
+
   function isAirportPlace(stored) {
     if (!stored) return false;
+
     const name = String(stored.name || "").toLowerCase();
-    const addr = String(stored.address || "").toLowerCase();
-    const types = Array.isArray(stored.types) ? stored.types.map(x => String(x).toLowerCase()) : [];
-    return types.includes("airport") || name.includes("airport") || name.includes("will rogers") || addr.includes("airport") || addr.includes("will rogers");
+    const address = String(stored.address || "").toLowerCase();
+    const types = Array.isArray(stored.types)
+      ? stored.types.map(x => String(x).toLowerCase())
+      : [];
+
+    return (
+      types.includes("airport") ||
+      name.includes("airport") ||
+      name.includes("will rogers") ||
+      address.includes("airport") ||
+      address.includes("will rogers")
+    );
   }
 
-  function isAirportTripNow(){
+  function isAirportTripNow() {
     const pickupText = document.getElementById("pickup").value || "";
-    const dropText   = document.getElementById("dropoff").value || "";
-    const pStored = loadPlace(PLACE_KEYS.pickup);
-    const dStored = loadPlace(PLACE_KEYS.dropoff);
-    return isAirportText(pickupText) || isAirportText(dropText) || isAirportPlace(pStored) || isAirportPlace(dStored);
+    const dropoffText = document.getElementById("dropoff").value || "";
+
+    return (
+      isAirportText(pickupText) ||
+      isAirportText(dropoffText) ||
+      isAirportPlace(loadPlace(PLACE_KEYS.pickup)) ||
+      isAirportPlace(loadPlace(PLACE_KEYS.dropoff))
+    );
   }
 
-  function readLuggageCount(){
-    const el = document.getElementById("luggageCount");
-    const v = Number(el?.value ?? 0);
-    return Number.isFinite(v) ? v : 0;
+  function readLuggageCount() {
+    const value = Number(document.getElementById("luggageCount")?.value || 0);
+    return Number.isFinite(value) ? value : 0;
   }
 
-  function syncLuggageVisibility(){
+  function syncLuggageVisibility() {
     const wrap = document.getElementById("luggageWrap");
     const luggageEl = document.getElementById("luggageCount");
-    if(!wrap || !luggageEl) return;
 
-    if(isAirportTripNow()){
+    if (!wrap || !luggageEl) return;
+
+    if (isAirportTripNow()) {
       wrap.style.display = "block";
     } else {
       wrap.style.display = "none";
@@ -1207,27 +1374,21 @@ FILE 2: /rider/ride-request.html (Ride Request & Estimate – Big Red Connect)
     }
   }
 
-  ["pickup","dropoff"].forEach(id=>{
-    const el = document.getElementById(id);
-    if(el){
-      el.addEventListener("input", syncLuggageVisibility);
-      el.addEventListener("change", syncLuggageVisibility);
-    }
-  });
-
   function applyAutoRateLabels() {
-    const pickupText = (document.getElementById("pickup").value || "").toLowerCase();
-    const dropText   = (document.getElementById("dropoff").value || "").toLowerCase();
-    const effective  = getEffectiveDate();
+    const pickupText = String(document.getElementById("pickup").value || "").toLowerCase();
+    const dropoffText = String(document.getElementById("dropoff").value || "").toLowerCase();
+    const effective = getEffectiveDate();
 
-    const rush    = isWeekdayRushHour(effective);
+    const rush = isWeekdayRushHour(effective);
     const airport = isAirportTripNow();
-    const event   = SPECIAL_EVENT_KEYWORDS.some(k => pickupText.includes(k) || dropText.includes(k));
-    const holidayInfo = getHolidayInfo(effective);
+    const event = SPECIAL_EVENT_KEYWORDS.some(keyword =>
+      pickupText.includes(keyword) || dropoffText.includes(keyword)
+    );
+    const holiday = getHolidayInfo(effective);
 
-    const rushNote    = document.getElementById("rushhour-note");
+    const rushNote = document.getElementById("rushhour-note");
     const airportNote = document.getElementById("airport-note");
-    const eventNote   = document.getElementById("event-note");
+    const eventNote = document.getElementById("event-note");
 
     rushNote.textContent = "";
     airportNote.textContent = "";
@@ -1235,11 +1396,27 @@ FILE 2: /rider/ride-request.html (Ride Request & Estimate – Big Red Connect)
 
     syncLuggageVisibility();
 
-    if (holidayInfo) { eventNote.textContent = holidayInfo.message; return { baseType: "holiday", base: 20 }; }
-    if (event) { eventNote.textContent = "📍 Special event area – Event base ($20) may apply."; return { baseType: "event", base: 20 }; }
-    if (airport) { airportNote.textContent = "✈️ Airport run – Airport base ($20) applies."; return { baseType: "airport", base: 20 }; }
-    if (rush) { rushNote.textContent = "🚦 Weekday Rush Hour (5–9 AM / 3–7 PM)."; return { baseType: "rush", base: 15 }; }
-    return { baseType: "standard", base: 10 };
+    if (holiday) {
+      eventNote.textContent = holiday.message;
+      return { baseType:"holiday", base:20 };
+    }
+
+    if (event) {
+      eventNote.textContent = "📍 Special event area – Event base ($20) may apply.";
+      return { baseType:"event", base:20 };
+    }
+
+    if (airport) {
+      airportNote.textContent = "✈️ Airport run – Airport base ($20) applies.";
+      return { baseType:"airport", base:20 };
+    }
+
+    if (rush) {
+      rushNote.textContent = "🚦 Weekday Rush Hour (5–9 AM / 3–7 PM).";
+      return { baseType:"rush", base:15 };
+    }
+
+    return { baseType:"standard", base:10 };
   }
 
   // =====================================================
@@ -1248,59 +1425,413 @@ FILE 2: /rider/ride-request.html (Ride Request & Estimate – Big Red Connect)
   function distMi(a, b) {
     const p1 = new google.maps.LatLng(a.lat, a.lng);
     const p2 = new google.maps.LatLng(b.lat, b.lng);
-    return google.maps.geometry.spherical.computeDistanceBetween(p1, p2) / 1609.34;
+
+    return (
+      google.maps.geometry.spherical.computeDistanceBetween(p1, p2) /
+      1609.34
+    );
   }
 
   function getEffectiveFairnessDistanceFromPickup() {
-  if (!pickupLatLng) return 0;
+    if (!pickupLatLng) return 0;
 
-  const pickup = {
-    lat: pickupLatLng.lat(),
-    lng: pickupLatLng.lng()
-  };
+    const pickup = {
+      lat:pickupLatLng.lat(),
+      lng:pickupLatLng.lng()
+    };
 
-  const dFromHQ = distMi(HQ, pickup);
-  const dFromLive = fairnessOrigin ? distMi(fairnessOrigin, pickup) : dFromHQ;
+    const origin = validPoint(fairnessOrigin)
+      ? fairnessOrigin
+      : HQ;
 
-  return Math.min(dFromHQ, dFromLive);
-}
-
-function computeFairnessFee(miles) {
-  if (!pickupLatLng) return 0;
-
-  const d = getEffectiveFairnessDistanceFromPickup();
-
-  let zoneFee = 0;
-  if (d > 15) zoneFee = 20;
-  else if (d > 10) zoneFee = 10;
-
-  if (zoneFee > 0 && miles > 20) zoneFee = 0;
-
-  return zoneFee;
-}
-
-function updateFairnessPreview() {
-  const note = document.getElementById("fairness-note");
-  note.textContent = "";
-  if (!pickupLatLng) return;
-
-  const d = getEffectiveFairnessDistanceFromPickup();
-
-  if (d > 40) {
-    note.textContent = "📍 Pickup is well outside the central metro / current driver area. A travel fairness fee may apply depending on total trip distance.";
-  } else if (d > 20) {
-    note.textContent = "📍 Pickup is outside the central zone / current driver area. A small travel fairness fee may apply depending on trip distance.";
+    // Authoritative status-selected origin.
+    // Do not compare against HQ and choose whichever is closer.
+    return distMi(origin, pickup);
   }
-}
+
+  function computeFairnessFee(miles) {
+    if (!pickupLatLng) return 0;
+
+    const distanceToPickup = getEffectiveFairnessDistanceFromPickup();
+
+    let fee = 0;
+
+    if (distanceToPickup > 15) {
+      fee = 20;
+    } else if (distanceToPickup > 10) {
+      fee = 10;
+    }
+
+    if (fee > 0 && Number(miles) > 20) {
+      fee = 0;
+    }
+
+    return fee;
+  }
+
+  function updateFairnessPreview() {
+    const note = document.getElementById("fairness-note");
+    if (!note) return;
+
+    note.textContent = "";
+
+    if (!pickupLatLng) return;
+
+    const distance = getEffectiveFairnessDistanceFromPickup();
+
+    if (distance > 40) {
+      note.textContent =
+        "📍 Pickup is well outside the central metro / current driver area. A travel fairness fee may apply depending on total trip distance.";
+    } else if (distance > 20) {
+      note.textContent =
+        "📍 Pickup is outside the central zone / current driver area. A small travel fairness fee may apply depending on trip distance.";
+    }
+  }
 
   // =====================================================
-  // ROUTE URL
+  // QUERY / HANDOFF PREFILL
   // =====================================================
-  function buildRouteUrl(pickup, dropoff, stops) {
-    const base = "https://www.google.com/maps/dir/?api=1";
-    let url = base + "&origin=" + encodeURIComponent(pickup) + "&destination=" + encodeURIComponent(dropoff);
-    if (stops && stops.length > 0) url += "&waypoints=" + encodeURIComponent(stops.join("|"));
-    return url;
+  function clearHandoffCommonParams() {
+    try {
+      sessionStorage.removeItem("brc_dropoff_handoff");
+      localStorage.removeItem("brc_dropoff_handoff");
+      sessionStorage.removeItem("brc_pickup_handoff");
+      localStorage.removeItem("brc_pickup_handoff");
+
+      const url = new URL(window.location.href);
+
+      [
+        "pickup",
+        "dropoff",
+        "destination",
+        "stop",
+        "mode",
+        "reserveDate",
+        "reserveTime",
+        "planBy",
+        "payment",
+        "estimate",
+        "miles",
+        "minutes",
+        "from"
+      ].forEach(key => url.searchParams.delete(key));
+
+      history.replaceState(
+        {},
+        "",
+        url.pathname + (url.search || "") + (url.hash || "")
+      );
+    } catch (e) {}
+  }
+
+  function readHandoffPickup() {
+    try {
+      const url = new URL(window.location.href);
+
+      return (
+        String(url.searchParams.get("pickup") || "").trim() ||
+        String(sessionStorage.getItem("brc_pickup_handoff") || "").trim() ||
+        String(localStorage.getItem("brc_pickup_handoff") || "").trim()
+      );
+    } catch (e) {
+      return "";
+    }
+  }
+
+  function readHandoffDropoff() {
+    try {
+      const url = new URL(window.location.href);
+
+      return (
+        String(
+          url.searchParams.get("dropoff") ||
+          url.searchParams.get("destination") ||
+          ""
+        ).trim() ||
+        String(sessionStorage.getItem("brc_dropoff_handoff") || "").trim() ||
+        String(localStorage.getItem("brc_dropoff_handoff") || "").trim()
+      );
+    } catch (e) {
+      return "";
+    }
+  }
+
+  function prefillFromEstimateQuery() {
+    if (repeatLocked) return;
+
+    try {
+      const url = new URL(window.location.href);
+
+      const pickup = String(url.searchParams.get("pickup") || "").trim();
+      const dropoff = String(
+        url.searchParams.get("dropoff") ||
+        url.searchParams.get("destination") ||
+        ""
+      ).trim();
+
+      const stops = url.searchParams
+        .getAll("stop")
+        .map(x => String(x || "").trim())
+        .filter(Boolean)
+        .slice(0, 3);
+
+      const reserveDate = String(url.searchParams.get("reserveDate") || "").trim();
+      const reserveTime = String(url.searchParams.get("reserveTime") || "").trim();
+      const planBy = String(url.searchParams.get("planBy") || "").trim().toLowerCase();
+      const payment = String(url.searchParams.get("payment") || "").trim().toLowerCase();
+      const estimate = String(url.searchParams.get("estimate") || "").trim();
+
+      if (pickup) {
+        document.getElementById("pickup").value = pickup;
+        setVerified("pickup", false);
+      }
+
+      if (dropoff) {
+        document.getElementById("dropoff").value = dropoff;
+        setVerified("dropoff", false);
+      }
+
+      stops.forEach(stop => addStopField(stop));
+
+      if (reserveDate) {
+        document.getElementById("reserveDate").value = reserveDate;
+      }
+
+      if (reserveTime) {
+        document.getElementById("reserveTimeSelect").value = reserveTime;
+      }
+
+      if (planBy === "pickup" || planBy === "dropoff") {
+        document.getElementById("planBy").value = planBy;
+      }
+
+      if (payment === "cash" || payment === "card") {
+        document.getElementById("payment").value = payment;
+      }
+
+      if (estimate) {
+        document.getElementById("estimateDisplay").value =
+          "$" + estimate.replace(/^\$/, "");
+      }
+
+      if (
+        pickup ||
+        dropoff ||
+        stops.length ||
+        reserveDate ||
+        reserveTime ||
+        planBy ||
+        payment ||
+        estimate
+      ) {
+        clearHandoffCommonParams();
+        showToast("Trip carried over ✅");
+      }
+    } catch (e) {
+      console.warn("Estimate prefill failed:", e);
+    }
+  }
+
+  function applyHandoffValues() {
+    if (repeatLocked) return;
+
+    const pickup = readHandoffPickup();
+    const dropoff = readHandoffDropoff();
+
+    const pickupEl = document.getElementById("pickup");
+    const dropoffEl = document.getElementById("dropoff");
+
+    if (pickup && pickupEl && !String(pickupEl.value || "").trim()) {
+      pickupEl.value = pickup;
+      setVerified("pickup", false);
+    }
+
+    if (dropoff && dropoffEl && !String(dropoffEl.value || "").trim()) {
+      dropoffEl.value = dropoff;
+      setVerified("dropoff", false);
+    }
+  }
+
+  // =====================================================
+  // REPEAT RIDE PREFILL
+  // =====================================================
+  async function prefillFromRepeatRideIfAny() {
+    try {
+      const url = new URL(location.href);
+
+      const repeatId = String(
+        url.searchParams.get("repeat") ||
+        url.searchParams.get("repeatId") ||
+        url.searchParams.get("repeat_id") ||
+        url.searchParams.get("rideId") ||
+        url.searchParams.get("ride_id") ||
+        url.searchParams.get("bookingId") ||
+        url.searchParams.get("booking_id") ||
+        url.searchParams.get("id") ||
+        ""
+      ).trim();
+
+      if (!repeatId) return false;
+
+      repeatLocked = true;
+      setLastRideId(repeatId);
+
+      const res = await fetch(
+        `${API_BOOK}/api/bookings/${encodeURIComponent(repeatId)}?t=${Date.now()}`,
+        { cache:"no-store" }
+      );
+
+      if (!res.ok) {
+        repeatLocked = false;
+        return false;
+      }
+
+      const raw = await res.json();
+      const ride = raw?.booking || raw?.data || raw;
+
+      if (!ride) {
+        repeatLocked = false;
+        return false;
+      }
+
+      const pickupObj =
+        ride.pickup && typeof ride.pickup === "object"
+          ? ride.pickup
+          : {};
+
+      const dropoffObj =
+        ride.dropoff && typeof ride.dropoff === "object"
+          ? ride.dropoff
+          : {};
+
+      const pickupAddress = pickFirstString(
+        pickupObj.address,
+        ride.pickupAddress,
+        ride.pickup_address,
+        ride.pickupAddr,
+        typeof ride.pickup === "string" ? ride.pickup : ""
+      );
+
+      const dropoffAddress = pickFirstString(
+        dropoffObj.address,
+        ride.dropoffAddress,
+        ride.dropoff_address,
+        ride.dropoffAddr,
+        typeof ride.dropoff === "string" ? ride.dropoff : ""
+      );
+
+      const pickupName = pickFirstString(
+        pickupObj.name,
+        ride.pickupName,
+        ride.pickup_name
+      );
+
+      const dropoffName = pickFirstString(
+        dropoffObj.name,
+        ride.dropoffName,
+        ride.dropoff_name
+      );
+
+      if (pickupAddress) {
+        document.getElementById("pickup").value =
+          formatPlaceLine(pickupName, pickupAddress);
+
+        savePlace(PLACE_KEYS.pickup, {
+          address:pickupAddress,
+          placeId:pickupObj.placeId || pickupObj.placeID || "",
+          lat:Number.isFinite(Number(pickupObj.lat)) ? Number(pickupObj.lat) : null,
+          lng:Number.isFinite(Number(pickupObj.lng)) ? Number(pickupObj.lng) : null,
+          name:pickupName || "",
+          types:Array.isArray(pickupObj.types) ? pickupObj.types : []
+        });
+      }
+
+      if (dropoffAddress) {
+        document.getElementById("dropoff").value =
+          formatPlaceLine(dropoffName, dropoffAddress);
+
+        savePlace(PLACE_KEYS.dropoff, {
+          address:dropoffAddress,
+          placeId:dropoffObj.placeId || dropoffObj.placeID || "",
+          lat:Number.isFinite(Number(dropoffObj.lat)) ? Number(dropoffObj.lat) : null,
+          lng:Number.isFinite(Number(dropoffObj.lng)) ? Number(dropoffObj.lng) : null,
+          name:dropoffName || "",
+          types:Array.isArray(dropoffObj.types) ? dropoffObj.types : []
+        });
+      }
+
+      document.getElementById("gateCode").value =
+        pickFirstString(
+          pickupObj.gate,
+          pickupObj.access,
+          pickupObj.notes,
+          ride.pickupGate,
+          ride.gateCode
+        );
+
+      const partySize = Number(ride?.rider?.partySize ?? ride?.passengers ?? 1);
+      document.getElementById("passengers").value =
+        String(Math.max(1, Math.min(6, Number.isFinite(partySize) ? partySize : 1)));
+
+      const luggageCount = Number(ride?.metadata?.luggageCount ?? 0);
+      document.getElementById("luggageCount").value =
+        String(Math.max(0, Math.min(6, Number.isFinite(luggageCount) ? luggageCount : 0)));
+
+      stopInputs.slice().forEach(removeStop);
+
+      const stops = Array.isArray(ride.stops) ? ride.stops : [];
+
+      stops.slice(0, 3).forEach(stop => {
+        const address = pickFirstString(
+          stop?.address,
+          stop?.addr,
+          stop?.location
+        );
+
+        if (!address) return;
+
+        const name = pickFirstString(stop?.name, stop?.stopName);
+        addStopField(formatPlaceLine(name, address));
+
+        const id = stopInputs[stopInputs.length - 1];
+
+        savePlace(PLACE_KEYS.stopPrefix + id, {
+          address,
+          placeId:stop?.placeId || stop?.placeID || "",
+          lat:Number.isFinite(Number(stop?.lat)) ? Number(stop.lat) : null,
+          lng:Number.isFinite(Number(stop?.lng)) ? Number(stop.lng) : null,
+          name:name || "",
+          types:Array.isArray(stop?.types) ? stop.types : []
+        });
+      });
+
+      [
+        "repeat",
+        "repeatId",
+        "repeat_id",
+        "rideId",
+        "ride_id",
+        "bookingId",
+        "booking_id",
+        "id"
+      ].forEach(key => url.searchParams.delete(key));
+
+      history.replaceState(
+        {},
+        "",
+        url.pathname + (url.search || "") + (url.hash || "")
+      );
+
+      showToast("Ride loaded ✅");
+      syncLuggageVisibility();
+      requestAutoRouteRender();
+
+      return true;
+    } catch (e) {
+      console.warn("Repeat ride prefill failed:", e);
+      repeatLocked = false;
+      return false;
+    }
   }
 
   // =====================================================
@@ -1310,204 +1841,328 @@ function updateFairnessPreview() {
   let requestInFlight = false;
 
   function getStopsAsTextList() {
-    return stopInputs.map(id => (document.getElementById(id)?.value || "").trim()).filter(Boolean);
+    return stopInputs
+      .map(id => String(document.getElementById(id)?.value || "").trim())
+      .filter(Boolean);
   }
 
   function getStopsAsObjects() {
     return stopInputs
       .map(id => {
-        const addr = (document.getElementById(id)?.value || "").trim();
-        if (!addr) return null;
+        const address = String(document.getElementById(id)?.value || "").trim();
+        if (!address) return null;
+
         const stored = loadPlace(PLACE_KEYS.stopPrefix + id);
+
         return {
-          address: addr,
-          placeId: stored?.placeId || null,
-          lat: (typeof stored?.lat === "number") ? stored.lat : null,
-          lng: (typeof stored?.lng === "number") ? stored.lng : null,
-          name: stored?.name || null,
-          types: Array.isArray(stored?.types) ? stored.types : []
+          address,
+          placeId:stored?.placeId || null,
+          lat:Number.isFinite(Number(stored?.lat)) ? Number(stored.lat) : null,
+          lng:Number.isFinite(Number(stored?.lng)) ? Number(stored.lng) : null,
+          name:stored?.name || null,
+          types:Array.isArray(stored?.types) ? stored.types : []
         };
       })
       .filter(Boolean);
   }
 
   async function calculateFare() {
-    const rd = (document.getElementById("reserveDate")?.value || "").trim();
-    const rt = (getReserveTimeValue() || "").trim();
-    if (!rd || !rt) { showToast("Select date & time"); return; }
+    initDefaultScheduleIfEmpty();
 
-    const pickup = document.getElementById("pickup").value.trim();
-    const dropoff = document.getElementById("dropoff").value.trim();
-    if (!pickup || !dropoff) { showToast("Enter pickup & drop-off"); return; }
+    const reserveDate = String(document.getElementById("reserveDate")?.value || "").trim();
+    const reserveTime = getReserveTimeValue();
 
-    // ✅ Enforce strict rules
+    if (!reserveDate || !reserveTime) {
+      showToast("Select date & time");
+      return;
+    }
+
+    const pickup = String(document.getElementById("pickup").value || "").trim();
+    const dropoff = String(document.getElementById("dropoff").value || "").trim();
+
+    if (!pickup || !dropoff) {
+      showToast("Enter pickup & drop-off");
+      return;
+    }
+
     if (!requireVerifiedOrResolvable("pickup")) return;
     if (!requireVerifiedOrResolvable("dropoff")) return;
 
-    const okPick = await ensureResolvedLatLng("pickup");
-    const okDrop = await ensureResolvedLatLng("dropoff");
-    if (looksLikeAddress(pickup) && !okPick) return;
-    if (looksLikeAddress(dropoff) && !okDrop) return;
+    const pickupResolved = await ensureResolvedLatLng("pickup");
+    const dropoffResolved = await ensureResolvedLatLng("dropoff");
+
+    if (!pickupResolved || !dropoffResolved) return;
 
     const waypoints = stopInputs
       .map(id => {
-        const v = document.getElementById(id)?.value.trim();
-        return v ? { location: v, stopover: true } : null;
+        const value = String(document.getElementById(id)?.value || "").trim();
+        return value ? { location:value, stopover:true } : null;
       })
       .filter(Boolean);
 
     let route;
+
     try {
       route = await new Promise((resolve, reject) => {
         directionsService.route(
-          { origin: pickup, destination: dropoff, waypoints, travelMode: "DRIVING" },
-          (r, status) => status === "OK" ? resolve(r) : reject(status)
+          {
+            origin:pickup,
+            destination:dropoff,
+            waypoints,
+            optimizeWaypoints:false,
+            travelMode:google.maps.TravelMode.DRIVING
+          },
+          (result, status) => {
+            if (status === "OK") {
+              resolve(result);
+            } else {
+              reject(new Error(status));
+            }
+          }
         );
       });
-    } catch (errStatus) {
-      alert("Unable to get route from Google Maps. Please double-check addresses.");
+    } catch (e) {
+      alert("Unable to get route from Google Maps. Please double-check the addresses.");
       return;
     }
 
     directionsRenderer.setDirections(route);
-    if (route?.routes?.[0]?.bounds) map.fitBounds(route.routes[0].bounds);
+
+    if (route?.routes?.[0]?.bounds) {
+      map.fitBounds(route.routes[0].bounds);
+    }
+
+    const legs = route?.routes?.[0]?.legs || [];
+
+    if (!legs.length) {
+      showToast("Route not found");
+      return;
+    }
+
+    setMarker(
+      "pickup",
+      legs[0].start_location.lat(),
+      legs[0].start_location.lng()
+    );
+
+    setMarker(
+      "dropoff",
+      legs[legs.length - 1].end_location.lat(),
+      legs[legs.length - 1].end_location.lng()
+    );
 
     let miles = 0;
     let minutes = 0;
-    route.routes[0].legs.forEach(l => {
-      miles   += (l.distance?.value || 0) / 1609.34;
-      minutes += (l.duration?.value || 0) / 60;
+
+    legs.forEach(leg => {
+      miles += Number(leg?.distance?.value || 0) / 1609.34;
+      minutes += Number(leg?.duration?.value || 0) / 60;
     });
-    miles   = Math.round(miles);
+
+    miles = Math.round(miles);
     minutes = Math.round(minutes);
 
     const rate = applyAutoRateLabels();
     const base = rate.base;
 
     const tier2 = Math.max(0, Math.min(10, miles - 10)) * 1.25;
-    const tier3 = Math.max(0, miles - 20) * 1.0;
+    const tier3 = Math.max(0, miles - 20) * 1.00;
     const mileageSub = tier2 + tier3;
 
-    const basePlusMiles = base + mileageSub;
+    await resolveFairnessOrigin();
 
-    await fetchDriverOriginFromLiveGPS();
     const fairnessFee = computeFairnessFee(miles);
+    const payment = document.getElementById("payment").value;
 
-    const pay = document.getElementById("payment").value;
-    let fare = basePlusMiles + fairnessFee;
-    if (pay === "card") fare += fare * 0.033 + fare * 0.024;
+    let fare = base + mileageSub + fairnessFee;
+
+    if (payment === "card") {
+      fare += fare * 0.033 + fare * 0.024;
+    }
 
     const total = fare.toFixed(2);
+
     document.getElementById("estimateDisplay").value = "$" + total;
 
-    const resDiv = document.getElementById("result");
-    resDiv.style.display = "block";
-    resDiv.innerHTML = `
+    const result = document.getElementById("result");
+    result.style.display = "block";
+    result.innerHTML = `
       <div class="total">$${total}</div>
       <p><strong>Base:</strong> $${base.toFixed(2)}</p>
       <p><strong>Mileage:</strong> $${mileageSub.toFixed(2)} (${miles} mi)</p>
-      ${fairnessFee > 0 ? `<p><strong>Travel Fairness Fee:</strong> $${fairnessFee.toFixed(2)}</p>` : ""}
-      <p><strong>Payment:</strong> ${pay === "card" ? "Card (incl. fees)" : "Cash / Venmo / Cash App"}</p>
-      <p>⏱️ Approx. ${Math.round(minutes)} min</p>
+      ${fairnessFee > 0
+        ? `<p><strong>Travel Fairness Fee:</strong> $${fairnessFee.toFixed(2)}</p>`
+        : ""
+      }
+      <p><strong>Payment:</strong> ${
+        payment === "card"
+          ? "Card (incl. fees)"
+          : "Cash / Venmo / Cash App"
+      }</p>
+      <p>⏱️ Approx. ${minutes} min</p>
       <div style="text-align:center;margin-top:10px;">
         <button class="btn btn-primary" id="btnRequest" type="button">📩 Request This Ride</button>
       </div>
     `;
 
     lastFare = {
-      pickup, dropoff, miles, minutes, base, mileageSub, fairnessFee,
-      total: Number(total),
-      pay,
+      pickup,
+      dropoff,
+      miles,
+      minutes,
+      base,
+      mileageSub,
+      fairnessFee,
+      total:Number(total),
+      pay:payment,
       mode,
-      stopsText: getStopsAsTextList(),
-      stopsObj: getStopsAsObjects(),
-      reserveDate: rd,
-      reserveTime: rt,
-      planBy: document.getElementById("planBy").value,
-      passengers: Number(document.getElementById("passengers").value || "1"),
-      luggageCount: readLuggageCount(),
-      gateCode: document.getElementById("gateCode").value.trim()
+      stopsText:getStopsAsTextList(),
+      stopsObj:getStopsAsObjects(),
+      reserveDate,
+      reserveTime,
+      planBy:document.getElementById("planBy").value,
+      passengers:Number(document.getElementById("passengers").value || 1),
+      luggageCount:readLuggageCount(),
+      gateCode:String(document.getElementById("gateCode").value || "").trim(),
+      pricingOrigin:{
+        lat:Number(fairnessOrigin.lat),
+        lng:Number(fairnessOrigin.lng),
+        source:fairnessOriginSource
+      }
     };
 
-    document.getElementById("btnRequest").onclick = sendRequest;
+    document.getElementById("btnRequest").addEventListener("click", sendRequest);
     updateFairnessPreview();
   }
 
   document.getElementById("calcBtn").addEventListener("click", calculateFare);
 
   // =====================================================
-  // SEND REQUEST (unchanged)
+  // ROUTE LINK
+  // =====================================================
+  function buildRouteUrl(pickup, dropoff, stops) {
+    const params = new URLSearchParams();
+
+    params.set("api", "1");
+    params.set("origin", pickup);
+    params.set("destination", dropoff);
+    params.set("travelmode", "driving");
+
+    if (Array.isArray(stops) && stops.length) {
+      params.set("waypoints", stops.join("|"));
+    }
+
+    return "https://www.google.com/maps/dir/?" + params.toString();
+  }
+
+  // =====================================================
+  // SEND REQUEST
   // =====================================================
   async function sendRequest() {
-    if (!lastFare) { showToast("Get an estimate first."); return; }
-    if (requestInFlight) { showToast("Request already sending…"); return; }
-    if (!lastFare.reserveDate || !lastFare.reserveTime) { showToast("Select date & time"); return; }
+    if (!lastFare) {
+      showToast("Get an estimate first");
+      return;
+    }
+
+    if (requestInFlight) {
+      showToast("Request already sending…");
+      return;
+    }
 
     requestInFlight = true;
 
-    const name  = localStorage.getItem("riderName")  || "Rider";
+    const name = localStorage.getItem("riderName") || "Rider";
     const phone = localStorage.getItem("riderPhone") || "";
     const riderId = ensureRiderId();
     const q = lastFare;
 
-    const localISO = q.reserveDate + "T" + q.reserveTime + ":00";
-    const scheduledISO = new Date(localISO).toISOString();
+    const scheduledLocal =
+      q.reserveDate + "T" + q.reserveTime + ":00";
 
-    const routeUrl = buildRouteUrl(q.pickup, q.dropoff, q.stopsText || []);
+    const scheduledISO =
+      new Date(scheduledLocal).toISOString();
+
+    const routeUrl =
+      buildRouteUrl(q.pickup, q.dropoff, q.stopsText || []);
+
     const pickupStored = loadPlace(PLACE_KEYS.pickup);
-    const dropStored   = loadPlace(PLACE_KEYS.dropoff);
-
-    const bookingType = "RESERVATION";
+    const dropoffStored = loadPlace(PLACE_KEYS.dropoff);
 
     const payload = {
-      type: bookingType,
-      pickup: {
-        address: q.pickup,
-        name: pickupStored?.name || null,
-        gate: q.gateCode || "",
-        placeId: pickupStored?.placeId || null,
-        lat: (typeof pickupStored?.lat === "number") ? pickupStored.lat : null,
-        lng: (typeof pickupStored?.lng === "number") ? pickupStored.lng : null
+      type:"RESERVATION",
+
+      pickup:{
+        address:q.pickup,
+        name:pickupStored?.name || null,
+        gate:q.gateCode || "",
+        placeId:pickupStored?.placeId || null,
+        lat:Number.isFinite(Number(pickupStored?.lat))
+          ? Number(pickupStored.lat)
+          : null,
+        lng:Number.isFinite(Number(pickupStored?.lng))
+          ? Number(pickupStored.lng)
+          : null
       },
-      dropoff: {
-        address: q.dropoff,
-        name: dropStored?.name || null,
-        placeId: dropStored?.placeId || null,
-        lat: (typeof dropStored?.lat === "number") ? dropStored.lat : null,
-        lng: (typeof dropStored?.lng === "number") ? dropStored.lng : null
+
+      dropoff:{
+        address:q.dropoff,
+        name:dropoffStored?.name || null,
+        placeId:dropoffStored?.placeId || null,
+        lat:Number.isFinite(Number(dropoffStored?.lat))
+          ? Number(dropoffStored.lat)
+          : null,
+        lng:Number.isFinite(Number(dropoffStored?.lng))
+          ? Number(dropoffStored.lng)
+          : null
       },
-      stops: (q.stopsObj || []).map(s => ({
-        address: s.address,
-        name: s.name || null,
-        placeId: s.placeId || null,
-        lat: (typeof s.lat === "number") ? s.lat : null,
-        lng: (typeof s.lng === "number") ? s.lng : null
+
+      stops:(q.stopsObj || []).map(stop => ({
+        address:stop.address,
+        name:stop.name || null,
+        placeId:stop.placeId || null,
+        lat:Number.isFinite(Number(stop.lat))
+          ? Number(stop.lat)
+          : null,
+        lng:Number.isFinite(Number(stop.lng))
+          ? Number(stop.lng)
+          : null
       })),
-      rider: {
-        name, phone,
-        partySize: q.passengers || 1,
+
+      rider:{
+        name,
+        phone,
+        partySize:q.passengers || 1,
         riderId,
-        notifyPref: getNotifyPref()
+        notifyPref:getNotifyPref()
       },
-      pricing: {
-        estimate: Number(q.total),
-        travelFee: q.fairnessFee || 0,
-        ratePlan: "RESERVATION"
+
+      pricing:{
+        estimate:Number(q.total),
+        travelFee:Number(q.fairnessFee || 0),
+        ratePlan:"RESERVATION"
       },
-      metrics: { miles: q.miles, minutes: q.minutes },
-      scheduledFor: scheduledISO,
-      source: "RIDE_REQUEST",
-      metadata: {
-        luggageCount: (q.luggageCount ?? 0),
+
+      metrics:{
+        miles:q.miles,
+        minutes:q.minutes
+      },
+
+      scheduledFor:scheduledISO,
+      source:"RIDE_REQUEST",
+
+      metadata:{
+        luggageCount:q.luggageCount ?? 0,
         routeUrl,
-        notifyPref: getNotifyPref(),
-        planBy: q.planBy || "pickup"
+        notifyPref:getNotifyPref(),
+        planBy:q.planBy || "pickup",
+        pricingOrigin:q.pricingOrigin || null
       }
     };
 
-    let res;
+    let response;
+
     try {
-      res = await fetch(API_BOOK + "/api/bookings", {
+      response = await fetch(API_BOOK + "/api/bookings", {
         method:"POST",
         headers:{ "Content-Type":"application/json" },
         body:JSON.stringify(payload)
@@ -1518,13 +2173,13 @@ function updateFairnessPreview() {
       return;
     }
 
-    if (!res.ok) {
+    if (!response.ok) {
       requestInFlight = false;
       alert("Error sending request. Please text RED with your details.");
       return;
     }
 
-    const booking = await res.json();
+    const booking = await response.json();
     const rideId = booking.id;
 
     setLastRideId(rideId);
@@ -1532,35 +2187,43 @@ function updateFairnessPreview() {
 
     try {
       await fetch(PUSH_API, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Ride-Push-Key": "ride_request_ok"
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json",
+          "X-Ride-Push-Key":"ride_request_ok"
         },
-        body: JSON.stringify({
+        body:JSON.stringify({
           rideId,
-          riderName: name,
-          pickup: q.pickup,
-          dropoff: q.dropoff,
-          passengers: q.passengers || 1,
-          luggageCount: (q.luggageCount ?? 0),
-          estimate: q.total,
-          scheduledFor: scheduledISO
+          riderName:name,
+          pickup:q.pickup,
+          dropoff:q.dropoff,
+          passengers:q.passengers || 1,
+          luggageCount:q.luggageCount ?? 0,
+          estimate:q.total,
+          scheduledFor:scheduledISO
         })
       });
     } catch (e) {
-      console.warn("Ride request push failed (non-blocking)", e);
+      console.warn("Ride request push failed (non-blocking):", e);
     }
 
-    const btn = document.getElementById("btnRequest");
-    if (btn) {
-      btn.disabled = true;
-      btn.textContent = "Request Sent";
+    const requestButton = document.getElementById("btnRequest");
+
+    if (requestButton) {
+      requestButton.disabled = true;
+      requestButton.textContent = "Request Sent";
     }
 
-    const stopsText = (q.stopsText && q.stopsText.length) ? q.stopsText.join(" → ") : "None";
-    const whenText = `${q.reserveDate} at ${q.reserveTime}`;
-    const shortRoute = `https://bigredconnectokc.com/rider/route.html?id=${encodeURIComponent(rideId)}`;
+    const stopsText =
+      q.stopsText?.length
+        ? q.stopsText.join(" → ")
+        : "None";
+
+    const whenText =
+      `${q.reserveDate} at ${q.reserveTime}`;
+
+    const shortRoute =
+      `https://bigredconnectokc.com/rider/route.html?id=${encodeURIComponent(rideId)}`;
 
     const smsBody =
       `Hey Big Red — this is ${name}.\n` +
@@ -1578,16 +2241,58 @@ function updateFairnessPreview() {
       `Ride ID: ${rideId}\n` +
       `Route: ${shortRoute}`;
 
-    const smsUrl = "sms:+14053784024?&body=" + encodeURIComponent(smsBody);
-    const trackUrl = "/rider/myride.html?id=" + encodeURIComponent(rideId);
+    const smsUrl =
+      "sms:+14053784024?&body=" +
+      encodeURIComponent(smsBody);
 
-    alert("Almost done! You’ll now be switched to Messages.\n\nPlease tap SEND in the text to finish submitting your ride request to Big Red.");
+    const trackUrl =
+      "/rider/myride.html?id=" +
+      encodeURIComponent(rideId);
+
+    alert(
+      "Almost done! You’ll now be switched to Messages.\n\n" +
+      "Please tap SEND in the text to finish submitting your ride request to Big Red."
+    );
+
     window.location.href = smsUrl;
 
     setTimeout(() => {
-      try { window.location.href = trackUrl; } catch (e) {}
+      try {
+        window.location.href = trackUrl;
+      } catch (e) {}
     }, 1500);
   }
+
+  // =====================================================
+  // PAGE INIT
+  // =====================================================
+  document.addEventListener("DOMContentLoaded", async () => {
+    build15MinOptions(document.getElementById("reserveTimeSelect"));
+    initDefaultScheduleIfEmpty();
+
+    const didRepeat = await prefillFromRepeatRideIfAny();
+
+    if (!didRepeat && !repeatLocked) {
+      prefillFromEstimateQuery();
+      applyHandoffValues();
+      initDefaultScheduleIfEmpty();
+    }
+
+    document.getElementById("reserveDate")
+      ?.addEventListener("change", applyAutoRateLabels);
+
+    document.getElementById("reserveTimeSelect")
+      ?.addEventListener("change", applyAutoRateLabels);
+
+    document.getElementById("pickup")
+      ?.addEventListener("input", syncLuggageVisibility);
+
+    document.getElementById("dropoff")
+      ?.addEventListener("input", syncLuggageVisibility);
+
+    ensureRiderId();
+    loadProfileSummary();
+  });
 
   // =====================================================
   // GOOGLE INIT
@@ -1595,14 +2300,17 @@ function updateFairnessPreview() {
   window.initGoogle = function () {
     geocoder = new google.maps.Geocoder();
     directionsService = new google.maps.DirectionsService();
-    directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers:true });
+
+    directionsRenderer = new google.maps.DirectionsRenderer({
+      suppressMarkers:true
+    });
 
     map = new google.maps.Map(document.getElementById("map"), {
-      center: { lat: 35.4676, lng: -97.5164 },
-      zoom: 11,
-      disableDefaultUI: true,
-      gestureHandling: "greedy",
-      styles: [
+      center:{ lat:35.4676, lng:-97.5164 },
+      zoom:11,
+      disableDefaultUI:true,
+      gestureHandling:"greedy",
+      styles:[
         { elementType:"geometry", stylers:[{ color:"#1a1a1a" }] },
         { elementType:"labels.text.stroke", stylers:[{ color:"#1a1a1a" }] },
         { elementType:"labels.text.fill", stylers:[{ color:"#ffffff" }] },
@@ -1615,51 +2323,57 @@ function updateFairnessPreview() {
 
     setupAutocomplete("pickup", "pickup");
     setupAutocomplete("dropoff", "dropoff");
+
     attachManualTypingWatcher("pickup");
     attachManualTypingWatcher("dropoff");
 
-    if (Array.isArray(pendingStopsToHydrate) && pendingStopsToHydrate.length) {
-      pendingStopsToHydrate.forEach(id => {
-        try { setupAutocomplete(id, "stop"); } catch(e) {}
-      });
-      pendingStopsToHydrate = [];
-    }
+    pendingStopsToHydrate.forEach(id => {
+      setupAutocomplete(id, "stop");
+    });
+    pendingStopsToHydrate = [];
 
     hydrateFromStoredPlace("pickup");
     hydrateFromStoredPlace("dropoff");
 
-    ensureRiderId();
-    loadProfileSummary();
-
-    fetchDriverOriginFromLiveGPS().finally(() => {
+    resolveFairnessOrigin().finally(() => {
       syncLuggageVisibility();
       applyAutoRateLabels();
       updateFairnessPreview();
     });
 
     setTimeout(renderRouteFromCurrentInputs, 200);
-    if (pendingAutoRoute) setTimeout(renderRouteFromCurrentInputs, 250);
+
+    if (pendingAutoRoute) {
+      setTimeout(renderRouteFromCurrentInputs, 250);
+    }
   };
 
-  window.addEventListener("error", (e) => {
-    if (String(e.filename || "").includes("maps.googleapis.com")) {
+  window.addEventListener("error", event => {
+    if (String(event.filename || "").includes("maps.googleapis.com")) {
       console.warn("Google Maps failed to load.");
       showToast("Map failed to load, but you can still text RED.");
     }
   });
 </script>
 
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places,geometry&callback=initGoogle" async defer></script>
+<script
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places,geometry&callback=initGoogle"
+  async
+  defer>
+</script>
 
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <script>
   window.OneSignalDeferred = window.OneSignalDeferred || [];
-  OneSignalDeferred.push(async function(OneSignal){
+
+  OneSignalDeferred.push(async function(OneSignal) {
     try {
       const raw = localStorage.getItem("bigred_rider_profile_v1");
       if (!raw) return;
+
       const profile = JSON.parse(raw);
       if (!profile.riderId) return;
+
       await OneSignal.login(profile.riderId);
       console.log("🔔 Rider push identity confirmed:", profile.riderId);
     } catch (e) {
