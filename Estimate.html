@@ -36,7 +36,7 @@ FILE 1: /rider/estimate.html (Estimate – Big Red Connect)
     label { display:block; font-size:0.8rem; color:#ccc; margin-bottom:4px; }
     input, select { width:100%; padding:10px; background:#111; border:1px solid #333; border-radius:8px; color:#fff; font-size:0.95rem; box-sizing:border-box; }
     .hint { font-size:0.75rem; color:var(--muted); margin-top:2px; }
-    .btn { display:inline-block; text-align:center; padding:12px; border-radius:10px; font-weight:700; font-size:0.95rem; border:none; cursor:pointer; text-decoration:none; box-sizing:border-box; }
+    .btn { display:inline-block; text-align:center; padding:12px; border-radius:10px; font-weight:700; font-size:0.95rem; border:none; cursor:pointer; text-decoration:none; box-sizing:border-box; [...]
     .btn-primary { background:var(--red); color:#fff; }
     .btn-ghost { background:#000; color:#fff; border:1px solid #444; }
     .btn-secondary { background:#111; color:#fff; border:1px solid #333; }
@@ -49,7 +49,7 @@ FILE 1: /rider/estimate.html (Estimate – Big Red Connect)
     #fairness-note { color:#d3b9ff; }
     #result { margin-top:10px; padding:10px; border-radius:10px; background:#080808; border:1px solid #333; font-size:0.9rem; display:none; }
     .total { font-size:1.3rem; font-weight:700; margin-bottom:6px; }
-    #toast { position:fixed; bottom:22px; left:50%; transform:translateX(-50%); background:#111; border:1px solid var(--red); padding:10px 18px; border-radius:999px; opacity:0; pointer-events:none; transition:opacity .25s; z-index:99; font-size:0.85rem; }
+    #toast { position:fixed; bottom:22px; left:50%; transform:translateX(-50%); background:#111; border:1px solid var(--red); padding:10px 18px; border-radius:999px; opacity:0; pointer-events:none[...]
     #toast.show { opacity:1; }
   </style>
 </head>
@@ -510,11 +510,10 @@ FILE 1: /rider/estimate.html (Estimate – Big Red Connect)
 
   // =====================================================
   // FAIRNESS FEE
-  // Uses whichever is closer:
-  // - HQ/base location
-  // - live driver GPS location
-  // This prevents unfair fees near base while still protecting
-  // you when already out and about.
+  // Pricing origin determined by driver status:
+  // - ONLINE/AWAY with fresh live tracker: use live tracker location
+  // - OFFLINE: use HQ
+  // - ONLINE/AWAY with stale/missing tracker: use fairness fallback chain
   // =====================================================
   function distMi(a, b) {
     const p1 = new google.maps.LatLng(a.lat, a.lng);
@@ -530,10 +529,14 @@ FILE 1: /rider/estimate.html (Estimate – Big Red Connect)
       lng: pickupLatLng.lng()
     };
 
-    const dFromHQ = distMi(HQ, pickup);
-    const dFromLive = fairnessOrigin ? distMi(fairnessOrigin, pickup) : dFromHQ;
+    const origin =
+      fairnessOrigin &&
+      Number.isFinite(Number(fairnessOrigin.lat)) &&
+      Number.isFinite(Number(fairnessOrigin.lng))
+        ? fairnessOrigin
+        : HQ;
 
-    return Math.min(dFromHQ, dFromLive);
+    return distMi(origin, pickup);
   }
 
   function computeFairnessFee(miles) {
@@ -631,7 +634,7 @@ FILE 1: /rider/estimate.html (Estimate – Big Red Connect)
 
     const basePlusMiles = base + mileageSub;
 
-    // Fetch live location first, then calculate fairness using closer of HQ/live GPS.
+    // Fetch live location first, then calculate fairness using fairnessOrigin.
     await fetchDriverOriginFromLiveGPS();
     const fairnessFee = computeFairnessFee(miles);
 
