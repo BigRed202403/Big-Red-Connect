@@ -5,6 +5,8 @@
      - Auto-refresh uses the same open/closed classification.
      - Re-links the current riderId to OneSignal on page load.
      - Shows rider-facing estimated fare and mileage on active and history cards.
+     - Uses only the rider-scoped bookings endpoint for ride history.
+     - Pauses ride and driver-location polling while the page is hidden.
      ========================================================= -->
 <!DOCTYPE html>
 <html lang="en">
@@ -309,48 +311,30 @@ async function fetchRideById(id){
 }
 
 async function fetchAllMine(){
-  if(!riderId&&!localStorage.getItem("riderPhone"))return [];
+  const storedPhone=String(riderPhone||localStorage.getItem("riderPhone")||"")
+    .replace(/\D/g,"")
+    .replace(/^1/,"");
 
-  const candidates=[
-    `${API}/api/rider/bookings?riderId=${encodeURIComponent(riderId)}&t=${Date.now()}`,
-    `${API}/api/bookings?riderId=${encodeURIComponent(riderId)}&t=${Date.now()}`,
-    `${API}/api/rider/bookings?rid=${encodeURIComponent(riderId)}&t=${Date.now()}`
-  ];
+  if(!riderId&&!storedPhone)return [];
 
-  for(const url of candidates){
-    try{
-      const res=await fetch(url,{cache:"no-store"});
-
-      if(res.ok){
-        const data=await safeJson(res);
-        if(Array.isArray(data))return data;
-        if(data&&Array.isArray(data.bookings))return data.bookings;
-      }
-    }catch(e){}
-  }
+  const params=new URLSearchParams();
+  if(riderId)params.set("riderId",riderId);
+  if(storedPhone)params.set("phone",storedPhone);
+  params.set("t",String(Date.now()));
 
   try{
-    const res=await fetch(`${API}/api/driver/bookings?scope=all&t=${Date.now()}`,{
+    const res=await fetch(`${API}/api/rider/bookings?${params.toString()}`,{
       cache:"no-store"
     });
 
     if(!res.ok)return [];
 
-    const all=await safeJson(res);
-    const list=Array.isArray(all)?all:[];
-    const myPhone=String(localStorage.getItem("riderPhone")||"")
-      .replace(/\D/g,"")
-      .replace(/^1/,"");
-
-    return list.filter(r=>{
-      const rid=String(r?.rider?.riderId||"");
-      const rph=String(r?.rider?.phone||"")
-        .replace(/\D/g,"")
-        .replace(/^1/,"");
-
-      return (riderId&&rid===riderId)||(myPhone&&rph===myPhone);
-    });
+    const data=await safeJson(res);
+    if(Array.isArray(data))return data;
+    if(data&&Array.isArray(data.bookings))return data.bookings;
+    return [];
   }catch(e){
+    console.warn("Rider bookings fetch failed:",e);
     return [];
   }
 }
@@ -615,7 +599,23 @@ function stopDriverPolling(){
   }
 }
 
+function scheduleDriverPoll(){
+  stopDriverPolling();
+
+  if(document.hidden)return;
+
+  driverPollTimer=setTimeout(()=>{
+    driverPollTimer=null;
+    pollDriver();
+  },15000);
+}
+
 async function pollDriver(){
+  if(document.hidden){
+    stopDriverPolling();
+    return;
+  }
+
   try{
     const r=await fetch(`${STATUS_API}?t=${Date.now()}`,{cache:"no-store"});
     if(!r.ok)throw new Error("status fetch failed");
@@ -623,14 +623,14 @@ async function pollDriver(){
     const j=await safeJson(r);
 
     if(!j||!j.location||typeof j.location.lat!=="number"){
-      driverPollTimer=setTimeout(pollDriver,15000);
+      scheduleDriverPoll();
       return;
     }
 
     const pos={lat:j.location.lat,lng:j.location.lng};
 
     if(!map){
-      driverPollTimer=setTimeout(pollDriver,15000);
+      scheduleDriverPoll();
       return;
     }
 
@@ -648,11 +648,14 @@ async function pollDriver(){
     console.warn("Driver poll error:",e.message||e);
   }
 
-  driverPollTimer=setTimeout(pollDriver,15000);
+  scheduleDriverPoll();
 }
 
 function startDriverPolling(){
   stopDriverPolling();
+
+  if(document.hidden)return;
+
   pollDriver();
 }
 
@@ -666,7 +669,14 @@ function stopAutoRefresh(){
 function startAutoRefresh(){
   stopAutoRefresh();
 
+  if(document.hidden)return;
+
   autoTimer=setInterval(async()=>{
+    if(document.hidden){
+      stopAutoRefresh();
+      return;
+    }
+
     const urlRideId=getRideIdFromUrl();
 
     if(urlRideId){
@@ -704,6 +714,16 @@ function startAutoRefresh(){
 
 document.getElementById("refreshBtn").onclick=async()=>{await loadRides();};
 document.getElementById("restoreHistoryBtn").onclick=()=>{restoreHistory();};
+
+document.addEventListener("visibilitychange",async()=>{
+  if(document.hidden){
+    stopAutoRefresh();
+    stopDriverPolling();
+    return;
+  }
+
+  await loadRides();
+});
 
 loadRides();
 </script>
