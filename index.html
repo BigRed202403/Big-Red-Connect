@@ -252,11 +252,47 @@
 
 <body class="homepage">
 
-  <div class="hero"></div>
+  <header class="homepage-hero">
+    <div
+      class="hero"
+      role="img"
+      aria-label="Big Red Connect red Chevrolet truck and black GMC SUV in Oklahoma City"
+    ></div>
 
-  <img src="Official Logo.png" alt="Big Red Connect Logo" class="main-logo" />
+    <div class="hero-content">
+      <h1 class="hero-title">
+        <span class="hero-title-red">BIG RED</span>
+        <span class="hero-title-white">CONNECT</span>
+      </h1>
 
-  <p class="tagline">Veteran Owned · Flat Rate Rides · Trusted Local Driver</p>
+      <p class="hero-tagline">Local. Trusted. Affordable Flat Rates.</p>
+      <p class="hero-trust">Veteran Owned • One Trusted Local Driver</p>
+
+      <div id="status-pill" class="status status--loading" aria-live="polite">
+        Checking availability…
+      </div>
+
+      <div class="cta-group">
+        <a
+          href="sms:+14053784024?&body=Hey%20Big%20Red%20%E2%80%94%20this%20is%20%5Byour%20name%5D.%20I%E2%80%99d%20like%20to%20line%20up%20a%20connection.%0APickup%3A%20%5Blocation%5D%0ADropoff%3A%20%5Bdestination%5D%0ATime%3A%20%5Btime%5D"
+          class="btn primary hero-primary-cta"
+        >
+          📲 Plan Your Ride
+        </a>
+
+        <a href="/Estimate.html" class="btn secondary">💲 Quick Estimate</a>
+
+        <a href="tel:14053784024" class="btn secondary">
+          📞 Call<br>
+          <span class="button-subtext">(Voicemail Only)</span>
+        </a>
+      </div>
+
+      <p class="cta-note">
+        Plan ahead by text and I’ll confirm availability as soon as possible.
+      </p>
+    </div>
+  </header>
 
   <div id="tickerBar" class="ticker hidden" aria-live="polite">
     <div class="ticker-viewport">
@@ -269,75 +305,85 @@
     </div>
   </div>
 
-  <div id="status-pill" class="status status--loading">Checking availability…</div>
-
   <button id="refreshButton" title="Refresh Page">🔄 Refresh</button>
 
-  <div class="cta-group">
-    <a href="sms:+14053784024?&body=Hey%20Big%20Red%20%E2%80%94%20this%20is%20%5Byour%20name%5D.%20I%E2%80%99d%20like%20to%20line%20up%20a%20connection.%0APickup%3A%20%5Blocation%5D%0ADropoff%3A%20%5Bdestination%5D%0ATime%3A%20%5Btime%5D"class="btn primary">📲 Text to plan your ride</a>
-    <a href="tel:14053784024" class="btn secondary">📞 Call<br>(Voicemail Only)</a>
-    <a href="/Estimate.html" class="btn secondary">💲 Quick Estimate</a>
-  </div>
-
-  <p class="cta-note">Texting works best while I’m driving — I’ll reply ASAP with availability.</p>
-
-  <div style="text-align:center; margin-top:18px;">
-    <button onclick="handleEnableAlerts()" style="
-      background:#b30000;
-      color:white;
-      border:none;
-      padding:12px 22px;
-      font-size:1em;
-      font-weight:700;
-      border-radius:8px;
-      cursor:pointer;
-      box-shadow:0 3px 6px rgba(0,0,0,0.4);
-    ">
+  <div class="alerts-section">
+    <button type="button" class="alerts-button" onclick="handleEnableAlerts()">
       🔔 Enable Big Red Alerts
     </button>
 
-    <p style="font-size:0.8em; color:#aaa; margin-top:6px;">
+    <p class="alerts-description">
       Get live updates when Big Red is on-duty and available.
     </p>
 
-    <p id="iosAlertTip" style="
-      font-size:0.8em;
-      color:#ffcc66;
-      margin-top:10px;
-      display:none;
-    ">
+    <p id="iosAlertTip" class="ios-alert-tip">
       👉 <strong>iPhone users:</strong> Tap Share → "Add to Home Screen", then reopen and tap Enable Alerts again.
     </p>
 
-    <p id="pushStatus" style="font-size:0.8em; color:#aaa; margin-top:10px;">
+    <p id="pushStatus" class="push-status">
       Initializing push…
     </p>
   </div>
 
-  <div class="info-section" style="text-align:center; margin-top:20px;">
+  <div class="info-section quick-destination-section">
     <h2>Plan Your Connection</h2>
-    <form id="quickDestination" onsubmit="goToEstimate(event)" style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
-      <input id="quickWhere" type="text" placeholder="Where are you headed?" required
-        style="flex:1;min-width:220px;max-width:420px;padding:12px;border-radius:10px;border:1px solid #333;background:#111;color:#fff;">
+
+    <form
+      id="quickDestination"
+      class="quick-destination-form"
+      onsubmit="goToEstimate(event)"
+    >
+      <input
+        id="quickWhere"
+        type="text"
+        placeholder="Where are you headed?"
+        required
+      >
+
       <button type="submit" class="btn primary">📅 Plan Now</button>
     </form>
-    <p style="font-size:0.9em;color:#888;margin-top:6px;">
+
+    <p class="quick-destination-tip">
       Tip: Start typing a place, business, or address.
     </p>
   </div>
 
   <div class="tile-grid">
-    <a onclick="goRequestRide()" class="tile" style="cursor:pointer;">🛷<br>Request a Ride</a>
-    <a href="live.html" class="tile">🗺️<br>Driver Map</a>
-    <a href="reviews.html" class="tile">⭐<br>Rider Reviews</a>
-    <a href="faq.html" class="tile">ℹ️<br>FAQ & Info</a>
-    <a onclick="goMyProfile()" class="tile" style="cursor:pointer;">👤<br>My Profile</a>
-    <a href="https://www.facebook.com/share/1BWCx63CUt/?mibextid=wwXIfr" target="_blank" class="tile">👍<br>Follow on Facebook</a>
+    <a onclick="goRequestRide()" class="tile" style="cursor:pointer;">
+      🛷<br>Request a Ride
+    </a>
+
+    <a href="live.html" class="tile">
+      🗺️<br>Driver Map
+    </a>
+
+    <a href="reviews.html" class="tile">
+      ⭐<br>Rider Reviews
+    </a>
+
+    <a href="faq.html" class="tile">
+      ℹ️<br>FAQ & Info
+    </a>
+
+    <a onclick="goMyProfile()" class="tile" style="cursor:pointer;">
+      👤<br>My Profile
+    </a>
+
+    <a
+      href="https://www.facebook.com/share/1BWCx63CUt/?mibextid=wwXIfr"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="tile"
+    >
+      👍<br>Follow on Facebook
+    </a>
   </div>
 
   <section class="info-section">
     <h2>What Big Red Connect Delivers</h2>
-    <p>Veteran-owned, affordable flat-rate connections across the Oklahoma City metro — dependable, local, and built around planning ahead.</p>
+    <p>
+      Veteran-owned, affordable flat-rate connections across the Oklahoma City metro — dependable, local, and built around planning ahead.
+    </p>
     <ul>
       <li>Work, school, and everyday appointments</li>
       <li>Airport and Tinker AFB connections</li>
@@ -345,7 +391,7 @@
       <li>Concerts, casinos, and special occasions</li>
     </ul>
   </section>
-  
+
   <section class="info-section">
     <h2>Why Choose Red</h2>
     <ul>
@@ -355,33 +401,42 @@
     </ul>
   </section>
 
-    <section class="info-section">
+  <section class="info-section">
     <h2>What Riders Say</h2>
+
     <div class="review-card">
       ⭐⭐⭐⭐⭐ "This company CARES!! This service is safer than Uber and they truly care about their clientele. Give them a call so you can go have fun and not worry about getting home. Let them handle that for you. A+ company."
       <br><strong>— Mark</strong>
     </div>
+
     <div class="review-card">
       ⭐⭐⭐⭐⭐ "Great service, always prompt, good conversations and a pleasure to do business with. Much better than the other run of the mill ride share programs. 100% of the fare goes to Dan!"
       <br><strong>— J.T.</strong>
     </div>
+
     <p><a href="reviews.html">More reviews →</a></p>
   </section>
 
   <footer>
     <p>Questions? Text <strong>"RED"</strong> to (405) 378-4024.</p>
     <p><a href="faq.html">FAQ</a> | <a href="reviews.html">Leave a Review</a></p>
-    <p>&copy; 2025 Big Red Connect</p>
+    <p>&copy; 2026 Big Red Connect</p>
   </footer>
 
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMM0dxLNM7XQI5G3OBSnINeO5hcS3Ks5I&libraries=places"></script>
+
   <script>
     function initQuickSearch() {
+      const quickWhere = document.getElementById("quickWhere");
+
+      if (!quickWhere || !window.google?.maps?.places) return;
+
       new google.maps.places.Autocomplete(
-        document.getElementById("quickWhere"),
+        quickWhere,
         { fields: ["formatted_address", "name"] }
       );
     }
+
     window.addEventListener("load", initQuickSearch);
   </script>
 
@@ -391,8 +446,11 @@
     const refreshBtn = document.getElementById("refreshButton");
     let refreshTimeout;
 
-    function showRefreshButton(){ refreshBtn.classList.add("visible"); }
-    function hideRefreshButton(){
+    function showRefreshButton() {
+      refreshBtn.classList.add("visible");
+    }
+
+    function hideRefreshButton() {
       refreshBtn.classList.remove("visible");
       clearTimeout(refreshTimeout);
       refreshTimeout = setTimeout(showRefreshButton, 30000);
@@ -407,31 +465,6 @@
       refreshTimeout = setTimeout(showRefreshButton, 30000);
     });
   </script>
-
-  <style>
-    #refreshButton {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background: #b30000;
-      color:#fff;
-      border:none;
-      border-radius:6px;
-      padding:10px 16px;
-      font-size:0.95em;
-      font-weight:700;
-      cursor:pointer;
-      box-shadow:0 2px 6px rgba(0,0,0,0.4);
-      opacity:0;
-      pointer-events:none;
-      transition:opacity .5s;
-      z-index:10;
-    }
-    #refreshButton.visible {
-      opacity:1;
-      pointer-events:auto;
-    }
-  </style>
 
   <script>
     (async function () {
