@@ -1,114 +1,303 @@
 /* ==========================================================
    BIG RED CONNECT – Global Stylesheet
-   Version: April 2026 (Homepage Scoped Fix)
+   Version: July 2026
+   Homepage Hero Clarity Update
 ========================================================== */
 
 /* ==============================
    GLOBAL LAYOUT
 ============================== */
 :root {
-  --red:#c40000;
-  --red-dark:#9a0000;
+  --red: #c40000;
+  --red-bright: #e00000;
+  --red-dark: #9a0000;
+  --panel: #111;
+  --panel-border: #242424;
+  --muted: #aaa;
 }
-* { box-sizing: border-box; }
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
   margin: 0;
+  padding: 0;
   font-family: "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", sans-serif;
   background-color: #000;
   color: #fff;
   text-align: center;
-  padding: 0;
 }
+
 h1, h2, h3, p {
   margin: 0 auto 10px;
   max-width: 600px;
   line-height: 1.5;
 }
+
 .smallnote {
-  font-size:.8em;
-  color:#777;
-  margin-top:10px;
-  line-height:1.4;
+  font-size: 0.8em;
+  color: #777;
+  margin-top: 10px;
+  line-height: 1.4;
 }
 
 /* ==============================
    TOP BAR (secondary pages)
 ============================== */
 .topbar {
-  display:flex;
-  justify-content:flex-start;
-  align-items:center;
-  gap:10px;
-  padding:10px 14px;
-  background:#0b0b0b;
-  border-bottom:1px solid #111;
-  position:sticky;
-  top:0;
-  z-index:1000;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: #0b0b0b;
+  border-bottom: 1px solid #111;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
 }
+
 .home-link {
-  display:inline-block;
-  padding:8px 12px;
-  border-radius:8px;
-  text-decoration:none;
-  background:linear-gradient(180deg, var(--red), var(--red-dark));
-  border:1px solid var(--red);
-  color:#fff;
-  font-weight:700;
-  box-shadow:0 2px 8px rgba(255,0,0,.25);
+  display: inline-block;
+  padding: 8px 12px;
+  border-radius: 8px;
+  text-decoration: none;
+  background: linear-gradient(180deg, var(--red), var(--red-dark));
+  border: 1px solid var(--red);
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(255, 0, 0, 0.25);
 }
 
 /* ==============================
-   HOMEPAGE ONLY
+   HOMEPAGE HERO
 ============================== */
+.homepage .homepage-hero {
+  width: 100%;
+  margin: 0;
+  padding: 0 0 10px;
+  background: #000;
+}
+
 .homepage .hero {
-  background-image: url("1A5072F2-8604-4CAB-BC84-E15D86D8CE73.png");
-  background-size: cover;
-  background-position: center;
-  height: 220px;
+  width: 100%;
+  height: clamp(210px, 36vw, 410px);
   border-bottom: 2px solid var(--red);
-  border-radius: 0 0 15px 15px;
-  box-shadow: 0 4px 20px rgba(255, 0, 0, 0.15);
-}
-.homepage .hero.small { display:none; }
-
-.homepage .logo-header {
-  text-align:center;
-  margin:18px 0 6px 0;
-}
-.homepage .logo-header img {
-  width:200px;
-  max-width:80%;
-  height:auto;
-}
-
-.homepage .main-logo {
-  width:220px;
-  margin-top:-40px;
+  border-radius: 0 0 14px 14px;
+  background-image:
+    linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.02) 55%,
+      rgba(0, 0, 0, 0.72) 100%
+    ),
+    url("Big Red Homepage Hero.PNG");
+  background-position: center center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  box-shadow: 0 5px 22px rgba(255, 0, 0, 0.16);
 }
 
-.homepage .tagline {
-  color:#ccc;
-  font-size:1em;
-  margin-bottom:14px;
+.homepage .hero.small {
+  display: none;
+}
+
+.homepage .hero-content {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 20px 18px 0;
+}
+
+.homepage .hero-title {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: none;
+  margin: 0 auto 5px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(2.8rem, 9vw, 5.2rem);
+  font-weight: 700;
+  line-height: 0.86;
+  letter-spacing: 0.015em;
+  text-transform: uppercase;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.85);
+}
+
+.homepage .hero-title-red {
+  color: #d30000;
+}
+
+.homepage .hero-title-white {
+  margin-top: 8px;
+  color: #fff;
+}
+
+.homepage .hero-tagline {
+  max-width: none;
+  margin: 22px auto 3px;
+  color: #fff;
+  font-size: clamp(1.08rem, 3.4vw, 1.4rem);
+  font-weight: 750;
+  line-height: 1.3;
+  letter-spacing: 0.02em;
+}
+
+.homepage .hero-trust {
+  max-width: none;
+  margin: 5px auto 12px;
+  color: #aaa;
+  font-size: clamp(0.84rem, 2.7vw, 1rem);
+  line-height: 1.4;
+  letter-spacing: 0.025em;
 }
 
 /* ==============================
    HEADINGS
 ============================== */
 h1 {
-  color:#ff1a1a;
-  font-size:2em;
-  margin-top:10px;
-  letter-spacing:0.5px;
+  color: #ff1a1a;
+  font-size: 2em;
+  margin-top: 10px;
+  letter-spacing: 0.5px;
 }
+
 h2 {
-  color:#ff1a1a;
-  font-size:1.4em;
-  margin-top:30px;
+  color: #ff1a1a;
+  font-size: 1.4em;
+  margin-top: 30px;
 }
-.section-title { margin-bottom:10px; }
-.hint { color:#888; font-size:.9em; margin-top:6px; }
+
+.section-title {
+  margin-bottom: 10px;
+}
+
+.hint {
+  color: #888;
+  font-size: 0.9em;
+  margin-top: 6px;
+}
+
+/* ==============================
+   HOMEPAGE AVAILABILITY PILL
+============================== */
+.homepage .status {
+  display: inline-block;
+  padding: 10px 17px;
+  border-radius: 25px;
+  font-size: 0.95em;
+  margin: 8px auto 5px;
+  text-align: center;
+  max-width: 100%;
+  line-height: 1.3;
+}
+
+.homepage .status--loading {
+  opacity: 0.8;
+}
+
+.homepage .status.online {
+  background: rgba(76, 175, 80, 0.15);
+  color: #4CAF50;
+  border: 1px solid #4CAF50;
+}
+
+.homepage .status.away {
+  background: rgba(255, 204, 0, 0.15);
+  color: #ffcc00;
+  border: 1px solid #ffcc00;
+}
+
+.homepage .status.offline {
+  background: rgba(255, 68, 68, 0.15);
+  color: #ff4c4c;
+  border: 1px solid #ff4c4c;
+}
+
+/* ==============================
+   BUTTONS
+============================== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  padding: 14px 20px;
+  border-radius: 10px;
+  text-decoration: none;
+  font-weight: 700;
+  color: #fff;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 3px 10px rgba(255, 0, 0, 0.2);
+  position: relative;
+  overflow: hidden;
+  border: 1px solid transparent;
+  line-height: 1.25;
+  text-align: center;
+}
+
+.btn.primary {
+  background: linear-gradient(180deg, var(--red-bright), var(--red-dark));
+  border-color: var(--red);
+}
+
+.btn.secondary {
+  background: linear-gradient(180deg, #333, #111);
+  border-color: #444;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(255, 0, 0, 0.35);
+}
+
+.btn:active {
+  transform: scale(0.97);
+  box-shadow: 0 0 8px rgba(255, 0, 0, 0.5) inset;
+}
+
+.button-subtext {
+  margin-left: 4px;
+  font-size: 0.82em;
+  font-weight: 500;
+  opacity: 0.82;
+}
+
+/* ==============================
+   HOMEPAGE CTA GROUP
+============================== */
+.homepage .cta-group {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(140px, 1fr));
+  gap: 11px;
+  max-width: 680px;
+  margin: 13px auto 6px;
+  padding: 0;
+}
+
+.homepage .cta-group .btn.primary {
+  grid-column: span 2;
+}
+
+.homepage .hero-primary-cta {
+  min-height: 62px;
+  font-size: clamp(1.05rem, 3.4vw, 1.22rem);
+  letter-spacing: 0.01em;
+  box-shadow: 0 4px 18px rgba(255, 0, 0, 0.34);
+}
+
+.homepage .cta-note {
+  max-width: 680px;
+  margin: 11px auto 4px;
+  padding: 0 5px;
+  color: #ccc;
+  font-size: 0.94rem;
+  line-height: 1.45;
+  text-align: center;
+}
 
 /* ==============================
    HOMEPAGE TICKER
@@ -119,16 +308,19 @@ h2 {
   border-top: 1px solid #222;
   border-bottom: 1px solid #222;
   max-width: 680px;
-  margin: 0 auto 10px;
+  margin: 4px auto 12px;
   overflow: hidden;
 }
+
 .homepage .ticker.hidden {
   display: none;
 }
+
 .homepage .ticker-viewport {
   width: 100%;
   overflow: hidden;
 }
+
 .homepage .ticker-track {
   display: flex;
   width: max-content;
@@ -139,227 +331,348 @@ h2 {
   animation: ticker-scroll 80s linear infinite;
   will-change: transform;
 }
+
 .homepage .ticker-text {
   font-weight: 600;
   font-size: 0.9rem;
   color: #fff;
 }
+
 .homepage .ticker-sep {
   color: #777;
   font-size: 0.9rem;
 }
+
 @keyframes ticker-scroll {
-  from { transform: translateX(40); }
+  from { transform: translateX(40px); }
   to   { transform: translateX(-100%); }
 }
+
 .homepage .ticker:active .ticker-track {
   animation-play-state: paused;
 }
+
 @media (prefers-reduced-motion: reduce) {
   .homepage .ticker-track {
     animation: none;
+    transform: none;
   }
 }
 
 /* ==============================
-   HOMEPAGE AVAILABILITY PILL
+   BIG RED ALERTS
 ============================== */
-.homepage .status {
-  display:inline-block;
-  padding:10px 16px;
-  border-radius:25px;
-  font-size:0.95em;
-  margin:10px auto 20px;
-  text-align:center;
-  max-width:90%;
+.homepage .alerts-section {
+  max-width: 680px;
+  margin: 18px auto 0;
+  padding: 0 18px;
+  text-align: center;
 }
-.homepage .status--loading {
-  opacity: 0.8;
+
+.homepage .alerts-button {
+  padding: 12px 22px;
+  border: 1px solid #d00000;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #c50000, #970000);
+  box-shadow: 0 3px 8px rgba(255, 0, 0, 0.2);
+  color: #fff;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 1em;
+  font-weight: 700;
 }
-.homepage .status.online  { background:rgba(76,175,80,0.15); color:#4CAF50; border:1px solid #4CAF50; }
-.homepage .status.away    { background:rgba(255,204,0,0.15); color:#ffcc00; border:1px solid #ffcc00; }
-.homepage .status.offline { background:rgba(255,68,68,0.15); color:#ff4c4c; border:1px solid #ff4c4c; }
+
+.homepage .alerts-description {
+  margin-top: 7px;
+  color: #aaa;
+  font-size: 0.8em;
+}
+
+.homepage .ios-alert-tip {
+  display: none;
+  margin-top: 10px;
+  color: #ffcc66;
+  font-size: 0.8em;
+}
+
+.homepage .push-status {
+  margin-top: 10px;
+  color: #aaa;
+  font-size: 0.8em;
+}
 
 /* ==============================
-   HOMEPAGE BUTTONS
+   QUICK DESTINATION
 ============================== */
-.homepage .cta-group {
-  display:grid;
-  grid-template-columns:repeat(2,minmax(140px,1fr));
-  gap:12px;
-  max-width:680px;
-  margin:16px auto 6px;
-  padding:0 16px;
+.homepage .quick-destination-section {
+  margin-top: 22px;
+  text-align: center;
 }
-.btn {
-  display:inline-block;
-  padding:14px 20px;
-  border-radius:10px;
-  text-decoration:none;
-  font-weight:700;
-  color:#fff;
-  transition:all .2s ease;
-  box-shadow:0 3px 10px rgba(255,0,0,.2);
-  position:relative;
-  overflow:hidden;
-  border:1px solid transparent;
-}
-.btn.primary   { background:linear-gradient(180deg,var(--red),var(--red-dark)); border-color:var(--red); }
-.btn.secondary { background:linear-gradient(180deg,#333,#111); border-color:#444; }
-.btn:hover     { transform:translateY(-2px); box-shadow:0 5px 15px rgba(255,0,0,0.35); }
-.btn:active    { transform:scale(0.97); box-shadow:0 0 8px rgba(255,0,0,0.5) inset; }
 
-.homepage .cta-group .btn.primary {
-  grid-column: span 2;
+.homepage .quick-destination-form {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
 }
-.homepage .cta-note {
-  max-width: 680px;
-  margin: 10px auto 18px;
-  padding: 0 20px;
-  color: #ddd;
-  font-size: 1em;
-  line-height: 1.5;
-  text-align: left;
+
+.homepage .quick-destination-form input {
+  flex: 1;
+  min-width: 220px;
+  max-width: 420px;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #333;
+  background: #111;
+  color: #fff;
+}
+
+.homepage .quick-destination-tip {
+  font-size: 0.9em;
+  color: #888;
+  margin-top: 6px;
 }
 
 /* ==============================
    HOMEPAGE TILE GRID
 ============================== */
 .homepage .tile-grid {
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
-  gap:14px;
-  max-width:680px;
-  margin:24px auto 10px;
-  padding:0 18px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 14px;
+  max-width: 680px;
+  margin: 24px auto 10px;
+  padding: 0 18px;
 }
+
 .homepage .tile {
-  background:#111;
-  border:1px solid #222;
-  border-radius:10px;
-  padding:18px 12px;
-  color:#fff;
-  text-decoration:none;
-  font-size:0.95em;
-  transition:all .2s ease;
-  box-shadow:0 2px 6px rgba(255,0,0,0.1);
+  background: #111;
+  border: 1px solid #222;
+  border-radius: 10px;
+  padding: 18px 12px;
+  color: #fff;
+  text-decoration: none;
+  font-size: 0.95em;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 2px 6px rgba(255, 0, 0, 0.1);
 }
+
 .homepage .tile:hover {
-  transform:translateY(-2px);
-  border-color:var(--red);
-  box-shadow:0 0 10px rgba(255,0,0,0.28);
+  transform: translateY(-2px);
+  border-color: var(--red);
+  box-shadow: 0 0 10px rgba(255, 0, 0, 0.28);
 }
 
 /* ==============================
    INFO SECTIONS
 ============================== */
 .info-section {
-  background:#111;
-  border-radius:10px;
-  padding:20px;
-  margin:25px auto;
-  max-width:650px;
-  text-align:left;
-  box-shadow:0 2px 10px rgba(255,0,0,0.15);
+  background: #111;
+  border-radius: 10px;
+  padding: 20px;
+  margin: 25px auto;
+  max-width: 650px;
+  text-align: left;
+  box-shadow: 0 2px 10px rgba(255, 0, 0, 0.15);
 }
-.info-section.centered { text-align:center; }
-.info-section h2 { text-align:center; }
-.info-section ul { text-align:left; padding-left:20px; }
-.info-section li { margin-bottom:8px; }
+
+.info-section.centered {
+  text-align: center;
+}
+
+.info-section h2 {
+  text-align: center;
+}
+
+.info-section ul {
+  text-align: left;
+  padding-left: 20px;
+}
+
+.info-section li {
+  margin-bottom: 8px;
+}
+
+.review-card {
+  margin: 14px 0;
+  padding: 14px;
+  border: 1px solid #292929;
+  border-radius: 9px;
+  background: #0b0b0b;
+  line-height: 1.55;
+}
 
 /* ==============================
    CALCULATOR + MAP
 ============================== */
 .calculator label {
-  display:block;
-  text-align:left;
-  font-weight:600;
-  margin:12px auto 6px;
-  max-width:600px;
+  display: block;
+  text-align: left;
+  font-weight: 600;
+  margin: 12px auto 6px;
+  max-width: 600px;
 }
+
 .calculator input,
 .calculator select {
-  width:100%;
-  padding:12px;
-  border:1px solid #333;
-  border-radius:8px;
-  background:#111;
-  color:#fff;
-  margin-bottom:12px;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #333;
+  border-radius: 8px;
+  background: #111;
+  color: #fff;
+  margin-bottom: 12px;
 }
+
 #map {
-  height:260px;
-  border:2px solid var(--red);
-  border-radius:10px;
-  margin:20px 0 25px;
+  height: 260px;
+  border: 2px solid var(--red);
+  border-radius: 10px;
+  margin: 20px 0 25px;
 }
+
 #airport-note,
 #event-note,
 #rushhour-note,
 #fairness-note {
-  text-align:left;
-  color:#ccc;
-  font-size:0.95em;
-  margin:6px auto;
-  max-width:600px;
+  text-align: left;
+  color: #ccc;
+  font-size: 0.95em;
+  margin: 6px auto;
+  max-width: 600px;
 }
-#airport-note { color:#ffcc00; font-weight:600; }
-#event-note  { color:#ffcc00; }
+
+#airport-note {
+  color: #ffcc00;
+  font-weight: 600;
+}
+
+#event-note {
+  color: #ffcc00;
+}
+
 #result {
-  background:#111;
-  border:1px solid var(--red);
-  border-radius:12px;
-  padding:18px;
-  margin-top:22px;
-  text-align:left;
-  max-width:600px;
-  margin-inline:auto;
+  background: #111;
+  border: 1px solid var(--red);
+  border-radius: 12px;
+  padding: 18px;
+  margin-top: 22px;
+  text-align: left;
+  max-width: 600px;
+  margin-inline: auto;
 }
+
 #result .total {
-  font-size:1.6em;
-  color:#ff4444;
-  font-weight:800;
-  text-align:center;
-  margin:0 0 8px;
+  font-size: 1.6em;
+  color: #ff4444;
+  font-weight: 800;
+  text-align: center;
+  margin: 0 0 8px;
 }
 
 /* ==============================
    FOOTER
 ============================== */
 footer {
-  margin:40px 0 30px;
-  font-size:0.85em;
-  color:#aaa;
+  margin: 40px 0 30px;
+  font-size: 0.85em;
+  color: #aaa;
 }
+
 footer a {
-  color:var(--red);
-  text-decoration:none;
+  color: var(--red);
+  text-decoration: none;
 }
+
 footer a:hover {
-  text-decoration:underline;
+  text-decoration: underline;
+}
+
+/* ==============================
+   REFRESH BUTTON
+============================== */
+#refreshButton {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #b30000;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-size: 0.95em;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s;
+  z-index: 10;
+}
+
+#refreshButton.visible {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 /* ==============================
    RESPONSIVE
 ============================== */
-@media (max-width:600px) {
-  h1 { font-size:1.7em; }
-
-  .homepage .main-logo {
-    width:180px;
-    margin-top:-20px;
+@media (max-width: 600px) {
+  h1 {
+    font-size: 1.7em;
   }
 
-  .info-section {
-    padding:15px;
-    margin:15px;
+  .homepage .hero {
+    height: clamp(205px, 58vw, 300px);
+    background-position: center center;
   }
 
-  #map { height:220px; }
-  .btn { width:100%; font-size:1em; }
+  .homepage .hero-content {
+    padding: 18px 12px 0;
+  }
+
+  .homepage .hero-title {
+    font-size: clamp(2.65rem, 15vw, 4rem);
+  }
+
+  .homepage .hero-tagline {
+    margin-top: 19px;
+    padding: 0 5px;
+    font-size: 1.08rem;
+  }
+
+  .homepage .hero-trust {
+    padding: 0 6px;
+    font-size: 0.83rem;
+  }
+
+  .homepage .status {
+    max-width: calc(100% - 12px);
+    margin: 8px 6px 4px;
+  }
+
+  .homepage .cta-group {
+    gap: 9px;
+  }
+
+  .homepage .cta-group .btn.secondary {
+    padding: 12px 9px;
+    font-size: 0.92rem;
+  }
+
+  .homepage .hero-primary-cta {
+    min-height: 60px;
+    font-size: 1.08rem;
+  }
+
+  .homepage .cta-note {
+    padding: 0 8px;
+    font-size: 0.88rem;
+  }
 
   .homepage .ticker {
-    margin: 0 12px 10px;
+    margin: 5px 12px 10px;
   }
 
   .homepage .ticker-text,
@@ -367,9 +680,57 @@ footer a:hover {
     font-size: 0.86rem;
   }
 
-  .homepage .status {
-    max-width: calc(100% - 24px);
-    margin: 10px 12px 18px;
+  .info-section {
+    padding: 15px;
+    margin: 15px;
+  }
+
+  .homepage .quick-destination-form {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .homepage .quick-destination-form input {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+  }
+
+  .homepage .quick-destination-form .btn {
+    width: 100%;
+  }
+
+  #map {
+    height: 220px;
+  }
+}
+
+/* ==============================
+   VERY SMALL MOBILE
+============================== */
+@media (max-width: 390px) {
+  .homepage .hero {
+    height: 215px;
+  }
+
+  .homepage .hero-title {
+    font-size: 2.7rem;
+  }
+
+  .homepage .hero-tagline {
+    font-size: 1rem;
+  }
+
+  .homepage .cta-group {
+    grid-template-columns: 1fr;
+  }
+
+  .homepage .cta-group .btn.primary {
+    grid-column: auto;
+  }
+
+  .homepage .cta-group .btn {
+    width: 100%;
   }
 }
 
@@ -377,44 +738,47 @@ footer a:hover {
    FARE CALCULATOR FIXES
 ============================== */
 .ride-mode-toggle {
-  display:flex;
-  gap:12px;
-  justify-content:center;
-  margin:15px 0 18px;
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin: 15px 0 18px;
 }
+
 .btn-toggle {
-  flex:1;
-  min-width:130px;
-  padding:10px 16px;
-  border-radius:10px;
-  border:1px solid #c00;
-  color:#c00;
-  background:transparent;
+  flex: 1;
+  min-width: 130px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1px solid #c00;
+  color: #c00;
+  background: transparent;
 }
+
 .btn-toggle.active {
-  background:#c00;
-  color:#fff;
-  border-color:#c00;
+  background: #c00;
+  color: #fff;
+  border-color: #c00;
 }
 
 #useLocPickup,
 #useLocDrop,
 #addStopBtn {
-  display:block;
-  width:100%;
-  margin-top:14px;
-  margin-bottom:18px;
-}
-#addStopBtn {
-  background:linear-gradient(180deg,#a30000,#7a0000);
-  border:1px solid #ff1a1a;
-  color:#fff;
-  font-weight:700;
+  display: block;
+  width: 100%;
+  margin-top: 14px;
+  margin-bottom: 18px;
 }
 
-/* ================================
-   Bigger form fields
-=================================== */
+#addStopBtn {
+  background: linear-gradient(180deg, #a30000, #7a0000);
+  border: 1px solid #ff1a1a;
+  color: #fff;
+  font-weight: 700;
+}
+
+/* ==============================
+   BIGGER FORM FIELDS
+============================== */
 .info-section input,
 .info-section select,
 .info-section textarea {
@@ -422,16 +786,21 @@ footer a:hover {
   line-height: 1.2;
   padding: 14px 12px;
 }
+
 .info-section input::placeholder,
 .info-section textarea::placeholder {
   font-size: 18px;
   opacity: 0.7;
 }
+
 .info-section select option {
   font-size: 18px;
 }
-html {
-  -webkit-text-size-adjust: 100%;
+
+#dropoff {
+  margin-top: 12px;
 }
-#dropoff { margin-top:12px; }
-.info-section.calculator { padding-bottom:28px; }
+
+.info-section.calculator {
+  padding-bottom: 28px;
+}
