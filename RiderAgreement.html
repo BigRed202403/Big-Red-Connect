@@ -13,38 +13,349 @@
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
-  <!-- ▸ Shimmer/Splash (once per session) -->
+  <!-- Page-specific layout protection -->
   <style>
+    .agreement-page,
+    .agreement-page * {
+      box-sizing: border-box;
+    }
+
+    html {
+      background: #000;
+    }
+
+    body.agreement-page {
+      margin: 0;
+      min-height: 100vh;
+      overflow-x: hidden;
+      background: #000;
+      color: #f4f4f4;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    }
+
+    /*
+      Prevent global image rules in style.css from making the logo fill
+      most of the mobile screen.
+    */
+    .agreement-page .logo-header {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 28px 20px 18px;
+      background: #050505;
+    }
+
+    .agreement-page .logo-header img {
+      display: block !important;
+      width: min(360px, 82vw) !important;
+      max-width: 360px !important;
+      height: auto !important;
+      max-height: 330px !important;
+      object-fit: contain !important;
+      margin: 0 auto !important;
+    }
+
+    .agreement-page .agreement-shell {
+      width: min(100% - 28px, 760px);
+      margin: 0 auto;
+      padding: 20px 0 34px;
+    }
+
+    .agreement-page .agreement-intro {
+      text-align: center;
+      margin-bottom: 18px;
+    }
+
+    .agreement-page .agreement-intro h1 {
+      margin: 0;
+      color: #ef1b1b;
+      font-size: clamp(1.65rem, 7vw, 2.3rem);
+      line-height: 1.12;
+      letter-spacing: -0.02em;
+    }
+
+    .agreement-page .tagline {
+      max-width: 560px;
+      margin: 10px auto 0;
+      color: #c9c9c9;
+      font-size: 0.98rem;
+      line-height: 1.5;
+    }
+
+    .agreement-page .status-wrap {
+      display: flex;
+      justify-content: center;
+      margin: 16px 0 22px;
+    }
+
+    .agreement-page #status-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: auto;
+      max-width: 100%;
+      min-height: 42px;
+      margin: 0;
+      padding: 10px 16px;
+      border: 1px solid #333;
+      border-radius: 999px;
+      background: #111;
+      color: #eee;
+      text-align: center;
+      font-size: 0.92rem;
+      font-weight: 600;
+      line-height: 1.35;
+    }
+
+    .agreement-page .status--loading {
+      color: #d0d0d0;
+      border-color: #3a3a3a;
+    }
+
+    .agreement-page .status--online,
+    .agreement-page .status.online {
+      color: #c9ffd5;
+      border-color: #187a35;
+      background: #092812;
+    }
+
+    .agreement-page .status--away,
+    .agreement-page .status.away {
+      color: #fff0b8;
+      border-color: #8e6b14;
+      background: #2b2106;
+    }
+
+    .agreement-page .status--offline,
+    .agreement-page .status.offline {
+      color: #ffd0d0;
+      border-color: #8f1f1f;
+      background: #2a0909;
+    }
+
+    .agreement-page #agreement-content.info-section {
+      width: 100%;
+      max-width: none;
+      margin: 0;
+      padding: 22px 20px;
+      border: 1px solid #2d1111;
+      border-radius: 14px;
+      background: #111;
+      color: #eee;
+      text-align: left;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.24);
+    }
+
+    .agreement-page #agreement-content p {
+      margin: 0 0 16px;
+      color: #eee;
+      font-size: 0.98rem;
+      line-height: 1.62;
+      text-align: left;
+    }
+
+    .agreement-page #agreement-content ul {
+      margin: 16px 0 0;
+      padding-left: 22px;
+    }
+
+    .agreement-page #agreement-content li {
+      margin-bottom: 11px;
+      color: #eee;
+      font-size: 0.98rem;
+      line-height: 1.55;
+    }
+
+    .agreement-page #agreement-content strong {
+      color: #fff;
+    }
+
+    .agreement-page .agreement-confirmation {
+      margin-top: 20px;
+      padding: 15px;
+      border: 1px solid #ffcc00;
+      border-radius: 10px;
+      background: #171300;
+      color: #fff4b8;
+      line-height: 1.55;
+    }
+
+    .agreement-page .agreement-action-copy {
+      margin-top: 20px !important;
+    }
+
+    .agreement-page .agreement-action {
+      margin: 16px 0 0 !important;
+      text-align: center !important;
+    }
+
+    .agreement-page .agreement-action .btn,
+    .agreement-page #downloadPdfBtn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
+      max-width: 100%;
+      padding: 12px 18px;
+      border-radius: 10px;
+      text-align: center;
+      font-weight: 700;
+      text-decoration: none;
+      white-space: normal;
+    }
+
+    .agreement-page .public-link-note {
+      margin-top: 30px !important;
+      color: #aaa !important;
+      font-size: 0.88rem !important;
+      text-align: center !important;
+      overflow-wrap: anywhere;
+    }
+
+    .agreement-page a {
+      color: #ff3434;
+      text-decoration-thickness: 1px;
+      text-underline-offset: 3px;
+    }
+
+    .agreement-page footer {
+      width: 100%;
+      margin-top: 28px;
+      padding: 24px 0 0;
+      border-top: 1px solid #222;
+      text-align: center;
+      color: #ddd;
+    }
+
+    .agreement-page footer p {
+      margin: 0 0 14px;
+      line-height: 1.5;
+    }
+
+    .agreement-page footer .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
+      padding: 12px 20px;
+      border: 1px solid #d91a1a;
+      border-radius: 10px;
+      background: #d91a1a;
+      color: #fff;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .agreement-page footer .btn:hover,
+    .agreement-page footer .btn:focus-visible {
+      background: #f02020;
+      border-color: #f02020;
+    }
+
+    .agreement-page .legal-note {
+      margin-top: 16px;
+      color: #777;
+      font-size: 0.78rem;
+      line-height: 1.45;
+    }
+
+    @media (max-width: 480px) {
+      .agreement-page .logo-header {
+        padding: 22px 16px 12px;
+      }
+
+      .agreement-page .logo-header img {
+        width: min(300px, 78vw) !important;
+        max-height: 285px !important;
+      }
+
+      .agreement-page .agreement-shell {
+        width: min(100% - 24px, 760px);
+        padding-top: 16px;
+      }
+
+      .agreement-page #agreement-content.info-section {
+        padding: 18px 16px;
+        border-radius: 12px;
+      }
+
+      .agreement-page .agreement-action .btn,
+      .agreement-page #downloadPdfBtn,
+      .agreement-page footer .btn {
+        width: 100%;
+      }
+    }
+
+    /* ▸ Shimmer/Splash — once per session */
     #shimmer {
-      position: fixed; inset: 0; background:#000; z-index:10000;
-      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      position: fixed;
+      inset: 0;
+      z-index: 10000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #000;
     }
+
     #shimmer .logo {
-      width: 160px; max-width: 50vw; height:auto;
-      animation:pulse 1.2s infinite ease-in-out;
+      width: 160px;
+      max-width: 50vw;
+      height: auto;
+      animation: pulse 1.2s infinite ease-in-out;
     }
+
     #shimmer .msg {
-      color:#bbb; margin-top:14px; font-size:0.95em; letter-spacing:.3px;
+      margin-top: 14px;
+      color: #bbb;
+      font-size: 0.95em;
+      letter-spacing: 0.3px;
     }
+
     @keyframes pulse {
-      0%{opacity:.5; transform:scale(.98)}
-      50%{opacity:1; transform:scale(1)}
-      100%{opacity:.5; transform:scale(.98)}
+      0% {
+        opacity: 0.5;
+        transform: scale(0.98);
+      }
+      50% {
+        opacity: 1;
+        transform: scale(1);
+      }
+      100% {
+        opacity: 0.5;
+        transform: scale(0.98);
+      }
     }
   </style>
 
   <script>
     window.SPLASH_MESSAGE = "Loading Rider Agreement…";
-    (function(){
+
+    (function () {
       if (sessionStorage.getItem("brc_splash_shown")) return;
-      const w=document.createElement("div");
-      w.id="shimmer";
-      w.innerHTML = '<img class="logo" src="official_logo.jpeg" alt="Big Red Connect Logo"><div class="msg">'+(window.SPLASH_MESSAGE||"Loading…")+'</div>';
-      document.addEventListener("DOMContentLoaded", ()=>document.body.appendChild(w));
-      window.addEventListener("load", ()=>{
-        setTimeout(()=>{
-          w.style.transition="opacity .35s"; w.style.opacity="0";
-          setTimeout(()=>{ w.remove(); sessionStorage.setItem("brc_splash_shown","1"); }, 350);
+
+      const shimmer = document.createElement("div");
+      shimmer.id = "shimmer";
+      shimmer.innerHTML =
+        '<img class="logo" src="official_logo.jpeg" alt="Big Red Connect Logo">' +
+        '<div class="msg">' +
+        (window.SPLASH_MESSAGE || "Loading…") +
+        "</div>";
+
+      document.addEventListener("DOMContentLoaded", function () {
+        document.body.appendChild(shimmer);
+      });
+
+      window.addEventListener("load", function () {
+        setTimeout(function () {
+          shimmer.style.transition = "opacity .35s";
+          shimmer.style.opacity = "0";
+
+          setTimeout(function () {
+            shimmer.remove();
+            sessionStorage.setItem("brc_splash_shown", "1");
+          }, 350);
         }, 350);
       });
     })();
@@ -54,115 +365,228 @@
 <body class="agreement-page">
 
   <!-- 🚗 Logo Header -->
-  <div class="logo-header">
+  <header class="logo-header">
     <img src="official_logo.jpeg" alt="Big Red Connect Logo" />
-  </div>
+  </header>
 
-  <!-- 🏷️ Header -->
-  <h1>Rider Agreement</h1>
-  <p class="tagline">Transparency, safety, and fairness — the Big Red Connect way.</p>
+  <main class="agreement-shell">
 
-  <!-- 🟢 Status Pill -->
-  <div id="status-pill" class="status status--loading">Checking status…</div>
+    <!-- 🏷️ Page Introduction -->
+    <section class="agreement-intro" aria-labelledby="agreement-title">
+      <h1 id="agreement-title">Rider Agreement</h1>
+      <p class="tagline">
+        Transparency, safety, and fairness — the Big Red Connect way.
+      </p>
+    </section>
 
-  <!-- 📜 Agreement Content -->
-  <section id="agreement-content" class="info-section" style="text-align:left; max-width:700px; margin:auto;">
-    <p>
-      By riding with Big Red Connect, you agree to the following policies.  
-      These terms are displayed in-vehicle, on our website, and shared when booking.
-    </p>
-
-    <ul>
-      <li><strong>Payment:</strong> Due as agreed. Missed or late payments may result in refusal of service.</li>
-      <li><strong>Cancellation:</strong> Cancel at least 3 hours in advance for refund eligibility.</li>
-      <li><strong>No-Shows:</strong> $5 fee applies after a 5-minute wait.</li>
-      <li><strong>Stops/Changes:</strong> $5 per extra stop or significant detour.</li>
-      <li><strong>Damage or Mess:</strong> Cleaning or repair fees (up to $200) may apply.</li>
-      <li><strong>Group Responsibility:</strong> The booking party is responsible for the conduct and costs of all group members.</li>
-      <li><strong>Insurance Disclaimer:</strong> Rides are offered by an independent operator under a personal auto policy with a rideshare endorsement.  
-          This is not a licensed commercial taxi service. Limited liability applies.</li>
-      <li><strong>Dash Cam Notice:</strong> Audio and video may be recorded inside the vehicle for safety and liability purposes. Riding implies consent.</li>
-      <li><strong>Voluntary Participation:</strong> All rides are voluntary and at your own risk. Big Red Connect is not liable for loss, injury, or damages unless caused by gross negligence or willful misconduct.</li>
-      <li><strong>Travel Fairness Rule:</strong> A flat travel fee may apply for pickups outside the local service area — $10 for 1–15 miles beyond, $20 for 16 miles or more. Long trips that already cover travel time and mileage do not incur extra fees.</li>
-      <li><strong>Loyalty Consistency:</strong> If you receive a quoted fare (e.g., $10 local) and request a return trip within the same night, that same rate will normally be honored for fairness and consistency.  
-          However, if the return occurs during a <em>special-rate period</em> (Rush Hour, Airport, or Special Event), the applicable base rate may apply. You’ll always be quoted up front before confirming your return ride.</li>
-    </ul>
-
-    <div style="background:#111;border:1px solid #ffcc00;border-radius:8px;padding:14px;margin-top:18px;">
-      <strong>By accepting a ride, you agree to these terms.</strong><br>
-      No physical signature is required for standard or recurring rides.
+    <!-- 🟢 Status Pill -->
+    <div class="status-wrap">
+      <div
+        id="status-pill"
+        class="status status--loading"
+        role="status"
+        aria-live="polite"
+      >
+        Checking status…
+      </div>
     </div>
 
-    <p style="margin-top:18px;">
-      Need a signed copy for a group, employer, or event?<br>
-      Complete the verified rider form below:
-    </p>
+    <!-- 📜 Agreement Content -->
+    <section id="agreement-content" class="info-section">
+      <p>
+        By riding with Big Red Connect, you agree to the following policies.
+        These terms are displayed in-vehicle, on the website, and shared when booking.
+      </p>
 
-    <p style="text-align:center;">
-      <a href="https://docs.google.com/forms/d/e/1FAIpQLSe9qLWuv1fF8PLVs8QCVJUNr9o-YlytixhDi1Rcz5St5e6hlw/viewform?usp=dialog"
-         target="_blank"
-         class="btn primary">
-         📝 Complete Signed Rider Form
-      </a>
-    </p>
+      <ul>
+        <li>
+          <strong>Payment:</strong>
+          Due as agreed. Missed or late payments may result in refusal of service.
+        </li>
 
-    <!-- 📄 PDF Download -->
-    <p style="text-align:center; margin-top:20px;">
-      <button id="downloadPdfBtn" class="btn secondary">📄 Download Official PDF Copy</button>
-    </p>
+        <li>
+          <strong>Cancellation:</strong>
+          Cancel at least 3 hours in advance for refund eligibility.
+        </li>
 
-    <p style="margin-top:30px;font-size:0.9em;color:#aaa;text-align:center;">
-      This document is publicly available at:<br>
-      <strong>bigred202403.github.io/Big-Red-Connect/RiderAgreement.html</strong><br>
-      For questions, text <strong>405-378-4024</strong>.
-    </p>
-  </section>
+        <li>
+          <strong>No-Shows:</strong>
+          A $5 fee applies after a 5-minute wait.
+        </li>
 
-  <!-- 🦶 Footer -->
-  <footer>
-    <p>Need a connection? Text <strong>“RED”</strong> to (405) 378-4024.</p>
-    <a href="index.html" class="btn">🏠 Return to Home</a>
-    <p style="font-size:0.8em;color:#777;margin-top:10px;line-height:1.4;">
-      Vehicle imagery features actual Big Red Connect fleet vehicles.<br>
-      Some backgrounds created with AI-assisted design tools for illustrative purposes only.<br>
-      Brand names (Chevrolet® and GMC®) are property of their respective owners and used descriptively.
-    </p>
-  </footer>
+        <li>
+          <strong>Stops/Changes:</strong>
+          A $5 fee applies for each extra stop or significant detour.
+        </li>
+
+        <li>
+          <strong>Damage or Mess:</strong>
+          Cleaning or repair fees of up to $200 may apply.
+        </li>
+
+        <li>
+          <strong>Group Responsibility:</strong>
+          The booking party is responsible for the conduct and costs of all group members.
+        </li>
+
+        <li>
+          <strong>Insurance Disclaimer:</strong>
+          Rides are offered by an independent operator under a personal auto policy with
+          a rideshare endorsement. This is not a licensed commercial taxi service.
+          Limited liability applies.
+        </li>
+
+        <li>
+          <strong>Dash Cam Notice:</strong>
+          Audio and video may be recorded inside the vehicle for safety and liability
+          purposes. Riding implies consent.
+        </li>
+
+        <li>
+          <strong>Voluntary Participation:</strong>
+          All rides are voluntary and at your own risk. Big Red Connect is not liable for
+          loss, injury, or damages unless caused by gross negligence or willful misconduct.
+        </li>
+
+        <li>
+          <strong>Travel Fairness Rule:</strong>
+          A flat travel fee may apply for pickups outside the local service area —
+          $10 for 1–15 miles beyond and $20 for 16 miles or more. Long trips that already
+          cover travel time and mileage do not incur extra fees.
+        </li>
+
+        <li>
+          <strong>Loyalty Consistency:</strong>
+          If you receive a quoted fare, such as a $10 local ride, and request a return trip
+          within the same night, that same rate will normally be honored for fairness and
+          consistency. However, if the return occurs during a special-rate period, including
+          Rush Hour, Airport, or a Special Event, the applicable base rate may apply.
+          You will always be quoted before confirming the return ride.
+        </li>
+      </ul>
+
+      <div class="agreement-confirmation">
+        <strong>By accepting a ride, you agree to these terms.</strong><br>
+        No physical signature is required for standard or recurring rides.
+      </div>
+
+      <p class="agreement-action-copy">
+        Need a signed copy for a group, employer, or event?<br>
+        Complete the verified rider form below:
+      </p>
+
+      <p class="agreement-action">
+        <a
+          href="https://docs.google.com/forms/d/e/1FAIpQLSe9qLWuv1fF8PLVs8QCVJUNr9o-YlytixhDi1Rcz5St5e6hlw/viewform?usp=dialog"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="btn primary"
+        >
+          📝 Complete Signed Rider Form
+        </a>
+      </p>
+
+      <!-- 📄 PDF Download -->
+      <p class="agreement-action">
+        <button id="downloadPdfBtn" type="button" class="btn secondary">
+          📄 Download Official PDF Copy
+        </button>
+      </p>
+
+      <p class="public-link-note">
+        This document is publicly available at:<br>
+        <strong>bigred202403.github.io/Big-Red-Connect/RiderAgreement.html</strong><br>
+        For questions, text <strong>405-378-4024</strong>.
+      </p>
+    </section>
+
+    <!-- 🦶 Footer -->
+    <footer>
+      <p>Need a connection? Text <strong>“RED”</strong> to (405) 378-4024.</p>
+
+      <a href="index.html" class="btn">🏠 Return to Home</a>
+
+      <p class="legal-note">
+        Vehicle imagery features actual Big Red Connect fleet vehicles.<br>
+        Some backgrounds were created with AI-assisted design tools for illustrative
+        purposes only.<br>
+        Brand names Chevrolet® and GMC® are property of their respective owners and are
+        used descriptively.
+      </p>
+    </footer>
+
+  </main>
 
   <script src="status.js"></script>
+
   <script>
-    document.getElementById("downloadPdfBtn").addEventListener("click", () => {
+    document.getElementById("downloadPdfBtn").addEventListener("click", function () {
       const element = document.getElementById("agreement-content");
       const date = new Date().toLocaleDateString();
+
       const opt = {
         margin: 0.5,
-        filename: `BigRedConnect_RiderAgreement_${date.replace(/\//g,'-')}.pdf`,
-        image: { type:'jpeg', quality:0.98 },
-        html2canvas: { scale:2, useCORS:true },
-        jsPDF: { unit:'in', format:'letter', orientation:'portrait' }
+        filename: `BigRedConnect_RiderAgreement_${date.replace(/\//g, "-")}.pdf`,
+        image: {
+          type: "jpeg",
+          quality: 0.98
+        },
+        html2canvas: {
+          scale: 2,
+          useCORS: true
+        },
+        jsPDF: {
+          unit: "in",
+          format: "letter",
+          orientation: "portrait"
+        }
       };
 
       const clone = element.cloneNode(true);
-      const wrapper = document.createElement('div');
+
+      const clonedDownloadButton = clone.querySelector("#downloadPdfBtn");
+      if (clonedDownloadButton) {
+        clonedDownloadButton.closest("p")?.remove();
+      }
+
+      const wrapper = document.createElement("div");
+
       wrapper.innerHTML = `
         <div style="text-align:center;margin-bottom:20px;">
-          <img src="official_logo.jpeg" alt="Big Red Connect Logo" style="width:150px;margin-bottom:10px;">
+          <img
+            src="official_logo.jpeg"
+            alt="Big Red Connect Logo"
+            style="width:150px;max-width:150px;height:auto;margin-bottom:10px;"
+          >
           <h2 style="color:#b30000;margin:0;">Big Red Connect</h2>
-          <p style="color:#666;margin:0;">Veteran Owned • Affordable • Local • Trusted</p>
-          <p style="font-size:0.85em;color:#999;">Generated on ${date}</p>
+          <p style="color:#666;margin:0;">
+            Veteran Owned • Affordable • Local • Trusted
+          </p>
+          <p style="font-size:0.85em;color:#999;">
+            Generated on ${date}
+          </p>
           <hr style="border:1px solid #c40000;margin:10px 0;">
-        </div>`;
+        </div>
+      `;
+
       wrapper.appendChild(clone);
-      const footer = document.createElement('div');
+
+      const footer = document.createElement("div");
       footer.innerHTML = `
         <hr style="border:1px solid #c40000;margin:20px 0;">
         <p style="font-size:0.8em;color:#777;text-align:center;">
           Veteran Owned. Affordable. Local. Trusted.<br>
-          Text “RED” to (405) 378-4024 • bigred202403.github.io/Big-Red-Connect
-        </p>`;
+          Text “RED” to (405) 378-4024 •
+          bigred202403.github.io/Big-Red-Connect
+        </p>
+      `;
+
       wrapper.appendChild(footer);
 
-      html2pdf().set(opt).from(wrapper).save();
+      html2pdf()
+        .set(opt)
+        .from(wrapper)
+        .save();
     });
   </script>
 </body>
