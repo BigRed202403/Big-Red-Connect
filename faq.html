@@ -12,38 +12,299 @@
 
   <link rel="stylesheet" href="style.css" />
 
-  <!-- ▸ Shimmer/Splash (once per session) -->
+  <!-- Page-specific layout protection -->
   <style>
+    .faq-page,
+    .faq-page * {
+      box-sizing: border-box;
+    }
+
+    html {
+      background: #000;
+    }
+
+    body.faq-page {
+      margin: 0;
+      min-height: 100vh;
+      overflow-x: hidden;
+      background: #000;
+      color: #f4f4f4;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    }
+
+    /* Keeps the logo visible without allowing it to take over the screen */
+    .faq-page .logo-header {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 28px 20px 18px;
+      background: #050505;
+    }
+
+    .faq-page .logo-header img {
+      display: block;
+      width: min(360px, 82vw);
+      max-width: 360px;
+      height: auto;
+      max-height: 330px;
+      object-fit: contain;
+    }
+
+    .faq-page .faq-shell {
+      width: min(100% - 28px, 760px);
+      margin: 0 auto;
+      padding: 20px 0 34px;
+    }
+
+    .faq-page .faq-intro {
+      text-align: center;
+      margin-bottom: 18px;
+    }
+
+    .faq-page .faq-intro h1 {
+      margin: 0;
+      color: #ef1b1b;
+      font-size: clamp(1.65rem, 7vw, 2.3rem);
+      line-height: 1.12;
+      letter-spacing: -0.02em;
+    }
+
+    .faq-page .tagline {
+      max-width: 560px;
+      margin: 10px auto 0;
+      color: #c9c9c9;
+      font-size: 0.98rem;
+      line-height: 1.5;
+    }
+
+    .faq-page .status-wrap {
+      display: flex;
+      justify-content: center;
+      margin: 16px 0 22px;
+    }
+
+    .faq-page #status-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: auto;
+      max-width: 100%;
+      min-height: 42px;
+      margin: 0;
+      padding: 10px 16px;
+      border: 1px solid #333;
+      border-radius: 999px;
+      background: #111;
+      color: #eee;
+      text-align: center;
+      font-size: 0.92rem;
+      font-weight: 600;
+      line-height: 1.35;
+    }
+
+    .faq-page .status--loading {
+      color: #d0d0d0;
+      border-color: #3a3a3a;
+    }
+
+    .faq-page .status--online,
+    .faq-page .status.online {
+      color: #c9ffd5;
+      border-color: #187a35;
+      background: #092812;
+    }
+
+    .faq-page .status--away,
+    .faq-page .status.away {
+      color: #fff0b8;
+      border-color: #8e6b14;
+      background: #2b2106;
+    }
+
+    .faq-page .status--offline,
+    .faq-page .status.offline {
+      color: #ffd0d0;
+      border-color: #8f1f1f;
+      background: #2a0909;
+    }
+
+    .faq-page .faq-list {
+      display: grid;
+      gap: 14px;
+    }
+
+    .faq-page .info-section {
+      width: 100%;
+      margin: 0;
+      padding: 20px;
+      border: 1px solid #2d1111;
+      border-radius: 14px;
+      background: #111;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.24);
+    }
+
+    .faq-page .info-section h2 {
+      margin: 0 0 10px;
+      color: #ff2828;
+      font-size: clamp(1.13rem, 5vw, 1.4rem);
+      line-height: 1.3;
+      text-align: left;
+    }
+
+    .faq-page .info-section p {
+      margin: 0;
+      color: #eeeeee;
+      font-size: 0.98rem;
+      line-height: 1.62;
+      text-align: left;
+    }
+
+    .faq-page .info-section strong {
+      color: #fff;
+    }
+
+    .faq-page a {
+      color: #ff3434;
+      text-decoration-thickness: 1px;
+      text-underline-offset: 3px;
+    }
+
+    .faq-page footer {
+      width: 100%;
+      margin-top: 28px;
+      padding: 24px 0 0;
+      border-top: 1px solid #222;
+      text-align: center;
+      color: #ddd;
+    }
+
+    .faq-page footer p {
+      margin: 0 0 14px;
+      line-height: 1.5;
+    }
+
+    .faq-page footer .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
+      padding: 12px 20px;
+      border: 1px solid #d91a1a;
+      border-radius: 10px;
+      background: #d91a1a;
+      color: #fff;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .faq-page footer .btn:hover,
+    .faq-page footer .btn:focus-visible {
+      background: #f02020;
+      border-color: #f02020;
+    }
+
+    .faq-page .legal-note {
+      margin-top: 16px;
+      color: #777;
+      font-size: 0.78rem;
+      line-height: 1.45;
+    }
+
+    @media (max-width: 480px) {
+      .faq-page .logo-header {
+        padding: 22px 16px 12px;
+      }
+
+      .faq-page .logo-header img {
+        width: min(300px, 78vw);
+        max-height: 285px;
+      }
+
+      .faq-page .faq-shell {
+        width: min(100% - 24px, 760px);
+        padding-top: 16px;
+      }
+
+      .faq-page .info-section {
+        padding: 18px 16px;
+        border-radius: 12px;
+      }
+
+      .faq-page footer .btn {
+        width: 100%;
+      }
+    }
+
+    /* ▸ Shimmer/Splash — once per session */
     #shimmer {
-      position: fixed; inset: 0; background:#000; z-index:10000;
-      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      position: fixed;
+      inset: 0;
+      z-index: 10000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #000;
     }
+
     #shimmer .logo {
-      width: 160px; max-width: 50vw; height:auto;
-      animation:pulse 1.2s infinite ease-in-out;
+      width: 160px;
+      max-width: 50vw;
+      height: auto;
+      animation: pulse 1.2s infinite ease-in-out;
     }
+
     #shimmer .msg {
-      color:#bbb; margin-top:14px; font-size:0.95em; letter-spacing:.3px;
+      margin-top: 14px;
+      color: #bbb;
+      font-size: 0.95em;
+      letter-spacing: 0.3px;
     }
+
     @keyframes pulse {
-      0%{opacity:.5; transform:scale(.98)}
-      50%{opacity:1; transform:scale(1)}
-      100%{opacity:.5; transform:scale(.98)}
+      0% {
+        opacity: 0.5;
+        transform: scale(0.98);
+      }
+      50% {
+        opacity: 1;
+        transform: scale(1);
+      }
+      100% {
+        opacity: 0.5;
+        transform: scale(0.98);
+      }
     }
   </style>
 
   <script>
     window.SPLASH_MESSAGE = "Loading FAQs…";
-    (function(){
+
+    (function () {
       if (sessionStorage.getItem("brc_splash_shown")) return;
-      const w=document.createElement("div");
-      w.id="shimmer";
-      w.innerHTML = '<img class="logo" src="official_logo.jpeg" alt="Big Red Connect Logo"><div class="msg">'+(window.SPLASH_MESSAGE||"Loading…")+'</div>';
-      document.addEventListener("DOMContentLoaded", ()=>document.body.appendChild(w));
-      window.addEventListener("load", ()=>{
-        setTimeout(()=>{
-          w.style.transition="opacity .35s"; w.style.opacity="0";
-          setTimeout(()=>{ w.remove(); sessionStorage.setItem("brc_splash_shown","1"); }, 350);
+
+      const shimmer = document.createElement("div");
+      shimmer.id = "shimmer";
+      shimmer.innerHTML =
+        '<img class="logo" src="official_logo.jpeg" alt="Big Red Connect Logo">' +
+        '<div class="msg">' +
+        (window.SPLASH_MESSAGE || "Loading…") +
+        "</div>";
+
+      document.addEventListener("DOMContentLoaded", function () {
+        document.body.appendChild(shimmer);
+      });
+
+      window.addEventListener("load", function () {
+        setTimeout(function () {
+          shimmer.style.transition = "opacity .35s";
+          shimmer.style.opacity = "0";
+
+          setTimeout(function () {
+            shimmer.remove();
+            sessionStorage.setItem("brc_splash_shown", "1");
+          }, 350);
         }, 350);
       });
     })();
@@ -53,88 +314,118 @@
 <body class="faq-page">
 
   <!-- 🚗 Logo Header -->
-  <div class="logo-header">
+  <header class="logo-header">
     <img src="official_logo.jpeg" alt="Big Red Connect Logo" />
-  </div>
+  </header>
 
-  <!-- 🏷️ Header -->
-  <h1>Frequently Asked Questions</h1>
-  <p class="tagline">Everything you need to know before you plan your connection.</p>
+  <main class="faq-shell">
 
-  <!-- 🟢 Status Pill -->
-  <div id="status-pill" class="status status--loading">Checking status…</div>
+    <!-- 🏷️ Page Introduction -->
+    <section class="faq-intro" aria-labelledby="faq-title">
+      <h1 id="faq-title">Frequently Asked Questions</h1>
+      <p class="tagline">
+        Everything you need to know before you plan your connection.
+      </p>
+    </section>
 
-  <!-- 💬 FAQ Content -->
-  <section class="info-section">
-    <h2>How do I get around with Big Red?</h2>
-    <p>
-      Just text me at <strong>405-378-4024</strong> and I’ll let you know if I’m available.<br>
-      No app, no surge pricing — just local, friendly service.
-    </p>
-  </section>
+    <!-- 🟢 Status Pill -->
+    <div class="status-wrap">
+      <div id="status-pill" class="status status--loading" role="status" aria-live="polite">
+        Checking status…
+      </div>
+    </div>
 
-  <section class="info-section">
-    <h2>How much does it cost?</h2>
-    <p>
-      Standard rides start at <strong>$10</strong> (covers up to 10 miles).<br>
-      Longer trips are <strong>$1.25 per mile for miles 11–20</strong> and <strong>$1.00 per mile</strong> beyond 20.<br><br>
-      Rush Hour and Airport base fares are <strong>$15</strong>, and Special Events are <strong>$20</strong>.<br><br>
-      <strong>Travel Fairness Rule:</strong> A travel fee only applies when a short, local trip is requested far from my current driving area or home zone.<br>
-      Long-distance trips (like Shawnee → OKC or Norman → Edmond) are already fairly covered by mileage and do <em>not</em> incur any travel fee.
-    </p>
-  </section>
+    <!-- 💬 FAQ Content -->
+    <div class="faq-list">
 
-  <section class="info-section">
-    <h2>Do you record video inside the vehicle?</h2>
-    <p>
-      Yes — for safety and accountability. Dash cams record both inside and outside the vehicle.<br>
-      Riders are notified by in-car display and in the 
-      <a href="RiderAgreement.html" style="color:#ff1a1a;">Rider Agreement</a>.
-    </p>
-  </section>
+      <section class="info-section">
+        <h2>How do I get around with Big Red?</h2>
+        <p>
+          Just text me at <strong>405-378-4024</strong> and I’ll let you know if I’m available.<br>
+          No app, no surge pricing — just local, friendly service.
+        </p>
+      </section>
 
-  <section class="info-section">
-    <h2>Do I need to sign anything?</h2>
-    <p>
-      First-time riders agree to a one-time 
-      <a href="RiderAgreement.html" style="color:#ff1a1a;">Rider Agreement</a>.<br>
-      You don’t need to sign again unless something changes or it’s for a special event.
-    </p>
-  </section>
+      <section class="info-section">
+        <h2>How much does it cost?</h2>
+        <p>
+          Standard rides start at <strong>$10</strong> and cover the first 10 miles.<br>
+          Miles 11–20 are <strong>$1.25 per mile</strong>, and miles beyond 20 are
+          <strong>$1.00 per mile</strong>.<br><br>
 
-  <section class="info-section">
-    <h2>Where do you operate?</h2>
-    <p>
-      <strong>Local Zone (no travel fee):</strong><br>
-      Oklahoma City · Moore · Norman · Midwest City · Del City<br><br>
+          Rush Hour rides start at <strong>$15</strong>. Airport and Special Event rides
+          start at <strong>$20</strong>.<br><br>
 
-      <strong>Extended Coverage (Zone 2):</strong><br>
-      Yukon · Mustang · Edmond · Noble · Newcastle · Tuttle · Harrah · Choctaw · Jones · Luther · Far East Norman · East Norman<br><br>
+          <strong>Travel Fairness Rule:</strong> A travel fee only applies when a short,
+          local trip is requested far from my current driving area or home zone.
+          Long-distance trips that already fairly cover time and mileage do
+          <em>not</em> receive an additional travel fee.
+        </p>
+      </section>
 
-      <strong>Outer Coverage (Zone 3):</strong><br>
-      Shawnee · Tecumseh · Guthrie · Blanchard · Wellston · Seminole · Chickasha · Goldsby · Lexington · Purcell · And Beyond!<br><br>
+      <section class="info-section">
+        <h2>Do you record video inside the vehicle?</h2>
+        <p>
+          Yes — for safety and accountability. Dash cams record both inside and outside
+          the vehicle. Riders are notified by the in-car display and in the
+          <a href="RiderAgreement.html">Rider Agreement</a>.
+        </p>
+      </section>
 
-      Trips outside these areas are evaluated on distance — if it’s a long route that already fairly covers time and mileage, no travel fee applies.
-    </p>
-  </section>
+      <section class="info-section">
+        <h2>Do I need to sign anything?</h2>
+        <p>
+          First-time riders agree to a one-time
+          <a href="RiderAgreement.html">Rider Agreement</a>.
+          You do not need to sign again unless something changes or the ride is connected
+          to a special event.
+        </p>
+      </section>
 
-  <section class="info-section">
-    <h2>Can I bring food or drinks?</h2>
-    <p>
-      Sure — just be respectful and tidy. If you need help carrying something, I’ve got you.
-    </p>
-  </section>
+      <section class="info-section">
+        <h2>Where do you operate?</h2>
+        <p>
+          <strong>Local Zone:</strong><br>
+          Oklahoma City · Moore · Norman · Midwest City · Del City<br><br>
 
-  <!-- 🦶 Footer -->
-  <footer>
-    <p>Need a connection? Text <strong>“RED”</strong> to (405) 378-4024.</p>
-    <a href="index.html" class="btn">🏠 Return to Home</a>
-    <p style="font-size:0.8em;color:#777;margin-top:10px;line-height:1.4;">
-      Vehicle imagery features actual Big Red Connect fleet vehicles.<br>
-      Some backgrounds created with AI-assisted design tools for illustrative purposes only.<br>
-      Brand names (Chevrolet® and GMC®) are property of their respective owners and used descriptively.
-    </p>
-  </footer>
+          <strong>Extended Coverage:</strong><br>
+          Yukon · Mustang · Edmond · Noble · Newcastle · Tuttle · Harrah · Choctaw ·
+          Jones · Luther · Far East Norman · East Norman<br><br>
+
+          <strong>Outer Coverage:</strong><br>
+          Shawnee · Tecumseh · Guthrie · Blanchard · Wellston · Seminole · Chickasha ·
+          Goldsby · Lexington · Purcell · and beyond.<br><br>
+
+          Trips outside these areas are evaluated by distance. When a longer route already
+          fairly covers travel time and mileage, no additional travel fee applies.
+        </p>
+      </section>
+
+      <section class="info-section">
+        <h2>Can I bring food or drinks?</h2>
+        <p>
+          Sure — just be respectful and tidy. If you need help carrying something,
+          I’ve got you.
+        </p>
+      </section>
+
+    </div>
+
+    <!-- 🦶 Footer -->
+    <footer>
+      <p>Need a connection? Text <strong>“RED”</strong> to (405) 378-4024.</p>
+      <a href="index.html" class="btn">🏠 Return to Home</a>
+
+      <p class="legal-note">
+        Vehicle imagery features actual Big Red Connect fleet vehicles.<br>
+        Some backgrounds were created with AI-assisted design tools for illustrative
+        purposes only.<br>
+        Brand names Chevrolet® and GMC® are property of their respective owners and are
+        used descriptively.
+      </p>
+    </footer>
+
+  </main>
 
   <script src="status.js"></script>
 </body>
