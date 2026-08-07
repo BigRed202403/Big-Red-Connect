@@ -20,6 +20,103 @@
       height: auto;
       border-radius: 12px;
     }
+    /* =========================================
+       Rider Rating Summary
+       ========================================= */
+    .rating-summary {
+      margin-top: 18px;
+    }
+    .rating-score {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .rating-stars {
+      font-size: 1.6rem;
+      line-height: 1;
+      margin-bottom: 10px;
+    }
+    .rating-number {
+      font-size: 2.5rem;
+      line-height: 1;
+      font-weight: 800;
+      margin-bottom: 7px;
+    }
+    .rating-period {
+      color: #aaa;
+      font-size: 0.95rem;
+    }
+    .rating-breakdown {
+      max-width: 620px;
+      margin: 0 auto;
+    }
+    .rating-row {
+      display: grid;
+      grid-template-columns: 62px 1fr 42px;
+      align-items: center;
+      gap: 10px;
+      margin: 13px 0;
+    }
+    .rating-label {
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .rating-track {
+      width: 100%;
+      height: 10px;
+      background: #282828;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .rating-fill {
+      height: 100%;
+      background: #b30000;
+      border-radius: 999px;
+    }
+    .rating-fill.full {
+      width: 100%;
+    }
+    .rating-fill.zero {
+      width: 0;
+    }
+    .rating-count {
+      text-align: right;
+      font-weight: 700;
+    }
+    .rating-highlight {
+      text-align: center;
+      margin: 22px 0 4px;
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+    .rating-source-note {
+      text-align: center;
+      color: #888;
+      font-size: 0.82rem;
+      margin-top: 6px;
+    }
+    /* =========================================
+       Additional Rider Feedback
+       ========================================= */
+    .feedback-card {
+      margin-top: 14px;
+    }
+    .feedback-label {
+      display: inline-block;
+      color: #aaa;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    /* Mobile rating layout */
+    @media (max-width: 480px) {
+      .rating-row {
+        grid-template-columns: 58px 1fr 34px;
+        gap: 8px;
+      }
+      .rating-number {
+        font-size: 2.1rem;
+      }
+    }
   </style>
 </head>
 <body class="reviews-page">
@@ -32,6 +129,58 @@
   <p class="tagline">Real feedback from local riders — and a place to share yours.</p>
   <!-- Status pill -->
   <div id="status-pill" class="status status--loading">Checking status…</div>
+  <!-- Rider Rating Summary -->
+  <section class="info-section rating-summary">
+    <h2>Rider Rating Summary</h2>
+    <div class="rating-score">
+      <div class="rating-stars">⭐⭐⭐⭐⭐</div>
+      <div class="rating-number">5.0</div>
+      <div class="rating-period">Last 100 Rated Rides</div>
+    </div>
+    <div class="rating-breakdown">
+      <div class="rating-row">
+        <div class="rating-label">5 stars</div>
+        <div class="rating-track">
+          <div class="rating-fill full"></div>
+        </div>
+        <div class="rating-count">100</div>
+      </div>
+      <div class="rating-row">
+        <div class="rating-label">4 stars</div>
+        <div class="rating-track">
+          <div class="rating-fill zero"></div>
+        </div>
+        <div class="rating-count">0</div>
+      </div>
+      <div class="rating-row">
+        <div class="rating-label">3 stars</div>
+        <div class="rating-track">
+          <div class="rating-fill zero"></div>
+        </div>
+        <div class="rating-count">0</div>
+      </div>
+      <div class="rating-row">
+        <div class="rating-label">2 stars</div>
+        <div class="rating-track">
+          <div class="rating-fill zero"></div>
+        </div>
+        <div class="rating-count">0</div>
+      </div>
+      <div class="rating-row">
+        <div class="rating-label">1 star</div>
+        <div class="rating-track">
+          <div class="rating-fill zero"></div>
+        </div>
+        <div class="rating-count">0</div>
+      </div>
+    </div>
+    <p class="rating-highlight">
+      100% Five-Star Ratings
+    </p>
+    <p class="rating-source-note">
+      Based on my most recent 100 rider ratings.
+    </p>
+  </section>
   <!-- Real customer reviews -->
   <section class="info-section">
     <h2>What Riders Say</h2>
@@ -47,14 +196,31 @@
       ⭐⭐⭐⭐⭐ “Very friendly, smart, courteous, replies extremely fast, knowledgeable, and great ads. Would use every time I'm in OKC even if I don't have to go anywhere.”
       <br>— <strong>Arjun</strong>
     </div>
-    <p style="margin-top:10px;"><a class="btn primary" href="#leave-review">✍️ Leave a Review</a></p>
+    <p style="margin-top:10px;">
+      <a class="btn primary" href="#leave-review">✍️ Leave a Review</a>
+    </p>
+  </section>
+  <!-- Additional rider feedback -->
+  <section class="info-section">
+    <h2>More Rider Feedback</h2>
+    <div class="review-card feedback-card">
+      <span class="feedback-label">Passenger Comment</span><br>
+      “He was a great driver and helped me in and out of the car. A gentleman.”
+    </div>
+    <div class="review-card feedback-card">
+      <span class="feedback-label">Passenger Comment</span><br>
+      “Dan was a cool cat!! Very patient driver. Was not rude at all and I had a grocery store stop and maps even took us to the correct address wrong location lol. He handled it like a champ!! 🎯💯”
+    </div>
   </section>
   <!-- Google Form Embed -->
   <section id="leave-review" class="info-section" style="text-align:center;">
     <h2>Share Your Experience</h2>
     <iframe 
       src="https://docs.google.com/forms/d/e/1FAIpQLSeq6WCnkrG417rWCGwN56i7FplWpNTHlg1lpGuC-IETDEkEHw/viewform?embedded=true"
-      width="100%" height="700" style="border:none; border-radius:10px;" allowfullscreen>
+      width="100%"
+      height="700"
+      style="border:none; border-radius:10px;"
+      allowfullscreen>
     </iframe>
     <p class="note" style="color:#aaa; margin-top:10px;">
       Your feedback goes directly to Big Red Connect. Thanks for supporting local!
