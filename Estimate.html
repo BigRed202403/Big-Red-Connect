@@ -1,3 +1,14 @@
+<!-- =========================
+FILE: /Estimate.html
+Estimate – Big Red Connect
+
+UPDATED:
+- Extended Trip pricing is rider-visible before request.
+- Availability confirmation remains separate from pricing.
+- Extended empty travel includes driver positioning to a remote pickup plus return travel after drop-off.
+- Uses higher of normal fare + $0.35/empty mile or $40/operating hour.
+- Final Extended Trip fare rounds to nearest $5.
+========================= -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -160,33 +171,31 @@
   // =====================================================
   // EXTENDED TRIP CONFIG
   // =====================================================
-  // Locked pricing rules:
-  // - Trigger: >60 passenger miles OR >75 passenger minutes OR
-  //   material out-of-area trip with substantial expected deadhead return.
-  // - Extended fare = max(
-  //     normal fare + $0.35 * expected empty-return miles,
-  //     $40 * total estimated operating hours
-  //   )
-  // - Round selected extended fare to nearest $5.
+  // Locked rules:
+  // - >60 passenger miles OR >75 passenger minutes OR
+  //   a material out-of-area trip with substantial expected deadhead.
+  // - normal calculated fare + $0.35 per expected empty mile
+  // - expected empty miles include:
+  //     1) positioning from the status-selected pricing origin to pickup, and
+  //     2) return travel from drop-off back to HQ
+  // - compare against $40 x total estimated operating hours
+  // - use the higher result
+  // - round to nearest $5
   //
-  // PUBLIC QUOTE SAFETY:
-  // Keep false during commercial-sense testing. Extended pricing is still
-  // calculated and logged internally, but the rider only sees the availability flag.
-  // After Weatherford/Shawnee/Stillwater/Tulsa/Lawton/Woodward validation,
-  // change this single value to true to expose the long-distance dollar estimate.
-  const EXTENDED_PUBLIC_ESTIMATE_ENABLED = false;
+  // Pricing and availability are separate: the rider sees the estimate while
+  // Extended Trips still require availability confirmation.
+  const EXTENDED_PUBLIC_ESTIMATE_ENABLED = true;
 
-  // Temporary validation switch: open /Estimate.html?extendedTest=1 to reveal
-  // the Extended Trip dollar result and detailed breakdown without enabling it
-  // for normal rider traffic. This is a testing convenience, not an auth layer.
+  // Testing convenience only. Open /Estimate.html?extendedTest=1 to show
+  // the detailed positioning / return / hourly-floor breakdown.
   const EXTENDED_TEST_MODE =
     new URLSearchParams(window.location.search).get("extendedTest") === "1";
 
   const EXTENDED_TRIP_CONFIG = {
     distanceTriggerMiles: 60,
     durationTriggerMinutes: 75,
-    outOfAreaReturnMiles: 40, // initial proxy for "material out-of-area"; easy to tune after testing
-    emptyReturnRatePerMile: 0.35,
+    outOfAreaDeadheadMiles: 40,
+    emptyDeadheadRatePerMile: 0.35,
     operatingHourFloor: 40,
     roundToNearest: 5
   };
@@ -754,56 +763,164 @@
     passengerMinutes,
     normalFareBeforePayment
   }){
+    let positioningMiles = 0;
+    let positioningMinutes = 0;
+    let positioningRouteAvailable = false;
+    let positioningMetricsSource = "PRICING_ORIGIN_TO_PICKUP";
+
     let returnMiles = 0;
     let returnMinutes = 0;
     let returnRouteAvailable = false;
-    let returnMetricsSource = "HQ_RETURN_ROUTE";
+    let returnMetricsSource = "DROPOFF_TO_HQ";
+
+    const positioningOrigin =
+      fairnessOrigin &&
+      Number.isFinite(Number(fairnessOrigin.lat)) &&
+      Number.isFinite(Number(fairnessOrigin.lng))
+        ? {
+            lat:Number(fairnessOrigin.lat),
+            lng:Number(fairnessOrigin.lng)
+          }
+        : { ...HQ };
+
+    if (pickupLatLng) {
+      try {
+        const positioningRoute = await getDrivingRoute(
+          positioningOrigin,
+          { lat:pickupLatLng.lat(), lng:pickupLatLng.lng() }
+        );
+
+        const positioningMetrics = extractRouteMetrics(positioningRoute);
+        positioningMiles = positioningMetrics.miles;
+        positioningMinutes = positioningMetrics.minutes;
+        positioningRouteAvailable = true;
+      } catch (e) {
+        // Conservative fallback for an inbound Extended Trip.
+        positioningMiles = passengerMiles;
+        positioningMinutes = passengerMinutes;
+        positioningMetricsSource = "PASSENGER_ROUTE_FALLBACK";
+
+        console.warn(
+          "[Estimate] Empty-positioning route failed; using passenger-route fallback",
+          e
+        );
+      }
+    }
 
     if (dropoffLatLng) {
       try {
         const returnRoute = await getDrivingRoute(
-          { lat: dropoffLatLng.lat(), lng: dropoffLatLng.lng() },
+          { lat:dropoffLatLng.lat(), lng:dropoffLatLng.lng() },
           HQ
         );
+
         const returnMetrics = extractRouteMetrics(returnRoute);
         returnMiles = returnMetrics.miles;
         returnMinutes = returnMetrics.minutes;
         returnRouteAvailable = true;
       } catch (e) {
-        // Do not let an Extended Trip collapse back to a metro fare just because
-        // the second Google route call fails. Passenger-route metrics provide a
-        // conservative fallback for the locked >60 mi / >75 min triggers.
+        // Conservative fallback for an outbound Extended Trip.
         returnMiles = passengerMiles;
         returnMinutes = passengerMinutes;
         returnMetricsSource = "PASSENGER_ROUTE_FALLBACK";
-        console.warn("[Estimate] Empty-return route failed; using passenger-route fallback", e);
+
+        console.warn(
+          "[Estimate] Empty-return route failed; using passenger-route fallback",
+          e
+        );
       }
     }
 
-    // The out-of-area trigger requires an actual HQ-return route. The locked
-    // distance/time triggers can still price safely from the fallback metrics.
-    const distanceTriggered = passengerMiles > EXTENDED_TRIP_CONFIG.distanceTriggerMiles;
-    const durationTriggered = passengerMinutes > EXTENDED_TRIP_CONFIG.durationTriggerMinutes;
-    const outOfAreaTriggered =
-      returnRouteAvailable &&
-      returnMiles > EXTENDED_TRIP_CONFIG.outOfAreaReturnMiles;
+    const totalEmptyMiles =
+      positioningMiles + returnMiles;
 
-    const isExtended = distanceTriggered || durationTriggered || outOfAreaTriggered;
+    const totalEmptyMinutes =
+      positioningMinutes + returnMinutes;
+
+    const distanceTriggered =
+      passengerMiles > EXTENDED_TRIP_CONFIG.distanceTriggerMiles;
+
+    const durationTriggered =
+      passengerMinutes > EXTENDED_TRIP_CONFIG.durationTriggerMinutes;
+
+    const positioningTriggered =
+      positioningMiles > EXTENDED_TRIP_CONFIG.outOfAreaDeadheadMiles;
+
+    const returnTriggered =
+      returnMiles > EXTENDED_TRIP_CONFIG.outOfAreaDeadheadMiles;
+
+    const combinedDeadheadTriggered =
+      !positioningTriggered &&
+      !returnTriggered &&
+      totalEmptyMiles > EXTENDED_TRIP_CONFIG.outOfAreaDeadheadMiles;
+
+    const outOfAreaTriggered =
+      positioningTriggered ||
+      returnTriggered ||
+      combinedDeadheadTriggered;
+
+    const isExtended =
+      distanceTriggered ||
+      durationTriggered ||
+      outOfAreaTriggered;
 
     const triggerReasons = [];
-    if (distanceTriggered) triggerReasons.push(`Passenger trip > ${EXTENDED_TRIP_CONFIG.distanceTriggerMiles} miles`);
-    if (durationTriggered) triggerReasons.push(`Passenger trip > ${EXTENDED_TRIP_CONFIG.durationTriggerMinutes} minutes`);
-    if (outOfAreaTriggered) triggerReasons.push(`Expected empty return > ${EXTENDED_TRIP_CONFIG.outOfAreaReturnMiles} miles`);
 
-    const emptyReturnCharge = returnMiles * EXTENDED_TRIP_CONFIG.emptyReturnRatePerMile;
-    const deadheadAdjustedFare = normalFareBeforePayment + emptyReturnCharge;
+    if (distanceTriggered) {
+      triggerReasons.push(
+        `Passenger trip > ${EXTENDED_TRIP_CONFIG.distanceTriggerMiles} miles`
+      );
+    }
 
-    // Stable operating-hours definition for this first implementation:
-    // passenger service time + expected empty return to HQ.
-    const totalOperatingHours = (passengerMinutes + returnMinutes) / 60;
-    const hourlyFloorFare = totalOperatingHours * EXTENDED_TRIP_CONFIG.operatingHourFloor;
+    if (durationTriggered) {
+      triggerReasons.push(
+        `Passenger trip > ${EXTENDED_TRIP_CONFIG.durationTriggerMinutes} minutes`
+      );
+    }
 
-    const selectedBeforeRound = Math.max(deadheadAdjustedFare, hourlyFloorFare);
+    if (positioningTriggered) {
+      triggerReasons.push(
+        `Expected empty positioning > ${EXTENDED_TRIP_CONFIG.outOfAreaDeadheadMiles} miles`
+      );
+    }
+
+    if (returnTriggered) {
+      triggerReasons.push(
+        `Expected empty return > ${EXTENDED_TRIP_CONFIG.outOfAreaDeadheadMiles} miles`
+      );
+    }
+
+    if (combinedDeadheadTriggered) {
+      triggerReasons.push(
+        `Combined expected empty travel > ${EXTENDED_TRIP_CONFIG.outOfAreaDeadheadMiles} miles`
+      );
+    }
+
+    const positioningCharge =
+      positioningMiles * EXTENDED_TRIP_CONFIG.emptyDeadheadRatePerMile;
+
+    const returnCharge =
+      returnMiles * EXTENDED_TRIP_CONFIG.emptyDeadheadRatePerMile;
+
+    const emptyDeadheadCharge =
+      totalEmptyMiles * EXTENDED_TRIP_CONFIG.emptyDeadheadRatePerMile;
+
+    const deadheadAdjustedFare =
+      normalFareBeforePayment + emptyDeadheadCharge;
+
+    // Total operating time includes expected vehicle commitment:
+    // positioning to pickup + passenger service + return to HQ.
+    const totalOperatingHours =
+      (positioningMinutes + passengerMinutes + returnMinutes) / 60;
+
+    const hourlyFloorFare =
+      totalOperatingHours * EXTENDED_TRIP_CONFIG.operatingHourFloor;
+
+    const selectedBeforeRound = Math.max(
+      deadheadAdjustedFare,
+      hourlyFloorFare
+    );
+
     const extendedFareBeforePayment = roundToIncrement(
       selectedBeforeRound,
       EXTENDED_TRIP_CONFIG.roundToNearest
@@ -814,12 +931,30 @@
       triggerReasons,
       passengerMiles,
       passengerMinutes,
+
+      positioningMiles,
+      positioningMinutes,
+      positioningRouteAvailable,
+      positioningMetricsSource,
+      positioningOrigin,
+      positioningOriginSource:fairnessOriginSource,
+
       returnMiles,
       returnMinutes,
       returnRouteAvailable,
       returnMetricsSource,
+
+      totalEmptyMiles,
+      totalEmptyMinutes,
+
       normalFareBeforePayment,
-      emptyReturnCharge,
+      positioningCharge,
+      returnCharge,
+      emptyDeadheadCharge,
+
+      // Backward-compatible field retained for existing debug consumers.
+      emptyReturnCharge:returnCharge,
+
       deadheadAdjustedFare,
       totalOperatingHours,
       hourlyFloorFare,
@@ -923,15 +1058,9 @@
     const resDiv = document.getElementById("result");
 
     const planBy = document.getElementById("planBy").value;
-    const publicExtendedPriceVisible =
-      !extendedDetails.isExtended ||
-      EXTENDED_PUBLIC_ESTIMATE_ENABLED ||
-      EXTENDED_TEST_MODE;
 
-    // Do not pass a hidden long-distance dollar amount forward while public
-    // Extended Trip quotes are disabled. The request can still continue and
-    // carries the Extended Trip / confirmation-required flags separately.
-    const estimateParam = publicExtendedPriceVisible ? total : "";
+    // Extended Trip pricing is rider-visible. Availability remains separate.
+    const estimateParam = total;
 
     const requestHref =
       `/rider/ride-request.html?pickup=${encodeURIComponent(pickup)}` +
@@ -948,47 +1077,51 @@
 
     resDiv.style.display = "block";
 
-    if (extendedDetails.isExtended && !EXTENDED_PUBLIC_ESTIMATE_ENABLED && !EXTENDED_TEST_MODE) {
-      resDiv.innerHTML = `
-        <div class="total">Extended Trip</div>
-        <div class="extended-flag">🛣️ Availability confirmation required</div>
-        <p>This trip qualifies for Extended Trip pricing. The long-distance fare is being calculated internally while availability is confirmed.</p>
-        <p><strong>Trip distance:</strong> ${miles} mi</p>
-        <p><strong>Trip time:</strong> Approx. ${minutes} min</p>
-        <p><strong>Payment:</strong> ${pay === "card" ? "Card" : "Cash / Venmo / Cash App"}</p>
-        <div style="text-align:center;margin-top:10px;">
-          <a class="btn btn-secondary" href="${requestHref}">Continue to Request →</a>
-        </div>
-      `;
-    } else {
-      const extendedBreakdown = extendedDetails.isExtended
+    const extendedPublicMessage = extendedDetails.isExtended
+      ? `
+        <div class="extended-flag">${
+          EXTENDED_TEST_MODE
+            ? "🧪 Extended Trip test mode — availability confirmation required"
+            : "🛣️ Extended Trip — availability confirmation required"
+        }</div>
+        <p>Extended Trip pricing includes expected driver positioning / return travel. Availability must still be confirmed before the ride is accepted.</p>
+      `
+      : "";
+
+    const extendedTestBreakdown =
+      extendedDetails.isExtended && EXTENDED_TEST_MODE
         ? `
-          <div class="extended-flag">${EXTENDED_TEST_MODE && !EXTENDED_PUBLIC_ESTIMATE_ENABLED ? "🧪 Extended Trip test mode — availability confirmation required" : "🛣️ Extended Trip — availability confirmation required"}</div>
           <div class="test-breakdown">
             <p><strong>Normal fare:</strong> $${normalFareBeforePayment.toFixed(2)}</p>
-            <p><strong>Expected empty return:</strong> ${extendedDetails.returnMiles.toFixed(1)} mi / ${Math.round(extendedDetails.returnMinutes)} min</p>
-            <p><strong>Empty-return adjustment:</strong> $${extendedDetails.emptyReturnCharge.toFixed(2)}</p>
-            <p><strong>Fare + return adjustment:</strong> $${extendedDetails.deadheadAdjustedFare.toFixed(2)}</p>
+            <p><strong>Empty positioning to pickup:</strong> ${extendedDetails.positioningMiles.toFixed(1)} mi / ${Math.round(extendedDetails.positioningMinutes)} min</p>
+            <p><strong>Positioning source:</strong> ${extendedDetails.positioningMetricsSource} (${extendedDetails.positioningOriginSource})</p>
+            <p><strong>Empty return after drop-off:</strong> ${extendedDetails.returnMiles.toFixed(1)} mi / ${Math.round(extendedDetails.returnMinutes)} min</p>
+            <p><strong>Return source:</strong> ${extendedDetails.returnMetricsSource}</p>
+            <p><strong>Total expected empty travel:</strong> ${extendedDetails.totalEmptyMiles.toFixed(1)} mi / ${Math.round(extendedDetails.totalEmptyMinutes)} min</p>
+            <p><strong>Empty-travel adjustment:</strong> $${extendedDetails.emptyDeadheadCharge.toFixed(2)}</p>
+            <p><strong>Fare + empty-travel adjustment:</strong> $${extendedDetails.deadheadAdjustedFare.toFixed(2)}</p>
             <p><strong>$40/hr operating floor:</strong> $${extendedDetails.hourlyFloorFare.toFixed(2)} (${extendedDetails.totalOperatingHours.toFixed(2)} hrs)</p>
             <p><strong>Rounded Extended Trip fare:</strong> $${extendedDetails.extendedFareBeforePayment.toFixed(2)} before payment-method fees</p>
           </div>
         `
         : "";
 
-      resDiv.innerHTML = `
-        <div class="total">$${total}</div>
-        <p><strong>Base:</strong> $${base.toFixed(2)}</p>
-        <p><strong>Mileage:</strong> $${mileageSub.toFixed(2)} (${miles} mi)</p>
-        <p><strong>Travel Fairness Fee:</strong> $${Number(fairnessFee).toFixed(2)}</p>
-        ${extendedBreakdown}
-        <p><strong>Payment:</strong> ${pay === "card" ? "Card (incl. fees)" : "Cash / Venmo / Cash App"}</p>
-        <p>⏱️ Approx. ${minutes} min</p>
-        <div style="text-align:center;margin-top:10px;">
-          <a class="btn btn-secondary" href="${requestHref}">Continue to Request →</a>
-        </div>
-      `;
-    }
-
+    resDiv.innerHTML = `
+      <div class="total">$${total}</div>
+      <p><strong>Base:</strong> $${base.toFixed(2)}</p>
+      <p><strong>Mileage:</strong> $${mileageSub.toFixed(2)} (${miles} mi)</p>
+      ${fairnessFee > 0
+        ? `<p><strong>Travel Fairness Fee:</strong> $${Number(fairnessFee).toFixed(2)}</p>`
+        : ""
+      }
+      ${extendedPublicMessage}
+      ${extendedTestBreakdown}
+      <p><strong>Payment:</strong> ${pay === "card" ? "Card (incl. fees)" : "Cash / Venmo / Cash App"}</p>
+      <p>⏱️ Approx. ${minutes} min passenger trip</p>
+      <div style="text-align:center;margin-top:10px;">
+        <a class="btn btn-secondary" href="${requestHref}">Continue to Request →</a>
+      </div>
+    `;
     updateFairnessPreview();
 
     console.log("[Estimate] Fairness origin:", fairnessOriginSource, fairnessOrigin);
@@ -999,12 +1132,18 @@
       console.log("Trigger reasons:", extendedDetails.triggerReasons);
       console.log("Passenger miles:", extendedDetails.passengerMiles);
       console.log("Passenger minutes:", extendedDetails.passengerMinutes);
-      console.log("Expected empty-return miles:", extendedDetails.returnMiles);
-      console.log("Expected empty-return minutes:", extendedDetails.returnMinutes);
+      console.log("Empty positioning miles:", extendedDetails.positioningMiles);
+      console.log("Empty positioning minutes:", extendedDetails.positioningMinutes);
+      console.log("Positioning metrics source:", extendedDetails.positioningMetricsSource);
+      console.log("Positioning origin source:", extendedDetails.positioningOriginSource);
+      console.log("Empty return miles:", extendedDetails.returnMiles);
+      console.log("Empty return minutes:", extendedDetails.returnMinutes);
       console.log("Return metrics source:", extendedDetails.returnMetricsSource);
+      console.log("Total expected empty miles:", extendedDetails.totalEmptyMiles);
+      console.log("Total expected empty minutes:", extendedDetails.totalEmptyMinutes);
       console.log("Normal fare before payment:", extendedDetails.normalFareBeforePayment);
-      console.log("Empty-return charge:", extendedDetails.emptyReturnCharge);
-      console.log("Normal + empty-return:", extendedDetails.deadheadAdjustedFare);
+      console.log("Empty-travel charge:", extendedDetails.emptyDeadheadCharge);
+      console.log("Normal + empty travel:", extendedDetails.deadheadAdjustedFare);
       console.log("Total operating hours:", extendedDetails.totalOperatingHours);
       console.log("$40/hr operating floor:", extendedDetails.hourlyFloorFare);
       console.log("Selected before rounding:", extendedDetails.selectedBeforeRound);
