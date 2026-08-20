@@ -8,6 +8,9 @@ UPDATED:
 - ONLINE / AWAY uses a fresh tracker location.
 - Stale or missing tracker data falls back to the status-worker location, then HQ.
 - Removed the prior Math.min(HQ, live) behavior.
+- Added Extended Trip pricing without changing existing base or mileage tiers.
+- Extended Trip pricing stays separate from availability confirmation.
+- Public Extended Trip dollar amounts remain hidden during validation unless ?extendedTest=1 is used.
 ========================= -->
 <!DOCTYPE html>
 <html lang="en">
@@ -231,6 +234,7 @@ UPDATED:
     #event-note { color:#ffd27f; }
     #rushhour-note { color:#ffb3b3; }
     #fairness-note { color:#d3b9ff; }
+    #extended-note { color:#ffd27f; font-weight:700; }
 
     #result {
       margin-top:10px;
@@ -250,6 +254,24 @@ UPDATED:
       font-size:1.3rem;
       font-weight:700;
       margin-bottom:6px;
+    }
+
+    .extended-flag {
+      padding:9px 10px;
+      margin:8px 0;
+      background:#171006;
+      border:1px solid #5c431d;
+      border-radius:8px;
+      color:#ffd27f;
+      font-weight:700;
+    }
+
+    .test-breakdown {
+      margin:8px 0;
+      padding:8px 10px;
+      border:1px dashed #555;
+      border-radius:8px;
+      background:#050505;
     }
 
     .profile-chip {
@@ -422,6 +444,7 @@ UPDATED:
       <p id="event-note"></p>
       <p id="rushhour-note"></p>
       <p id="fairness-note"></p>
+      <p id="extended-note"></p>
     </div>
   </div>
 
@@ -472,8 +495,38 @@ UPDATED:
   const HQ = { lat:35.3207, lng:-97.4929 };
   const LIVE_LOCATION_FRESH_MS = 15 * 60 * 1000;
 
+  // =====================================================
+  // EXTENDED TRIP CONFIG
+  // =====================================================
+  // Locked rules:
+  // - >60 passenger miles OR >75 passenger minutes OR
+  //   a material out-of-area trip with substantial expected empty return.
+  // - normal calculated fare + $0.35 per expected empty-return mile
+  // - compare against $40 x total estimated operating hours
+  // - use the higher result
+  // - round to nearest $5
+  //
+  // Keep false until route validation is complete. The actual Extended Trip
+  // amount is still calculated and stored with the booking internally.
+  const EXTENDED_PUBLIC_ESTIMATE_ENABLED = false;
+
+  // Testing convenience only. Open ride-request.html?extendedTest=1 to reveal
+  // the Extended Trip amount and detailed pricing breakdown on this page.
+  const EXTENDED_TEST_MODE =
+    new URLSearchParams(window.location.search).get("extendedTest") === "1";
+
+  const EXTENDED_TRIP_CONFIG = {
+    distanceTriggerMiles:60,
+    durationTriggerMinutes:75,
+    outOfAreaReturnMiles:40,
+    emptyReturnRatePerMile:0.35,
+    operatingHourFloor:40,
+    roundToNearest:5
+  };
+
   let fairnessOrigin = { ...HQ };
   let fairnessOriginSource = "HQ";
+  window.__lastExtendedTripEstimate = null;
 
   // =====================================================
   // BASIC HELPERS
@@ -522,6 +575,21 @@ UPDATED:
       if (typeof v === "string" && v.trim()) return v.trim();
     }
     return "";
+  }
+
+  function roundToIncrement(amount, increment) {
+    const step = Number(increment) || 1;
+    return Math.round(Number(amount) / step) * step;
+  }
+
+  function applyPaymentFees(amount, payment) {
+    let total = Number(amount) || 0;
+
+    if (payment === "card") {
+      total += total * 0.033 + total * 0.024;
+    }
+
+    return total;
   }
 
   // =====================================================
@@ -1513,7 +1581,9 @@ UPDATED:
         "estimate",
         "miles",
         "minutes",
-        "from"
+        "from",
+        "extendedTrip",
+        "availabilityConfirmation"
       ].forEach(key => url.searchParams.delete(key));
 
       history.replaceState(
@@ -1580,6 +1650,9 @@ UPDATED:
       const planBy = String(url.searchParams.get("planBy") || "").trim().toLowerCase();
       const payment = String(url.searchParams.get("payment") || "").trim().toLowerCase();
       const estimate = String(url.searchParams.get("estimate") || "").trim();
+      const extendedTrip = String(url.searchParams.get("extendedTrip") || "") === "1";
+      const availabilityConfirmation =
+        String(url.searchParams.get("availabilityConfirmation") || "").toLowerCase() === "required";
 
       if (pickup) {
         document.getElementById("pickup").value = pickup;
@@ -1609,7 +1682,11 @@ UPDATED:
         document.getElementById("payment").value = payment;
       }
 
-      if (estimate) {
+      if (extendedTrip && availabilityConfirmation) {
+        document.getElementById("estimateDisplay").value = "Extended Trip";
+        document.getElementById("extended-note").textContent =
+          "🛣️ Extended Trip — availability confirmation required.";
+      } else if (estimate) {
         document.getElementById("estimateDisplay").value =
           "$" + estimate.replace(/^\$/, "");
       }
@@ -1622,7 +1699,9 @@ UPDATED:
         reserveTime ||
         planBy ||
         payment ||
-        estimate
+        estimate ||
+        extendedTrip ||
+        availabilityConfirmation
       ) {
         clearHandoffCommonParams();
         showToast("Trip carried over ✅");
@@ -1866,6 +1945,162 @@ UPDATED:
       .filter(Boolean);
   }
 
+  function extractRouteMetrics(route) {
+    let miles = 0;
+    let minutes = 0;
+
+    const legs = route?.routes?.[0]?.legs || [];
+
+    legs.forEach(leg => {
+      miles += Number(leg?.distance?.value || 0) / 1609.34;
+      minutes += Number(leg?.duration?.value || 0) / 60;
+    });
+
+    return { miles, minutes };
+  }
+
+  async function getDrivingRoute(origin, destination) {
+    return await new Promise((resolve, reject) => {
+      directionsService.route(
+        {
+          origin,
+          destination,
+          travelMode:google.maps.TravelMode.DRIVING
+        },
+        (result, status) => {
+          if (status === "OK") {
+            resolve(result);
+          } else {
+            reject(new Error(status));
+          }
+        }
+      );
+    });
+  }
+
+  async function calculateExtendedTripDetails({
+    passengerMiles,
+    passengerMinutes,
+    normalFareBeforePayment
+  }) {
+    let returnMiles = 0;
+    let returnMinutes = 0;
+    let returnRouteAvailable = false;
+    let returnMetricsSource = "HQ_RETURN_ROUTE";
+
+    if (dropoffLatLng) {
+      try {
+        const returnRoute = await getDrivingRoute(
+          { lat:dropoffLatLng.lat(), lng:dropoffLatLng.lng() },
+          HQ
+        );
+
+        const returnMetrics = extractRouteMetrics(returnRoute);
+        returnMiles = returnMetrics.miles;
+        returnMinutes = returnMetrics.minutes;
+        returnRouteAvailable = true;
+      } catch (e) {
+        // Keep Extended Trip pricing available even if the return-route call fails.
+        // Passenger-route metrics are a conservative fallback for the locked
+        // distance/time triggers. The out-of-area trigger itself still requires
+        // an actual HQ return route.
+        returnMiles = passengerMiles;
+        returnMinutes = passengerMinutes;
+        returnMetricsSource = "PASSENGER_ROUTE_FALLBACK";
+        console.warn(
+          "[Ride Request] Empty-return route failed; using passenger-route fallback",
+          e
+        );
+      }
+    }
+
+    const distanceTriggered =
+      passengerMiles > EXTENDED_TRIP_CONFIG.distanceTriggerMiles;
+
+    const durationTriggered =
+      passengerMinutes > EXTENDED_TRIP_CONFIG.durationTriggerMinutes;
+
+    const outOfAreaTriggered =
+      returnRouteAvailable &&
+      returnMiles > EXTENDED_TRIP_CONFIG.outOfAreaReturnMiles;
+
+    const isExtended =
+      distanceTriggered ||
+      durationTriggered ||
+      outOfAreaTriggered;
+
+    const triggerReasons = [];
+
+    if (distanceTriggered) {
+      triggerReasons.push(
+        `Passenger trip > ${EXTENDED_TRIP_CONFIG.distanceTriggerMiles} miles`
+      );
+    }
+
+    if (durationTriggered) {
+      triggerReasons.push(
+        `Passenger trip > ${EXTENDED_TRIP_CONFIG.durationTriggerMinutes} minutes`
+      );
+    }
+
+    if (outOfAreaTriggered) {
+      triggerReasons.push(
+        `Expected empty return > ${EXTENDED_TRIP_CONFIG.outOfAreaReturnMiles} miles`
+      );
+    }
+
+    const emptyReturnCharge =
+      returnMiles * EXTENDED_TRIP_CONFIG.emptyReturnRatePerMile;
+
+    const deadheadAdjustedFare =
+      normalFareBeforePayment + emptyReturnCharge;
+
+    // Stable definition used by the Estimate page:
+    // passenger service time + expected empty return to HQ.
+    const totalOperatingHours =
+      (passengerMinutes + returnMinutes) / 60;
+
+    const hourlyFloorFare =
+      totalOperatingHours * EXTENDED_TRIP_CONFIG.operatingHourFloor;
+
+    const selectedBeforeRound = Math.max(
+      deadheadAdjustedFare,
+      hourlyFloorFare
+    );
+
+    const extendedFareBeforePayment = roundToIncrement(
+      selectedBeforeRound,
+      EXTENDED_TRIP_CONFIG.roundToNearest
+    );
+
+    return {
+      isExtended,
+      triggerReasons,
+      passengerMiles,
+      passengerMinutes,
+      returnMiles,
+      returnMinutes,
+      returnRouteAvailable,
+      returnMetricsSource,
+      normalFareBeforePayment,
+      emptyReturnCharge,
+      deadheadAdjustedFare,
+      totalOperatingHours,
+      hourlyFloorFare,
+      selectedBeforeRound,
+      extendedFareBeforePayment
+    };
+  }
+
+  function setExtendedNote(details) {
+    const note = document.getElementById("extended-note");
+    if (!note) return;
+
+    note.textContent = details?.isExtended
+      ? "🛣️ Extended Trip — availability confirmation required."
+      : "";
+  }
+
   async function calculateFare() {
     initDefaultScheduleIfEmpty();
 
@@ -1951,20 +2186,18 @@ UPDATED:
       legs[legs.length - 1].end_location.lng()
     );
 
-    let miles = 0;
-    let minutes = 0;
+    const passengerMetrics = extractRouteMetrics(route);
+    const passengerMilesExact = passengerMetrics.miles;
+    const passengerMinutesExact = passengerMetrics.minutes;
 
-    legs.forEach(leg => {
-      miles += Number(leg?.distance?.value || 0) / 1609.34;
-      minutes += Number(leg?.duration?.value || 0) / 60;
-    });
-
-    miles = Math.round(miles);
-    minutes = Math.round(minutes);
+    // Preserve the existing displayed/standard mileage behavior.
+    const miles = Math.round(passengerMilesExact);
+    const minutes = Math.round(passengerMinutesExact);
 
     const rate = applyAutoRateLabels();
     const base = rate.base;
 
+    // Existing mileage tiers remain unchanged.
     const tier2 = Math.max(0, Math.min(10, miles - 10)) * 1.25;
     const tier3 = Math.max(0, miles - 20) * 1.00;
     const mileageSub = tier2 + tier3;
@@ -1974,46 +2207,124 @@ UPDATED:
     const fairnessFee = computeFairnessFee(miles);
     const payment = document.getElementById("payment").value;
 
-    let fare = base + mileageSub + fairnessFee;
+    // Capture the normal transportation fare before card fees so the Extended
+    // Trip comparison uses the same underlying price regardless of payment type.
+    const normalFareBeforePayment =
+      base + mileageSub + fairnessFee;
 
-    if (payment === "card") {
-      fare += fare * 0.033 + fare * 0.024;
+    const extendedDetails = await calculateExtendedTripDetails({
+      passengerMiles:passengerMilesExact,
+      passengerMinutes:passengerMinutesExact,
+      normalFareBeforePayment
+    });
+
+    setExtendedNote(extendedDetails);
+    window.__lastExtendedTripEstimate = extendedDetails;
+
+    let selectedFareBeforePayment = normalFareBeforePayment;
+
+    if (extendedDetails.isExtended) {
+      selectedFareBeforePayment = extendedDetails.extendedFareBeforePayment;
     }
 
-    const total = fare.toFixed(2);
+    const finalFareWithPayment = applyPaymentFees(
+      selectedFareBeforePayment,
+      payment
+    );
 
-    document.getElementById("estimateDisplay").value = "$" + total;
+    const total = finalFareWithPayment.toFixed(2);
+
+    const publicExtendedPriceVisible =
+      !extendedDetails.isExtended ||
+      EXTENDED_PUBLIC_ESTIMATE_ENABLED ||
+      EXTENDED_TEST_MODE;
+
+    const publicEstimate = publicExtendedPriceVisible
+      ? Number(total)
+      : null;
+
+    document.getElementById("estimateDisplay").value =
+      publicExtendedPriceVisible
+        ? "$" + total
+        : "Extended Trip";
 
     const result = document.getElementById("result");
     result.style.display = "block";
-    result.innerHTML = `
-      <div class="total">$${total}</div>
-      <p><strong>Base:</strong> $${base.toFixed(2)}</p>
-      <p><strong>Mileage:</strong> $${mileageSub.toFixed(2)} (${miles} mi)</p>
-      ${fairnessFee > 0
-        ? `<p><strong>Travel Fairness Fee:</strong> $${fairnessFee.toFixed(2)}</p>`
-        : ""
-      }
-      <p><strong>Payment:</strong> ${
-        payment === "card"
-          ? "Card (incl. fees)"
-          : "Cash / Venmo / Cash App"
-      }</p>
-      <p>⏱️ Approx. ${minutes} min</p>
-      <div style="text-align:center;margin-top:10px;">
-        <button class="btn btn-primary" id="btnRequest" type="button">📩 Request This Ride</button>
-      </div>
-    `;
+
+    if (
+      extendedDetails.isExtended &&
+      !EXTENDED_PUBLIC_ESTIMATE_ENABLED &&
+      !EXTENDED_TEST_MODE
+    ) {
+      result.innerHTML = `
+        <div class="total">Extended Trip</div>
+        <div class="extended-flag">🛣️ Availability confirmation required</div>
+        <p>This trip qualifies for Extended Trip pricing. The long-distance fare is being calculated internally while availability is confirmed.</p>
+        <p><strong>Trip distance:</strong> ${miles} mi</p>
+        <p><strong>Trip time:</strong> Approx. ${minutes} min</p>
+        <p><strong>Payment:</strong> ${
+          payment === "card"
+            ? "Card"
+            : "Cash / Venmo / Cash App"
+        }</p>
+        <div style="text-align:center;margin-top:10px;">
+          <button class="btn btn-primary" id="btnRequest" type="button">📩 Request This Ride</button>
+        </div>
+      `;
+    } else {
+      const extendedBreakdown = extendedDetails.isExtended
+        ? `
+          <div class="extended-flag">${
+            EXTENDED_TEST_MODE && !EXTENDED_PUBLIC_ESTIMATE_ENABLED
+              ? "🧪 Extended Trip test mode — availability confirmation required"
+              : "🛣️ Extended Trip — availability confirmation required"
+          }</div>
+          <div class="test-breakdown">
+            <p><strong>Normal fare:</strong> $${normalFareBeforePayment.toFixed(2)}</p>
+            <p><strong>Expected empty return:</strong> ${extendedDetails.returnMiles.toFixed(1)} mi / ${Math.round(extendedDetails.returnMinutes)} min</p>
+            <p><strong>Empty-return adjustment:</strong> $${extendedDetails.emptyReturnCharge.toFixed(2)}</p>
+            <p><strong>Fare + return adjustment:</strong> $${extendedDetails.deadheadAdjustedFare.toFixed(2)}</p>
+            <p><strong>$40/hr operating floor:</strong> $${extendedDetails.hourlyFloorFare.toFixed(2)} (${extendedDetails.totalOperatingHours.toFixed(2)} hrs)</p>
+            <p><strong>Rounded Extended Trip fare:</strong> $${extendedDetails.extendedFareBeforePayment.toFixed(2)} before payment-method fees</p>
+          </div>
+        `
+        : "";
+
+      result.innerHTML = `
+        <div class="total">$${total}</div>
+        <p><strong>Base:</strong> $${base.toFixed(2)}</p>
+        <p><strong>Mileage:</strong> $${mileageSub.toFixed(2)} (${miles} mi)</p>
+        ${fairnessFee > 0
+          ? `<p><strong>Travel Fairness Fee:</strong> $${fairnessFee.toFixed(2)}</p>`
+          : ""
+        }
+        ${extendedBreakdown}
+        <p><strong>Payment:</strong> ${
+          payment === "card"
+            ? "Card (incl. fees)"
+            : "Cash / Venmo / Cash App"
+        }</p>
+        <p>⏱️ Approx. ${minutes} min</p>
+        <div style="text-align:center;margin-top:10px;">
+          <button class="btn btn-primary" id="btnRequest" type="button">📩 Request This Ride</button>
+        </div>
+      `;
+    }
 
     lastFare = {
       pickup,
       dropoff,
       miles,
       minutes,
+      passengerMilesExact,
+      passengerMinutesExact,
       base,
       mileageSub,
       fairnessFee,
+      normalFareBeforePayment,
+      selectedFareBeforePayment,
       total:Number(total),
+      publicEstimate,
       pay:payment,
       mode,
       stopsText:getStopsAsTextList(),
@@ -2024,6 +2335,17 @@ UPDATED:
       passengers:Number(document.getElementById("passengers").value || 1),
       luggageCount:readLuggageCount(),
       gateCode:String(document.getElementById("gateCode").value || "").trim(),
+      isExtended:extendedDetails.isExtended,
+      availabilityConfirmationRequired:extendedDetails.isExtended,
+      extendedTriggerReasons:extendedDetails.triggerReasons,
+      expectedEmptyReturnMiles:extendedDetails.returnMiles,
+      expectedEmptyReturnMinutes:extendedDetails.returnMinutes,
+      returnMetricsSource:extendedDetails.returnMetricsSource,
+      emptyReturnCharge:extendedDetails.emptyReturnCharge,
+      deadheadAdjustedFare:extendedDetails.deadheadAdjustedFare,
+      totalOperatingHours:extendedDetails.totalOperatingHours,
+      hourlyFloorFare:extendedDetails.hourlyFloorFare,
+      extendedFareBeforePayment:extendedDetails.extendedFareBeforePayment,
       pricingOrigin:{
         lat:Number(fairnessOrigin.lat),
         lng:Number(fairnessOrigin.lng),
@@ -2033,6 +2355,28 @@ UPDATED:
 
     document.getElementById("btnRequest").addEventListener("click", sendRequest);
     updateFairnessPreview();
+
+    console.log("[Ride Request] Fairness origin:", fairnessOriginSource, fairnessOrigin);
+    console.log("[Ride Request] Standard fare before payment:", normalFareBeforePayment);
+
+    if (extendedDetails.isExtended) {
+      console.group("[Ride Request] Extended Trip internal pricing");
+      console.log("Trigger reasons:", extendedDetails.triggerReasons);
+      console.log("Passenger miles:", extendedDetails.passengerMiles);
+      console.log("Passenger minutes:", extendedDetails.passengerMinutes);
+      console.log("Expected empty-return miles:", extendedDetails.returnMiles);
+      console.log("Expected empty-return minutes:", extendedDetails.returnMinutes);
+      console.log("Return metrics source:", extendedDetails.returnMetricsSource);
+      console.log("Normal fare before payment:", extendedDetails.normalFareBeforePayment);
+      console.log("Empty-return charge:", extendedDetails.emptyReturnCharge);
+      console.log("Normal + empty-return:", extendedDetails.deadheadAdjustedFare);
+      console.log("Total operating hours:", extendedDetails.totalOperatingHours);
+      console.log("$40/hr operating floor:", extendedDetails.hourlyFloorFare);
+      console.log("Selected before rounding:", extendedDetails.selectedBeforeRound);
+      console.log("Rounded Extended Trip fare before payment:", extendedDetails.extendedFareBeforePayment);
+      console.log("Final with selected payment method:", finalFareWithPayment);
+      console.groupEnd();
+    }
   }
 
   document.getElementById("calcBtn").addEventListener("click", calculateFare);
@@ -2137,6 +2481,9 @@ UPDATED:
       },
 
       pricing:{
+        // Preserve the existing bookings payload shape. For Extended Trips this
+        // estimate is the internally calculated long-distance fare even while the
+        // rider-facing dollar amount remains hidden during validation.
         estimate:Number(q.total),
         travelFee:Number(q.fairnessFee || 0),
         ratePlan:"RESERVATION"
@@ -2155,7 +2502,37 @@ UPDATED:
         routeUrl,
         notifyPref:getNotifyPref(),
         planBy:q.planBy || "pickup",
-        pricingOrigin:q.pricingOrigin || null
+        pricingOrigin:q.pricingOrigin || null,
+        extendedTrip:!!q.isExtended,
+        availabilityConfirmationRequired:!!q.availabilityConfirmationRequired,
+        extendedTriggerReasons:Array.isArray(q.extendedTriggerReasons)
+          ? q.extendedTriggerReasons
+          : [],
+        expectedEmptyReturnMiles:q.isExtended
+          ? Number(q.expectedEmptyReturnMiles || 0)
+          : 0,
+        expectedEmptyReturnMinutes:q.isExtended
+          ? Number(q.expectedEmptyReturnMinutes || 0)
+          : 0,
+        returnMetricsSource:q.isExtended
+          ? q.returnMetricsSource || null
+          : null,
+        emptyReturnCharge:q.isExtended
+          ? Number(q.emptyReturnCharge || 0)
+          : 0,
+        deadheadAdjustedFare:q.isExtended
+          ? Number(q.deadheadAdjustedFare || 0)
+          : null,
+        totalOperatingHours:q.isExtended
+          ? Number(q.totalOperatingHours || 0)
+          : Number(q.minutes || 0) / 60,
+        hourlyFloorFare:q.isExtended
+          ? Number(q.hourlyFloorFare || 0)
+          : null,
+        extendedFareBeforePayment:q.isExtended
+          ? Number(q.extendedFareBeforePayment || 0)
+          : null,
+        normalFareBeforePayment:Number(q.normalFareBeforePayment || 0)
       }
     };
 
@@ -2225,6 +2602,15 @@ UPDATED:
     const shortRoute =
       `https://bigredconnectokc.com/rider/route.html?id=${encodeURIComponent(rideId)}`;
 
+    const riderFareText =
+      q.isExtended && !EXTENDED_PUBLIC_ESTIMATE_ENABLED && !EXTENDED_TEST_MODE
+        ? "Extended Trip — availability confirmation required"
+        : `$${q.total}`;
+
+    const tripTypeLine = q.isExtended
+      ? `Trip Type: Extended Trip — availability confirmation required\n`
+      : "";
+
     const smsBody =
       `Hey Big Red — this is ${name}.\n` +
       `I'd like to request this ride:\n\n` +
@@ -2232,7 +2618,8 @@ UPDATED:
       `Dropoff: ${q.dropoff}\n` +
       `Stops: ${stopsText}\n` +
       `Miles: ${q.miles}\n` +
-      `Estimated Fare: $${q.total}\n` +
+      tripTypeLine +
+      `Estimated Fare: ${riderFareText}\n` +
       `When: ${whenText}\n` +
       `Plan By: ${q.planBy || "pickup"}\n` +
       `Passengers: ${q.passengers}\n` +
