@@ -1,3 +1,19 @@
+<!-- =========================================================
+FILE: /admin-driver.html
+Big Red Admin / Driver Console
+
+UPDATED — EXTENDED TRIP PRICING PARITY:
+- Keeps existing manual fare tiers and travel fairness behavior.
+- Extended Trip trigger: >60 passenger miles, >75 passenger minutes, or
+  >20 passenger miles with substantial expected empty positioning/return travel.
+- Extended Trip pricing: normal fare + $0.35 per expected empty mile, compared
+  against a $40/hour total operating-time floor; higher result wins and rounds
+  to nearest $5.
+- Expected empty travel includes pricing origin -> pickup plus drop-off -> HQ.
+- Short remote trips (<=20 passenger miles) remain normal fare + fairness fee.
+- Extended Trip details are stored in manual-ride metadata and surfaced on the
+  dispatch card when available.
+========================================================= -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -306,17 +322,23 @@ body.mode-admin .driver-only{display:none;}
       <div class="preview-box" id="manualEstimateBox" style="margin-top:10px;">
         <strong>Estimate</strong><br>
         <span id="manualEstMiles">Miles: —</span><br>
+        <span id="manualEstTripTime">Passenger Trip Time: —</span><br>
         <span id="manualEstBase">Base: —</span><br>
-        <span id="manualEstTravelFee">Extended Coverage: —</span><br>
-        <span id="manualEstFare">Fare: —</span><br>
-        <span style="color:#888;font-size:.75rem;">Stored as metadata on create: estimateFare / estimateMiles / estimateBase / estimateTravelFee.</span>
+        <span id="manualEstMileage">Mileage: —</span><br>
+        <span id="manualEstTravelFee">Travel Fairness Fee: —</span><br>
+        <span id="manualEstExtended">Extended Trip: —</span><br>
+        <span id="manualEstEmptyTravel">Expected Empty Travel: —</span><br>
+        <span id="manualEstOperatingFloor">Operating Floor: —</span><br>
+        <span id="manualEstFare"><strong>Fare:</strong> —</span><br>
+        <span style="color:#888;font-size:.75rem;">Manual estimates store the standard fare breakdown plus Extended Trip trigger / deadhead / operating-hour details in metadata.</span>
       </div>
       <div class="row" style="margin-top:8px;"><button class="btn btn-ghost" id="btnEstimateManual" type="button">💲 Estimate Fare</button></div>
       <p class="meta">
         ✅ Manual create uses: <code>POST /api/admin/bookings/manual</code> (requires <code>X-Admin-Secret</code>).<br>
-        ✅ Extended coverage uses the selected pricing origin → pickup: $10 if pickup is over 10 miles away; $20 if over 15 miles away.<br>
-        ✅ Tracking ON uses fresh live GPS. Tracking OFF uses HQ.<br>
-        ✅ Long trips over 20 miles waive the extended coverage fee because mileage already covers the relocation.
+        ✅ Travel fairness: $10 when pickup is over 10 miles from the selected pricing origin; $20 when over 15 miles. Passenger trips over 20 miles waive that fee.<br>
+        ✅ Extended Trip: &gt;60 passenger miles, &gt;75 passenger minutes, or &gt;20 passenger miles with substantial expected empty travel (&gt;40 mi).<br>
+        ✅ Extended pricing compares normal fare + $0.35 per expected empty mile against $40 × total operating hours, uses the higher result, then rounds to the nearest $5.<br>
+        ✅ Tracking ON uses fresh live GPS as the pricing origin. Tracking OFF uses HQ. Empty return is measured from drop-off back to HQ.
       </p>
     </section>
 
@@ -489,6 +511,15 @@ const EXTENDED_COVERAGE_TIER_2_MI=15;
 const EXTENDED_COVERAGE_TIER_1_FEE=10;
 const EXTENDED_COVERAGE_TIER_2_FEE=20;
 const EXTENDED_COVERAGE_WAIVE_TRIP_OVER_MI=20;
+
+// Extended Trip pricing — locked parity with rider / estimate pages.
+const EXTENDED_TRIP_DISTANCE_TRIGGER_MI=60;
+const EXTENDED_TRIP_DURATION_TRIGGER_MIN=75;
+const EXTENDED_TRIP_DEADHEAD_TRIGGER_MI=40;
+const EXTENDED_TRIP_DEADHEAD_MIN_PASSENGER_MI=20;
+const EXTENDED_TRIP_EMPTY_MILE_RATE=0.35;
+const EXTENDED_TRIP_OPERATING_HOURLY_FLOOR=40;
+const EXTENDED_TRIP_ROUND_TO=5;
 
 const BIG_RED_AUDIO_CLIPS={
   welcome:"Welcome%20Aboard%202.MOV",
@@ -1204,9 +1235,15 @@ function clearManualRideForm(){
   clearManualStops();
   syncManualLuggageVisibility();
   $("manualEstMiles").textContent="Miles: —";
+  $("manualEstTripTime").textContent="Passenger Trip Time: —";
   $("manualEstBase").textContent="Base: —";
-  $("manualEstTravelFee").textContent="Extended Coverage: —";
-  $("manualEstFare").textContent="Fare: —";
+  $("manualEstMileage").textContent="Mileage: —";
+  $("manualEstTravelFee").textContent="Travel Fairness Fee: —";
+  $("manualEstExtended").textContent="Extended Trip: —";
+  $("manualEstExtended").style.color="";
+  $("manualEstEmptyTravel").textContent="Expected Empty Travel: —";
+  $("manualEstOperatingFloor").textContent="Operating Floor: —";
+  $("manualEstFare").innerHTML="<strong>Fare:</strong> —";
   window.__manualEstimate=null;
 }
 function computeMileageSubtotal(miles){
@@ -1219,14 +1256,19 @@ function computeMileageSubtotal(miles){
 function computeFlatRateFare(miles,baseRate,travelFee=0){
   return (Number(baseRate)||0)+computeMileageSubtotal(miles)+(Number(travelFee)||0);
 }
+function roundToIncrement(amount,increment){
+  const step=Number(increment)||1;
+  return Math.round((Number(amount)||0)/step)*step;
+}
 function getManualRateBase(){
   return manualIsAirportRide()?20:10;
 }
 
 /*
- * Extended coverage uses exactly one origin:
+ * Travel fairness uses exactly one origin:
  * the origin already selected by the tracking rule.
  * It never substitutes HQ because HQ happens to be closer.
+ * Legacy function name is retained to avoid unnecessary structural churn.
  */
 function computeExtendedCoverageFee(driverOrigin,pickupPoint,tripMiles){
   const hqOrigin={lat:HQ_LAT,lng:HQ_LNG,src:"HQ",ts:null};
@@ -1278,6 +1320,168 @@ async function getRouteDetailsWithStops(origin,destination,stopAddrs){
 async function getRouteMilesWithStops(origin,destination,stopAddrs){
   return (await getRouteDetailsWithStops(origin,destination,stopAddrs)).miles;
 }
+
+async function getDirectRouteDetails(origin,destination){
+  if(!(window.google&&google.maps))throw new Error("Google Maps not available");
+  const ds=new google.maps.DirectionsService();
+  return await new Promise((resolve,reject)=>{
+    ds.route({origin,destination,travelMode:google.maps.TravelMode.DRIVING},(result,status)=>{
+      if(status!=="OK"||!result?.routes?.[0]?.legs?.length){
+        reject(new Error("Directions failed: "+status));
+        return;
+      }
+      const legs=result.routes[0].legs;
+      const meters=legs.reduce((sum,leg)=>sum+(leg?.distance?.value||0),0);
+      const seconds=legs.reduce((sum,leg)=>sum+(leg?.duration?.value||0),0);
+      resolve({miles:meters/1609.344,minutes:seconds/60,meters,seconds});
+    });
+  });
+}
+
+async function calculateManualExtendedTripDetails({
+  passengerMiles,
+  passengerMinutes,
+  normalFare,
+  driverOrigin,
+  pickupPoint,
+  dropoffPoint
+}){
+  const hq={lat:HQ_LAT,lng:HQ_LNG};
+
+  let positioningMiles=0;
+  let positioningMinutes=0;
+  let positioningSource="PRICING_ORIGIN_TO_PICKUP";
+
+  let returnMiles=0;
+  let returnMinutes=0;
+  let returnSource="DROPOFF_TO_HQ";
+
+  const hasDriverOrigin=
+    driverOrigin&&
+    Number.isFinite(Number(driverOrigin.lat))&&
+    Number.isFinite(Number(driverOrigin.lng));
+
+  const positioningOrigin=hasDriverOrigin
+    ? {lat:Number(driverOrigin.lat),lng:Number(driverOrigin.lng)}
+    : hq;
+
+  if(pickupPoint){
+    try{
+      const pos=await getDirectRouteDetails(positioningOrigin,pickupPoint);
+      positioningMiles=pos.miles;
+      positioningMinutes=pos.minutes;
+    }catch(e){
+      positioningMiles=Number(passengerMiles)||0;
+      positioningMinutes=Number(passengerMinutes)||0;
+      positioningSource="PASSENGER_ROUTE_FALLBACK";
+      log("Extended Trip positioning fallback: "+e.message);
+    }
+  }
+
+  if(dropoffPoint){
+    try{
+      const ret=await getDirectRouteDetails(dropoffPoint,hq);
+      returnMiles=ret.miles;
+      returnMinutes=ret.minutes;
+    }catch(e){
+      returnMiles=Number(passengerMiles)||0;
+      returnMinutes=Number(passengerMinutes)||0;
+      returnSource="PASSENGER_ROUTE_FALLBACK";
+      log("Extended Trip return fallback: "+e.message);
+    }
+  }
+
+  const totalEmptyMiles=positioningMiles+returnMiles;
+  const totalEmptyMinutes=positioningMinutes+returnMinutes;
+
+  const distanceTriggered=
+    Number(passengerMiles)>EXTENDED_TRIP_DISTANCE_TRIGGER_MI;
+
+  const durationTriggered=
+    Number(passengerMinutes)>EXTENDED_TRIP_DURATION_TRIGGER_MIN;
+
+  const positioningTriggered=
+    positioningMiles>EXTENDED_TRIP_DEADHEAD_TRIGGER_MI;
+
+  const returnTriggered=
+    returnMiles>EXTENDED_TRIP_DEADHEAD_TRIGGER_MI;
+
+  const combinedDeadheadTriggered=
+    !positioningTriggered&&
+    !returnTriggered&&
+    totalEmptyMiles>EXTENDED_TRIP_DEADHEAD_TRIGGER_MI;
+
+  // Short remote trips remain on normal + travel-fairness pricing.
+  const deadheadTriggerEligible=
+    Number(passengerMiles)>EXTENDED_TRIP_DEADHEAD_MIN_PASSENGER_MI;
+
+  const outOfAreaTriggered=
+    deadheadTriggerEligible&&(
+      positioningTriggered||
+      returnTriggered||
+      combinedDeadheadTriggered
+    );
+
+  const isExtended=
+    distanceTriggered||
+    durationTriggered||
+    outOfAreaTriggered;
+
+  const triggerReasons=[];
+  if(distanceTriggered)triggerReasons.push(`Passenger trip > ${EXTENDED_TRIP_DISTANCE_TRIGGER_MI} miles`);
+  if(durationTriggered)triggerReasons.push(`Passenger trip > ${EXTENDED_TRIP_DURATION_TRIGGER_MIN} minutes`);
+  if(deadheadTriggerEligible&&positioningTriggered)triggerReasons.push(`Expected empty positioning > ${EXTENDED_TRIP_DEADHEAD_TRIGGER_MI} miles`);
+  if(deadheadTriggerEligible&&returnTriggered)triggerReasons.push(`Expected empty return > ${EXTENDED_TRIP_DEADHEAD_TRIGGER_MI} miles`);
+  if(deadheadTriggerEligible&&combinedDeadheadTriggered)triggerReasons.push(`Combined expected empty travel > ${EXTENDED_TRIP_DEADHEAD_TRIGGER_MI} miles`);
+
+  const emptyDeadheadCharge=
+    totalEmptyMiles*EXTENDED_TRIP_EMPTY_MILE_RATE;
+
+  const deadheadAdjustedFare=
+    Number(normalFare)+emptyDeadheadCharge;
+
+  const totalOperatingHours=
+    (positioningMinutes+Number(passengerMinutes)+returnMinutes)/60;
+
+  const hourlyFloorFare=
+    totalOperatingHours*EXTENDED_TRIP_OPERATING_HOURLY_FLOOR;
+
+  const selectedBeforeRound=Math.max(
+    deadheadAdjustedFare,
+    hourlyFloorFare
+  );
+
+  const extendedFare=roundToIncrement(
+    selectedBeforeRound,
+    EXTENDED_TRIP_ROUND_TO
+  );
+
+  return {
+    isExtended,
+    triggerReasons,
+    deadheadTriggerEligible,
+    passengerMiles:Number(passengerMiles)||0,
+    passengerMinutes:Number(passengerMinutes)||0,
+    positioningMiles,
+    positioningMinutes,
+    positioningSource,
+    positioningOrigin,
+    positioningOriginSource:driverOrigin?.src||"HQ",
+    returnMiles,
+    returnMinutes,
+    returnSource,
+    totalEmptyMiles,
+    totalEmptyMinutes,
+    emptyDeadheadCharge,
+    normalFare:Number(normalFare)||0,
+    deadheadAdjustedFare,
+    totalOperatingHours,
+    hourlyFloorFare,
+    selectedBeforeRound,
+    extendedFare
+  };
+}
+
 function setManualEstimateDraft(est){window.__manualEstimate=est||null;}
 
 async function estimateManualFare(){
@@ -1285,31 +1489,97 @@ async function estimateManualFare(){
   const dropoff=($("manualDropoff")?.value||"").trim();
   const stops=getManualStopsList();
   if(!pickup||!dropoff){showToast("Pickup + dropoff required to estimate");return null;}
+
   $("manualEstMiles").textContent="Miles: …";
+  $("manualEstTripTime").textContent="Passenger Trip Time: …";
   $("manualEstBase").textContent="Base: …";
-  $("manualEstTravelFee").textContent="Extended Coverage: …";
-  $("manualEstFare").textContent="Fare: …";
+  $("manualEstMileage").textContent="Mileage: …";
+  $("manualEstTravelFee").textContent="Travel Fairness Fee: …";
+  $("manualEstExtended").textContent="Extended Trip: …";
+  $("manualEstExtended").style.color="";
+  $("manualEstEmptyTravel").textContent="Expected Empty Travel: …";
+  $("manualEstOperatingFloor").textContent="Operating Floor: …";
+  $("manualEstFare").innerHTML="<strong>Fare:</strong> …";
+
   try{
     const route=await getRouteDetailsWithStops(pickup,dropoff,stops);
     const driverOrigin=await getDriverEffectiveLocationForPricing();
-    const miles=route.miles;
-    const base=getManualRateBase();
-    const mileageSubtotal=computeMileageSubtotal(miles);
-    const coverage=computeExtendedCoverageFee(driverOrigin,route.pickupPoint,miles);
-    const fare=computeFlatRateFare(miles,base,coverage.fee);
 
-    $("manualEstMiles").textContent=`Miles: ${miles.toFixed(1)}`;
-    $("manualEstBase").textContent=`Base: $${base}`;
-    $("manualEstTravelFee").textContent=`Extended Coverage: ${money(coverage.fee)} (${coverage.driverToPickupMiles.toFixed(1)} mi from ${coverage.pricingOriginSource==="HQ"?"base location":"live driver location"})`;
-    $("manualEstFare").textContent=`Fare: ${money(fare)} (base $${base} + mileage ${money(mileageSubtotal)}${coverage.fee?" + coverage "+money(coverage.fee):""})`;
+    const passengerMilesExact=route.miles;
+    const passengerMinutesExact=route.minutes;
+
+    // Match rider-facing pricing behavior: displayed/charged mileage tiers use
+    // rounded passenger miles; Extended Trip triggers use the detailed route.
+    const pricingMiles=Math.round(passengerMilesExact);
+    const base=getManualRateBase();
+    const mileageSubtotal=computeMileageSubtotal(pricingMiles);
+    const coverage=computeExtendedCoverageFee(
+      driverOrigin,
+      route.pickupPoint,
+      pricingMiles
+    );
+
+    const normalFare=
+      Number(base)+
+      Number(mileageSubtotal)+
+      Number(coverage.fee||0);
+
+    const extended=await calculateManualExtendedTripDetails({
+      passengerMiles:passengerMilesExact,
+      passengerMinutes:passengerMinutesExact,
+      normalFare,
+      driverOrigin,
+      pickupPoint:route.pickupPoint,
+      dropoffPoint:route.dropoffPoint
+    });
+
+    const fare=extended.isExtended
+      ? extended.extendedFare
+      : normalFare;
+
+    $("manualEstMiles").textContent=
+      `Miles: ${passengerMilesExact.toFixed(1)} (${pricingMiles} mi pricing)`;
+
+    $("manualEstTripTime").textContent=
+      `Passenger Trip Time: ${Math.round(passengerMinutesExact)} min`;
+
+    $("manualEstBase").textContent=`Base: ${money(base)}`;
+
+    $("manualEstMileage").textContent=
+      `Mileage: ${money(mileageSubtotal)}`;
+
+    $("manualEstTravelFee").textContent=
+      `Travel Fairness Fee: ${money(coverage.fee)} (${coverage.driverToPickupMiles.toFixed(1)} mi from ${coverage.pricingOriginSource==="HQ"?"base location":"live driver location"})`;
+
+    if(extended.isExtended){
+      $("manualEstExtended").textContent=
+        `Extended Trip: YES — availability confirmation required (${extended.triggerReasons.join("; ")})`;
+      $("manualEstExtended").style.color="#ffd27f";
+      $("manualEstEmptyTravel").textContent=
+        `Expected Empty Travel: ${extended.totalEmptyMiles.toFixed(1)} mi / ${Math.round(extended.totalEmptyMinutes)} min `+
+        `(to pickup ${extended.positioningMiles.toFixed(1)} mi + return ${extended.returnMiles.toFixed(1)} mi)`;
+      $("manualEstOperatingFloor").textContent=
+        `Operating Floor: ${money(extended.hourlyFloorFare)} (${extended.totalOperatingHours.toFixed(2)} hrs × $${EXTENDED_TRIP_OPERATING_HOURLY_FLOOR}/hr) • fare + empty travel ${money(extended.deadheadAdjustedFare)}`;
+      $("manualEstFare").innerHTML=
+        `<strong>Fare: ${money(fare)}</strong> (Extended Trip • rounded to nearest $${EXTENDED_TRIP_ROUND_TO})`;
+    }else{
+      $("manualEstExtended").textContent="Extended Trip: No";
+      $("manualEstExtended").style.color="";
+      $("manualEstEmptyTravel").textContent="Expected Empty Travel: Not used for local/standard pricing";
+      $("manualEstOperatingFloor").textContent="Operating Floor: Not applicable";
+      $("manualEstFare").innerHTML=
+        `<strong>Fare: ${money(fare)}</strong> (base ${money(base)} + mileage ${money(mileageSubtotal)}${coverage.fee?" + fairness "+money(coverage.fee):""})`;
+    }
 
     const est={
-      estimateMiles:Number(miles.toFixed(3)),
-      estimateMinutes:Number(route.minutes.toFixed(1)),
+      estimateMiles:Number(passengerMilesExact.toFixed(3)),
+      estimatePricingMiles:Number(pricingMiles),
+      estimateMinutes:Number(passengerMinutesExact.toFixed(1)),
       estimateFare:Number(fare.toFixed(2)),
       estimateBase:Number(base),
       estimateMileageSubtotal:Number(mileageSubtotal.toFixed(2)),
       estimateTravelFee:Number(coverage.fee.toFixed(2)),
+      estimateNormalFare:Number(normalFare.toFixed(2)),
       estimateDriverToPickupMiles:Number(coverage.driverToPickupMiles.toFixed(3)),
       estimatePricingOrigin:{
         lat:Number(coverage.origin?.lat),
@@ -1318,15 +1588,55 @@ async function estimateManualFare(){
         ts:coverage.origin?.ts||null
       },
       estimatePickupPoint:route.pickupPoint,
-      estimateDropoffPoint:route.dropoffPoint
+      estimateDropoffPoint:route.dropoffPoint,
+
+      estimateIsExtended:extended.isExtended,
+      estimateAvailabilityConfirmationRequired:extended.isExtended,
+      estimateExtendedTriggerReasons:extended.triggerReasons,
+      estimateExpectedEmptyPositioningMiles:Number(extended.positioningMiles.toFixed(3)),
+      estimateExpectedEmptyPositioningMinutes:Number(extended.positioningMinutes.toFixed(1)),
+      estimatePositioningSource:extended.positioningSource,
+      estimatePositioningOrigin:extended.positioningOrigin,
+      estimatePositioningOriginSource:extended.positioningOriginSource,
+      estimateExpectedEmptyReturnMiles:Number(extended.returnMiles.toFixed(3)),
+      estimateExpectedEmptyReturnMinutes:Number(extended.returnMinutes.toFixed(1)),
+      estimateReturnSource:extended.returnSource,
+      estimateExpectedEmptyMiles:Number(extended.totalEmptyMiles.toFixed(3)),
+      estimateExpectedEmptyMinutes:Number(extended.totalEmptyMinutes.toFixed(1)),
+      estimateEmptyDeadheadCharge:Number(extended.emptyDeadheadCharge.toFixed(2)),
+      estimateDeadheadAdjustedFare:Number(extended.deadheadAdjustedFare.toFixed(2)),
+      estimateTotalOperatingHours:Number(extended.totalOperatingHours.toFixed(3)),
+      estimateHourlyFloorFare:Number(extended.hourlyFloorFare.toFixed(2)),
+      estimateExtendedFare:Number(extended.extendedFare.toFixed(2))
     };
+
     setManualEstimateDraft(est);
+
+    log(
+      "Manual estimate: "+
+      JSON.stringify({
+        miles:est.estimateMiles,
+        minutes:est.estimateMinutes,
+        normalFare:est.estimateNormalFare,
+        isExtended:est.estimateIsExtended,
+        emptyMiles:est.estimateExpectedEmptyMiles,
+        hourlyFloor:est.estimateHourlyFloorFare,
+        finalFare:est.estimateFare
+      })
+    );
+
     return est;
   }catch(e){
     $("manualEstMiles").textContent="Miles: —";
+    $("manualEstTripTime").textContent="Passenger Trip Time: —";
     $("manualEstBase").textContent="Base: —";
-    $("manualEstTravelFee").textContent="Extended Coverage: —";
-    $("manualEstFare").textContent="Fare: —";
+    $("manualEstMileage").textContent="Mileage: —";
+    $("manualEstTravelFee").textContent="Travel Fairness Fee: —";
+    $("manualEstExtended").textContent="Extended Trip: —";
+    $("manualEstExtended").style.color="";
+    $("manualEstEmptyTravel").textContent="Expected Empty Travel: —";
+    $("manualEstOperatingFloor").textContent="Operating Floor: —";
+    $("manualEstFare").innerHTML="<strong>Fare:</strong> —";
     setManualEstimateDraft(null);
     showToast("Estimate failed");
     log("Estimate error: "+e.message);
@@ -1368,10 +1678,31 @@ async function createManualRide(){
       estimateBase:est.estimateBase,
       estimateMileageSubtotal:est.estimateMileageSubtotal,
       estimateTravelFee:est.estimateTravelFee||0,
+      estimateNormalFare:est.estimateNormalFare||est.estimateFare,
+      estimatePricingMiles:est.estimatePricingMiles??null,
       estimateDriverToPickupMiles:est.estimateDriverToPickupMiles||0,
       estimatePricingOrigin:est.estimatePricingOrigin||null,
       estimatePickupPoint:est.estimatePickupPoint||null,
-      estimateDropoffPoint:est.estimateDropoffPoint||null
+      estimateDropoffPoint:est.estimateDropoffPoint||null,
+
+      estimateIsExtended:!!est.estimateIsExtended,
+      estimateAvailabilityConfirmationRequired:!!est.estimateAvailabilityConfirmationRequired,
+      estimateExtendedTriggerReasons:Array.isArray(est.estimateExtendedTriggerReasons)?est.estimateExtendedTriggerReasons:[],
+      estimateExpectedEmptyPositioningMiles:est.estimateExpectedEmptyPositioningMiles||0,
+      estimateExpectedEmptyPositioningMinutes:est.estimateExpectedEmptyPositioningMinutes||0,
+      estimatePositioningSource:est.estimatePositioningSource||null,
+      estimatePositioningOrigin:est.estimatePositioningOrigin||null,
+      estimatePositioningOriginSource:est.estimatePositioningOriginSource||null,
+      estimateExpectedEmptyReturnMiles:est.estimateExpectedEmptyReturnMiles||0,
+      estimateExpectedEmptyReturnMinutes:est.estimateExpectedEmptyReturnMinutes||0,
+      estimateReturnSource:est.estimateReturnSource||null,
+      estimateExpectedEmptyMiles:est.estimateExpectedEmptyMiles||0,
+      estimateExpectedEmptyMinutes:est.estimateExpectedEmptyMinutes||0,
+      estimateEmptyDeadheadCharge:est.estimateEmptyDeadheadCharge||0,
+      estimateDeadheadAdjustedFare:est.estimateDeadheadAdjustedFare||est.estimateFare,
+      estimateTotalOperatingHours:est.estimateTotalOperatingHours||0,
+      estimateHourlyFloorFare:est.estimateHourlyFloorFare||0,
+      estimateExtendedFare:est.estimateExtendedFare||est.estimateFare
     });
   }
 
@@ -1408,18 +1739,40 @@ async function createManualRide(){
 function readEstimateFromBooking(b){
   const md=b?.metadata||{};
   const fare=asNum(md.estimateFare),miles=asNum(md.estimateMiles),base=asNum(md.estimateBase),travelFee=asNum(md.estimateTravelFee);
-  if(fare!=null&&miles!=null)return {fare,miles,base:base!=null?base:null,travelFee:travelFee!=null?travelFee:0,src:"metadata"};
+  if(fare!=null&&miles!=null)return {
+    fare,
+    miles,
+    base:base!=null?base:null,
+    travelFee:travelFee!=null?travelFee:0,
+    isExtended:md.estimateIsExtended===true,
+    src:"metadata"
+  };
+
+  // Rider-created bookings store the public estimate in pricing / metrics.
+  const riderFare=asNum(b?.pricing?.estimate);
+  const riderMiles=asNum(b?.metrics?.miles);
+  const riderTravelFee=asNum(b?.pricing?.travelFee);
+  if(riderFare!=null&&riderMiles!=null)return {
+    fare:riderFare,
+    miles:riderMiles,
+    base:null,
+    travelFee:riderTravelFee!=null?riderTravelFee:0,
+    isExtended:md.extendedTrip===true,
+    src:"pricing"
+  };
+
   const notes=String(md?.notes||"");
   const m=notes.match(/Estimate:\s*\$?(\d+(?:\.\d+)?)\s*\((\d+(?:\.\d+)?)\s*mi,\s*base\s*\$?(\d+(?:\.\d+)?)\)/i);
-  if(m)return {fare:Number(m[1]),miles:Number(m[2]),base:Number(m[3]),travelFee:0,src:"notes"};
+  if(m)return {fare:Number(m[1]),miles:Number(m[2]),base:Number(m[3]),travelFee:0,isExtended:false,src:"notes"};
   return null;
 }
 function estimateLineHtml(b){
   const est=readEstimateFromBooking(b);
   if(!est)return "";
   const baseTxt=est.base!=null&&Number.isFinite(est.base)?` • base $${est.base}`:"";
-  const travelTxt=est.travelFee!=null&&Number(est.travelFee)>0?` • coverage ${money(est.travelFee)}`:"";
-  return `<div class="loc-line">💲 Estimate: ${escHtml(money(est.fare))} • ${escHtml(est.miles.toFixed(1))} mi${escHtml(baseTxt)}${escHtml(travelTxt)}</div>`;
+  const travelTxt=est.travelFee!=null&&Number(est.travelFee)>0?` • fairness ${money(est.travelFee)}`:"";
+  const extendedTxt=est.isExtended?" • 🛣️ Extended Trip":"";
+  return `<div class="loc-line">💲 Estimate: ${escHtml(money(est.fare))} • ${escHtml(est.miles.toFixed(1))} mi${escHtml(baseTxt)}${escHtml(travelTxt)}${escHtml(extendedTxt)}</div>`;
 }
 function fmtStops(stops){
   const addrs=(Array.isArray(stops)?stops:[]).map(x=>(x?.address||"").trim()).filter(Boolean);
@@ -1616,8 +1969,23 @@ async function saveEditModal(){
     metadata:{notes,manualTimeText,luggageCount:Number.isFinite(luggageCount)?luggageCount:0}
   };
   [
-    "estimateFare","estimateMiles","estimateMinutes","estimateBase","estimateMileageSubtotal",
-    "estimateTravelFee","estimateDriverToPickupMiles","estimatePricingOrigin","estimatePickupPoint","estimateDropoffPoint"
+    "estimateFare","estimateMiles","estimatePricingMiles","estimateMinutes","estimateBase","estimateMileageSubtotal",
+    "estimateTravelFee","estimateNormalFare","estimateDriverToPickupMiles","estimatePricingOrigin","estimatePickupPoint","estimateDropoffPoint",
+    "estimateIsExtended","estimateAvailabilityConfirmationRequired","estimateExtendedTriggerReasons",
+    "estimateExpectedEmptyPositioningMiles","estimateExpectedEmptyPositioningMinutes","estimatePositioningSource",
+    "estimatePositioningOrigin","estimatePositioningOriginSource","estimateExpectedEmptyReturnMiles",
+    "estimateExpectedEmptyReturnMinutes","estimateReturnSource","estimateExpectedEmptyMiles","estimateExpectedEmptyMinutes",
+    "estimateEmptyDeadheadCharge","estimateDeadheadAdjustedFare","estimateTotalOperatingHours",
+    "estimateHourlyFloorFare","estimateExtendedFare",
+
+    // Preserve rider-created Extended Trip metadata when an admin edits a ride.
+    "extendedTrip","availabilityConfirmationRequired","extendedTriggerReasons",
+    "expectedEmptyPositioningMiles","expectedEmptyPositioningMinutes","positioningMetricsSource",
+    "positioningOrigin","positioningOriginSource","expectedEmptyReturnMiles","expectedEmptyReturnMinutes",
+    "returnMetricsSource","expectedEmptyMiles","expectedEmptyMinutes","positioningCharge",
+    "emptyReturnCharge","emptyDeadheadCharge","deadheadAdjustedFare","totalOperatingHours",
+    "hourlyFloorFare","extendedFareBeforePayment","normalFareBeforePayment",
+    "pricingOrigin","notifyPref","planBy","routeUrl"
   ].forEach(k=>{if(mdExisting[k]!=null)payload.metadata[k]=mdExisting[k];});
   try{
     log(`Admin edit PUT ${editingBookingId} … ${JSON.stringify(payload)}`);
