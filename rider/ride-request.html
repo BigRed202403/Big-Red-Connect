@@ -503,6 +503,8 @@ UPDATED:
   // Locked rules:
   // - >60 passenger miles OR >75 passenger minutes OR
   //   a material out-of-area trip with substantial expected deadhead.
+  // - Deadhead alone can trigger Extended Trip only when the passenger trip
+  //   is over 20 miles; short remote trips stay on normal + fairness pricing.
   // - normal calculated fare + $0.35 per expected empty mile
   // - expected empty miles include:
   //     1) positioning from the status-selected pricing origin to pickup, and
@@ -524,6 +526,7 @@ UPDATED:
     distanceTriggerMiles:60,
     durationTriggerMinutes:75,
     outOfAreaDeadheadMiles:40,
+    deadheadTriggerMinPassengerMiles:20,
     emptyDeadheadRatePerMile:0.35,
     operatingHourFloor:40,
     roundToNearest:5
@@ -2081,10 +2084,19 @@ UPDATED:
       !returnTriggered &&
       totalEmptyMiles > EXTENDED_TRIP_CONFIG.outOfAreaDeadheadMiles;
 
+    // Short remote trips are handled by the existing fairness fee.
+    // Deadhead by itself becomes an Extended Trip trigger only when the
+    // passenger trip is more than 20 miles. Distance/time triggers remain
+    // independent and can still classify a trip as Extended on their own.
+    const deadheadTriggerEligible =
+      passengerMiles > EXTENDED_TRIP_CONFIG.deadheadTriggerMinPassengerMiles;
+
     const outOfAreaTriggered =
-      positioningTriggered ||
-      returnTriggered ||
-      combinedDeadheadTriggered;
+      deadheadTriggerEligible && (
+        positioningTriggered ||
+        returnTriggered ||
+        combinedDeadheadTriggered
+      );
 
     const isExtended =
       distanceTriggered ||
@@ -2105,19 +2117,19 @@ UPDATED:
       );
     }
 
-    if (positioningTriggered) {
+    if (deadheadTriggerEligible && positioningTriggered) {
       triggerReasons.push(
         `Expected empty positioning > ${EXTENDED_TRIP_CONFIG.outOfAreaDeadheadMiles} miles`
       );
     }
 
-    if (returnTriggered) {
+    if (deadheadTriggerEligible && returnTriggered) {
       triggerReasons.push(
         `Expected empty return > ${EXTENDED_TRIP_CONFIG.outOfAreaDeadheadMiles} miles`
       );
     }
 
-    if (combinedDeadheadTriggered) {
+    if (deadheadTriggerEligible && combinedDeadheadTriggered) {
       triggerReasons.push(
         `Combined expected empty travel > ${EXTENDED_TRIP_CONFIG.outOfAreaDeadheadMiles} miles`
       );
@@ -2173,6 +2185,7 @@ UPDATED:
 
       totalEmptyMiles,
       totalEmptyMinutes,
+      deadheadTriggerEligible,
 
       normalFareBeforePayment,
       positioningCharge,
