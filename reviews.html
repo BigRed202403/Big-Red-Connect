@@ -4,63 +4,51 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Rider Reviews • Big Red Connect</title>
-
   <!-- No cache -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-
   <link rel="stylesheet" href="style.css" />
-
   <style>
     .logo-header {
       text-align: center;
       margin: 10px 0 20px;
     }
-
     .logo-header img {
       width: 140px;
       max-width: 40vw;
       height: auto;
       border-radius: 12px;
     }
-
     /* =========================================
        Rider Rating Summary
        ========================================= */
-
     .rating-summary {
       margin-top: 18px;
     }
-
     .rating-score {
       text-align: center;
       margin-bottom: 24px;
     }
-
     .rating-stars {
       font-size: 1.6rem;
       line-height: 1;
       margin-bottom: 10px;
     }
-
     .rating-number {
       font-size: 2.5rem;
       line-height: 1;
       font-weight: 800;
       margin-bottom: 7px;
     }
-
     .rating-period {
       color: #aaa;
       font-size: 0.95rem;
     }
-
     .rating-breakdown {
       max-width: 620px;
       margin: 0 auto;
     }
-
     .rating-row {
       display: grid;
       grid-template-columns: 62px 1fr 42px;
@@ -68,12 +56,10 @@
       gap: 10px;
       margin: 13px 0;
     }
-
     .rating-label {
       font-weight: 600;
       white-space: nowrap;
     }
-
     .rating-track {
       width: 100%;
       height: 10px;
@@ -81,33 +67,27 @@
       border-radius: 999px;
       overflow: hidden;
     }
-
     .rating-fill {
       height: 100%;
       background: #b30000;
       border-radius: 999px;
     }
-
     .rating-fill.full {
       width: 100%;
     }
-
     .rating-fill.zero {
       width: 0;
     }
-
     .rating-count {
       text-align: right;
       font-weight: 700;
     }
-
     .rating-highlight {
       text-align: center;
       margin: 22px 0 4px;
       font-size: 1.05rem;
       font-weight: 700;
     }
-
     .rating-source-note {
       text-align: center;
       color: #888;
@@ -115,7 +95,6 @@
       margin-top: 6px;
       line-height: 1.5;
     }
-
     .rating-history {
       max-width: 620px;
       margin: 18px auto 0;
@@ -123,27 +102,22 @@
       border-top: 1px solid #2b2b2b;
       text-align: center;
     }
-
     .rating-history-number {
       font-size: 1.4rem;
       font-weight: 800;
       margin-bottom: 4px;
     }
-
     .rating-history-label {
       color: #aaa;
       font-size: 0.9rem;
       line-height: 1.4;
     }
-
     /* =========================================
        Additional Rider Feedback
        ========================================= */
-
     .feedback-card {
       margin-top: 14px;
     }
-
     .feedback-label {
       display: inline-block;
       color: #aaa;
@@ -151,47 +125,37 @@
       font-weight: 600;
       margin-bottom: 6px;
     }
-
     /* Mobile rating layout */
     @media (max-width: 480px) {
       .rating-row {
         grid-template-columns: 58px 1fr 34px;
         gap: 8px;
       }
-
       .rating-number {
         font-size: 2.1rem;
       }
     }
   </style>
 </head>
-
 <body class="reviews-page">
-
   <div class="logo-header">
     <a href="index.html" class="btn secondary">🏠 Home</a>
     <br/>
     <img src="official_logo.jpeg" alt="Big Red Connect Logo" />
   </div>
-
   <h1>Rider Reviews</h1>
   <p class="tagline">Real feedback from local riders — and a place to share yours.</p>
-
   <!-- Status pill -->
   <div id="status-pill" class="status status--loading">Checking status…</div>
-
   <!-- Rider Rating Summary -->
   <section class="info-section rating-summary">
     <h2>Rider Rating Summary</h2>
-
     <div class="rating-score">
       <div class="rating-stars">⭐⭐⭐⭐⭐</div>
       <div class="rating-number">5.0</div>
       <div class="rating-period">Last 100 Rated Rides</div>
     </div>
-
     <div class="rating-breakdown">
-
       <div class="rating-row">
         <div class="rating-label">5 stars</div>
         <div class="rating-track">
@@ -199,7 +163,6 @@
         </div>
         <div class="rating-count">100</div>
       </div>
-
       <div class="rating-row">
         <div class="rating-label">4 stars</div>
         <div class="rating-track">
@@ -207,7 +170,6 @@
         </div>
         <div class="rating-count">0</div>
       </div>
-
       <div class="rating-row">
         <div class="rating-label">3 stars</div>
         <div class="rating-track">
@@ -215,7 +177,6 @@
         </div>
         <div class="rating-count">0</div>
       </div>
-
       <div class="rating-row">
         <div class="rating-label">2 stars</div>
         <div class="rating-track">
@@ -223,7 +184,6 @@
         </div>
         <div class="rating-count">0</div>
       </div>
-
       <div class="rating-row">
         <div class="rating-label">1 star</div>
         <div class="rating-track">
@@ -231,17 +191,13 @@
         </div>
         <div class="rating-count">0</div>
       </div>
-
     </div>
-
     <p class="rating-highlight">
       100% Five-Star Ratings
     </p>
-
     <p class="rating-source-note">
       Based on my most recent 100 rider ratings.
     </p>
-
     <div class="rating-history">
       <div class="rating-history-number">4.97 ★</div>
       <div class="rating-history-label">
@@ -249,57 +205,46 @@
       </div>
     </div>
   </section>
-
   <!-- Real customer reviews -->
   <section class="info-section">
     <h2>What Riders Say</h2>
-
     <div class="review-card">
       ⭐⭐⭐⭐⭐ “Princess Airlines — the fanciest ride we’ve ever been in!”
       <br><br>
       “Big Red is completely worth it because we know who we’re getting. We know the car is clean, we know the driver, and we don’t have to wait around wondering who’s coming or how long it’ll take. We were able to enjoy our night, grab some food, and not feel rushed because Big Red was already there waiting when we were ready to leave. We’ll definitely use Big Red again.”
       <br>— <strong>Yukon riders, September 2026</strong>
     </div>
-
     <div class="review-card">
       ⭐⭐⭐⭐⭐ “This company CARES!! This service is safer than Uber and they truly care about their clientele. Give them a call so you can go have fun and not worry about getting home. Let them handle that for you. A+ company.”
       <br>— <strong>Mark</strong>
     </div>
-
     <div class="review-card">
       ⭐⭐⭐⭐⭐ “Great service, always prompt, good conversations and a pleasure to do business with. Much better than the other run of the mill ride share programs. 100% of the fare goes to Dan!”
       <br>— <strong>J.T.</strong>
     </div>
-
     <div class="review-card">
       ⭐⭐⭐⭐⭐ “Very friendly, smart, courteous, replies extremely fast, knowledgeable, and great ads. Would use every time I'm in OKC even if I don't have to go anywhere.”
       <br>— <strong>Arjun</strong>
     </div>
-
     <p style="margin-top:10px;">
       <a class="btn primary" href="#leave-review">✍️ Leave a Review</a>
     </p>
   </section>
-
   <!-- Additional rider feedback -->
   <section class="info-section">
     <h2>More Rider Feedback</h2>
-
     <div class="review-card feedback-card">
       <span class="feedback-label">Passenger Comment</span><br>
       “He was a great driver and helped me in and out of the car. A gentleman.”
     </div>
-
     <div class="review-card feedback-card">
       <span class="feedback-label">Passenger Comment</span><br>
       “Dan was a cool cat!! Very patient driver. Was not rude at all and I had a grocery store stop and maps even took us to the correct address wrong location lol. He handled it like a champ!! 🎯💯”
     </div>
   </section>
-
   <!-- Google Form Embed -->
   <section id="leave-review" class="info-section" style="text-align:center;">
     <h2>Share Your Experience</h2>
-
     <iframe
       src="https://docs.google.com/forms/d/e/1FAIpQLSeq6WCnkrG417rWCGwN56i7FplWpNTHlg1lpGuC-IETDEkEHw/viewform?embedded=true"
       width="100%"
@@ -307,26 +252,20 @@
       style="border:none; border-radius:10px;"
       allowfullscreen>
     </iframe>
-
     <p class="note" style="color:#aaa; margin-top:10px;">
       Your feedback goes directly to Big Red Connect. Thanks for supporting local!
     </p>
   </section>
-
   <footer>
     <p>Need a connection? Text <strong>“RED”</strong> to (405) 378-4024.</p>
-
     <a href="index.html" class="btn">🏠 Return to Home</a>
-
     <p style="font-size:0.8em;color:#777;margin-top:10px;line-height:1.4;">
       Vehicle imagery features actual Big Red Connect fleet vehicles.<br>
       Some backgrounds created with AI-assisted design tools for illustrative purposes only.<br>
       Brand names (Chevrolet® and GMC®) are property of their respective owners and used descriptively.
     </p>
   </footer>
-
   <!-- status.js -->
   <script src="status.js"></script>
-
 </body>
 </html>
