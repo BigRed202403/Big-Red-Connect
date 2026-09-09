@@ -2,7 +2,12 @@
 FILE: /admin-driver.html
 Big Red Admin / Driver Console
 
-UPDATED — EXTENDED TRIP PRICING PARITY:
+UPDATED — BILINGUAL AUDIO PANEL + EXTENDED TRIP PRICING PARITY:
+- Adds persistent English / Spanish selector to the Driver Audio Panel.
+- Keeps the same soundboard buttons; selected language controls playback.
+- English remains the default.
+- Spanish paths match the exact committed GitHub filenames.
+- Spanish Save To Home Screen (Long) safely falls back to the normal Spanish Save clip.
 - Keeps existing manual fare tiers and travel fairness behavior.
 - Extended Trip trigger: >60 passenger miles, >75 passenger minutes, or
   >20 passenger miles with substantial expected empty positioning/return travel.
@@ -118,6 +123,9 @@ textarea{width:100%;min-height:100px;background:#111;color:#fff;border:1px solid
 .stop-row input{flex:1 1 240px;min-width:0;}
 .preview-box{margin-top:8px;padding:10px;border-radius:8px;border:1px dashed #444;background:#050505;font-size:.82rem;color:#ddd;line-height:1.3;}
 
+.audio-language-toggle{display:flex;gap:8px;width:100%;margin:0 0 12px;}
+.audio-lang-btn{flex:1;min-height:44px;padding:8px 12px;border-radius:10px;border:1px solid #444;background:#090909;color:#ddd;font-weight:700;font-size:.86rem;cursor:pointer;}
+.audio-lang-btn.active{background:var(--red);border-color:var(--red);color:#fff;}
 .audio-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;width:100%;}
 .audio-btn{width:100%;min-height:58px;padding:10px 12px;font-size:.86rem;line-height:1.2;border-radius:10px;white-space:normal;}
 #bigRedAudioPlayer{width:100%;margin-top:10px;display:none;}
@@ -252,6 +260,10 @@ body.mode-admin .driver-only{display:none;}
 
     <section class="driver-only" style="margin-top:12px;">
       <h2>🔴 Big Red Audio Panel</h2>
+      <div class="audio-language-toggle" aria-label="Audio language">
+        <button type="button" id="audioLangEn" class="audio-lang-btn active" onclick="setBigRedAudioLanguage('en')">🇺🇸 EN</button>
+        <button type="button" id="audioLangEs" class="audio-lang-btn" onclick="setBigRedAudioLanguage('es')">🇲🇽 ES</button>
+      </div>
       <div class="audio-grid">
         <button class="btn btn-primary audio-btn" onclick="playBigRedClip('welcome')">🎙️ Welcome Aboard</button>
         <button class="btn btn-secondary audio-btn" onclick="playBigRedClip('welcomeBack')">👋 Welcome Back</button>
@@ -268,7 +280,7 @@ body.mode-admin .driver-only{display:none;}
         <button class="btn btn-ghost audio-btn" onclick="stopBigRedClip()">⏹ Stop</button>
       </div>
       <audio id="bigRedAudioPlayer" preload="auto"></audio>
-      <p class="meta">Manual driver soundboard. Tap once to play through the iPad / Bluetooth audio.</p>
+      <p class="meta">Manual driver soundboard. Select EN or ES, then tap once to play through the iPad / Bluetooth audio.</p>
     </section>
 
     <section class="admin-only" style="margin-top:12px;">
@@ -524,19 +536,38 @@ const EXTENDED_TRIP_OPERATING_HOURLY_FLOOR=40;
 const EXTENDED_TRIP_ROUND_TO=5;
 
 const BIG_RED_AUDIO_CLIPS={
-  welcome:"Welcome%20Aboard%202.MOV",
-  welcomeBack:"Welcome%20Back.mov",
-  airportWelcome:"Airport%20Welcome%20Aboard.MOV",
-  who:"Who%20Is%20Big%20Red%20Connect.mov",
-  why:"Why%20Choose%20Red%3F.MOV",
-  think:"Think%20Big%20Red.MOV",
-  saveLong:"Save%20To%20Home%20Screen%20(Long).MOV",
-  save:"Save%20To%20Home%20Screen.MOV",
-  nextStop:"Next%20Stop.mov",
-  continueJourney:"Continue%20Journey.mov",
-  airportArrive:"Airport%20Arrival.MOV",
-  arrival:"Destination%20Arrival%202.MOV"
+  en:{
+    welcome:"Welcome%20Aboard%202.MOV",
+    welcomeBack:"Welcome%20Back.mov",
+    airportWelcome:"Airport%20Welcome%20Aboard.MOV",
+    who:"Who%20Is%20Big%20Red%20Connect.mov",
+    why:"Why%20Choose%20Red%3F.MOV",
+    think:"Think%20Big%20Red.MOV",
+    saveLong:"Save%20To%20Home%20Screen%20(Long).MOV",
+    save:"Save%20To%20Home%20Screen.MOV",
+    nextStop:"Next%20Stop.mov",
+    continueJourney:"Continue%20Journey.mov",
+    airportArrive:"Airport%20Arrival.MOV",
+    arrival:"Destination%20Arrival%202.MOV"
+  },
+  es:{
+    welcome:"%F0%9F%87%B2%F0%9F%87%BD%201.%20Bienvenida%20%E2%80%94%20Welcome%20Aboard.mov",
+    welcomeBack:"%F0%9F%87%B2%F0%9F%87%BD%2011.%20Bienvenidos%20de%20Nuevo%20%E2%80%94%20Welcome%20Back.mov",
+    airportWelcome:"%F0%9F%87%B2%F0%9F%87%BD%205.%20Bienvenida%20desde%20el%20Aeropuerto%20%E2%80%94%20Airport%20Welcome%20Aboard.mov",
+    who:"%F0%9F%87%B2%F0%9F%87%BD%2010.%20%C2%BFQuie%CC%81n%20es%20Big%20Red%3F%20%E2%80%94%20Who%20Is%20Big%20Red.mov",
+    why:"%F0%9F%87%B2%F0%9F%87%BD%209.%20%C2%BFPor%20que%CC%81%20elegir%20Big%20Red%3F%20%E2%80%94%20Why%20Choose%20Red.mov",
+    think:"%F0%9F%87%B2%F0%9F%87%BD%208.%20Piensa%20en%20Big%20Red%20%E2%80%94%20Think%20Big%20Red.mov",
+    saveLong:"%F0%9F%87%B2%F0%9F%87%BD%207.%20Guardar%20en%20la%20Pantalla%20de%20Inicio%20%E2%80%94%20Save%20to%20Home%20Screen.mov",
+    save:"%F0%9F%87%B2%F0%9F%87%BD%207.%20Guardar%20en%20la%20Pantalla%20de%20Inicio%20%E2%80%94%20Save%20to%20Home%20Screen.mov",
+    nextStop:"%F0%9F%87%B2%F0%9F%87%BD%202.%20Pro%CC%81xima%20Parada%20%E2%80%94%20Next%20Stop.mov",
+    continueJourney:"%F0%9F%87%B2%F0%9F%87%BD%203.%20Continuamos%20el%20Viaje%20%E2%80%94%20Continue%20Journey.mov",
+    airportArrive:"%F0%9F%87%B2%F0%9F%87%BD%206.%20Llegada%20al%20Aeropuerto%20%E2%80%94%20Airport%20Arrival.mov",
+    arrival:"%F0%9F%87%B2%F0%9F%87%BD%204.%20Llegada%20al%20Destino%20%E2%80%94%20Destination%20Arrival.mov"
+  }
 };
+
+let bigRedAudioLanguage=localStorage.getItem("bigRedAudioLanguage")||"en";
+if(!["en","es"].includes(bigRedAudioLanguage))bigRedAudioLanguage="en";
 
 const DRIVER_STATUSES=[
   {value:"REQUESTED",label:"🆕 Requested"},
@@ -627,20 +658,34 @@ function showToast(msg){
   t.classList.add("show");
   setTimeout(()=>t.classList.remove("show"),2000);
 }
+function syncBigRedAudioLanguageUI(){
+  const en=$("audioLangEn"),es=$("audioLangEs");
+  if(en)en.classList.toggle("active",bigRedAudioLanguage==="en");
+  if(es)es.classList.toggle("active",bigRedAudioLanguage==="es");
+}
+function setBigRedAudioLanguage(lang,notify=true){
+  bigRedAudioLanguage=lang==="es"?"es":"en";
+  localStorage.setItem("bigRedAudioLanguage",bigRedAudioLanguage);
+  stopBigRedClip(false);
+  syncBigRedAudioLanguageUI();
+  if(notify)showToast(bigRedAudioLanguage==="es"?"Audio: Español":"Audio: English");
+}
+window.setBigRedAudioLanguage=setBigRedAudioLanguage;
 function playBigRedClip(key){
   const player=$("bigRedAudioPlayer");
-  const src=BIG_RED_AUDIO_CLIPS[key];
+  const library=BIG_RED_AUDIO_CLIPS[bigRedAudioLanguage]||BIG_RED_AUDIO_CLIPS.en;
+  const src=library[key]||BIG_RED_AUDIO_CLIPS.en[key];
   if(!player||!src){showToast("Audio clip not found");return;}
   player.style.display="block";
   player.pause();
   player.src=src;
   player.currentTime=0;
-  player.play().then(()=>showToast("Playing audio")).catch(err=>{
+  player.play().then(()=>showToast(bigRedAudioLanguage==="es"?"Reproduciendo audio":"Playing audio")).catch(err=>{
     console.warn("Audio play error:",err);
     showToast("Tap again to play");
   });
 }
-function stopBigRedClip(){
+function stopBigRedClip(notify=true){
   const player=$("bigRedAudioPlayer");
   if(!player)return;
   player.pause();
@@ -648,7 +693,7 @@ function stopBigRedClip(){
   player.removeAttribute("src");
   player.load();
   player.style.display="none";
-  showToast("Audio stopped");
+  if(notify)showToast("Audio stopped");
 }
 function log(msg){
   const box=$("debugLog");
@@ -1398,26 +1443,17 @@ async function calculateManualExtendedTripDetails({
   const totalEmptyMiles=positioningMiles+returnMiles;
   const totalEmptyMinutes=positioningMinutes+returnMinutes;
 
-  const distanceTriggered=
-    Number(passengerMiles)>EXTENDED_TRIP_DISTANCE_TRIGGER_MI;
-
-  const durationTriggered=
-    Number(passengerMinutes)>EXTENDED_TRIP_DURATION_TRIGGER_MIN;
-
-  const positioningTriggered=
-    positioningMiles>EXTENDED_TRIP_DEADHEAD_TRIGGER_MI;
-
-  const returnTriggered=
-    returnMiles>EXTENDED_TRIP_DEADHEAD_TRIGGER_MI;
-
+  const distanceTriggered=Number(passengerMiles)>EXTENDED_TRIP_DISTANCE_TRIGGER_MI;
+  const durationTriggered=Number(passengerMinutes)>EXTENDED_TRIP_DURATION_TRIGGER_MIN;
+  const positioningTriggered=positioningMiles>EXTENDED_TRIP_DEADHEAD_TRIGGER_MI;
+  const returnTriggered=returnMiles>EXTENDED_TRIP_DEADHEAD_TRIGGER_MI;
   const combinedDeadheadTriggered=
     !positioningTriggered&&
     !returnTriggered&&
     totalEmptyMiles>EXTENDED_TRIP_DEADHEAD_TRIGGER_MI;
 
   // Short remote trips remain on normal + travel-fairness pricing.
-  const deadheadTriggerEligible=
-    Number(passengerMiles)>EXTENDED_TRIP_DEADHEAD_MIN_PASSENGER_MI;
+  const deadheadTriggerEligible=Number(passengerMiles)>EXTENDED_TRIP_DEADHEAD_MIN_PASSENGER_MI;
 
   const outOfAreaTriggered=
     deadheadTriggerEligible&&(
@@ -1426,10 +1462,7 @@ async function calculateManualExtendedTripDetails({
       combinedDeadheadTriggered
     );
 
-  const isExtended=
-    distanceTriggered||
-    durationTriggered||
-    outOfAreaTriggered;
+  const isExtended=distanceTriggered||durationTriggered||outOfAreaTriggered;
 
   const triggerReasons=[];
   if(distanceTriggered)triggerReasons.push(`Passenger trip > ${EXTENDED_TRIP_DISTANCE_TRIGGER_MI} miles`);
@@ -1438,27 +1471,12 @@ async function calculateManualExtendedTripDetails({
   if(deadheadTriggerEligible&&returnTriggered)triggerReasons.push(`Expected empty return > ${EXTENDED_TRIP_DEADHEAD_TRIGGER_MI} miles`);
   if(deadheadTriggerEligible&&combinedDeadheadTriggered)triggerReasons.push(`Combined expected empty travel > ${EXTENDED_TRIP_DEADHEAD_TRIGGER_MI} miles`);
 
-  const emptyDeadheadCharge=
-    totalEmptyMiles*EXTENDED_TRIP_EMPTY_MILE_RATE;
-
-  const deadheadAdjustedFare=
-    Number(normalFare)+emptyDeadheadCharge;
-
-  const totalOperatingHours=
-    (positioningMinutes+Number(passengerMinutes)+returnMinutes)/60;
-
-  const hourlyFloorFare=
-    totalOperatingHours*EXTENDED_TRIP_OPERATING_HOURLY_FLOOR;
-
-  const selectedBeforeRound=Math.max(
-    deadheadAdjustedFare,
-    hourlyFloorFare
-  );
-
-  const extendedFare=roundToIncrement(
-    selectedBeforeRound,
-    EXTENDED_TRIP_ROUND_TO
-  );
+  const emptyDeadheadCharge=totalEmptyMiles*EXTENDED_TRIP_EMPTY_MILE_RATE;
+  const deadheadAdjustedFare=Number(normalFare)+emptyDeadheadCharge;
+  const totalOperatingHours=(positioningMinutes+Number(passengerMinutes)+returnMinutes)/60;
+  const hourlyFloorFare=totalOperatingHours*EXTENDED_TRIP_OPERATING_HOURLY_FLOOR;
+  const selectedBeforeRound=Math.max(deadheadAdjustedFare,hourlyFloorFare);
+  const extendedFare=roundToIncrement(selectedBeforeRound,EXTENDED_TRIP_ROUND_TO);
 
   return {
     isExtended,
@@ -1517,16 +1535,9 @@ async function estimateManualFare(){
     const pricingMiles=Math.round(passengerMilesExact);
     const base=getManualRateBase();
     const mileageSubtotal=computeMileageSubtotal(pricingMiles);
-    const coverage=computeExtendedCoverageFee(
-      driverOrigin,
-      route.pickupPoint,
-      pricingMiles
-    );
+    const coverage=computeExtendedCoverageFee(driverOrigin,route.pickupPoint,pricingMiles);
 
-    const normalFare=
-      Number(base)+
-      Number(mileageSubtotal)+
-      Number(coverage.fee||0);
+    const normalFare=Number(base)+Number(mileageSubtotal)+Number(coverage.fee||0);
 
     const extended=await calculateManualExtendedTripDetails({
       passengerMiles:passengerMilesExact,
@@ -1537,42 +1548,26 @@ async function estimateManualFare(){
       dropoffPoint:route.dropoffPoint
     });
 
-    const fare=extended.isExtended
-      ? extended.extendedFare
-      : normalFare;
+    const fare=extended.isExtended?extended.extendedFare:normalFare;
 
-    $("manualEstMiles").textContent=
-      `Miles: ${passengerMilesExact.toFixed(1)} (${pricingMiles} mi pricing)`;
-
-    $("manualEstTripTime").textContent=
-      `Passenger Trip Time: ${Math.round(passengerMinutesExact)} min`;
-
+    $("manualEstMiles").textContent=`Miles: ${passengerMilesExact.toFixed(1)} (${pricingMiles} mi pricing)`;
+    $("manualEstTripTime").textContent=`Passenger Trip Time: ${Math.round(passengerMinutesExact)} min`;
     $("manualEstBase").textContent=`Base: ${money(base)}`;
-
-    $("manualEstMileage").textContent=
-      `Mileage: ${money(mileageSubtotal)}`;
-
-    $("manualEstTravelFee").textContent=
-      `Travel Fairness Fee: ${money(coverage.fee)} (${coverage.driverToPickupMiles.toFixed(1)} mi from ${coverage.pricingOriginSource==="HQ"?"base location":"live driver location"})`;
+    $("manualEstMileage").textContent=`Mileage: ${money(mileageSubtotal)}`;
+    $("manualEstTravelFee").textContent=`Travel Fairness Fee: ${money(coverage.fee)} (${coverage.driverToPickupMiles.toFixed(1)} mi from ${coverage.pricingOriginSource==="HQ"?"base location":"live driver location"})`;
 
     if(extended.isExtended){
-      $("manualEstExtended").textContent=
-        `Extended Trip: YES — availability confirmation required (${extended.triggerReasons.join("; ")})`;
+      $("manualEstExtended").textContent=`Extended Trip: YES — availability confirmation required (${extended.triggerReasons.join("; ")})`;
       $("manualEstExtended").style.color="#ffd27f";
-      $("manualEstEmptyTravel").textContent=
-        `Expected Empty Travel: ${extended.totalEmptyMiles.toFixed(1)} mi / ${Math.round(extended.totalEmptyMinutes)} min `+
-        `(to pickup ${extended.positioningMiles.toFixed(1)} mi + return ${extended.returnMiles.toFixed(1)} mi)`;
-      $("manualEstOperatingFloor").textContent=
-        `Operating Floor: ${money(extended.hourlyFloorFare)} (${extended.totalOperatingHours.toFixed(2)} hrs × $${EXTENDED_TRIP_OPERATING_HOURLY_FLOOR}/hr) • fare + empty travel ${money(extended.deadheadAdjustedFare)}`;
-      $("manualEstFare").innerHTML=
-        `<strong>Fare: ${money(fare)}</strong> (Extended Trip • rounded to nearest $${EXTENDED_TRIP_ROUND_TO})`;
+      $("manualEstEmptyTravel").textContent=`Expected Empty Travel: ${extended.totalEmptyMiles.toFixed(1)} mi / ${Math.round(extended.totalEmptyMinutes)} min (to pickup ${extended.positioningMiles.toFixed(1)} mi + return ${extended.returnMiles.toFixed(1)} mi)`;
+      $("manualEstOperatingFloor").textContent=`Operating Floor: ${money(extended.hourlyFloorFare)} (${extended.totalOperatingHours.toFixed(2)} hrs × $${EXTENDED_TRIP_OPERATING_HOURLY_FLOOR}/hr) • fare + empty travel ${money(extended.deadheadAdjustedFare)}`;
+      $("manualEstFare").innerHTML=`<strong>Fare: ${money(fare)}</strong> (Extended Trip • rounded to nearest $${EXTENDED_TRIP_ROUND_TO})`;
     }else{
       $("manualEstExtended").textContent="Extended Trip: No";
       $("manualEstExtended").style.color="";
       $("manualEstEmptyTravel").textContent="Expected Empty Travel: Not used for local/standard pricing";
       $("manualEstOperatingFloor").textContent="Operating Floor: Not applicable";
-      $("manualEstFare").innerHTML=
-        `<strong>Fare: ${money(fare)}</strong> (base ${money(base)} + mileage ${money(mileageSubtotal)}${coverage.fee?" + fairness "+money(coverage.fee):""})`;
+      $("manualEstFare").innerHTML=`<strong>Fare: ${money(fare)}</strong> (base ${money(base)} + mileage ${money(mileageSubtotal)}${coverage.fee?" + fairness "+money(coverage.fee):""})`;
     }
 
     const est={
@@ -1593,7 +1588,6 @@ async function estimateManualFare(){
       },
       estimatePickupPoint:route.pickupPoint,
       estimateDropoffPoint:route.dropoffPoint,
-
       estimateIsExtended:extended.isExtended,
       estimateAvailabilityConfirmationRequired:extended.isExtended,
       estimateExtendedTriggerReasons:extended.triggerReasons,
@@ -1616,18 +1610,15 @@ async function estimateManualFare(){
 
     setManualEstimateDraft(est);
 
-    log(
-      "Manual estimate: "+
-      JSON.stringify({
-        miles:est.estimateMiles,
-        minutes:est.estimateMinutes,
-        normalFare:est.estimateNormalFare,
-        isExtended:est.estimateIsExtended,
-        emptyMiles:est.estimateExpectedEmptyMiles,
-        hourlyFloor:est.estimateHourlyFloorFare,
-        finalFare:est.estimateFare
-      })
-    );
+    log("Manual estimate: "+JSON.stringify({
+      miles:est.estimateMiles,
+      minutes:est.estimateMinutes,
+      normalFare:est.estimateNormalFare,
+      isExtended:est.estimateIsExtended,
+      emptyMiles:est.estimateExpectedEmptyMiles,
+      hourlyFloor:est.estimateHourlyFloorFare,
+      finalFare:est.estimateFare
+    }));
 
     return est;
   }catch(e){
@@ -1688,7 +1679,6 @@ async function createManualRide(){
       estimatePricingOrigin:est.estimatePricingOrigin||null,
       estimatePickupPoint:est.estimatePickupPoint||null,
       estimateDropoffPoint:est.estimateDropoffPoint||null,
-
       estimateIsExtended:!!est.estimateIsExtended,
       estimateAvailabilityConfirmationRequired:!!est.estimateAvailabilityConfirmationRequired,
       estimateExtendedTriggerReasons:Array.isArray(est.estimateExtendedTriggerReasons)?est.estimateExtendedTriggerReasons:[],
@@ -1752,7 +1742,6 @@ function readEstimateFromBooking(b){
     src:"metadata"
   };
 
-  // Rider-created bookings store the public estimate in pricing / metrics.
   const riderFare=asNum(b?.pricing?.estimate);
   const riderMiles=asNum(b?.metrics?.miles);
   const riderTravelFee=asNum(b?.pricing?.travelFee);
@@ -1981,8 +1970,6 @@ async function saveEditModal(){
     "estimateExpectedEmptyReturnMinutes","estimateReturnSource","estimateExpectedEmptyMiles","estimateExpectedEmptyMinutes",
     "estimateEmptyDeadheadCharge","estimateDeadheadAdjustedFare","estimateTotalOperatingHours",
     "estimateHourlyFloorFare","estimateExtendedFare",
-
-    // Preserve rider-created Extended Trip metadata when an admin edits a ride.
     "extendedTrip","availabilityConfirmationRequired","extendedTriggerReasons",
     "expectedEmptyPositioningMiles","expectedEmptyPositioningMinutes","positioningMetricsSource",
     "positioningOrigin","positioningOriginSource","expectedEmptyReturnMiles","expectedEmptyReturnMinutes",
@@ -2153,6 +2140,7 @@ function wireButtons(){
 window.addEventListener("load",()=>{
   applyMode(currentMode);
   applyTrackingPill();
+  syncBigRedAudioLanguageUI();
   updPrev();
   applyTemplateToCaption("LIVE");
   setImage(0);
