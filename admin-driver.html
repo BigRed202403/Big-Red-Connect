@@ -2,8 +2,9 @@
 FILE: /admin-driver.html
 Big Red Admin / Driver Console
 
-UPDATED — BILINGUAL AUDIO PANEL + EXTENDED TRIP PRICING PARITY:
+UPDATED — COMPACT TWO-COLUMN BILINGUAL AUDIO PANEL + EXTENDED TRIP PRICING PARITY:
 - Adds persistent English / Spanish selector to the Driver Audio Panel.
+- Keeps audio buttons in two columns even in the narrow dashboard window to reduce scrolling.
 - Keeps the same soundboard buttons; selected language controls playback.
 - English remains the default.
 - Spanish paths match the exact committed GitHub filenames.
@@ -173,8 +174,19 @@ body.mode-admin .driver-only{display:none;}
   .img-box img{max-height:220px;}
   .col-body{max-height:48vh;}
   .input-with-button .btn{width:100%;}
+
+  /* Driver dashboard is intentionally used in a narrow split-screen window.
+     Keep the bilingual soundboard two-up so more controls stay visible. */
+  .audio-language-toggle{gap:8px;margin-bottom:10px;}
+  .audio-lang-btn{min-height:42px;padding:7px 8px;font-size:.80rem;}
+  .audio-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
+  .audio-btn{min-height:48px;padding:8px 7px;font-size:.76rem;line-height:1.15;}
+}
+
+/* Only collapse the soundboard if the window becomes exceptionally narrow. */
+@media (max-width:330px){
   .audio-grid{grid-template-columns:1fr;}
-  .audio-btn{min-height:52px;font-size:.84rem;}
+  .audio-btn{font-size:.82rem;}
 }
 
 @media (min-width:521px) and (max-width:1024px){
