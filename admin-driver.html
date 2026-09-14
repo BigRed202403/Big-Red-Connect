@@ -643,6 +643,12 @@ let captionIndex=0;
 let gpsTimer=null;
 let gpsLastTs=null;
 let gpsRunToken=0;
+let gpsRunning=false;
+const GPS_MOVE_THRESHOLD_MI=0.025;
+const GPS_HEARTBEAT_MS=180000;
+let gpsLastSentLat=null;
+let gpsLastSentLng=null;
+let gpsLastSentTs=0;
 
 let dispatchScope=localStorage.getItem("dispatchScope")||"active";
 if(!["active","all"].includes(dispatchScope)) dispatchScope="active";
@@ -1187,54 +1193,84 @@ function handleGpsForStatus(val){
 }
 function determineGpsInterval(){
   let interval=600000;
-  if(document.querySelectorAll("#listActive .card").length>0)interval=20000;
-  if(window.__nearPickup===true)interval=5000;
+  if(document.querySelectorAll("#listActive .card").length>0)interval=45000;
+  if(window.__nearPickup===true)interval=15000;
   return interval;
 }
 function startGpsPings(){
+  // Re-reading status must not restart the loop or create another GPS request.
+  if(gpsRunning)return;
+  if(!("geolocation" in navigator)){log("No geolocation support.");return;}
+  gpsRunning=true;
   gpsRunToken++;
   const myToken=gpsRunToken;
   if(gpsTimer){clearTimeout(gpsTimer);gpsTimer=null;}
-  if(!("geolocation" in navigator)){log("No geolocation support.");return;}
 
-  async function pingOnce(){
+  function scheduleNext(delay=determineGpsInterval()){
+    if(myToken!==gpsRunToken)return;
+    gpsTimer=setTimeout(pingOnce,delay);
+  }
+  function pingOnce(){
     if(myToken!==gpsRunToken)return;
     if(!trackingEnabled||!(currentStatusVal==="online"||currentStatusVal==="away")){
       stopGpsPings();
       return;
     }
-    const interval=determineGpsInterval();
-    navigator.geolocation.getCurrentPosition(pos=>{
+    navigator.geolocation.getCurrentPosition(async pos=>{
       if(myToken!==gpsRunToken)return;
       const now=Date.now();
-      $("gpsStamp").textContent=new Date().toLocaleString("en-US",{timeZone:TZ});
-      $("gpsRate").textContent=gpsLastTs?Math.round((now-gpsLastTs)/1000)+"s":interval>=60000?Math.round(interval/60000)+"m":Math.round(interval/1000)+"s";
-      gpsLastTs=now;
-      const lat=pos.coords.latitude,lng=pos.coords.longitude,ts=new Date().toISOString();
-      fetch(LOCATION_WORKER,{
-        method:"PUT",
-        headers:{"Content-Type":"application/json","X-Auth-Token":AUTH_SECRET},
-        body:JSON.stringify({lat,lng,accuracy:pos.coords.accuracy,updated:ts,source:"admin-gps"})
-      }).then(r=>r.text()).then(t=>{
-        log("GPS PUT: "+t);
+      const lat=pos.coords.latitude,lng=pos.coords.longitude;
+      const firstSend=gpsLastSentLat===null||gpsLastSentLng===null;
+      const moved=firstSend?Infinity:haversineMiles(
+        {lat:gpsLastSentLat,lng:gpsLastSentLng},{lat,lng}
+      );
+      // Heartbeat is checked at each scheduled sample; idle samples remain 10 minutes apart.
+      const heartbeatDue=firstSend||now-gpsLastSentTs>=GPS_HEARTBEAT_MS;
+      if(!firstSend&&moved<GPS_MOVE_THRESHOLD_MI&&!heartbeatDue){
+        scheduleNext();
+        return;
+      }
+      const ts=new Date(now).toISOString();
+      try{
+        const response=await fetch(LOCATION_WORKER,{
+          method:"PUT",
+          headers:{"Content-Type":"application/json","X-Auth-Token":AUTH_SECRET},
+          body:JSON.stringify({lat,lng,accuracy:pos.coords.accuracy,updated:ts,source:"admin-gps"})
+        });
+        const body=await response.text();
+        if(myToken!==gpsRunToken)return;
+        if(!response.ok)throw new Error(`Location PUT failed (${response.status}): ${body}`);
+        const confirmedAt=Date.now();
+        gpsLastSentLat=lat;
+        gpsLastSentLng=lng;
+        gpsLastSentTs=confirmedAt;
+        $("gpsStamp").textContent=new Date(confirmedAt).toLocaleString("en-US",{timeZone:TZ});
+        $("gpsRate").textContent=gpsLastTs?Math.round((confirmedAt-gpsLastTs)/1000)+"s":"—";
+        gpsLastTs=confirmedAt;
+        log("GPS PUT: "+body);
         setLiveLocText(lat,lng);
         logEffectiveOnce(lat,lng,"GPS",ts);
-      }).catch(e=>log("GPS error: "+e.message)).finally(()=>{
-        if(myToken!==gpsRunToken)return;
-        gpsTimer=setTimeout(pingOnce,interval);
-      });
+      }catch(e){
+        if(myToken===gpsRunToken)log("GPS error: "+e.message);
+      }finally{
+        scheduleNext();
+      }
     },err=>{
-      log("GPS error: "+err.message);
       if(myToken!==gpsRunToken)return;
-      gpsTimer=setTimeout(pingOnce,60000);
+      log("GPS error: "+err.message);
+      scheduleNext(60000);
     },{enableHighAccuracy:true,maximumAge:15000,timeout:10000});
   }
   pingOnce();
 }
 function stopGpsPings(){
   gpsRunToken++;
+  gpsRunning=false;
   if(gpsTimer){clearTimeout(gpsTimer);gpsTimer=null;}
   gpsLastTs=null;
+  gpsLastSentLat=null;
+  gpsLastSentLng=null;
+  gpsLastSentTs=0;
   if($("gpsRate"))$("gpsRate").textContent="—";
 }
 
