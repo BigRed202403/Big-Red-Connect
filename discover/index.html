@@ -3,12 +3,21 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+  <!-- Keep the installed Discover experience from mixing old/new app files -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+
   <meta name="theme-color" content="#000000" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Discover with Big Red" />
+
   <title>Discover with Big Red</title>
-  <link rel="stylesheet" href="discover.css" />
+
+  <!-- Versioned app assets prevent an old iPad/PWA cache from mixing releases -->
+  <link rel="stylesheet" href="discover.css?v=20260918-v3" />
 </head>
 <body>
   <main class="experience-shell">
@@ -25,7 +34,10 @@
         preload="auto"
         disablepictureinpicture
       >
-        <source src="https://media.bigredconnectokc.com/discover-current.mov" type="video/quicktime" />
+        <source
+          src="https://media.bigredconnectokc.com/discover-current.mov"
+          type="video/quicktime"
+        />
       </video>
 
       <div class="discover-badge" aria-hidden="true">
@@ -107,6 +119,7 @@
 
   </main>
 
-  <script src="discover.js"></script>
+  <!-- Versioned JS forces the current game engine to load -->
+  <script src="discover.js?v=20260918-v3"></script>
 </body>
 </html>
