@@ -698,4 +698,294 @@ button {
     min-width: 0;
   }
 }
+/* --------------------------------------------------
+   DISCOVER WITH BIG RED — GAME SESSION V2
+   Append this to the VERY END of discover.css
+-------------------------------------------------- */
+
+/* Small persistent brand mark over the movie */
+.discover-badge {
+  position: absolute;
+  top: calc(16px + var(--safe-top));
+  left: calc(18px + var(--safe-left));
+  z-index: 6;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 9px 13px;
+
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: 999px;
+
+  background: rgba(0,0,0,.66);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+
+  color: #fff;
+  font-size: 14px;
+  font-weight: 850;
+  letter-spacing: .02em;
+}
+
+.discover-badge-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--red);
+}
+
+/* Shared game status row */
+.game-statusbar {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
+
+  margin: 0 auto 6px;
+}
+
+.game-status-pill {
+  min-width: 110px;
+  padding: 8px 12px;
+
+  border: 1px solid var(--line);
+  border-radius: 999px;
+
+  background: #151515;
+  color: var(--muted);
+
+  text-align: center;
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.game-status-pill strong {
+  color: #fff;
+}
+
+/* Trivia difficulty */
+.difficulty-pill {
+  min-width: 96px;
+  padding: 8px 12px;
+
+  border-radius: 999px;
+  border: 1px solid var(--line);
+
+  text-align: center;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: .08em;
+}
+
+.difficulty-easy {
+  background: #15251a;
+  color: #9ed9ac;
+}
+
+.difficulty-medium {
+  background: #2a2414;
+  color: #e2c56b;
+}
+
+.difficulty-hard {
+  background: #321617;
+  color: #ff9da1;
+}
+
+/* Word Scramble timer */
+.timer-wrap {
+  width: min(720px, 100%);
+  margin: 0 auto 6px;
+}
+
+.timer-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  margin-bottom: 8px;
+
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.timer-number {
+  color: #fff;
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.timer-track {
+  width: 100%;
+  height: 10px;
+
+  overflow: hidden;
+
+  border-radius: 999px;
+  background: #202020;
+}
+
+.timer-fill {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--red);
+  transform-origin: left center;
+}
+
+/* Result / score screen */
+.score-screen {
+  width: min(760px, 100%);
+  margin: 0 auto;
+
+  text-align: center;
+}
+
+.score-title {
+  margin: 0 0 10px;
+
+  font-size: clamp(38px, 6vw, 62px);
+  line-height: 1;
+}
+
+.score-subtitle {
+  margin: 0 0 22px;
+
+  color: var(--muted);
+  font-size: 18px;
+}
+
+.score-hero {
+  margin: 8px 0 20px;
+
+  color: #fff;
+  font-size: clamp(60px, 10vw, 100px);
+  font-weight: 950;
+  line-height: .95;
+}
+
+.score-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0,1fr));
+  gap: 12px;
+
+  margin: 0 auto 22px;
+}
+
+.score-card {
+  padding: 16px;
+
+  border: 1px solid var(--line);
+  border-radius: 16px;
+
+  background: #171717;
+}
+
+.score-card span {
+  display: block;
+
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.score-card strong {
+  display: block;
+
+  margin-top: 5px;
+
+  color: #fff;
+  font-size: 26px;
+  font-weight: 900;
+}
+
+.score-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.score-actions button {
+  min-height: 58px;
+  padding: 14px 20px;
+
+  border-radius: 15px;
+  border: 1px solid var(--line);
+
+  font-weight: 850;
+}
+
+.score-primary {
+  background: var(--red);
+  color: #fff;
+  border-color: var(--red) !important;
+}
+
+.score-secondary {
+  background: #1a1a1a;
+  color: #fff;
+}
+
+/* Would You Rather session progress */
+.wyr-progress {
+  margin: 0 auto 8px;
+
+  color: var(--muted);
+  text-align: center;
+  font-size: 15px;
+  font-weight: 750;
+}
+
+/* Compact fit for older landscape iPad */
+@media (max-height: 700px) {
+  .game-content {
+    min-height: 420px;
+    padding-top: 12px;
+    gap: 12px;
+  }
+
+  .game-title {
+    font-size: clamp(32px, 5vw, 54px);
+  }
+
+  .game-prompt {
+    margin-bottom: 12px;
+    font-size: clamp(22px, 3.8vw, 36px);
+  }
+
+  .wyr-choice {
+    min-height: 150px;
+  }
+
+  .scramble-word {
+    font-size: clamp(38px, 6vw, 64px);
+  }
+
+  .score-grid {
+    gap: 8px;
+  }
+
+  .score-card {
+    padding: 12px;
+  }
+}
+
+@media (max-width: 760px) {
+  .score-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .game-status-pill {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .discover-badge {
+    font-size: 12px;
+  }
+}
 
