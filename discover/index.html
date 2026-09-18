@@ -5,90 +5,76 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#000000" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Discover with Big Red" />
   <title>Discover with Big Red</title>
   <link rel="stylesheet" href="discover.css" />
 </head>
 <body>
-  <main id="app" class="app-shell" aria-live="polite">
+  <main class="experience-shell">
+    <section id="homeView" class="home-view" aria-label="Discover with Big Red presentation">
+      <video id="presentationVideo" class="presentation-video"
+        autoplay muted loop playsinline webkit-playsinline preload="auto" disablepictureinpicture>
+        <source src="https://media.bigredconnectokc.com/discover-current.mov" type="video/quicktime" />
+      </video>
 
-    <section id="slidesView" class="view active" aria-label="Big Red slideshow">
-      <div class="topbar">
-        <div class="brand-lockup">
-          <span class="eyebrow">BIG RED CONNECT</span>
+      <div id="videoFallback" class="video-fallback" hidden>
+        <div class="fallback-card">
+          <div class="eyebrow">BIG RED CONNECT</div>
           <h1>Discover with Big Red</h1>
+          <p>The presentation is temporarily unavailable.</p>
+          <button id="retryVideoBtn" type="button">Try Again</button>
         </div>
-        <button id="fullscreenBtn" class="icon-btn" type="button" aria-label="Toggle fullscreen">⛶</button>
       </div>
 
-      <div class="slide-stage">
-        <img id="slideImage" class="slide-image" alt="Big Red Connect slide" />
-        <div id="slideFallback" class="slide-fallback">
-          <div class="fallback-inner">
-            <div class="fallback-kicker">WELCOME ABOARD</div>
-            <div class="fallback-title">Discover with Big Red</div>
-            <div class="fallback-copy">Local. Trusted. Affordable Flat Rates.</div>
-          </div>
-        </div>
-        <div id="slideCounter" class="slide-counter">1 / 1</div>
+      <div class="discover-actions" aria-label="Discover options">
+        <button id="gamesBtn" class="action-button" type="button">🎮 Games</button>
+        <button id="planBtn" class="action-button" type="button">📲 Plan Next Ride</button>
       </div>
-
-      <nav class="bottom-nav" aria-label="Discover controls">
-        <button id="prevBtn" class="nav-btn secondary" type="button">◀ Previous</button>
-        <button id="gamesBtn" class="nav-btn primary" type="button">Games</button>
-        <button id="planBtn" class="nav-btn primary" type="button">Plan Next Ride</button>
-        <button id="nextBtn" class="nav-btn secondary" type="button">Next ▶</button>
-      </nav>
     </section>
 
-    <section id="gamesView" class="view panel-view" aria-label="Games">
+    <section id="gamesPanel" class="overlay-panel" aria-label="Games" hidden>
       <div class="panel-card">
-        <button class="back-btn" data-home type="button">← Back to Big Red</button>
+        <button class="back-button" data-close-panel type="button">← Back to Big Red</button>
         <div class="panel-heading">
-          <span class="eyebrow">DISCOVER WITH BIG RED</span>
+          <div class="eyebrow">DISCOVER WITH BIG RED</div>
           <h2>Pick a game</h2>
-          <p>Quick, simple games made for the ride.</p>
+          <p>Quick games made for the ride.</p>
         </div>
         <div class="game-grid">
           <button class="game-card" data-game="trivia" type="button">
-            <strong>Trivia</strong>
-            <span>Multiple-choice questions</span>
+            <strong>Trivia</strong><span>Multiple-choice questions</span>
           </button>
           <button class="game-card" data-game="wyr" type="button">
-            <strong>Would You Rather</strong>
-            <span>Pick a side</span>
+            <strong>Would You Rather</strong><span>Pick a side</span>
           </button>
           <button class="game-card" data-game="scramble" type="button">
-            <strong>Word Scramble</strong>
-            <span>Unscramble the word</span>
+            <strong>Word Scramble</strong><span>Unscramble the word</span>
           </button>
         </div>
       </div>
     </section>
 
-    <section id="gamePlayView" class="view panel-view" aria-label="Game">
-      <div class="panel-card game-panel">
-        <button class="back-btn" id="gameBackBtn" type="button">← Games</button>
-        <div id="gameContent"></div>
+    <section id="gamePanel" class="overlay-panel" aria-label="Game" hidden>
+      <div class="panel-card game-panel-card">
+        <button id="backToGamesBtn" class="back-button" type="button">← Games</button>
+        <div id="gameContent" class="game-content"></div>
       </div>
     </section>
 
-    <section id="planView" class="view panel-view" aria-label="Plan next ride">
+    <section id="planPanel" class="overlay-panel" aria-label="Plan next ride" hidden>
       <div class="panel-card plan-card">
-        <button class="back-btn" data-home type="button">← Back to Big Red</button>
-        <span class="eyebrow">PLAN AHEAD</span>
+        <button class="back-button" data-close-panel type="button">← Back to Big Red</button>
+        <div class="eyebrow">PLAN AHEAD</div>
         <h2>Request or manage your next ride</h2>
-        <p class="plan-copy">Use your phone so your ride details stay with you.</p>
-
-        <div class="qr-wrap">
-          <canvas id="qrCanvas" width="300" height="300" aria-label="QR code to Big Red Connect Rider Hub"></canvas>
+        <p>Scan with your phone so your ride details stay with you.</p>
+        <div class="qr-frame">
+          <img src="rider-hub-qr.png" alt="QR code linking to the Big Red Connect Rider Hub" class="rider-qr" />
         </div>
-
-        <p class="scan-label">SCAN WITH YOUR PHONE</p>
-        <a id="riderHubLink" class="phone-link" href="#" target="_blank" rel="noopener">Open Big Red Connect</a>
+        <div class="scan-label">SCAN WITH YOUR PHONE</div>
+        <div class="hub-address">bigredconnectokc.com/rider/</div>
       </div>
     </section>
-
   </main>
 
   <script src="discover.js"></script>
