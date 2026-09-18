@@ -644,6 +644,8 @@ let gpsTimer=null;
 let gpsLastTs=null;
 let gpsRunToken=0;
 let gpsRunning=false;
+let gpsReschedule=null;
+let gpsScheduledInterval=null;
 const GPS_MOVE_THRESHOLD_MI=0.025;
 const GPS_HEARTBEAT_MS=180000;
 let gpsLastSentLat=null;
@@ -1192,10 +1194,14 @@ function handleGpsForStatus(val){
   else stopGpsPings();
 }
 function determineGpsInterval(){
-  let interval=600000;
-  if(document.querySelectorAll("#listActive .card").length>0)interval=45000;
-  if(window.__nearPickup===true)interval=15000;
-  return interval;
+  const rides=Array.from(bookingCache.values());
+  const enroute=rides.some(ride=>ride.status==="ENROUTE");
+  const underway=rides.some(ride=>["ENROUTE","ARRIVED","PICKED_UP"].includes(ride.status));
+  if(enroute&&window.__nearPickup===true)return 15000;
+  return underway?45000:600000;
+}
+function rescheduleGpsForRideStatus(){
+  if(gpsRunning&&gpsReschedule)gpsReschedule();
 }
 function startGpsPings(){
   // Re-reading status must not restart the loop or create another GPS request.
@@ -1208,10 +1214,20 @@ function startGpsPings(){
 
   function scheduleNext(delay=determineGpsInterval()){
     if(myToken!==gpsRunToken)return;
+    if(gpsTimer){clearTimeout(gpsTimer);gpsTimer=null;}
+    gpsScheduledInterval=determineGpsInterval();
     gpsTimer=setTimeout(pingOnce,delay);
   }
+  gpsReschedule=()=>{
+    if(myToken!==gpsRunToken)return;
+    // Do not interrupt an in-flight GPS/PUT cycle; it schedules using the latest status.
+    if(gpsTimer===null)return;
+    const interval=determineGpsInterval();
+    if(interval!==gpsScheduledInterval)scheduleNext(interval);
+  };
   function pingOnce(){
     if(myToken!==gpsRunToken)return;
+    gpsTimer=null;
     if(!trackingEnabled||!(currentStatusVal==="online"||currentStatusVal==="away")){
       stopGpsPings();
       return;
@@ -1266,6 +1282,8 @@ function startGpsPings(){
 function stopGpsPings(){
   gpsRunToken++;
   gpsRunning=false;
+  gpsReschedule=null;
+  gpsScheduledInterval=null;
   if(gpsTimer){clearTimeout(gpsTimer);gpsTimer=null;}
   gpsLastTs=null;
   gpsLastSentLat=null;
@@ -1878,6 +1896,7 @@ function renderAllBookings(list){
   $("countActive").textContent=activeArr.length;
   $("countDone").textContent=doneArr.length;
   if($("btnScope"))$("btnScope").textContent=`📋 ${dispatchScope}`;
+  rescheduleGpsForRideStatus();
 }
 async function fetchBookings(options={}){
   const force=options.force===true;
@@ -1953,6 +1972,10 @@ async function updateBookingStatus(bookingId,newStatus){
     const txt=await r.text();
     log(`Booking status PUT ${r.status}: ${txt}`);
     if(!r.ok){showToast("Status update failed");refreshDispatchNow({force:true});return;}
+    // Apply the confirmed status locally so the GPS timer changes without waiting for a GET.
+    const updatedBooking=bookingCache.get(String(bookingId));
+    if(updatedBooking)updatedBooking.status=newStatus;
+    rescheduleGpsForRideStatus();
     showToast("Ride updated");
     refreshDispatchNow({force:true});
   }catch(e){log("updateBookingStatus error: "+e.message);showToast("Status update error");refreshDispatchNow({force:true});}
@@ -2205,3 +2228,4 @@ window.addEventListener("load",()=>{
 
 </body>
 </html>
+
