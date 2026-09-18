@@ -12,11 +12,26 @@
 </head>
 <body>
   <main class="experience-shell">
+
     <section id="homeView" class="home-view" aria-label="Discover with Big Red presentation">
-      <video id="presentationVideo" class="presentation-video"
-        autoplay muted loop playsinline webkit-playsinline preload="auto" disablepictureinpicture>
+      <video
+        id="presentationVideo"
+        class="presentation-video"
+        autoplay
+        muted
+        loop
+        playsinline
+        webkit-playsinline
+        preload="auto"
+        disablepictureinpicture
+      >
         <source src="https://media.bigredconnectokc.com/discover-current.mov" type="video/quicktime" />
       </video>
+
+      <div class="discover-badge" aria-hidden="true">
+        <span class="discover-badge-dot"></span>
+        Discover with Big Red
+      </div>
 
       <div id="videoFallback" class="video-fallback" hidden>
         <div class="fallback-card">
@@ -35,21 +50,28 @@
 
     <section id="gamesPanel" class="overlay-panel" aria-label="Games" hidden>
       <div class="panel-card">
-        <button class="back-button" data-close-panel type="button">← Back to Big Red</button>
+        <button class="back-button" data-home-reset type="button">← Back to Big Red</button>
+
         <div class="panel-heading">
           <div class="eyebrow">DISCOVER WITH BIG RED</div>
           <h2>Pick a game</h2>
           <p>Quick games made for the ride.</p>
         </div>
+
         <div class="game-grid">
           <button class="game-card" data-game="trivia" type="button">
-            <strong>Trivia</strong><span>Multiple-choice questions</span>
+            <strong>Trivia</strong>
+            <span>15 questions • gets harder as you go</span>
           </button>
+
           <button class="game-card" data-game="wyr" type="button">
-            <strong>Would You Rather</strong><span>Pick a side</span>
+            <strong>Would You Rather</strong>
+            <span>10 quick choices</span>
           </button>
+
           <button class="game-card" data-game="scramble" type="button">
-            <strong>Word Scramble</strong><span>Unscramble the word</span>
+            <strong>Word Scramble</strong>
+            <span>10 timed words</span>
           </button>
         </div>
       </div>
@@ -64,17 +86,25 @@
 
     <section id="planPanel" class="overlay-panel" aria-label="Plan next ride" hidden>
       <div class="panel-card plan-card">
-        <button class="back-button" data-close-panel type="button">← Back to Big Red</button>
+        <button class="back-button" data-home-reset type="button">← Back to Big Red</button>
+
         <div class="eyebrow">PLAN AHEAD</div>
         <h2>Request or manage your next ride</h2>
         <p>Scan with your phone so your ride details stay with you.</p>
+
         <div class="qr-frame">
-          <img src="rider-hub-qr.png" alt="QR code linking to the Big Red Connect Rider Hub" class="rider-qr" />
+          <img
+            src="rider-hub-qr.png"
+            alt="QR code linking to the Big Red Connect Rider Hub"
+            class="rider-qr"
+          />
         </div>
+
         <div class="scan-label">SCAN WITH YOUR PHONE</div>
         <div class="hub-address">bigredconnectokc.com/rider/</div>
       </div>
     </section>
+
   </main>
 
   <script src="discover.js"></script>
