@@ -487,3 +487,86 @@ button {
     padding: 16px;
   }
 }
+
+/* --------------------------------------------------
+   PLAN NEXT RIDE — OLD IPAD FIT FIX
+   Add this at the VERY END of discover.css
+-------------------------------------------------- */
+
+.plan-card {
+  max-height: calc(100dvh - 24px);
+  overflow: hidden;
+  padding: 18px 22px;
+}
+
+.plan-card > .eyebrow {
+  margin-top: 20px;
+}
+
+.plan-card h2 {
+  margin: 6px auto 8px;
+  max-width: 820px;
+  font-size: clamp(30px, 5vw, 50px);
+  line-height: 0.98;
+}
+
+.plan-card p {
+  margin: 8px auto 10px;
+  max-width: 760px;
+  font-size: clamp(15px, 2.2vw, 20px);
+  line-height: 1.25;
+}
+
+.qr-frame {
+  width: min(285px, 52vh, 60vw);
+  margin: 14px auto 8px;
+  padding: 10px;
+  border-radius: 18px;
+}
+
+.scan-label {
+  margin-top: 8px;
+  font-size: 13px;
+}
+
+.hub-address {
+  margin-top: 4px;
+  font-size: 14px;
+}
+
+/* Extra tightening for shorter landscape tablet viewports */
+@media (max-height: 700px) {
+  .plan-card {
+    padding: 14px 18px;
+  }
+
+  .plan-card > .eyebrow {
+    margin-top: 12px;
+  }
+
+  .plan-card h2 {
+    font-size: clamp(28px, 4.6vw, 44px);
+  }
+
+  .plan-card p {
+    margin: 6px auto 8px;
+    font-size: 16px;
+  }
+
+  .qr-frame {
+    width: min(245px, 47vh, 55vw);
+    margin: 10px auto 6px;
+    padding: 8px;
+  }
+
+  .scan-label {
+    margin-top: 6px;
+    font-size: 12px;
+  }
+
+  .hub-address {
+    margin-top: 2px;
+    font-size: 13px;
+  }
+}
+
