@@ -2,77 +2,36 @@
   "use strict";
 
   const CONFIG = {
-    slideIntervalMs: 12000,
-    gameInactivityMs: 180000,
-    // Upload weekly slide images as slides/slide-01.png, slide-02.png, etc.
-    // The app automatically checks sequential files and stops at the first missing slide.
-    slideFolder: "./slides",
-    slidePrefix: "slide-",
-    slideExtension: ".png",
-    slideMax: 40,
-    // Update this single value when the exact Rider Hub URL is confirmed.
-    riderHubUrl: "https://bigredconnectokc.com/"
+    videoUrl: "https://media.bigredconnectokc.com/discover-current.mov",
+    inactivityMs: 180000
   };
 
-  const FALLBACK_SLIDES = [];
+  const video = document.getElementById("presentationVideo");
+  const videoFallback = document.getElementById("videoFallback");
+  const retryVideoBtn = document.getElementById("retryVideoBtn");
+  const gamesBtn = document.getElementById("gamesBtn");
+  const planBtn = document.getElementById("planBtn");
+  const gamesPanel = document.getElementById("gamesPanel");
+  const gamePanel = document.getElementById("gamePanel");
+  const planPanel = document.getElementById("planPanel");
+  const backToGamesBtn = document.getElementById("backToGamesBtn");
+  const gameContent = document.getElementById("gameContent");
 
-  const els = {
-    slidesView: document.getElementById("slidesView"),
-    gamesView: document.getElementById("gamesView"),
-    gamePlayView: document.getElementById("gamePlayView"),
-    planView: document.getElementById("planView"),
-    slideImage: document.getElementById("slideImage"),
-    slideFallback: document.getElementById("slideFallback"),
-    slideCounter: document.getElementById("slideCounter"),
-    prevBtn: document.getElementById("prevBtn"),
-    nextBtn: document.getElementById("nextBtn"),
-    gamesBtn: document.getElementById("gamesBtn"),
-    planBtn: document.getElementById("planBtn"),
-    fullscreenBtn: document.getElementById("fullscreenBtn"),
-    gameBackBtn: document.getElementById("gameBackBtn"),
-    gameContent: document.getElementById("gameContent"),
-    riderHubLink: document.getElementById("riderHubLink"),
-    qrCanvas: document.getElementById("qrCanvas")
-  };
-
-  let slides = FALLBACK_SLIDES;
-  let slideIndex = 0;
-  let slideTimer = null;
   let inactivityTimer = null;
   let activeGame = null;
 
   const trivia = [
-    {
-      q: "Which Oklahoma city is home to the Bricktown entertainment district?",
-      a: ["Norman", "Oklahoma City", "Edmond", "Shawnee"],
-      correct: 1
-    },
-    {
-      q: "What color is Big Red Connect best known for?",
-      a: ["Blue", "Green", "Red", "Orange"],
-      correct: 2
-    },
-    {
-      q: "Which phrase best fits Big Red Connect pricing?",
-      a: ["Surprise surge", "Flat-rate clarity", "Auction pricing", "Mystery fare"],
-      correct: 1
-    },
-    {
-      q: "OU is located in which Oklahoma city?",
-      a: ["Norman", "Moore", "Yukon", "Midwest City"],
-      correct: 0
-    },
-    {
-      q: "The Oklahoma City Thunder play which sport?",
-      a: ["Baseball", "Hockey", "Basketball", "Soccer"],
-      correct: 2
-    }
+    { q: "Which Oklahoma city is home to the Bricktown entertainment district?", a: ["Norman","Oklahoma City","Edmond","Shawnee"], correct: 1 },
+    { q: "What color is Big Red Connect best known for?", a: ["Blue","Green","Red","Orange"], correct: 2 },
+    { q: "OU is located in which Oklahoma city?", a: ["Norman","Moore","Yukon","Midwest City"], correct: 0 },
+    { q: "The Oklahoma City Thunder play which sport?", a: ["Baseball","Hockey","Basketball","Soccer"], correct: 2 },
+    { q: "Which Oklahoma city is directly south of Oklahoma City along I-35?", a: ["Moore","Yukon","Edmond","Shawnee"], correct: 0 }
   ];
 
   const wouldYouRather = [
     "Would you rather have the perfect playlist for every drive or never hit a red light again?",
     "Would you rather explore a new local restaurant or a new live-music venue?",
-    "Would you rather take a weekend road trip or staycation downtown?",
+    "Would you rather take a weekend road trip or a staycation downtown?",
     "Would you rather always get the window seat or always control the music?",
     "Would you rather arrive 20 minutes early or exactly on time every time?"
   ];
@@ -85,166 +44,119 @@
     { word: "NORMAN", scramble: "MANRON" }
   ];
 
-  function showView(view) {
-    [els.slidesView, els.gamesView, els.gamePlayView, els.planView]
-      .forEach(v => v.classList.remove("active"));
-    view.classList.add("active");
+  const randomItem = (items) => items[Math.floor(Math.random() * items.length)];
+  const anyPanelOpen = () => !gamesPanel.hidden || !gamePanel.hidden || !planPanel.hidden;
 
-    if (view === els.slidesView) {
-      clearInactivity();
-      startSlideshow();
-    } else {
-      stopSlideshow();
-      resetInactivity();
+  function hideAllPanels() {
+    gamesPanel.hidden = true;
+    gamePanel.hidden = true;
+    planPanel.hidden = true;
+    activeGame = null;
+    clearInactivityTimer();
+  }
+
+  function openPanel(panel) {
+    gamesPanel.hidden = true;
+    gamePanel.hidden = true;
+    planPanel.hidden = true;
+    panel.hidden = false;
+    resetInactivityTimer();
+  }
+
+  function resetInactivityTimer() {
+    clearInactivityTimer();
+    if (!anyPanelOpen()) return;
+    inactivityTimer = window.setTimeout(hideAllPanels, CONFIG.inactivityMs);
+  }
+
+  function clearInactivityTimer() {
+    if (inactivityTimer) {
+      window.clearTimeout(inactivityTimer);
+      inactivityTimer = null;
     }
   }
 
-  function startSlideshow() {
-    stopSlideshow();
-    slideTimer = setInterval(() => showSlide(slideIndex + 1), CONFIG.slideIntervalMs);
-  }
-
-  function stopSlideshow() {
-    if (slideTimer) clearInterval(slideTimer);
-    slideTimer = null;
-  }
-
-  function resetInactivity() {
-    clearInactivity();
-    inactivityTimer = setTimeout(() => {
-      activeGame = null;
-      showView(els.slidesView);
-    }, CONFIG.gameInactivityMs);
-  }
-
-  function clearInactivity() {
-    if (inactivityTimer) clearTimeout(inactivityTimer);
-    inactivityTimer = null;
-  }
-
-  ["pointerdown", "touchstart", "keydown"].forEach(evt => {
-    document.addEventListener(evt, () => {
-      if (!els.slidesView.classList.contains("active")) resetInactivity();
-    }, { passive: true });
-  });
-
-  async function loadSlides() {
-    slides = [];
-
-    for (let i = 1; i <= CONFIG.slideMax; i++) {
-      const number = String(i).padStart(2, "0");
-      const src = `${CONFIG.slideFolder}/${CONFIG.slidePrefix}${number}${CONFIG.slideExtension}`;
-
-      try {
-        const res = await fetch(src, { method: "HEAD", cache: "no-store" });
-        if (!res.ok) break;
-        slides.push(src);
-      } catch (err) {
-        break;
-      }
+  async function ensureVideoPlayback() {
+    try {
+      video.muted = true;
+      await video.play();
+      videoFallback.hidden = true;
+    } catch (error) {
+      console.info("Autoplay was blocked. Waiting for interaction.", error);
     }
-
-    if (!slides.length) {
-      console.info("No weekly slide images found; using branded fallback.");
-    }
-
-    showSlide(0);
   }
 
-  function showSlide(index) {
-    if (!slides.length) {
-      els.slideImage.classList.remove("ready");
-      els.slideFallback.classList.remove("hidden");
-      els.slideCounter.textContent = "Discover with Big Red";
-      return;
-    }
-
-    slideIndex = (index + slides.length) % slides.length;
-    const src = slides[slideIndex];
-
-    els.slideImage.onload = () => {
-      els.slideImage.classList.add("ready");
-      els.slideFallback.classList.add("hidden");
-    };
-
-    els.slideImage.onerror = () => {
-      els.slideImage.classList.remove("ready");
-      els.slideFallback.classList.remove("hidden");
-    };
-
-    els.slideImage.src = src;
-    els.slideCounter.textContent = `${slideIndex + 1} / ${slides.length}`;
+  function retryVideo() {
+    videoFallback.hidden = true;
+    video.load();
+    ensureVideoPlayback();
   }
 
-  function randomItem(arr) {
-    return arr[Math.floor(Math.random() * arr.length)];
+  function escapeHtml(value) {
+    return String(value)
+      .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;").replaceAll("'","&#039;");
   }
 
   function launchGame(type) {
     activeGame = type;
-    showView(els.gamePlayView);
-    renderGame();
+    openPanel(gamePanel);
+    renderActiveGame();
   }
 
-  function renderGame() {
+  function renderActiveGame() {
     if (activeGame === "trivia") return renderTrivia();
-    if (activeGame === "wyr") return renderWyr();
+    if (activeGame === "wyr") return renderWouldYouRather();
     if (activeGame === "scramble") return renderScramble();
   }
 
   function renderTrivia() {
     const item = randomItem(trivia);
-    els.gameContent.innerHTML = `
+    gameContent.innerHTML = `
       <h2 class="game-title">Trivia</h2>
       <div class="game-prompt">${escapeHtml(item.q)}</div>
       <div class="answer-grid">
-        ${item.a.map((answer, i) =>
-          `<button class="answer-btn" data-answer="${i}" type="button">${escapeHtml(answer)}</button>`
-        ).join("")}
+        ${item.a.map((answer,index)=>`<button class="answer-btn" data-answer="${index}" type="button">${escapeHtml(answer)}</button>`).join("")}
       </div>
       <div id="resultText" class="result-text"></div>
-      <div class="action-row">
-        <button id="nextQuestionBtn" class="action-btn" type="button">Next Question</button>
-      </div>
+      <div class="next-row"><button id="nextTriviaBtn" class="next-btn" type="button">Next Question</button></div>
     `;
 
-    els.gameContent.querySelectorAll("[data-answer]").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const selected = Number(btn.dataset.answer);
-        els.gameContent.querySelectorAll("[data-answer]").forEach((b, i) => {
-          b.disabled = true;
-          if (i === item.correct) b.classList.add("correct");
-          if (i === selected && i !== item.correct) b.classList.add("wrong");
+    gameContent.querySelectorAll("[data-answer]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const selected = Number(button.dataset.answer);
+        gameContent.querySelectorAll("[data-answer]").forEach((candidate,index) => {
+          candidate.disabled = true;
+          if (index === item.correct) candidate.classList.add("correct");
+          if (index === selected && index !== item.correct) candidate.classList.add("wrong");
         });
         document.getElementById("resultText").textContent =
           selected === item.correct ? "Nice! You got it." : `Answer: ${item.a[item.correct]}`;
       });
     });
 
-    document.getElementById("nextQuestionBtn").addEventListener("click", renderTrivia);
+    document.getElementById("nextTriviaBtn").addEventListener("click", renderTrivia);
   }
 
-  function renderWyr() {
+  function renderWouldYouRather() {
     const prompt = randomItem(wouldYouRather);
-    els.gameContent.innerHTML = `
+    gameContent.innerHTML = `
       <h2 class="game-title">Would You Rather</h2>
       <div class="game-prompt">${escapeHtml(prompt)}</div>
-      <div class="action-row">
-        <button id="anotherWyrBtn" class="action-btn" type="button">Another One</button>
-      </div>
+      <div class="next-row"><button id="nextWyrBtn" class="next-btn" type="button">Another One</button></div>
     `;
-    document.getElementById("anotherWyrBtn").addEventListener("click", renderWyr);
+    document.getElementById("nextWyrBtn").addEventListener("click", renderWouldYouRather);
   }
 
   function renderScramble() {
     const item = randomItem(scrambles);
-    els.gameContent.innerHTML = `
+    gameContent.innerHTML = `
       <h2 class="game-title">Word Scramble</h2>
       <div class="game-prompt">${escapeHtml(item.scramble)}</div>
       <div id="resultText" class="result-text">Tap reveal when you're ready.</div>
-      <div class="action-row">
-        <button id="revealBtn" class="action-btn" type="button">Reveal</button>
-        <button id="nextScrambleBtn" class="action-btn" type="button">Next Word</button>
+      <div class="next-row">
+        <button id="revealBtn" class="next-btn" type="button">Reveal</button>
+        <button id="nextScrambleBtn" class="next-btn" type="button">Next Word</button>
       </div>
     `;
     document.getElementById("revealBtn").addEventListener("click", () => {
@@ -253,86 +165,39 @@
     document.getElementById("nextScrambleBtn").addEventListener("click", renderScramble);
   }
 
-  function escapeHtml(str) {
-    return String(str)
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
-  }
+  gamesBtn.addEventListener("click", () => { openPanel(gamesPanel); ensureVideoPlayback(); });
+  planBtn.addEventListener("click", () => { openPanel(planPanel); ensureVideoPlayback(); });
 
-  function toggleFullscreen() {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen?.();
-    } else {
-      document.exitFullscreen?.();
-    }
-  }
-
-  // Small dependency-free QR renderer.
-  // Uses a compact public-domain-style QR implementation adapted for static client use.
-  // For the first build, the QR is generated from a Google Chart-compatible fallback pattern
-  // if canvas QR generation cannot be guaranteed. We instead draw a clear placeholder tile
-  // and keep the direct link active. Replace with a local QR asset or approved QR library
-  // once the exact Rider Hub URL is confirmed.
-  function drawQrPlaceholder(url) {
-    const canvas = els.qrCanvas;
-    const ctx = canvas.getContext("2d");
-    const size = canvas.width;
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, size, size);
-    ctx.fillStyle = "#000000";
-
-    const cell = 12;
-    const offset = 18;
-    function finder(x, y) {
-      ctx.fillRect(x, y, 84, 84);
-      ctx.fillStyle = "#fff";
-      ctx.fillRect(x + 14, y + 14, 56, 56);
-      ctx.fillStyle = "#000";
-      ctx.fillRect(x + 28, y + 28, 28, 28);
-    }
-    finder(offset, offset);
-    finder(size - offset - 84, offset);
-    finder(offset, size - offset - 84);
-
-    // Deterministic decorative modules based on URL text.
-    let seed = 0;
-    for (const ch of url) seed = (seed * 31 + ch.charCodeAt(0)) >>> 0;
-    for (let y = 9; y < 22; y++) {
-      for (let x = 9; x < 22; x++) {
-        seed = (1664525 * seed + 1013904223) >>> 0;
-        if (seed & 1) ctx.fillRect(x * cell, y * cell, cell - 2, cell - 2);
-      }
-    }
-
-    ctx.fillStyle = "#d71920";
-    ctx.font = "bold 17px sans-serif";
-    ctx.textAlign = "center";
-    ctx.fillText("QR URL NOT LOCKED", size / 2, size - 18);
-  }
-
-  els.prevBtn.addEventListener("click", () => showSlide(slideIndex - 1));
-  els.nextBtn.addEventListener("click", () => showSlide(slideIndex + 1));
-  els.gamesBtn.addEventListener("click", () => showView(els.gamesView));
-  els.planBtn.addEventListener("click", () => showView(els.planView));
-  els.fullscreenBtn.addEventListener("click", toggleFullscreen);
-
-  document.querySelectorAll("[data-home]").forEach(btn => {
-    btn.addEventListener("click", () => showView(els.slidesView));
+  document.querySelectorAll("[data-close-panel]").forEach((button) => {
+    button.addEventListener("click", hideAllPanels);
   });
 
-  document.querySelectorAll("[data-game]").forEach(btn => {
-    btn.addEventListener("click", () => launchGame(btn.dataset.game));
+  document.querySelectorAll("[data-game]").forEach((button) => {
+    button.addEventListener("click", () => launchGame(button.dataset.game));
   });
 
-  els.gameBackBtn.addEventListener("click", () => showView(els.gamesView));
+  backToGamesBtn.addEventListener("click", () => { activeGame = null; openPanel(gamesPanel); });
+  retryVideoBtn.addEventListener("click", retryVideo);
 
-  els.riderHubLink.href = CONFIG.riderHubUrl;
-  els.riderHubLink.textContent = "Open Big Red Connect";
-  drawQrPlaceholder(CONFIG.riderHubUrl);
+  video.addEventListener("canplay", () => { videoFallback.hidden = true; });
+  video.addEventListener("error", () => { videoFallback.hidden = false; });
 
-  loadSlides();
-  startSlideshow();
+  ["pointerdown","touchstart","keydown"].forEach((eventName) => {
+    document.addEventListener(eventName, () => {
+      if (anyPanelOpen()) resetInactivityTimer();
+      ensureVideoPlayback();
+    }, { passive: true });
+  });
+
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) ensureVideoPlayback();
+  });
+
+  const source = video.querySelector("source");
+  if (source && source.src !== CONFIG.videoUrl) {
+    source.src = CONFIG.videoUrl;
+    video.load();
+  }
+
+  ensureVideoPlayback();
 })();
