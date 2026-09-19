@@ -537,6 +537,9 @@
         </button>
       </p>
 
+      <p id="pdfDownloadStatus" role="status" aria-live="polite" style="text-align:center;"></p>
+      <p class="agreement-action"><a id="pdfDownloadLink" hidden target="_blank" rel="noopener">Open PDF / Save a Copy</a></p>
+
       <p class="public-link-note">
         This document is publicly available at:<br>
         <a href="https://bigredconnectokc.com/RiderAgreement">bigredconnectokc.com/RiderAgreement</a><br>
@@ -564,75 +567,97 @@
   <script src="status.js"></script>
 
   <script>
-    document.getElementById("downloadPdfBtn").addEventListener("click", function () {
-      const element = document.getElementById("agreement-content");
-      const date = new Date().toLocaleDateString();
-
-      const opt = {
-        margin: 0.5,
-        filename: `BigRedConnect_RiderAgreement_${date.replace(/\//g, "-")}.pdf`,
-        image: {
-          type: "jpeg",
-          quality: 0.98
-        },
-        html2canvas: {
-          scale: 2,
-          useCORS: true
-        },
-        jsPDF: {
-          unit: "in",
-          format: "letter",
-          orientation: "portrait"
+    (function () {
+      const button = document.getElementById("downloadPdfBtn");
+      const message = document.getElementById("pdfDownloadStatus");
+      const link = document.getElementById("pdfDownloadLink");
+      let pdfUrl = null;
+      button.addEventListener("click", async function () {
+        if (button.disabled) return;
+        const label = button.textContent;
+        button.disabled = true;
+        button.textContent = "Preparing PDF…";
+        message.textContent = "Preparing your Rider Agreement…";
+        link.hidden = true;
+        try {
+          if (typeof html2pdf !== "function") {
+            throw new Error("The PDF tool did not load. Check your connection and refresh this page.");
+          }
+          const date = new Date();
+          const dateStamp = [date.getFullYear(), String(date.getMonth()+1).padStart(2,"0"), String(date.getDate()).padStart(2,"0")].join("-");
+          const filename = "BigRedConnect_RiderAgreement_" + dateStamp + ".pdf";
+          const clone = document.getElementById("agreement-content").cloneNode(true);
+          clone.querySelectorAll(".agreement-action, .agreement-action-copy, #pdfDownloadStatus, #pdfDownloadLink").forEach(node => node.remove());
+          // Remove page-specific selectors so dark website styles cannot leak into the PDF.
+          [clone, ...clone.querySelectorAll("*")].forEach(node => {
+            node.removeAttribute("id");
+            node.removeAttribute("class");
+            node.removeAttribute("style");
+            node.style.color = "#111111";
+            node.style.background = "transparent";
+            node.style.boxShadow = "none";
+          });
+          clone.style.cssText = "display:block;width:100%;margin:0;padding:0;border:0;color:#111;background:#fff;";
+          clone.querySelectorAll("p").forEach(node => {
+            node.style.cssText = "color:#111;margin:0 0 12px;text-align:left;line-height:1.5;";
+          });
+          clone.querySelectorAll("ul").forEach(node => {
+            node.style.cssText = "color:#111;margin:12px 0;padding-left:22px;list-style:disc;";
+          });
+          clone.querySelectorAll("li").forEach(node => {
+            node.style.cssText = "color:#111;margin:0 0 12px;line-height:1.5;break-inside:avoid;page-break-inside:avoid;";
+          });
+          clone.querySelectorAll("a").forEach(node => {
+            node.style.cssText = "color:#990000;text-decoration:underline;overflow-wrap:anywhere;";
+          });
+          const wrapper = document.createElement("div");
+          wrapper.style.cssText = "box-sizing:border-box;width:720px;max-width:none;padding:0;margin:0;background:#fff;color:#111;font:14px/1.5 Arial,sans-serif;text-align:left;";
+          const heading = document.createElement("div");
+          heading.style.cssText = "color:#111;text-align:center;border-bottom:2px solid #b30000;margin-bottom:18px;padding-bottom:12px;";
+          const title = document.createElement("h1");
+          title.style.cssText = "margin:0;color:#b30000;font:bold 24px Arial,sans-serif;";
+          title.textContent = "Big Red Connect — Rider Agreement";
+          const subtitle = document.createElement("p");
+          subtitle.style.cssText = "margin:8px 0 0;color:#444;font:12px Arial,sans-serif;";
+          subtitle.textContent = "Generated " + date.toLocaleDateString() + " • bigredconnectokc.com";
+          heading.append(title, subtitle);
+          wrapper.append(heading, clone);
+          if (document.fonts && document.fonts.ready) await document.fonts.ready;
+          const blob = await html2pdf().set({
+            margin: 0.5,
+            filename,
+            image: {type:"jpeg", quality:0.98},
+            html2canvas: {scale:1.5, backgroundColor:"#ffffff", useCORS:true, scrollX:0, scrollY:0, windowWidth:816},
+            jsPDF: {unit:"in", format:"letter", orientation:"portrait"},
+            pagebreak: {mode:["css","legacy"], avoid:"li"},
+            enableLinks:true
+          }).from(wrapper).outputPdf("blob");
+          if (pdfUrl) URL.revokeObjectURL(pdfUrl);
+          pdfUrl = URL.createObjectURL(blob);
+          link.href = pdfUrl;
+          link.hidden = false;
+          link.textContent = "Open PDF / Save a Copy";
+          message.textContent = "PDF ready. If the download does not appear, tap Open PDF. On iPhone or iPad, use Share → Save to Files.";
+          const download = document.createElement("a");
+          download.href = pdfUrl;
+          download.download = filename;
+          document.body.appendChild(download);
+          download.click();
+          download.remove();
+        } catch (error) {
+          console.error("Rider Agreement PDF:", error);
+          message.textContent = "Unable to prepare the PDF. " + (error.message || "Please refresh and try again.");
+        } finally {
+          button.disabled = false;
+          button.textContent = label;
         }
-      };
-
-      const clone = element.cloneNode(true);
-
-      const clonedDownloadButton = clone.querySelector("#downloadPdfBtn");
-      if (clonedDownloadButton) {
-        clonedDownloadButton.closest("p")?.remove();
-      }
-
-      const wrapper = document.createElement("div");
-
-      wrapper.innerHTML = `
-        <div style="text-align:center;margin-bottom:20px;">
-          <img
-            src="official_logo.jpeg"
-            alt="Big Red Connect Logo"
-            style="width:150px;max-width:150px;height:auto;margin-bottom:10px;"
-          >
-          <h2 style="color:#b30000;margin:0;">Big Red Connect</h2>
-          <p style="color:#666;margin:0;">
-            Veteran Owned • Affordable • Local • Trusted
-          </p>
-          <p style="font-size:0.85em;color:#999;">
-            Generated on ${date}
-          </p>
-          <hr style="border:1px solid #c40000;margin:10px 0;">
-        </div>
-      `;
-
-      wrapper.appendChild(clone);
-
-      const footer = document.createElement("div");
-      footer.innerHTML = `
-        <hr style="border:1px solid #c40000;margin:20px 0;">
-        <p style="font-size:0.8em;color:#777;text-align:center;">
-          Veteran Owned. Affordable. Local. Trusted.<br>
-          Text “RED” to (405) 378-4024 •
-          bigredconnectokc.com
-        </p>
-      `;
-
-      wrapper.appendChild(footer);
-
-      html2pdf()
-        .set(opt)
-        .from(wrapper)
-        .save();
-    });
+      });
+      window.addEventListener("pagehide", function (event) {
+        if (!event.persisted && pdfUrl) URL.revokeObjectURL(pdfUrl);
+      });
+    })();
   </script>
 </body>
 </html>
+
 
