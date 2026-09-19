@@ -52,10 +52,6 @@ button {
   place-items: center;
 }
 
-/* --------------------------------------------------
-   WEEKLY PRESENTATION VIDEO
--------------------------------------------------- */
-
 .presentation-video {
   position: absolute;
   inset: 0;
@@ -64,10 +60,6 @@ button {
   object-fit: contain;
   background: #000000;
 }
-
-/* --------------------------------------------------
-   RIDER ACTION BUTTONS
--------------------------------------------------- */
 
 .discover-actions {
   position: absolute;
@@ -111,10 +103,6 @@ button {
 .next-btn:active {
   transform: scale(0.98);
 }
-
-/* --------------------------------------------------
-   VIDEO FALLBACK
--------------------------------------------------- */
 
 .video-fallback {
   position: absolute;
@@ -174,10 +162,6 @@ button {
 
   font-weight: 800;
 }
-
-/* --------------------------------------------------
-   OVERLAY PANELS
--------------------------------------------------- */
 
 .overlay-panel {
   position: fixed;
@@ -260,10 +244,6 @@ button {
   font-size: clamp(17px, 2.4vw, 23px);
 }
 
-/* --------------------------------------------------
-   GAME MENU
--------------------------------------------------- */
-
 .game-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -299,10 +279,6 @@ button {
   color: var(--muted);
   font-size: 16px;
 }
-
-/* --------------------------------------------------
-   ACTIVE GAME
--------------------------------------------------- */
 
 .game-panel-card {
   display: flex;
@@ -400,10 +376,6 @@ button {
   border-color: var(--red);
 }
 
-/* --------------------------------------------------
-   PLAN NEXT RIDE
--------------------------------------------------- */
-
 .plan-card {
   text-align: center;
 }
@@ -455,10 +427,6 @@ button {
   font-weight: 700;
 }
 
-/* --------------------------------------------------
-   SMALLER TABLETS / PHONES
--------------------------------------------------- */
-
 @media (max-width: 760px) {
   .discover-actions {
     gap: 8px;
@@ -487,11 +455,6 @@ button {
     padding: 16px;
   }
 }
-
-/* --------------------------------------------------
-   PLAN NEXT RIDE — OLD IPAD FIT FIX
-   Add this at the VERY END of discover.css
--------------------------------------------------- */
 
 .plan-card {
   max-height: calc(100dvh - 24px);
@@ -534,7 +497,6 @@ button {
   font-size: 14px;
 }
 
-/* Extra tightening for shorter landscape tablet viewports */
 @media (max-height: 700px) {
   .plan-card {
     padding: 14px 18px;
@@ -569,10 +531,6 @@ button {
     font-size: 13px;
   }
 }
-/* --------------------------------------------------
-   DISCOVER GAMES — POLISH PACK
-   Add this at the VERY END of discover.css
--------------------------------------------------- */
 
 .game-topline {
   display: flex;
@@ -609,8 +567,6 @@ button {
 .secondary-game-btn:active {
   transform: scale(0.98);
 }
-
-/* Would You Rather */
 
 .wyr-grid {
   width: min(820px, 100%);
@@ -651,8 +607,6 @@ button {
   font-weight: 900;
   letter-spacing: 0.15em;
 }
-
-/* Word Scramble */
 
 .scramble-word {
   margin: 8px auto 10px;
@@ -698,12 +652,7 @@ button {
     min-width: 0;
   }
 }
-/* --------------------------------------------------
-   DISCOVER WITH BIG RED — GAME SESSION V2
-   Append this to the VERY END of discover.css
--------------------------------------------------- */
 
-/* Small persistent brand mark over the movie */
 .discover-badge {
   position: absolute;
   top: calc(16px + var(--safe-top));
@@ -736,7 +685,6 @@ button {
   background: var(--red);
 }
 
-/* Shared game status row */
 .game-statusbar {
   display: flex;
   justify-content: center;
@@ -765,7 +713,6 @@ button {
   color: #fff;
 }
 
-/* Trivia difficulty */
 .difficulty-pill {
   min-width: 96px;
   padding: 8px 12px;
@@ -794,7 +741,6 @@ button {
   color: #ff9da1;
 }
 
-/* Word Scramble timer */
 .timer-wrap {
   width: min(720px, 100%);
   margin: 0 auto 6px;
@@ -836,7 +782,6 @@ button {
   transform-origin: left center;
 }
 
-/* Result / score screen */
 .score-screen {
   width: min(760px, 100%);
   margin: 0 auto;
@@ -930,7 +875,6 @@ button {
   color: #fff;
 }
 
-/* Would You Rather session progress */
 .wyr-progress {
   margin: 0 auto 8px;
 
@@ -940,7 +884,6 @@ button {
   font-weight: 750;
 }
 
-/* Compact fit for older landscape iPad */
 @media (max-height: 700px) {
   .game-content {
     min-height: 420px;
@@ -988,12 +931,7 @@ button {
     font-size: 12px;
   }
 }
-/* --------------------------------------------------
-   TIP BIG RED — V4
-   Append this to the VERY END of discover.css
--------------------------------------------------- */
 
-/* Three balanced actions on the movie screen */
 .discover-actions {
   flex-wrap: wrap;
 }
@@ -1002,7 +940,6 @@ button {
   min-width: 170px;
 }
 
-/* Tip panel */
 .tip-card {
   text-align: center;
   max-height: calc(100dvh - 24px);
@@ -1090,7 +1027,6 @@ button {
   overflow-wrap: anywhere;
 }
 
-/* Extra tightening for the older landscape iPad */
 @media (max-height: 700px) {
   .tip-card {
     padding: 12px 16px;
@@ -1155,3 +1091,91 @@ button {
   }
 }
 
+/* --------------------------------------------------
+   DISCOVER AUDIO CONTROL — V5
+   Four-step tap control: Off → Low → Medium → High
+-------------------------------------------------- */
+
+.volume-control {
+  position: fixed;
+  top: calc(16px + var(--safe-top));
+  right: calc(18px + var(--safe-right));
+  z-index: 30;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+
+  min-width: 82px;
+  min-height: 44px;
+  padding: 8px 12px;
+
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+
+  background: rgba(0, 0, 0, 0.68);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+
+  color: #ffffff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+}
+
+.volume-control:active {
+  transform: scale(0.97);
+}
+
+.volume-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 22px;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.volume-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.volume-dot {
+  width: 8px;
+  height: 8px;
+
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.24);
+
+  transition:
+    background 120ms ease,
+    transform 120ms ease;
+}
+
+.volume-low .volume-dot:nth-child(1),
+.volume-medium .volume-dot:nth-child(-n + 2),
+.volume-high .volume-dot:nth-child(-n + 3) {
+  background: #ffffff;
+  transform: scale(1.05);
+}
+
+.volume-off .volume-dot {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+@media (max-width: 760px) {
+  .volume-control {
+    top: calc(12px + var(--safe-top));
+    right: calc(12px + var(--safe-right));
+
+    min-width: 74px;
+    min-height: 40px;
+    padding: 7px 10px;
+  }
+
+  .volume-dot {
+    width: 7px;
+    height: 7px;
+  }
+}
