@@ -19,10 +19,12 @@
 
   const gamesBtn = document.getElementById("gamesBtn");
   const planBtn = document.getElementById("planBtn");
+  const tipBtn = document.getElementById("tipBtn");
 
   const gamesPanel = document.getElementById("gamesPanel");
   const gamePanel = document.getElementById("gamePanel");
   const planPanel = document.getElementById("planPanel");
+  const tipPanel = document.getElementById("tipPanel");
 
   const backToGamesBtn = document.getElementById("backToGamesBtn");
   const gameContent = document.getElementById("gameContent");
@@ -227,12 +229,13 @@
   }
 
   const anyPanelOpen = () =>
-    !gamesPanel.hidden || !gamePanel.hidden || !planPanel.hidden;
+    !gamesPanel.hidden || !gamePanel.hidden || !planPanel.hidden || !tipPanel.hidden;
 
   function goHomeAndReset() {
     gamesPanel.hidden = true;
     gamePanel.hidden = true;
     planPanel.hidden = true;
+    tipPanel.hidden = true;
 
     clearInactivityTimer();
     resetGameSession();
@@ -242,6 +245,7 @@
     gamesPanel.hidden = true;
     gamePanel.hidden = true;
     planPanel.hidden = true;
+    tipPanel.hidden = true;
     panel.hidden = false;
     resetInactivityTimer();
   }
@@ -735,6 +739,11 @@
 
   planBtn.addEventListener("click", () => {
     openPanel(planPanel);
+    ensureVideoPlayback();
+  });
+
+  tipBtn.addEventListener("click", () => {
+    openPanel(tipPanel);
     ensureVideoPlayback();
   });
 
