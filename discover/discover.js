@@ -260,6 +260,22 @@
   const anyPanelOpen = () =>
     !gamesPanel.hidden || !gamePanel.hidden || !planPanel.hidden || !tipPanel.hidden;
 
+  function pausePresentation() {
+    if (!video.paused) {
+      video.pause();
+    }
+  }
+
+  async function resumePresentation() {
+    try {
+      applySoundLevel();
+      await video.play();
+      videoFallback.hidden = true;
+    } catch (error) {
+      console.info("Presentation will resume on the next rider interaction.", error);
+    }
+  }
+
   function goHomeAndReset() {
     gamesPanel.hidden = true;
     gamePanel.hidden = true;
@@ -268,6 +284,8 @@
 
     clearInactivityTimer();
     resetGameSession();
+
+    resumePresentation();
   }
 
   function openPanel(panel) {
@@ -276,6 +294,8 @@
     planPanel.hidden = true;
     tipPanel.hidden = true;
     panel.hidden = false;
+
+    pausePresentation();
     resetInactivityTimer();
   }
 
@@ -821,17 +841,14 @@
 
   gamesBtn.addEventListener("click", () => {
     openPanel(gamesPanel);
-    ensureVideoPlayback();
   });
 
   planBtn.addEventListener("click", () => {
     openPanel(planPanel);
-    ensureVideoPlayback();
   });
 
   tipBtn.addEventListener("click", () => {
     openPanel(tipPanel);
-    ensureVideoPlayback();
   });
 
   document.querySelectorAll("[data-home-reset]").forEach((button) => {
@@ -873,7 +890,7 @@
 
         if (!audioUnlocked && !tappedVolumeControl) {
           unlockAudioAtCurrentLevel();
-        } else {
+        } else if (!anyPanelOpen()) {
           ensureVideoPlayback();
         }
       },
@@ -882,8 +899,8 @@
   });
 
   document.addEventListener("visibilitychange", () => {
-    if (!document.hidden) {
-      ensureVideoPlayback();
+    if (!document.hidden && !anyPanelOpen()) {
+      resumePresentation();
     }
   });
 
