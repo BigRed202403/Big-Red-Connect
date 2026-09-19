@@ -21,6 +21,7 @@
   const videoFallback = document.getElementById("videoFallback");
   const retryVideoBtn = document.getElementById("retryVideoBtn");
 
+  // Volume control is global and remains visible above every overlay.
   const volumeBtn = document.getElementById("volumeBtn");
   const volumeIcon = document.getElementById("volumeIcon");
 
@@ -260,22 +261,6 @@
   const anyPanelOpen = () =>
     !gamesPanel.hidden || !gamePanel.hidden || !planPanel.hidden || !tipPanel.hidden;
 
-  function pausePresentation() {
-    if (!video.paused) {
-      video.pause();
-    }
-  }
-
-  async function resumePresentation() {
-    try {
-      applySoundLevel();
-      await video.play();
-      videoFallback.hidden = true;
-    } catch (error) {
-      console.info("Presentation will resume on the next rider interaction.", error);
-    }
-  }
-
   function goHomeAndReset() {
     gamesPanel.hidden = true;
     gamePanel.hidden = true;
@@ -284,10 +269,10 @@
 
     clearInactivityTimer();
     resetGameSession();
-
-    resumePresentation();
   }
 
+  // Overlays never pause the weekly program.
+  // Video and audio continue underneath Games / Plan / Tip.
   function openPanel(panel) {
     gamesPanel.hidden = true;
     gamePanel.hidden = true;
@@ -295,7 +280,6 @@
     tipPanel.hidden = true;
     panel.hidden = false;
 
-    pausePresentation();
     resetInactivityTimer();
   }
 
@@ -890,7 +874,7 @@
 
         if (!audioUnlocked && !tappedVolumeControl) {
           unlockAudioAtCurrentLevel();
-        } else if (!anyPanelOpen()) {
+        } else {
           ensureVideoPlayback();
         }
       },
@@ -899,8 +883,8 @@
   });
 
   document.addEventListener("visibilitychange", () => {
-    if (!document.hidden && !anyPanelOpen()) {
-      resumePresentation();
+    if (!document.hidden) {
+      ensureVideoPlayback();
     }
   });
 
