@@ -319,7 +319,7 @@ body.mode-admin .driver-only{display:none;}
       </div>
       <span class="smalllabel">Gate Code / Access (optional)</span>
       <input id="manualGateCode" type="text" placeholder="Gate code, building, apartment…">
-      <div class="minihint">Stops are optional (up to 3). Add them in order.</div>
+      <div class="minihint">Stops are optional (up to 3), $5 each for brief stops up to 10 minutes. Add them in order. Plan extended activities as separate rides.</div>
       <div id="manualStopsWrap"></div>
       <div class="row">
         <button class="btn btn-secondary" id="manualAddStopBtn" type="button">➕ Add Stop</button>
@@ -364,7 +364,7 @@ body.mode-admin .driver-only{display:none;}
       <div class="row" style="margin-top:8px;"><button class="btn btn-ghost" id="btnEstimateManual" type="button">💲 Estimate Fare</button></div>
       <p class="meta">
         ✅ Manual create uses: <code>POST /api/admin/bookings/manual</code> (requires <code>X-Admin-Secret</code>).<br>
-        ✅ Added stops: $5 each; pickup and final dropoff are not added stops. No waiting-time charge is included.<br>
+        ✅ Added stops: $5 each for brief stops of up to 10 minutes; pickup and final dropoff are not added stops. No per-minute waiting charge.<br>
         ✅ Travel fairness: $10 when pickup is over 10 miles from the selected pricing origin; $20 when over 15 miles. Passenger trips over 20 miles waive that fee.<br>
         ✅ Extended Trip: &gt;60 passenger miles, &gt;75 passenger minutes, or &gt;20 passenger miles with substantial expected empty travel (&gt;40 mi).<br>
         ✅ Extended pricing compares normal fare + $0.35 per expected empty mile against $40 × total operating hours, uses the higher result, then rounds to the nearest $5.<br>
@@ -462,6 +462,13 @@ body.mode-admin .driver-only{display:none;}
   <div>
     <section>
       <h2>Driver Dispatch Board</h2>
+      <details class="preview-box" style="margin-bottom:12px;">
+        <summary style="cursor:pointer;font-weight:700;">Added-stop policy — $5 / up to 10 minutes</summary>
+        <p>Added stops are $5 each and are intended for brief stops of up to 10 minutes. The fare includes the complete pickup → stops → final dropoff route.</p>
+        <p>Ten minutes is the standard, with reasonable driver discretion for a minute or two. It is not an automatic cutoff.</p>
+        <p>If a stop is expected to exceed 10 minutes, end the ride at that location. The rider may request another ride when ready, subject to availability and normal pricing. Plan known extended shopping, dining, appointments, or other extended activities as separate rides from the outset.</p>
+        <p>If you are leaving, the rider takes all belongings with them. There is no per-minute waiting charge.</p>
+      </details>
       <div class="row" style="justify-content:space-between;">
         <button class="btn btn-ghost" id="btnDispatchRefresh" title="Refresh Dispatch">🔄 Refresh</button>
         <button class="btn btn-secondary" id="btnScope" title="Toggle Scope">📋 active</button>
@@ -2305,6 +2312,7 @@ window.addEventListener("load",()=>{
 
 </body>
 </html>
+
 
 
 
