@@ -10,12 +10,19 @@
     scrambleRounds: 10,
 
     scrambleSeconds: 12,
-    scrambleRevealMs: 1600
+    scrambleRevealMs: 1600,
+
+    soundLevels: [0, 0.25, 0.5, 0.8],
+    defaultSoundLevel: 1,
+    soundLevelStorageKey: "discoverSoundLevel"
   };
 
   const video = document.getElementById("presentationVideo");
   const videoFallback = document.getElementById("videoFallback");
   const retryVideoBtn = document.getElementById("retryVideoBtn");
+
+  const volumeBtn = document.getElementById("volumeBtn");
+  const volumeIcon = document.getElementById("volumeIcon");
 
   const gamesBtn = document.getElementById("gamesBtn");
   const planBtn = document.getElementById("planBtn");
@@ -33,6 +40,28 @@
   let activeGame = null;
   let scrambleTimer = null;
   let scrambleDeadline = 0;
+
+  let audioUnlocked = false;
+
+  function getInitialSoundLevel() {
+    try {
+      const stored = Number(sessionStorage.getItem(CONFIG.soundLevelStorageKey));
+
+      if (
+        Number.isInteger(stored) &&
+        stored >= 0 &&
+        stored < CONFIG.soundLevels.length
+      ) {
+        return stored;
+      }
+    } catch (error) {
+      console.info("Sound level storage is unavailable.", error);
+    }
+
+    return CONFIG.defaultSoundLevel;
+  }
+
+  let soundLevel = getInitialSoundLevel();
 
   const session = {
     trivia: null,
@@ -265,9 +294,77 @@
     }
   }
 
+  function soundLevelName(level) {
+    return ["Off", "Low", "Medium", "High"][level] || "Low";
+  }
+
+  function updateVolumeControl() {
+    const levelName = soundLevelName(soundLevel);
+
+    volumeBtn.classList.remove(
+      "volume-off",
+      "volume-low",
+      "volume-medium",
+      "volume-high"
+    );
+
+    volumeBtn.classList.add(
+      ["volume-off", "volume-low", "volume-medium", "volume-high"][soundLevel]
+    );
+
+    volumeIcon.textContent = soundLevel === 0 ? "🔇" : "🔊";
+    volumeBtn.setAttribute("aria-label", `Sound: ${levelName}`);
+    volumeBtn.title = `Sound: ${levelName}`;
+  }
+
+  function saveSoundLevel() {
+    try {
+      sessionStorage.setItem(CONFIG.soundLevelStorageKey, String(soundLevel));
+    } catch (error) {
+      console.info("Sound level could not be saved for this session.", error);
+    }
+  }
+
+  function applySoundLevel() {
+    video.volume = CONFIG.soundLevels[soundLevel];
+    video.muted = !audioUnlocked || soundLevel === 0;
+    updateVolumeControl();
+  }
+
+  async function unlockAudioAtCurrentLevel() {
+    if (audioUnlocked) return;
+
+    audioUnlocked = true;
+    applySoundLevel();
+
+    try {
+      await video.play();
+      videoFallback.hidden = true;
+    } catch (error) {
+      console.info("Sound will begin on the next rider interaction.", error);
+    }
+  }
+
+  async function cycleSoundLevel() {
+    if (!audioUnlocked) {
+      await unlockAudioAtCurrentLevel();
+      return;
+    }
+
+    soundLevel = (soundLevel + 1) % CONFIG.soundLevels.length;
+    saveSoundLevel();
+    applySoundLevel();
+
+    try {
+      await video.play();
+    } catch (error) {
+      console.info("Playback will resume on the next rider interaction.", error);
+    }
+  }
+
   async function ensureVideoPlayback() {
     try {
-      video.muted = true;
+      applySoundLevel();
       await video.play();
       videoFallback.hidden = true;
     } catch (error) {
@@ -306,8 +403,6 @@
     if (activeGame === "wyr") return renderWouldYouRather();
     if (activeGame === "scramble") return renderScramble();
   }
-
-  /* ---------------- TRIVIA ---------------- */
 
   function startTriviaSession() {
     session.trivia = {
@@ -457,8 +552,6 @@
     });
   }
 
-  /* ---------------- WOULD YOU RATHER ---------------- */
-
   function startWyrSession() {
     session.wyr = {
       rounds: sampleWithoutReplacement(wouldYouRather, CONFIG.wyrRounds),
@@ -541,8 +634,6 @@
       }
     });
   }
-
-  /* ---------------- WORD SCRAMBLE ---------------- */
 
   function startScrambleSession() {
     clearScrambleTimer();
@@ -693,8 +784,6 @@
     });
   }
 
-  /* ---------------- SCORE SCREEN ---------------- */
-
   function renderScoreScreen({title,subtitle,hero,cards,replay}) {
     gameContent.innerHTML = `
       <div class="score-screen">
@@ -730,8 +819,6 @@
     document.getElementById("scoreHomeBtn").addEventListener("click", goHomeAndReset);
   }
 
-  /* ---------------- NAVIGATION ---------------- */
-
   gamesBtn.addEventListener("click", () => {
     openPanel(gamesPanel);
     ensureVideoPlayback();
@@ -762,6 +849,7 @@
   });
 
   retryVideoBtn.addEventListener("click", retryVideo);
+  volumeBtn.addEventListener("click", cycleSoundLevel);
 
   video.addEventListener("canplay", () => {
     videoFallback.hidden = true;
@@ -774,12 +862,20 @@
   ["pointerdown","touchstart","keydown"].forEach((eventName) => {
     document.addEventListener(
       eventName,
-      () => {
+      (event) => {
         if (anyPanelOpen()) {
           resetInactivityTimer();
         }
 
-        ensureVideoPlayback();
+        const tappedVolumeControl =
+          event.target instanceof Element &&
+          event.target.closest("#volumeBtn");
+
+        if (!audioUnlocked && !tappedVolumeControl) {
+          unlockAudioAtCurrentLevel();
+        } else {
+          ensureVideoPlayback();
+        }
       },
       {passive:true}
     );
@@ -798,5 +894,6 @@
     video.load();
   }
 
+  applySoundLevel();
   ensureVideoPlayback();
 })();
