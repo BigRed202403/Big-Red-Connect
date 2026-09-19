@@ -347,6 +347,8 @@ body.mode-admin .driver-only{display:none;}
       </div>
       <div class="preview-box" id="manualEstimateBox" style="margin-top:10px;">
         <strong>Estimate</strong><br>
+        <div id="manualEstRoute" style="white-space:pre-line;margin:6px 0;" aria-live="polite">Route: —</div>
+        <div id="manualEstOrigin" style="margin:6px 0;">Pricing origin: —</div>
         <span id="manualEstMiles">Miles: —</span><br>
         <span id="manualEstTripTime">Passenger Trip Time: —</span><br>
         <span id="manualEstBase">Base: —</span><br>
@@ -860,6 +862,7 @@ function applyTrackingPill(){
 }
 function setTrackingEnabled(next){
   trackingEnabled=!!next;
+  setManualEstimateDraft(null);
   localStorage.setItem("trackingEnabled",trackingEnabled?"true":"false");
   applyTrackingPill();
   handleGpsForStatus(currentStatusVal);
@@ -1313,6 +1316,7 @@ function addManualStopField(initialValue=""){
   if(manualStopIds.length>=3){showToast("Stop limit is 3");return;}
   const id="manualStop_"+Date.now()+"_"+Math.floor(Math.random()*1000);
   manualStopIds.push(id);
+  setManualEstimateDraft(null);
   const div=document.createElement("div");
   div.className="stop-row";
   div.id="row_"+id;
@@ -1359,7 +1363,7 @@ function clearManualRideForm(){
   $("manualEstEmptyTravel").textContent="Expected Empty Travel: —";
   $("manualEstOperatingFloor").textContent="Operating Floor: —";
   $("manualEstFare").innerHTML="<strong>Fare:</strong> —";
-  window.__manualEstimate=null;
+  setManualEstimateDraft(null);
 }
 function computeMileageSubtotal(miles){
   const m=Math.max(0,Number(miles)||0);
@@ -1418,10 +1422,23 @@ async function getRouteDetailsWithStops(origin,destination,stopAddrs){
     ds.route({origin,destination,waypoints,optimizeWaypoints:false,travelMode:google.maps.TravelMode.DRIVING},(result,status)=>{
       if(status!=="OK"||!result?.routes?.[0]?.legs){reject(new Error("Directions failed: "+status));return;}
       const legs=result.routes[0].legs;
-      const meters=legs.reduce((sum,leg)=>sum+(leg?.distance?.value||0),0);
+      if(!Array.isArray(legs)||legs.length!==waypoints.length+1){
+        reject(new Error("Incomplete route: expected "+(waypoints.length+1)+" legs; received "+(legs?.length||0)+". Check stops and final dropoff."));return;
+      }
+      if(legs.some(leg=>!Number.isFinite(leg?.distance?.value)||leg.distance.value<0||!Number.isFinite(leg?.duration?.value)||leg.duration.value<0)){
+        reject(new Error("Route is missing mileage or driving time for a leg. Please estimate again."));return;
+      }
+      const routeLegs=legs.map((leg,i)=>({
+        from:leg.start_address||String(i===0?origin:waypoints[i-1].location),
+        to:leg.end_address||String(i===waypoints.length?destination:waypoints[i].location),
+        miles:leg.distance.value/1609.344,
+        minutes:leg.duration.value/60
+      }));
+      const meters=legs.reduce((sum,leg)=>sum+leg.distance.value,0);
       const seconds=legs.reduce((sum,leg)=>sum+(leg?.duration?.value||0),0);
       const firstLeg=legs[0],lastLeg=legs[legs.length-1];
       resolve({
+        routeLegs,
         miles:meters/1609.344,
         minutes:seconds/60,
         meters,
@@ -1570,9 +1587,36 @@ async function calculateManualExtendedTripDetails({
   };
 }
 
-function setManualEstimateDraft(est){window.__manualEstimate=est||null;}
+let manualEstimateRevision=0;
+function manualEstimateInputKey(){
+  return JSON.stringify({
+    pickup:($("manualPickup")?.value||"").trim(),
+    dropoff:($("manualDropoff")?.value||"").trim(),
+    stops:getManualStopsList(),
+    airport:$("manualAirportToggle")?.value||"auto",
+    tracking:trackingEnabled
+  });
+}
+function setManualEstimateDraft(est){
+  window.__manualEstimate=est||null;
+  if(est)return;
+  manualEstimateRevision++;
+  const labels={manualEstMiles:"Miles",manualEstTripTime:"Passenger Trip Time",
+    manualEstBase:"Base",manualEstMileage:"Mileage",manualEstTravelFee:"Travel Fairness Fee",
+    manualEstExtended:"Extended Trip",manualEstEmptyTravel:"Expected Empty Travel",
+    manualEstOperatingFloor:"Operating Floor",manualEstFare:"Fare",
+    manualEstOrigin:"Pricing origin"};
+  Object.entries(labels).forEach(([id,label])=>{if($(id))$(id).textContent=label+": —";});
+  if($("manualEstExtended"))$("manualEstExtended").style.color="";
+  if($("manualEstRoute"))$("manualEstRoute").textContent="Route changed or not estimated — tap Estimate Fare.";
+}
 
 async function estimateManualFare(){
+  setManualEstimateDraft(null);
+  const revision=manualEstimateRevision;
+  const inputKey=manualEstimateInputKey();
+  const base=getManualRateBase();
+  const isCurrent=()=>revision===manualEstimateRevision&&inputKey===manualEstimateInputKey();
   const pickup=($("manualPickup")?.value||"").trim();
   const dropoff=($("manualDropoff")?.value||"").trim();
   const stops=getManualStopsList();
@@ -1591,7 +1635,9 @@ async function estimateManualFare(){
 
   try{
     const route=await getRouteDetailsWithStops(pickup,dropoff,stops);
+    if(!isCurrent())return null;
     const driverOrigin=await getDriverEffectiveLocationForPricing();
+    if(!isCurrent())return null;
 
     const passengerMilesExact=route.miles;
     const passengerMinutesExact=route.minutes;
@@ -1599,7 +1645,6 @@ async function estimateManualFare(){
     // Match rider-facing pricing behavior: displayed/charged mileage tiers use
     // rounded passenger miles; Extended Trip triggers use the detailed route.
     const pricingMiles=Math.round(passengerMilesExact);
-    const base=getManualRateBase();
     const mileageSubtotal=computeMileageSubtotal(pricingMiles);
     const coverage=computeExtendedCoverageFee(driverOrigin,route.pickupPoint,pricingMiles);
 
@@ -1614,7 +1659,12 @@ async function estimateManualFare(){
       dropoffPoint:route.dropoffPoint
     });
 
+    if(!isCurrent())return null;
     const fare=extended.isExtended?extended.extendedFare:normalFare;
+    $("manualEstRoute").textContent=route.routeLegs.map((leg,i)=>
+      `Leg ${i+1}: ${leg.from} → ${leg.to} — ${leg.miles.toFixed(2)} mi / ${leg.minutes.toFixed(1)} min`
+    ).join("\n")+"\nDriving time only; stop waiting time is not included.";
+    $("manualEstOrigin").textContent=`Pricing origin: ${driverOrigin.src==="HQ"?"HQ / base":"Stored live GPS"} (${driverOrigin.lat.toFixed(5)}, ${driverOrigin.lng.toFixed(5)})${driverOrigin.ts?" • GPS updated "+formatDateTime(driverOrigin.ts):""}. Travel Fairness uses straight-line miles.`;
 
     $("manualEstMiles").textContent=`Miles: ${passengerMilesExact.toFixed(1)} (${pricingMiles} mi pricing)`;
     $("manualEstTripTime").textContent=`Passenger Trip Time: ${Math.round(passengerMinutesExact)} min`;
@@ -1637,6 +1687,8 @@ async function estimateManualFare(){
     }
 
     const est={
+      inputKey,
+      estimateRouteLegs:route.routeLegs,
       estimateMiles:Number(passengerMilesExact.toFixed(3)),
       estimatePricingMiles:Number(pricingMiles),
       estimateMinutes:Number(passengerMinutesExact.toFixed(1)),
@@ -1688,6 +1740,7 @@ async function estimateManualFare(){
 
     return est;
   }catch(e){
+    if(!isCurrent())return null;
     $("manualEstMiles").textContent="Miles: —";
     $("manualEstTripTime").textContent="Passenger Trip Time: —";
     $("manualEstBase").textContent="Base: —";
@@ -1699,7 +1752,8 @@ async function estimateManualFare(){
     $("manualEstOperatingFloor").textContent="Operating Floor: —";
     $("manualEstFare").innerHTML="<strong>Fare:</strong> —";
     setManualEstimateDraft(null);
-    showToast("Estimate failed");
+    $("manualEstRoute").textContent="Estimate unavailable: "+e.message;
+    showToast("Estimate failed — check route details");
     log("Estimate error: "+e.message);
     return null;
   }
@@ -1723,8 +1777,13 @@ async function createManualRide(){
   let notes=notesRaw;
   if(gateCode)notes=notes?notes+`\nGate: ${gateCode}`:`Gate: ${gateCode}`;
 
+  const inputKey=manualEstimateInputKey();
   let est=window.__manualEstimate||null;
+  if(est?.inputKey!==inputKey)est=null;
   if(!est){try{est=await estimateManualFare();}catch(e){est=null;}}
+  if(!est||est.inputKey!==inputKey||manualEstimateInputKey()!==inputKey){
+    showToast("Ride not created — complete a current route estimate first.");return;
+  }
 
   const metadata={
     manualTimeText:time||"",
@@ -1733,6 +1792,7 @@ async function createManualRide(){
   };
   if(est&&Number.isFinite(est.estimateFare)&&Number.isFinite(est.estimateMiles)){
     Object.assign(metadata,{
+      estimateRouteLegs:est.estimateRouteLegs,
       estimateFare:est.estimateFare,
       estimateMiles:est.estimateMiles,
       estimateMinutes:est.estimateMinutes,
@@ -2033,7 +2093,7 @@ async function saveEditModal(){
     metadata:{notes,manualTimeText,luggageCount:Number.isFinite(luggageCount)?luggageCount:0}
   };
   [
-    "estimateFare","estimateMiles","estimatePricingMiles","estimateMinutes","estimateBase","estimateMileageSubtotal",
+    "estimateRouteLegs","estimateFare","estimateMiles","estimatePricingMiles","estimateMinutes","estimateBase","estimateMileageSubtotal",
     "estimateTravelFee","estimateNormalFare","estimateDriverToPickupMiles","estimatePricingOrigin","estimatePickupPoint","estimateDropoffPoint",
     "estimateIsExtended","estimateAvailabilityConfirmationRequired","estimateExtendedTriggerReasons",
     "estimateExpectedEmptyPositioningMiles","estimateExpectedEmptyPositioningMinutes","estimatePositioningSource",
@@ -2228,4 +2288,5 @@ window.addEventListener("load",()=>{
 
 </body>
 </html>
+
 
