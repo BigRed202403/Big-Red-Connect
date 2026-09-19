@@ -12,27 +12,28 @@
     scrambleSeconds: 12,
     scrambleRevealMs: 1600,
 
-    soundLevels: [0, 0.25, 0.5, 0.8],
-    defaultSoundLevel: 1,
-    soundLevelStorageKey: "discoverSoundLevel"
+    soundStateStorageKey: "discoverSoundOn"
   };
 
   const video = document.getElementById("presentationVideo");
   const videoFallback = document.getElementById("videoFallback");
   const retryVideoBtn = document.getElementById("retryVideoBtn");
 
-  // Volume control is global and remains visible above every overlay.
+  // Sound control is global and remains visible above every overlay.
   const volumeBtn = document.getElementById("volumeBtn");
   const volumeIcon = document.getElementById("volumeIcon");
+  const volumeLabel = document.getElementById("volumeLabel");
 
   const gamesBtn = document.getElementById("gamesBtn");
   const planBtn = document.getElementById("planBtn");
   const tipBtn = document.getElementById("tipBtn");
+  const reviewBtn = document.getElementById("reviewBtn");
 
   const gamesPanel = document.getElementById("gamesPanel");
   const gamePanel = document.getElementById("gamePanel");
   const planPanel = document.getElementById("planPanel");
   const tipPanel = document.getElementById("tipPanel");
+  const reviewPanel = document.getElementById("reviewPanel");
 
   const backToGamesBtn = document.getElementById("backToGamesBtn");
   const gameContent = document.getElementById("gameContent");
@@ -44,25 +45,18 @@
 
   let audioUnlocked = false;
 
-  function getInitialSoundLevel() {
+  function getInitialSoundState() {
     try {
-      const stored = Number(sessionStorage.getItem(CONFIG.soundLevelStorageKey));
-
-      if (
-        Number.isInteger(stored) &&
-        stored >= 0 &&
-        stored < CONFIG.soundLevels.length
-      ) {
-        return stored;
-      }
+      const stored = sessionStorage.getItem(CONFIG.soundStateStorageKey);
+      if (stored === "false") return false;
+      if (stored === "true") return true;
     } catch (error) {
-      console.info("Sound level storage is unavailable.", error);
+      console.info("Sound state storage is unavailable.", error);
     }
-
-    return CONFIG.defaultSoundLevel;
+    return true;
   }
 
-  let soundLevel = getInitialSoundLevel();
+  let soundOn = getInitialSoundState();
 
   const session = {
     trivia: null,
@@ -259,13 +253,18 @@
   }
 
   const anyPanelOpen = () =>
-    !gamesPanel.hidden || !gamePanel.hidden || !planPanel.hidden || !tipPanel.hidden;
+    !gamesPanel.hidden ||
+    !gamePanel.hidden ||
+    !planPanel.hidden ||
+    !tipPanel.hidden ||
+    !reviewPanel.hidden;
 
   function goHomeAndReset() {
     gamesPanel.hidden = true;
     gamePanel.hidden = true;
     planPanel.hidden = true;
     tipPanel.hidden = true;
+    reviewPanel.hidden = true;
 
     clearInactivityTimer();
     resetGameSession();
@@ -278,6 +277,7 @@
     gamePanel.hidden = true;
     planPanel.hidden = true;
     tipPanel.hidden = true;
+    reviewPanel.hidden = true;
     panel.hidden = false;
 
     resetInactivityTimer();
@@ -298,48 +298,33 @@
     }
   }
 
-  function soundLevelName(level) {
-    return ["Off", "Low", "Medium", "High"][level] || "Low";
+  function updateSoundControl() {
+    volumeBtn.classList.toggle("sound-on", soundOn);
+    volumeBtn.classList.toggle("sound-off", !soundOn);
+    volumeIcon.textContent = soundOn ? "🔊" : "🔇";
+    volumeLabel.textContent = soundOn ? "Sound" : "Muted";
+    const label = soundOn ? "Sound On" : "Sound Off";
+    volumeBtn.setAttribute("aria-label", label);
+    volumeBtn.title = label;
   }
 
-  function updateVolumeControl() {
-    const levelName = soundLevelName(soundLevel);
-
-    volumeBtn.classList.remove(
-      "volume-off",
-      "volume-low",
-      "volume-medium",
-      "volume-high"
-    );
-
-    volumeBtn.classList.add(
-      ["volume-off", "volume-low", "volume-medium", "volume-high"][soundLevel]
-    );
-
-    volumeIcon.textContent = soundLevel === 0 ? "🔇" : "🔊";
-    volumeBtn.setAttribute("aria-label", `Sound: ${levelName}`);
-    volumeBtn.title = `Sound: ${levelName}`;
-  }
-
-  function saveSoundLevel() {
+  function saveSoundState() {
     try {
-      sessionStorage.setItem(CONFIG.soundLevelStorageKey, String(soundLevel));
+      sessionStorage.setItem(CONFIG.soundStateStorageKey, String(soundOn));
     } catch (error) {
-      console.info("Sound level could not be saved for this session.", error);
+      console.info("Sound state could not be saved for this session.", error);
     }
   }
 
-  function applySoundLevel() {
-    video.volume = CONFIG.soundLevels[soundLevel];
-    video.muted = !audioUnlocked || soundLevel === 0;
-    updateVolumeControl();
+  function applySoundState() {
+    video.muted = !audioUnlocked || !soundOn;
+    updateSoundControl();
   }
 
-  async function unlockAudioAtCurrentLevel() {
+  async function unlockAudioIfNeeded() {
     if (audioUnlocked) return;
-
     audioUnlocked = true;
-    applySoundLevel();
+    applySoundState();
 
     try {
       await video.play();
@@ -349,15 +334,17 @@
     }
   }
 
-  async function cycleSoundLevel() {
+  async function toggleSound() {
     if (!audioUnlocked) {
-      await unlockAudioAtCurrentLevel();
+      soundOn = true;
+      saveSoundState();
+      await unlockAudioIfNeeded();
       return;
     }
 
-    soundLevel = (soundLevel + 1) % CONFIG.soundLevels.length;
-    saveSoundLevel();
-    applySoundLevel();
+    soundOn = !soundOn;
+    saveSoundState();
+    applySoundState();
 
     try {
       await video.play();
@@ -368,7 +355,7 @@
 
   async function ensureVideoPlayback() {
     try {
-      applySoundLevel();
+      applySoundState();
       await video.play();
       videoFallback.hidden = true;
     } catch (error) {
@@ -687,6 +674,10 @@
 
       <div class="scramble-word">${escapeHtml(item.scramble)}</div>
 
+      <div class="scramble-credit-note">
+        Know it? Tap <strong>Solved!</strong> before time runs out to get credit.
+      </div>
+
       <div id="scrambleHint" class="scramble-hint" hidden>
         Hint: ${escapeHtml(item.hint)}
       </div>
@@ -835,6 +826,10 @@
     openPanel(tipPanel);
   });
 
+  reviewBtn.addEventListener("click", () => {
+    openPanel(reviewPanel);
+  });
+
   document.querySelectorAll("[data-home-reset]").forEach((button) => {
     button.addEventListener("click", goHomeAndReset);
   });
@@ -850,7 +845,7 @@
   });
 
   retryVideoBtn.addEventListener("click", retryVideo);
-  volumeBtn.addEventListener("click", cycleSoundLevel);
+  volumeBtn.addEventListener("click", toggleSound);
 
   video.addEventListener("canplay", () => {
     videoFallback.hidden = true;
@@ -873,7 +868,7 @@
           event.target.closest("#volumeBtn");
 
         if (!audioUnlocked && !tappedVolumeControl) {
-          unlockAudioAtCurrentLevel();
+          unlockAudioIfNeeded();
         } else {
           ensureVideoPlayback();
         }
@@ -895,6 +890,6 @@
     video.load();
   }
 
-  applySoundLevel();
+  applySoundState();
   ensureVideoPlayback();
 })();
