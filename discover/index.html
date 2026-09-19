@@ -17,24 +17,20 @@
   <title>Discover with Big Red</title>
 
   <!-- Versioned app assets prevent an old iPad/PWA cache from mixing releases -->
-  <link rel="stylesheet" href="discover.css?v=20260919-v8" />
+  <link rel="stylesheet" href="discover.css?v=20260919-v10" />
 </head>
 <body>
   <main class="experience-shell">
 
     <button
       id="volumeBtn"
-      class="volume-control volume-low"
+      class="volume-control sound-on"
       type="button"
-      aria-label="Sound: Low"
-      title="Volume"
+      aria-label="Sound On"
+      title="Sound On"
     >
       <span id="volumeIcon" class="volume-icon" aria-hidden="true">🔊</span>
-      <span class="volume-dots" aria-hidden="true">
-        <span class="volume-dot"></span>
-        <span class="volume-dot"></span>
-        <span class="volume-dot"></span>
-      </span>
+      <span id="volumeLabel" class="volume-label">Sound</span>
     </button>
 
     <section id="homeView" class="home-view" aria-label="Discover with Big Red presentation">
@@ -73,6 +69,7 @@
         <button id="gamesBtn" class="action-button" type="button">🎮 Games</button>
         <button id="planBtn" class="action-button" type="button">📲 Plan Next Ride</button>
         <button id="tipBtn" class="action-button" type="button">❤️ Tip Big Red</button>
+        <button id="reviewBtn" class="action-button" type="button">⭐ Leave a Review</button>
       </div>
     </section>
 
@@ -170,9 +167,50 @@
       </div>
     </section>
 
+    <section id="reviewPanel" class="overlay-panel" aria-label="Leave a Review" hidden>
+      <div class="panel-card review-panel-card">
+        <button class="back-button" data-home-reset type="button">← Back to Big Red</button>
+
+        <div class="review-heading">
+          <div class="eyebrow">THANKS FOR RIDING</div>
+          <h2>Leave a Review</h2>
+          <p>Rate your ride right here, or scan the QR code to finish on your phone.</p>
+        </div>
+
+        <div class="review-grid">
+          <div class="review-form-wrap">
+            <div class="review-section-label">RATE ON THIS TABLET</div>
+            <iframe
+              class="review-form-frame"
+              src="https://docs.google.com/forms/d/e/1FAIpQLSeq6WCnkrG417rWCGwN56i7FplWpNTHlg1lpGuC-IETDEkEHw/viewform?embedded=true"
+              title="Big Red Connect Rider Feedback form"
+              loading="lazy"
+            ></iframe>
+          </div>
+
+          <div class="review-qr-column">
+            <div class="review-section-label">OR USE YOUR PHONE</div>
+
+            <div class="review-qr-frame">
+              <img
+                src="review-form-qr.png"
+                alt="QR code for the Big Red Connect Rider Feedback form"
+                class="review-qr"
+              />
+            </div>
+
+            <div class="scan-label">SCAN TO LEAVE A REVIEW</div>
+            <p class="review-privacy">
+              Your review stays on your phone if you use the QR code.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
   </main>
 
   <!-- Versioned JS forces the current game/audio engine to load -->
-  <script src="discover.js?v=20260919-v8"></script>
+  <script src="discover.js?v=20260919-v10"></script>
 </body>
 </html>
