@@ -353,6 +353,7 @@ body.mode-admin .driver-only{display:none;}
         <span id="manualEstTripTime">Passenger Trip Time: —</span><br>
         <span id="manualEstBase">Base: —</span><br>
         <span id="manualEstMileage">Mileage: —</span><br>
+        <span id="manualEstStops">Added Stops: —</span><br>
         <span id="manualEstTravelFee">Travel Fairness Fee: —</span><br>
         <span id="manualEstExtended">Extended Trip: —</span><br>
         <span id="manualEstEmptyTravel">Expected Empty Travel: —</span><br>
@@ -363,6 +364,7 @@ body.mode-admin .driver-only{display:none;}
       <div class="row" style="margin-top:8px;"><button class="btn btn-ghost" id="btnEstimateManual" type="button">💲 Estimate Fare</button></div>
       <p class="meta">
         ✅ Manual create uses: <code>POST /api/admin/bookings/manual</code> (requires <code>X-Admin-Secret</code>).<br>
+        ✅ Added stops: $5 each; pickup and final dropoff are not added stops. No waiting-time charge is included.<br>
         ✅ Travel fairness: $10 when pickup is over 10 miles from the selected pricing origin; $20 when over 15 miles. Passenger trips over 20 miles waive that fee.<br>
         ✅ Extended Trip: &gt;60 passenger miles, &gt;75 passenger minutes, or &gt;20 passenger miles with substantial expected empty travel (&gt;40 mi).<br>
         ✅ Extended pricing compares normal fare + $0.35 per expected empty mile against $40 × total operating hours, uses the higher result, then rounds to the nearest $5.<br>
@@ -548,6 +550,7 @@ const EXTENDED_TRIP_DEADHEAD_MIN_PASSENGER_MI=20;
 const EXTENDED_TRIP_EMPTY_MILE_RATE=0.35;
 const EXTENDED_TRIP_OPERATING_HOURLY_FLOOR=40;
 const EXTENDED_TRIP_ROUND_TO=5;
+const ADDED_STOP_FEE=5;
 
 const BIG_RED_AUDIO_CLIPS={
   en:{
@@ -1602,7 +1605,7 @@ function setManualEstimateDraft(est){
   if(est)return;
   manualEstimateRevision++;
   const labels={manualEstMiles:"Miles",manualEstTripTime:"Passenger Trip Time",
-    manualEstBase:"Base",manualEstMileage:"Mileage",manualEstTravelFee:"Travel Fairness Fee",
+    manualEstBase:"Base",manualEstMileage:"Mileage",manualEstStops:"Added Stops",manualEstTravelFee:"Travel Fairness Fee",
     manualEstExtended:"Extended Trip",manualEstEmptyTravel:"Expected Empty Travel",
     manualEstOperatingFloor:"Operating Floor",manualEstFare:"Fare",
     manualEstOrigin:"Pricing origin"};
@@ -1626,6 +1629,7 @@ async function estimateManualFare(){
   $("manualEstTripTime").textContent="Passenger Trip Time: …";
   $("manualEstBase").textContent="Base: …";
   $("manualEstMileage").textContent="Mileage: …";
+  $("manualEstStops").textContent="Added Stops: …";
   $("manualEstTravelFee").textContent="Travel Fairness Fee: …";
   $("manualEstExtended").textContent="Extended Trip: …";
   $("manualEstExtended").style.color="";
@@ -1648,6 +1652,8 @@ async function estimateManualFare(){
     const mileageSubtotal=computeMileageSubtotal(pricingMiles);
     const coverage=computeExtendedCoverageFee(driverOrigin,route.pickupPoint,pricingMiles);
 
+    const stopCount=stops.length;
+    const stopFee=stopCount*ADDED_STOP_FEE;
     const normalFare=Number(base)+Number(mileageSubtotal)+Number(coverage.fee||0);
 
     const extended=await calculateManualExtendedTripDetails({
@@ -1660,7 +1666,9 @@ async function estimateManualFare(){
     });
 
     if(!isCurrent())return null;
-    const fare=extended.isExtended?extended.extendedFare:normalFare;
+    // Apply the fixed stop charge after the existing fare rules, including
+    // the Extended Trip floor, so every added stop costs exactly $5.
+    const fare=(extended.isExtended?extended.extendedFare:normalFare)+stopFee;
     $("manualEstRoute").textContent=route.routeLegs.map((leg,i)=>
       `Leg ${i+1}: ${leg.from} → ${leg.to} — ${leg.miles.toFixed(2)} mi / ${leg.minutes.toFixed(1)} min`
     ).join("\n")+"\nDriving time only; stop waiting time is not included.";
@@ -1670,6 +1678,7 @@ async function estimateManualFare(){
     $("manualEstTripTime").textContent=`Passenger Trip Time: ${Math.round(passengerMinutesExact)} min`;
     $("manualEstBase").textContent=`Base: ${money(base)}`;
     $("manualEstMileage").textContent=`Mileage: ${money(mileageSubtotal)}`;
+    $("manualEstStops").textContent=`Added Stops: ${money(stopFee)} (${stopCount} × ${money(ADDED_STOP_FEE)})`;
     $("manualEstTravelFee").textContent=`Travel Fairness Fee: ${money(coverage.fee)} (${coverage.driverToPickupMiles.toFixed(1)} mi from ${coverage.pricingOriginSource==="HQ"?"base location":"live driver location"})`;
 
     if(extended.isExtended){
@@ -1677,13 +1686,13 @@ async function estimateManualFare(){
       $("manualEstExtended").style.color="#ffd27f";
       $("manualEstEmptyTravel").textContent=`Expected Empty Travel: ${extended.totalEmptyMiles.toFixed(1)} mi / ${Math.round(extended.totalEmptyMinutes)} min (to pickup ${extended.positioningMiles.toFixed(1)} mi + return ${extended.returnMiles.toFixed(1)} mi)`;
       $("manualEstOperatingFloor").textContent=`Operating Floor: ${money(extended.hourlyFloorFare)} (${extended.totalOperatingHours.toFixed(2)} hrs × $${EXTENDED_TRIP_OPERATING_HOURLY_FLOOR}/hr) • fare + empty travel ${money(extended.deadheadAdjustedFare)}`;
-      $("manualEstFare").innerHTML=`<strong>Fare: ${money(fare)}</strong> (Extended Trip • rounded to nearest $${EXTENDED_TRIP_ROUND_TO})`;
+      $("manualEstFare").innerHTML=`<strong>Fare: ${money(fare)}</strong> (Extended Trip • rounded to nearest $${EXTENDED_TRIP_ROUND_TO}${stopFee?" + stops "+money(stopFee):""})`;
     }else{
       $("manualEstExtended").textContent="Extended Trip: No";
       $("manualEstExtended").style.color="";
       $("manualEstEmptyTravel").textContent="Expected Empty Travel: Not used for local/standard pricing";
       $("manualEstOperatingFloor").textContent="Operating Floor: Not applicable";
-      $("manualEstFare").innerHTML=`<strong>Fare: ${money(fare)}</strong> (base ${money(base)} + mileage ${money(mileageSubtotal)}${coverage.fee?" + fairness "+money(coverage.fee):""})`;
+      $("manualEstFare").innerHTML=`<strong>Fare: ${money(fare)}</strong> (base ${money(base)} + mileage ${money(mileageSubtotal)}${coverage.fee?" + fairness "+money(coverage.fee):""}${stopFee?" + stops "+money(stopFee):""})`;
     }
 
     const est={
@@ -1695,8 +1704,11 @@ async function estimateManualFare(){
       estimateFare:Number(fare.toFixed(2)),
       estimateBase:Number(base),
       estimateMileageSubtotal:Number(mileageSubtotal.toFixed(2)),
+      estimateStopCount:stopCount,
+      estimateStopRate:ADDED_STOP_FEE,
+      estimateStopFee:stopFee,
       estimateTravelFee:Number(coverage.fee.toFixed(2)),
-      estimateNormalFare:Number(normalFare.toFixed(2)),
+      estimateNormalFare:Number((normalFare+stopFee).toFixed(2)),
       estimateDriverToPickupMiles:Number(coverage.driverToPickupMiles.toFixed(3)),
       estimatePricingOrigin:{
         lat:Number(coverage.origin?.lat),
@@ -1723,7 +1735,7 @@ async function estimateManualFare(){
       estimateDeadheadAdjustedFare:Number(extended.deadheadAdjustedFare.toFixed(2)),
       estimateTotalOperatingHours:Number(extended.totalOperatingHours.toFixed(3)),
       estimateHourlyFloorFare:Number(extended.hourlyFloorFare.toFixed(2)),
-      estimateExtendedFare:Number(extended.extendedFare.toFixed(2))
+      estimateExtendedFare:Number((extended.extendedFare+stopFee).toFixed(2))
     };
 
     setManualEstimateDraft(est);
@@ -1798,6 +1810,9 @@ async function createManualRide(){
       estimateMinutes:est.estimateMinutes,
       estimateBase:est.estimateBase,
       estimateMileageSubtotal:est.estimateMileageSubtotal,
+      estimateStopCount:est.estimateStopCount,
+      estimateStopRate:est.estimateStopRate,
+      estimateStopFee:est.estimateStopFee,
       estimateTravelFee:est.estimateTravelFee||0,
       estimateNormalFare:est.estimateNormalFare||est.estimateFare,
       estimatePricingMiles:est.estimatePricingMiles??null,
@@ -1864,6 +1879,7 @@ function readEstimateFromBooking(b){
     miles,
     base:base!=null?base:null,
     travelFee:travelFee!=null?travelFee:0,
+    stopFee:asNum(md.estimateStopFee)||0,
     isExtended:md.estimateIsExtended===true,
     src:"metadata"
   };
@@ -1890,8 +1906,9 @@ function estimateLineHtml(b){
   if(!est)return "";
   const baseTxt=est.base!=null&&Number.isFinite(est.base)?` • base $${est.base}`:"";
   const travelTxt=est.travelFee!=null&&Number(est.travelFee)>0?` • fairness ${money(est.travelFee)}`:"";
+  const stopTxt=est.stopFee>0?` • stops ${money(est.stopFee)}`:"";
   const extendedTxt=est.isExtended?" • 🛣️ Extended Trip":"";
-  return `<div class="loc-line">💲 Estimate: ${escHtml(money(est.fare))} • ${escHtml(est.miles.toFixed(1))} mi${escHtml(baseTxt)}${escHtml(travelTxt)}${escHtml(extendedTxt)}</div>`;
+  return `<div class="loc-line">💲 Estimate: ${escHtml(money(est.fare))} • ${escHtml(est.miles.toFixed(1))} mi${escHtml(baseTxt)}${escHtml(travelTxt)}${escHtml(stopTxt)}${escHtml(extendedTxt)}</div>`;
 }
 function fmtStops(stops){
   const addrs=(Array.isArray(stops)?stops:[]).map(x=>(x?.address||"").trim()).filter(Boolean);
@@ -2093,7 +2110,7 @@ async function saveEditModal(){
     metadata:{notes,manualTimeText,luggageCount:Number.isFinite(luggageCount)?luggageCount:0}
   };
   [
-    "estimateRouteLegs","estimateFare","estimateMiles","estimatePricingMiles","estimateMinutes","estimateBase","estimateMileageSubtotal",
+    "estimateStopCount","estimateStopRate","estimateStopFee","estimateRouteLegs","estimateFare","estimateMiles","estimatePricingMiles","estimateMinutes","estimateBase","estimateMileageSubtotal",
     "estimateTravelFee","estimateNormalFare","estimateDriverToPickupMiles","estimatePricingOrigin","estimatePickupPoint","estimateDropoffPoint",
     "estimateIsExtended","estimateAvailabilityConfirmationRequired","estimateExtendedTriggerReasons",
     "estimateExpectedEmptyPositioningMiles","estimateExpectedEmptyPositioningMinutes","estimatePositioningSource",
@@ -2288,5 +2305,6 @@ window.addEventListener("load",()=>{
 
 </body>
 </html>
+
 
 
