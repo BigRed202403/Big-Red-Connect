@@ -17,7 +17,7 @@
   <title>Discover with Big Red</title>
 
   <!-- Versioned app assets prevent an old iPad/PWA cache from mixing releases -->
-  <link rel="stylesheet" href="discover.css?v=20260918-v3" />
+  <link rel="stylesheet" href="discover.css?v=20260918-v4" />
 </head>
 <body>
   <main class="experience-shell">
@@ -57,6 +57,7 @@
       <div class="discover-actions" aria-label="Discover options">
         <button id="gamesBtn" class="action-button" type="button">🎮 Games</button>
         <button id="planBtn" class="action-button" type="button">📲 Plan Next Ride</button>
+        <button id="tipBtn" class="action-button" type="button">❤️ Tip Big Red</button>
       </div>
     </section>
 
@@ -117,9 +118,46 @@
       </div>
     </section>
 
+    <section id="tipPanel" class="overlay-panel" aria-label="Tip Big Red" hidden>
+      <div class="panel-card tip-card">
+        <button class="back-button" data-home-reset type="button">← Back to Big Red</button>
+
+        <div class="eyebrow">THANK YOU</div>
+        <h2>Tip Big Red</h2>
+        <p class="tip-note">Tips are appreciated, never expected.</p>
+        <p class="tip-helper">Scan your preferred payment app with your phone.</p>
+
+        <div class="tip-grid">
+          <div class="tip-option">
+            <div class="tip-service">Cash App</div>
+            <div class="tip-qr-frame">
+              <img
+                src="cashapp-tip-qr.png"
+                alt="Cash App QR code for Big Red Transportation"
+                class="tip-qr"
+              />
+            </div>
+            <div class="tip-handle">$BigRedTransport1</div>
+          </div>
+
+          <div class="tip-option">
+            <div class="tip-service">Venmo</div>
+            <div class="tip-qr-frame">
+              <img
+                src="venmo-tip-qr.png"
+                alt="Venmo QR code for Big Red Connect"
+                class="tip-qr"
+              />
+            </div>
+            <div class="tip-handle">@BigRedConnect</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
   </main>
 
   <!-- Versioned JS forces the current game engine to load -->
-  <script src="discover.js?v=20260918-v3"></script>
+  <script src="discover.js?v=20260918-v4"></script>
 </body>
 </html>
