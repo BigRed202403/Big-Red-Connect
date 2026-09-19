@@ -17,10 +17,25 @@
   <title>Discover with Big Red</title>
 
   <!-- Versioned app assets prevent an old iPad/PWA cache from mixing releases -->
-  <link rel="stylesheet" href="discover.css?v=20260919-v6" />
+  <link rel="stylesheet" href="discover.css?v=20260919-v8" />
 </head>
 <body>
   <main class="experience-shell">
+
+    <button
+      id="volumeBtn"
+      class="volume-control volume-low"
+      type="button"
+      aria-label="Sound: Low"
+      title="Volume"
+    >
+      <span id="volumeIcon" class="volume-icon" aria-hidden="true">🔊</span>
+      <span class="volume-dots" aria-hidden="true">
+        <span class="volume-dot"></span>
+        <span class="volume-dot"></span>
+        <span class="volume-dot"></span>
+      </span>
+    </button>
 
     <section id="homeView" class="home-view" aria-label="Discover with Big Red presentation">
       <video
@@ -44,21 +59,6 @@
         <span class="discover-badge-dot"></span>
         Discover with Big Red
       </div>
-
-      <button
-        id="volumeBtn"
-        class="volume-control volume-low"
-        type="button"
-        aria-label="Sound: Low"
-        title="Volume"
-      >
-        <span id="volumeIcon" class="volume-icon" aria-hidden="true">🔊</span>
-        <span class="volume-dots" aria-hidden="true">
-          <span class="volume-dot"></span>
-          <span class="volume-dot"></span>
-          <span class="volume-dot"></span>
-        </span>
-      </button>
 
       <div id="videoFallback" class="video-fallback" hidden>
         <div class="fallback-card">
@@ -172,7 +172,7 @@
 
   </main>
 
-  <!-- Versioned JS forces the current game/audio/playback engine to load -->
-  <script src="discover.js?v=20260919-v6"></script>
+  <!-- Versioned JS forces the current game/audio engine to load -->
+  <script src="discover.js?v=20260919-v8"></script>
 </body>
 </html>
