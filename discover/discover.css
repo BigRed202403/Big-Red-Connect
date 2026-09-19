@@ -615,7 +615,7 @@ button {
 
   color: #ffffff;
 
-  font-size: clamp(54px, 9vw, 96px);
+  font-size: clamp(72px, 12vw, 132px);
   font-weight: 900;
   letter-spacing: 0.08em;
 }
@@ -1271,7 +1271,7 @@ button {
 
 @media (max-height: 700px) {
   .scramble-word {
-    font-size: clamp(48px, 7.4vw, 78px);
+    font-size: clamp(58px, 9vw, 98px);
   }
 
   .scramble-credit-note {
