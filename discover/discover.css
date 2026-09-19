@@ -1092,7 +1092,8 @@ button {
 }
 
 /* --------------------------------------------------
-   DISCOVER AUDIO CONTROL — V5
+   DISCOVER AUDIO CONTROL — V8
+   GLOBAL ABOVE ALL OVERLAYS
    Four-step tap control: Off → Low → Medium → High
 -------------------------------------------------- */
 
@@ -1100,7 +1101,7 @@ button {
   position: fixed;
   top: calc(16px + var(--safe-top));
   right: calc(18px + var(--safe-right));
-  z-index: 30;
+  z-index: 100;
 
   display: inline-flex;
   align-items: center;
