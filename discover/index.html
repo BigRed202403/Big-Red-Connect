@@ -17,7 +17,7 @@
   <title>Discover with Big Red</title>
 
   <!-- Versioned app assets prevent an old iPad/PWA cache from mixing releases -->
-  <link rel="stylesheet" href="discover.css?v=20260920-v13" />
+  <link rel="stylesheet" href="discover.css?v=20260920-v15" />
 </head>
 <body>
   <main class="experience-shell">
@@ -51,7 +51,6 @@
         />
       </video>
       <input id="localProgramFile" type="file" accept="video/*,.mov,.mp4" hidden />
-      <button id="loadLocalProgramBtn" class="local-program-button" type="button">🎬 Load Weekly Program</button>
       <div id="localProgramStatus" class="local-program-status" hidden></div>
 
       <div id="videoLoading" class="video-loading" hidden>
@@ -69,10 +68,16 @@
       </div>
 
 
-      <div class="discover-badge" aria-hidden="true">
-        <span class="discover-badge-dot"></span>
+      <button
+        id="loadLocalProgramBtn"
+        class="discover-badge discover-badge-button"
+        type="button"
+        title="Tap to load the weekly program"
+        aria-label="Discover with Big Red. Tap to load the weekly program."
+      >
+        <span class="discover-badge-dot" aria-hidden="true"></span>
         Discover with Big Red
-      </div>
+      </button>
 
       <div id="videoFallback" class="video-fallback" hidden>
         <div class="fallback-card">
@@ -229,6 +234,6 @@
   </main>
 
   <!-- Versioned JS forces the current game/audio engine to load -->
-  <script src="discover.js?v=20260920-v13"></script>
+  <script src="discover.js?v=20260920-v15"></script>
 </body>
 </html>
