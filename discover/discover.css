@@ -615,7 +615,7 @@ button {
 
   color: #ffffff;
 
-  font-size: clamp(72px, 12vw, 132px);
+  font-size: clamp(46px, 7.5vw, 82px);
   font-weight: 900;
   letter-spacing: 0.08em;
 }
@@ -684,6 +684,19 @@ button {
   border-radius: 50%;
   background: var(--red);
 }
+
+
+.discover-badge-button {
+  appearance: none;
+  -webkit-appearance: none;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.discover-badge-button:active {
+  transform: scale(0.98);
+}
+
 
 .game-statusbar {
   display: flex;
@@ -1271,7 +1284,7 @@ button {
 
 @media (max-height: 700px) {
   .scramble-word {
-    font-size: clamp(58px, 9vw, 98px);
+    font-size: clamp(40px, 6.4vw, 68px);
   }
 
   .scramble-credit-note {
@@ -1279,10 +1292,8 @@ button {
   }
 }
 
-/* LOCAL WEEKLY PROGRAM — V13 */
-.local-program-button{position:absolute;left:calc(16px + var(--safe-left));top:calc(16px + var(--safe-top));z-index:9;min-height:42px;padding:8px 12px;border:1px solid rgba(255,255,255,.16);border-radius:999px;background:rgba(0,0,0,.68);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:#fff;font-size:13px;font-weight:850;box-shadow:0 8px 24px rgba(0,0,0,.28)}
-.local-program-button:active{transform:scale(.97)}
-.local-program-status{position:absolute;left:50%;top:calc(68px + var(--safe-top));transform:translateX(-50%);z-index:10;max-width:min(560px,86vw);padding:9px 14px;border:1px solid rgba(255,255,255,.14);border-radius:999px;background:rgba(0,0,0,.8);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:#fff;font-size:13px;font-weight:800;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.3)}
+/* LOCAL WEEKLY PROGRAM — V15 */
+.local-program-status{position:absolute;left:50%;top:calc(66px + var(--safe-top));transform:translateX(-50%);z-index:10;max-width:min(560px,86vw);padding:9px 14px;border:1px solid rgba(255,255,255,.14);border-radius:999px;background:rgba(0,0,0,.8);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:#fff;font-size:13px;font-weight:800;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.3)}
 .local-program-status[hidden]{display:none}
 .video-loading{position:absolute;inset:0;z-index:8;display:grid;place-items:center;padding:calc(72px + var(--safe-top)) calc(22px + var(--safe-right)) calc(92px + var(--safe-bottom)) calc(22px + var(--safe-left));background:rgba(0,0,0,.76);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
 .video-loading[hidden]{display:none}
@@ -1292,4 +1303,48 @@ button {
 .loading-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:24px}
 .loading-actions button{min-height:58px;padding:12px 16px;border:1px solid rgba(255,255,255,.16);border-radius:15px;background:#181818;color:#fff;font-size:17px;font-weight:850}
 .loading-actions button:active{transform:scale(.98)}
-@media(max-width:760px){.local-program-button{left:calc(12px + var(--safe-left));top:calc(12px + var(--safe-top));min-height:40px;padding:7px 10px;font-size:12px}.local-program-status{top:calc(60px + var(--safe-top))}.loading-card{padding:24px 18px}.loading-actions{grid-template-columns:1fr;gap:9px}.loading-actions button{min-height:52px;font-size:16px}}
+@media(max-width:760px){.local-program-status{top:calc(60px + var(--safe-top))}.loading-card{padding:24px 18px}.loading-actions{grid-template-columns:1fr;gap:9px}.loading-actions button{min-height:52px;font-size:16px}}
+
+
+/* --------------------------------------------------
+   WORD SCRAMBLE ANSWER REVEAL — V14
+-------------------------------------------------- */
+
+.scramble-result {
+  min-height: 112px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+}
+
+.scramble-answer-label {
+  display: block;
+  color: var(--muted);
+  font-size: clamp(15px, 2vw, 19px);
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.scramble-answer-reveal {
+  display: block;
+  color: #ffffff;
+  font-size: clamp(68px, 11vw, 118px);
+  font-weight: 950;
+  line-height: 0.95;
+  letter-spacing: 0.035em;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+@media (max-height: 700px) {
+  .scramble-result {
+    min-height: 86px;
+  }
+
+  .scramble-answer-reveal {
+    font-size: clamp(54px, 8.5vw, 88px);
+  }
+}
