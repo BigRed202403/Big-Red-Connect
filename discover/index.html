@@ -17,7 +17,7 @@
   <title>Discover with Big Red</title>
 
   <!-- Versioned app assets prevent an old iPad/PWA cache from mixing releases -->
-  <link rel="stylesheet" href="discover.css?v=20260919-v12" />
+  <link rel="stylesheet" href="discover.css?v=20260920-v13" />
 </head>
 <body>
   <main class="experience-shell">
@@ -46,17 +46,19 @@
         disablepictureinpicture
       >
         <source
-          id="presentationSource"
+          src="https://media.bigredconnectokc.com/discover-current.mov"
           type="video/quicktime"
         />
       </video>
+      <input id="localProgramFile" type="file" accept="video/*,.mov,.mp4" hidden />
+      <button id="loadLocalProgramBtn" class="local-program-button" type="button">🎬 Load Weekly Program</button>
+      <div id="localProgramStatus" class="local-program-status" hidden></div>
 
       <div id="videoLoading" class="video-loading" hidden>
         <div class="loading-card">
           <div class="eyebrow">DISCOVER WITH BIG RED</div>
-          <h2 id="videoLoadingTitle">Big Red is getting your program ready.</h2>
+          <h2 id="videoLoadingTitle">Big Red is loading.</h2>
           <p id="videoLoadingMessage">While it loads, pick something to do.</p>
-
           <div class="loading-actions">
             <button id="loadingGamesBtn" type="button">🎮 Play a Game</button>
             <button id="loadingReviewBtn" type="button">⭐ Leave a Review</button>
@@ -66,7 +68,6 @@
         </div>
       </div>
 
-      <div id="offlineStatus" class="offline-status" role="status" hidden></div>
 
       <div class="discover-badge" aria-hidden="true">
         <span class="discover-badge-dot"></span>
@@ -228,6 +229,6 @@
   </main>
 
   <!-- Versioned JS forces the current game/audio engine to load -->
-  <script src="discover.js?v=20260919-v12"></script>
+  <script src="discover.js?v=20260920-v13"></script>
 </body>
 </html>
