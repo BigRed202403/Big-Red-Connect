@@ -13,32 +13,22 @@
     scrambleRevealMs: 1600,
 
     soundStateStorageKey: "discoverSoundOn",
-
-    mediaDbName: "bigRedDiscoverMedia",
-    mediaDbVersion: 1,
-    mediaStoreName: "programs",
-    mediaCacheKey: "currentProgram",
-
-    loadingPromptDelayMs: 1200,
-    offlineReadyToastMs: 5000
+    loadingPromptDelayMs: 1600
   };
 
   const video = document.getElementById("presentationVideo");
-  const presentationSource = document.getElementById("presentationSource");
-
+  const videoFallback = document.getElementById("videoFallback");
+  const localProgramFile = document.getElementById("localProgramFile");
+  const loadLocalProgramBtn = document.getElementById("loadLocalProgramBtn");
+  const localProgramStatus = document.getElementById("localProgramStatus");
   const videoLoading = document.getElementById("videoLoading");
   const videoLoadingTitle = document.getElementById("videoLoadingTitle");
   const videoLoadingMessage = document.getElementById("videoLoadingMessage");
-
-  const offlineStatus = document.getElementById("offlineStatus");
-
-  const videoFallback = document.getElementById("videoFallback");
-  const retryVideoBtn = document.getElementById("retryVideoBtn");
-
   const loadingGamesBtn = document.getElementById("loadingGamesBtn");
   const loadingReviewBtn = document.getElementById("loadingReviewBtn");
   const loadingTipBtn = document.getElementById("loadingTipBtn");
   const loadingPlanBtn = document.getElementById("loadingPlanBtn");
+  const retryVideoBtn = document.getElementById("retryVideoBtn");
 
   // Sound control is global and remains visible above every overlay.
   const volumeBtn = document.getElementById("volumeBtn");
@@ -65,11 +55,10 @@
   let scrambleDeadline = 0;
 
   let audioUnlocked = false;
-
   let localProgramUrl = null;
-  let usingLocalProgram = false;
+  let localProgramLoaded = false;
   let loadingPromptTimer = null;
-  let offlineStatusTimer = null;
+  let localProgramStatusTimer = null;
 
   function getInitialSoundState() {
     try {
@@ -389,39 +378,16 @@
     }
   }
 
-  function showOfflineStatus(message, autoHideMs = 0) {
-    if (offlineStatusTimer) {
-      clearTimeout(offlineStatusTimer);
-      offlineStatusTimer = null;
-    }
 
-    offlineStatus.textContent = message;
-    offlineStatus.hidden = false;
-
+  function showLocalProgramStatus(message, autoHideMs = 0) {
+    if (localProgramStatusTimer) clearTimeout(localProgramStatusTimer);
+    localProgramStatus.textContent = message;
+    localProgramStatus.hidden = false;
     if (autoHideMs > 0) {
-      offlineStatusTimer = window.setTimeout(() => {
-        offlineStatus.hidden = true;
-        offlineStatusTimer = null;
+      localProgramStatusTimer = setTimeout(() => {
+        localProgramStatus.hidden = true;
       }, autoHideMs);
     }
-  }
-
-  function hideOfflineStatus() {
-    if (offlineStatusTimer) {
-      clearTimeout(offlineStatusTimer);
-      offlineStatusTimer = null;
-    }
-
-    offlineStatus.hidden = true;
-  }
-
-  function showLoadingPrompt(
-    title = "Big Red is loading.",
-    message = "While it loads, pick something to do."
-  ) {
-    videoLoadingTitle.textContent = title;
-    videoLoadingMessage.textContent = message;
-    videoLoading.hidden = false;
   }
 
   function hideLoadingPrompt() {
@@ -429,244 +395,74 @@
       clearTimeout(loadingPromptTimer);
       loadingPromptTimer = null;
     }
-
     videoLoading.hidden = true;
+  }
+
+  function showLoadingPrompt(title, message) {
+    videoLoadingTitle.textContent = title;
+    videoLoadingMessage.textContent = message;
+    videoLoading.hidden = false;
   }
 
   function scheduleLoadingPrompt() {
     if (loadingPromptTimer || !videoLoading.hidden) return;
-
-    loadingPromptTimer = window.setTimeout(() => {
+    loadingPromptTimer = setTimeout(() => {
       loadingPromptTimer = null;
-
       if (video.paused || video.readyState < 3) {
         showLoadingPrompt(
-          "Big Red is buffering.",
+          localProgramLoaded ? "Big Red is getting ready." : "Big Red is buffering.",
           "While it catches up, play a game, leave a review, tip Big Red, or plan your next ride."
         );
       }
     }, CONFIG.loadingPromptDelayMs);
   }
 
-  function openMediaDb() {
-    return new Promise((resolve, reject) => {
-      if (!("indexedDB" in window)) {
-        reject(new Error("IndexedDB is unavailable."));
-        return;
-      }
-
-      const request = indexedDB.open(CONFIG.mediaDbName, CONFIG.mediaDbVersion);
-
-      request.onupgradeneeded = () => {
-        const db = request.result;
-
-        if (!db.objectStoreNames.contains(CONFIG.mediaStoreName)) {
-          db.createObjectStore(CONFIG.mediaStoreName, { keyPath: "key" });
-        }
-      };
-
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error || new Error("Could not open media storage."));
-    });
+  function chooseLocalProgram() {
+    localProgramFile.value = "";
+    localProgramFile.click();
   }
 
-  async function getCachedProgram() {
-    const db = await openMediaDb();
+  async function loadLocalProgram(file) {
+    if (!file) return;
 
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(CONFIG.mediaStoreName, "readonly");
-      const store = tx.objectStore(CONFIG.mediaStoreName);
-      const request = store.get(CONFIG.mediaCacheKey);
-
-      request.onsuccess = () => resolve(request.result || null);
-      request.onerror = () => reject(request.error || new Error("Could not read cached program."));
-
-      tx.oncomplete = () => db.close();
-    });
-  }
-
-  async function saveCachedProgram(blob, signature) {
-    const db = await openMediaDb();
-
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(CONFIG.mediaStoreName, "readwrite");
-      const store = tx.objectStore(CONFIG.mediaStoreName);
-
-      store.put({
-        key: CONFIG.mediaCacheKey,
-        blob,
-        signature: signature || "",
-        savedAt: Date.now()
-      });
-
-      tx.oncomplete = () => {
-        db.close();
-        resolve();
-      };
-
-      tx.onerror = () => {
-        db.close();
-        reject(tx.error || new Error("Could not save the offline program."));
-      };
-    });
-  }
-
-  function setLocalProgram(blob) {
-    if (localProgramUrl) {
-      URL.revokeObjectURL(localProgramUrl);
-      localProgramUrl = null;
-    }
-
-    localProgramUrl = URL.createObjectURL(blob);
-    usingLocalProgram = true;
-
-    presentationSource.removeAttribute("src");
-    video.src = localProgramUrl;
-    video.load();
-  }
-
-  function setStreamingProgram() {
-    if (localProgramUrl) {
-      URL.revokeObjectURL(localProgramUrl);
-      localProgramUrl = null;
-    }
-
-    usingLocalProgram = false;
-
-    video.removeAttribute("src");
-    presentationSource.src = CONFIG.videoUrl;
-    video.load();
-  }
-
-  async function getRemoteProgramSignature() {
-    try {
-      const response = await fetch(CONFIG.videoUrl, {
-        method: "HEAD",
-        mode: "cors",
-        cache: "no-store"
-      });
-
-      if (!response.ok) return null;
-
-      const lastModified = response.headers.get("Last-Modified") || "";
-      const contentLength = response.headers.get("Content-Length") || "";
-
-      if (!lastModified && !contentLength) return null;
-
-      return `${lastModified}|${contentLength}`;
-    } catch (error) {
-      console.info("Could not check the current R2 program version.", error);
-      return null;
-    }
-  }
-
-  async function downloadProgramToOfflineStorage(signature = "", interactive = true) {
-    if (interactive) {
-      showOfflineStatus("Preparing tonight’s program for offline playback…");
-      showLoadingPrompt(
-        "Getting tonight’s program ready.",
-        "The full movie is being saved on this tablet so weak signal will not interrupt the ride."
-      );
-    }
-
-    try {
-      const response = await fetch(CONFIG.videoUrl, {
-        method: "GET",
-        mode: "cors",
-        cache: "no-store"
-      });
-
-      if (!response.ok) {
-        throw new Error(`Program download failed with status ${response.status}.`);
-      }
-
-      const blob = await response.blob();
-
-      if (!blob || blob.size < 1024 * 1024) {
-        throw new Error("The downloaded program file was unexpectedly small.");
-      }
-
-      await saveCachedProgram(blob, signature);
-
-      showOfflineStatus("Offline program ready ✓", CONFIG.offlineReadyToastMs);
-      return blob;
-    } catch (error) {
-      console.info("Offline program download was unavailable. Using streaming fallback.", error);
-      showOfflineStatus("Streaming fallback — offline copy not available", CONFIG.offlineReadyToastMs);
-      return null;
-    }
-  }
-
-  async function refreshOfflineProgramInBackground(cachedProgram) {
-    const remoteSignature = await getRemoteProgramSignature();
-
-    if (!remoteSignature) return;
-
-    if (cachedProgram.signature === remoteSignature) {
+    if (!file.type.startsWith("video/") && !/\.(mov|mp4)$/i.test(file.name)) {
+      showLocalProgramStatus("Please choose a MOV or MP4 video file.", 5000);
       return;
     }
 
-    showOfflineStatus("A newer program is being saved for the next restart…");
-
-    const blob = await downloadProgramToOfflineStorage(remoteSignature, false);
-
-    if (blob) {
-      showOfflineStatus(
-        "Updated offline program saved ✓ Restart Discover when convenient.",
-        CONFIG.offlineReadyToastMs
-      );
-    }
-  }
-
-  async function initializeProgramPlayback() {
-    let cachedProgram = null;
-
     try {
-      cachedProgram = await getCachedProgram();
+      if (localProgramUrl) URL.revokeObjectURL(localProgramUrl);
+
+      localProgramUrl = URL.createObjectURL(file);
+      localProgramLoaded = true;
+
+      video.pause();
+      const source = video.querySelector("source");
+      if (source) source.removeAttribute("src");
+      video.src = localProgramUrl;
+      video.loop = true;
+      video.load();
+
+      showLocalProgramStatus(`Local program loaded: ${file.name}`, 5000);
+
+      try {
+        await video.play();
+        videoFallback.hidden = true;
+        hideLoadingPrompt();
+      } catch (error) {
+        console.info("Local program ready; waiting for rider interaction.", error);
+        showLocalProgramStatus("Local program ready — tap the screen once to start.", 5000);
+      }
     } catch (error) {
-      console.info("Offline media storage could not be read.", error);
+      console.info("Could not load local program.", error);
+      showLocalProgramStatus("Could not load that local program file.", 5000);
     }
-
-    if (cachedProgram && cachedProgram.blob) {
-      setLocalProgram(cachedProgram.blob);
-      showOfflineStatus("Offline program ready ✓", CONFIG.offlineReadyToastMs);
-      hideLoadingPrompt();
-      ensureVideoPlayback();
-
-      // Check for a newer weekly movie without interrupting the one already playing.
-      window.setTimeout(() => {
-        refreshOfflineProgramInBackground(cachedProgram);
-      }, 1500);
-
-      return;
-    }
-
-    const remoteSignature = await getRemoteProgramSignature();
-    const downloadedBlob = await downloadProgramToOfflineStorage(remoteSignature || "");
-
-    if (downloadedBlob) {
-      setLocalProgram(downloadedBlob);
-      hideLoadingPrompt();
-      ensureVideoPlayback();
-      return;
-    }
-
-    // Graceful fallback if R2 CORS/storage prevents a local copy.
-    setStreamingProgram();
-    hideLoadingPrompt();
-    ensureVideoPlayback();
   }
 
   function retryVideo() {
     videoFallback.hidden = true;
-
-    if (usingLocalProgram) {
-      video.load();
-      ensureVideoPlayback();
-      return;
-    }
-
-    initializeProgramPlayback();
+    video.load();
+    ensureVideoPlayback();
   }
 
   function escapeHtml(value) {
@@ -1130,21 +926,17 @@
     openPanel(reviewPanel);
   });
 
-  loadingGamesBtn.addEventListener("click", () => {
-    openPanel(gamesPanel);
+  loadLocalProgramBtn.addEventListener("click", chooseLocalProgram);
+
+  localProgramFile.addEventListener("change", () => {
+    const file = localProgramFile.files && localProgramFile.files[0];
+    loadLocalProgram(file);
   });
 
-  loadingReviewBtn.addEventListener("click", () => {
-    openPanel(reviewPanel);
-  });
-
-  loadingTipBtn.addEventListener("click", () => {
-    openPanel(tipPanel);
-  });
-
-  loadingPlanBtn.addEventListener("click", () => {
-    openPanel(planPanel);
-  });
+  loadingGamesBtn.addEventListener("click", () => openPanel(gamesPanel));
+  loadingReviewBtn.addEventListener("click", () => openPanel(reviewPanel));
+  loadingTipBtn.addEventListener("click", () => openPanel(tipPanel));
+  loadingPlanBtn.addEventListener("click", () => openPanel(planPanel));
 
   document.querySelectorAll("[data-home-reset]").forEach((button) => {
     button.addEventListener("click", goHomeAndReset);
@@ -1165,10 +957,7 @@
 
   video.addEventListener("canplay", () => {
     videoFallback.hidden = true;
-
-    if (video.readyState >= 3) {
-      hideLoadingPrompt();
-    }
+    if (video.readyState >= 3) hideLoadingPrompt();
   });
 
   video.addEventListener("playing", () => {
@@ -1212,13 +1001,16 @@
     }
   });
 
-  applySoundState();
-  initializeProgramPlayback();
+  const source = video.querySelector("source");
 
+  if (source && source.src !== CONFIG.videoUrl) {
+    source.src = CONFIG.videoUrl;
+    video.load();
+  }
+
+  applySoundState();
+  ensureVideoPlayback();
   window.addEventListener("beforeunload", () => {
-    if (localProgramUrl) {
-      URL.revokeObjectURL(localProgramUrl);
-      localProgramUrl = null;
-    }
+    if (localProgramUrl) URL.revokeObjectURL(localProgramUrl);
   });
 })();
