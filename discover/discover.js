@@ -238,6 +238,311 @@
     {word:"NIGHTLIFE",scramble:"LIFENIGHT",hint:"Evening entertainment."}
   ];
 
+
+  // --------------------------------------------------
+  // EXPANDED GAME BANKS — V14
+  // Long-ride variety: 150 trivia questions, 100 WYR prompts,
+  // and 150 word scrambles total.
+  // --------------------------------------------------
+  triviaBank.easy.push(
+    {"q": "What color do you get by mixing blue and yellow?", "a": ["Purple", "Green", "Orange", "Red"], "correct": 1},
+    {"q": "How many sides does a hexagon have?", "a": ["5", "6", "7", "8"], "correct": 1},
+    {"q": "Which animal is known for carrying its home on its back?", "a": ["Rabbit", "Turtle", "Horse", "Eagle"], "correct": 1},
+    {"q": "What is frozen water called?", "a": ["Steam", "Ice", "Mist", "Dew"], "correct": 1},
+    {"q": "Which month comes after September?", "a": ["August", "October", "November", "December"], "correct": 1},
+    {"q": "Which fruit is traditionally used to make guacamole?", "a": ["Apple", "Avocado", "Pear", "Peach"], "correct": 1},
+    {"q": "How many minutes are in one hour?", "a": ["30", "45", "60", "90"], "correct": 2},
+    {"q": "Which planet is closest to the Sun?", "a": ["Mercury", "Venus", "Earth", "Mars"], "correct": 0},
+    {"q": "Which state is directly north of Oklahoma?", "a": ["Texas", "Kansas", "Arkansas", "New Mexico"], "correct": 1},
+    {"q": "What is the capital of Oklahoma?", "a": ["Tulsa", "Norman", "Oklahoma City", "Stillwater"], "correct": 2},
+    {"q": "Which animal is the largest land mammal?", "a": ["Giraffe", "Elephant", "Rhino", "Hippo"], "correct": 1},
+    {"q": "What do bees make?", "a": ["Milk", "Honey", "Bread", "Silk"], "correct": 1},
+    {"q": "Which holiday is celebrated on July 4 in the United States?", "a": ["Memorial Day", "Independence Day", "Labor Day", "Veterans Day"], "correct": 1},
+    {"q": "What is the opposite of north?", "a": ["East", "West", "South", "Up"], "correct": 2},
+    {"q": "Which shape has three sides?", "a": ["Square", "Circle", "Triangle", "Pentagon"], "correct": 2},
+    {"q": "Which gas do humans breathe in to survive?", "a": ["Oxygen", "Helium", "Hydrogen", "Neon"], "correct": 0},
+    {"q": "How many wheels does a standard passenger car usually have?", "a": ["2", "3", "4", "6"], "correct": 2},
+    {"q": "What is the name of the toy cowboy in Toy Story?", "a": ["Buzz", "Woody", "Rex", "Andy"], "correct": 1},
+    {"q": "Which food is made from milk?", "a": ["Cheese", "Rice", "Bread", "Pasta"], "correct": 0},
+    {"q": "Which day comes after Friday?", "a": ["Thursday", "Saturday", "Sunday", "Monday"], "correct": 1},
+    {"q": "What color is a typical stop sign?", "a": ["Blue", "Green", "Red", "Yellow"], "correct": 2},
+    {"q": "Which animal says 'moo'?", "a": ["Pig", "Cow", "Duck", "Sheep"], "correct": 1},
+    {"q": "Which number comes after 99?", "a": ["98", "100", "101", "109"], "correct": 1},
+    {"q": "What is the largest planet in our solar system?", "a": ["Earth", "Saturn", "Jupiter", "Neptune"], "correct": 2},
+    {"q": "Which U.S. coin is worth 25 cents?", "a": ["Dime", "Nickel", "Quarter", "Penny"], "correct": 2},
+    {"q": "Which city is home to the University of Oklahoma?", "a": ["Norman", "Tulsa", "Lawton", "Enid"], "correct": 0},
+    {"q": "Which sport uses a basketball hoop?", "a": ["Soccer", "Basketball", "Baseball", "Golf"], "correct": 1},
+    {"q": "What do you call a baby dog?", "a": ["Cub", "Kitten", "Puppy", "Foal"], "correct": 2},
+    {"q": "Which meal is usually eaten in the morning?", "a": ["Dinner", "Breakfast", "Supper", "Dessert"], "correct": 1},
+    {"q": "How many months are in a year?", "a": ["10", "11", "12", "13"], "correct": 2},
+    {"q": "Which Oklahoma NBA team plays at Paycom Center?", "a": ["Thunder", "Sooners", "Cowboys", "Dodgers"], "correct": 0},
+    {"q": "What is the first letter of the English alphabet?", "a": ["A", "B", "C", "D"], "correct": 0},
+    {"q": "Which device is commonly used to take a photo?", "a": ["Camera", "Toaster", "Lamp", "Fan"], "correct": 0},
+    {"q": "What is 5 + 5?", "a": ["8", "9", "10", "11"], "correct": 2},
+    {"q": "Which season is typically the coldest?", "a": ["Spring", "Summer", "Fall", "Winter"], "correct": 3}
+  );
+
+  triviaBank.medium.push(
+    {"q": "Which U.S. state is known as the Sooner State?", "a": ["Kansas", "Oklahoma", "Texas", "Nebraska"], "correct": 1},
+    {"q": "What is the largest organ in the human body?", "a": ["Heart", "Liver", "Skin", "Lungs"], "correct": 2},
+    {"q": "Which city hosted the 2016 Summer Olympics?", "a": ["Tokyo", "Rio de Janeiro", "London", "Beijing"], "correct": 1},
+    {"q": "Which planet is famous for the Great Red Spot?", "a": ["Mars", "Jupiter", "Saturn", "Neptune"], "correct": 1},
+    {"q": "Which U.S. state has the nickname 'Lone Star State'?", "a": ["Arizona", "Texas", "Nevada", "Utah"], "correct": 1},
+    {"q": "What is the square root of 144?", "a": ["10", "11", "12", "14"], "correct": 2},
+    {"q": "Which author wrote 'Charlotte's Web'?", "a": ["E. B. White", "Dr. Seuss", "Roald Dahl", "Beverly Cleary"], "correct": 0},
+    {"q": "Which country is home to the Great Barrier Reef?", "a": ["Mexico", "Australia", "South Africa", "India"], "correct": 1},
+    {"q": "Which blood type is often called the universal red-cell donor?", "a": ["A positive", "B negative", "AB positive", "O negative"], "correct": 3},
+    {"q": "What is the main ingredient in hummus?", "a": ["Lentils", "Chickpeas", "Black beans", "Peas"], "correct": 1},
+    {"q": "Which city is the capital of Canada?", "a": ["Toronto", "Vancouver", "Ottawa", "Montreal"], "correct": 2},
+    {"q": "How many players from one team are on the court at a time in basketball?", "a": ["4", "5", "6", "7"], "correct": 1},
+    {"q": "Which ocean lies between the United States and Europe?", "a": ["Pacific", "Atlantic", "Indian", "Arctic"], "correct": 1},
+    {"q": "Which artist is famous for the song 'Jolene'?", "a": ["Reba McEntire", "Dolly Parton", "Shania Twain", "Faith Hill"], "correct": 1},
+    {"q": "What does GPS stand for?", "a": ["Global Positioning System", "General Path Service", "Geographic Planning Signal", "Global Pathway Setup"], "correct": 0},
+    {"q": "Which metal is liquid at room temperature?", "a": ["Iron", "Mercury", "Copper", "Aluminum"], "correct": 1},
+    {"q": "What is the capital of Colorado?", "a": ["Boulder", "Denver", "Aspen", "Colorado Springs"], "correct": 1},
+    {"q": "Which film franchise features the character Indiana Jones?", "a": ["Star Wars", "Indiana Jones", "Jurassic Park", "Mission: Impossible"], "correct": 1},
+    {"q": "Which U.S. city is famous for the French Quarter?", "a": ["Nashville", "New Orleans", "Memphis", "Savannah"], "correct": 1},
+    {"q": "What is the process by which plants convert light into energy called?", "a": ["Respiration", "Photosynthesis", "Fermentation", "Digestion"], "correct": 1},
+    {"q": "Which Oklahoma city is known for the Golden Driller statue?", "a": ["Tulsa", "Norman", "Stillwater", "Ada"], "correct": 0},
+    {"q": "How many strings does a standard violin have?", "a": ["4", "5", "6", "8"], "correct": 0},
+    {"q": "Which amendment to the U.S. Constitution abolished slavery?", "a": ["10th", "13th", "15th", "19th"], "correct": 1},
+    {"q": "Which sport is played at Wimbledon?", "a": ["Golf", "Tennis", "Cricket", "Soccer"], "correct": 1},
+    {"q": "Which country uses the yen as its currency?", "a": ["China", "Japan", "Thailand", "South Korea"], "correct": 1},
+    {"q": "Which element is represented by the symbol Na?", "a": ["Nitrogen", "Sodium", "Neon", "Nickel"], "correct": 1},
+    {"q": "What is the capital of Tennessee?", "a": ["Memphis", "Knoxville", "Nashville", "Chattanooga"], "correct": 2},
+    {"q": "Which singer recorded 'Friends in Low Places'?", "a": ["George Strait", "Garth Brooks", "Alan Jackson", "Tim McGraw"], "correct": 1},
+    {"q": "Which lake is the largest of the Great Lakes by surface area?", "a": ["Michigan", "Huron", "Erie", "Superior"], "correct": 3},
+    {"q": "Which famous road is often called the Mother Road?", "a": ["Route 66", "Interstate 40", "Highway 1", "Route 20"], "correct": 0},
+    {"q": "What is the Roman numeral for 50?", "a": ["X", "L", "C", "D"], "correct": 1},
+    {"q": "Which country gave the Statue of Liberty to the United States?", "a": ["England", "France", "Spain", "Italy"], "correct": 1},
+    {"q": "Which U.S. state is home to Mount Rushmore?", "a": ["Wyoming", "South Dakota", "Montana", "North Dakota"], "correct": 1},
+    {"q": "How many ounces are in a pound?", "a": ["8", "12", "16", "20"], "correct": 2},
+    {"q": "Which Oklahoma university's teams are called the Cowboys?", "a": ["OU", "OSU", "UCO", "Tulsa"], "correct": 1}
+  );
+
+  triviaBank.hard.push(
+    {"q": "Which element has the chemical symbol Sb?", "a": ["Antimony", "Tin", "Silver", "Bismuth"], "correct": 0},
+    {"q": "What is the capital of Slovenia?", "a": ["Bratislava", "Ljubljana", "Zagreb", "Sarajevo"], "correct": 1},
+    {"q": "Who wrote 'One Hundred Years of Solitude'?", "a": ["Jorge Luis Borges", "Gabriel García Márquez", "Pablo Neruda", "Isabel Allende"], "correct": 1},
+    {"q": "Which planet rotates on its side with an axial tilt of about 98 degrees?", "a": ["Mars", "Uranus", "Saturn", "Venus"], "correct": 1},
+    {"q": "What is the smallest prime number greater than 100?", "a": ["101", "103", "107", "109"], "correct": 0},
+    {"q": "Which treaty formally ended World War I between Germany and the Allied powers?", "a": ["Treaty of Paris", "Treaty of Versailles", "Treaty of Ghent", "Treaty of Utrecht"], "correct": 1},
+    {"q": "What is the SI unit of electric resistance?", "a": ["Volt", "Ampere", "Ohm", "Watt"], "correct": 2},
+    {"q": "Which country contains the ancient city of Petra?", "a": ["Jordan", "Egypt", "Lebanon", "Turkey"], "correct": 0},
+    {"q": "Who composed the opera 'The Magic Flute'?", "a": ["Mozart", "Verdi", "Wagner", "Puccini"], "correct": 0},
+    {"q": "What is the name of the deepest known point in Earth's oceans?", "a": ["Java Trench", "Tonga Trench", "Challenger Deep", "Puerto Rico Trench"], "correct": 2},
+    {"q": "Which mathematician is associated with the theorem a² + b² = c²?", "a": ["Euclid", "Pythagoras", "Archimedes", "Fibonacci"], "correct": 1},
+    {"q": "Which language has the most native speakers worldwide?", "a": ["English", "Spanish", "Mandarin Chinese", "Hindi"], "correct": 2},
+    {"q": "What is the capital of Mongolia?", "a": ["Astana", "Ulaanbaatar", "Bishkek", "Tashkent"], "correct": 1},
+    {"q": "Which scientist developed the three laws of planetary motion?", "a": ["Galileo", "Kepler", "Newton", "Copernicus"], "correct": 1},
+    {"q": "What is the name for a word that reads the same forward and backward?", "a": ["Anagram", "Palindrome", "Homonym", "Acronym"], "correct": 1},
+    {"q": "Which Oklahoma town hosts the National Cowboy & Western Heritage Museum?", "a": ["Oklahoma City", "Guthrie", "Pawhuska", "Duncan"], "correct": 0},
+    {"q": "In computing, what does CPU stand for?", "a": ["Central Processing Unit", "Computer Power Utility", "Core Program Unit", "Central Program User"], "correct": 0},
+    {"q": "Which U.S. state has the longest coastline?", "a": ["California", "Florida", "Alaska", "Hawaii"], "correct": 2},
+    {"q": "What is the chemical formula for table salt?", "a": ["NaCl", "KCl", "CaCO3", "H2SO4"], "correct": 0},
+    {"q": "Which novel begins with the character Ishmael narrating a whaling voyage?", "a": ["Moby-Dick", "Treasure Island", "The Odyssey", "Robinson Crusoe"], "correct": 0},
+    {"q": "Which country is home to Mount Kilimanjaro?", "a": ["Kenya", "Tanzania", "Ethiopia", "Uganda"], "correct": 1},
+    {"q": "What is the largest moon of Saturn?", "a": ["Europa", "Titan", "Io", "Triton"], "correct": 1},
+    {"q": "Which branch of mathematics studies rates of change and accumulation?", "a": ["Geometry", "Calculus", "Number theory", "Topology"], "correct": 1},
+    {"q": "What is the capital of Iceland?", "a": ["Oslo", "Reykjavík", "Helsinki", "Copenhagen"], "correct": 1},
+    {"q": "Which U.S. president was in office when the Louisiana Purchase was completed?", "a": ["George Washington", "Thomas Jefferson", "James Madison", "John Adams"], "correct": 1},
+    {"q": "What does the 'H' in HTTP stand for?", "a": ["Hyper", "Host", "Hybrid", "Header"], "correct": 0},
+    {"q": "Which ancient civilization built Machu Picchu?", "a": ["Maya", "Aztec", "Inca", "Olmec"], "correct": 2},
+    {"q": "Which composer became deaf later in life but continued composing?", "a": ["Bach", "Beethoven", "Haydn", "Schubert"], "correct": 1},
+    {"q": "Which country has the most time zones when overseas territories are included?", "a": ["Russia", "United States", "France", "Australia"], "correct": 2},
+    {"q": "What is the atomic number of carbon?", "a": ["4", "6", "8", "12"], "correct": 1},
+    {"q": "Which Oklahoma river flows through Oklahoma City?", "a": ["Canadian River", "Red River", "Illinois River", "Verdigris River"], "correct": 0},
+    {"q": "What is the term for animals that are active mainly at dawn and dusk?", "a": ["Nocturnal", "Diurnal", "Crepuscular", "Arboreal"], "correct": 2},
+    {"q": "Which philosopher wrote 'The Republic'?", "a": ["Aristotle", "Plato", "Socrates", "Seneca"], "correct": 1},
+    {"q": "What is the capital of Burkina Faso?", "a": ["Bamako", "Ouagadougou", "Niamey", "Lomé"], "correct": 1},
+    {"q": "Which physicist formulated the uncertainty principle?", "a": ["Bohr", "Heisenberg", "Fermi", "Dirac"], "correct": 1}
+  );
+
+  wouldYouRather.push(
+    ["Have front-row concert seats", "Have sideline seats at a championship game"],
+    ["Always have a full phone battery", "Always have perfect cell signal"],
+    ["Take a spontaneous road trip", "Plan every stop in advance"],
+    ["Eat breakfast for dinner", "Eat dinner for breakfast"],
+    ["Have unlimited airline miles", "Have unlimited hotel nights"],
+    ["Live near the mountains", "Live near the ocean"],
+    ["Give up desserts for a year", "Give up soda for a year"],
+    ["Have your dream car", "Have free gas for life"],
+    ["Be able to fly", "Be able to teleport"],
+    ["Read minds", "See five minutes into the future"],
+    ["Have a movie theater at home", "Have a game room at home"],
+    ["Go camping for a weekend", "Stay at a luxury resort"],
+    ["Always know the fastest route", "Always know where to find parking"],
+    ["Have dinner with your favorite musician", "Have dinner with your favorite actor"],
+    ["Never need sleep", "Never need to charge your phone"],
+    ["Have a lake house", "Have a cabin in the mountains"],
+    ["Watch only comedies", "Watch only action movies"],
+    ["Have a dog that can talk", "Have a cat that can text"],
+    ["Win free groceries for a year", "Win free restaurant meals for a year"],
+    ["Have a personal trainer", "Have a personal chef"],
+    ["Go to every home game", "Go to one championship game"],
+    ["Have a giant backyard", "Have a giant kitchen"],
+    ["Drive with the windows down", "Drive with the A/C blasting"],
+    ["Listen to country all night", "Listen to classic rock all night"],
+    ["Get one extra vacation week", "Work four-day weeks all year"],
+    ["Know every language", "Play every instrument"],
+    ["Have a rewind button for life", "Have a pause button for life"],
+    ["Always get green lights", "Always avoid construction zones"],
+    ["Spend a night in a haunted hotel", "Spend a night alone in the woods"],
+    ["Have unlimited pizza", "Have unlimited ice cream"],
+    ["Explore space", "Explore the deep ocean"],
+    ["Meet your future self", "Meet your great-great-grandparents"],
+    ["Have a private jet", "Have a private yacht"],
+    ["Give up music for a month", "Give up TV for a month"],
+    ["Always be 10 minutes early", "Never know the time but never be late"],
+    ["Have perfect memory", "Learn anything twice as fast"],
+    ["Go backstage at a concert", "Go behind the scenes on a movie set"],
+    ["Live in a big city", "Live in a small town"],
+    ["Have unlimited books", "Have unlimited movies"],
+    ["Take a sunrise drive", "Take a midnight drive"],
+    ["Only travel by train", "Only travel by plane"],
+    ["Have the best seat in the house", "Skip every line"],
+    ["Win $500 today", "Get $50 every month for a year"],
+    ["Spend a day at a theme park", "Spend a day at a water park"],
+    ["Be famous for music", "Be famous for sports"],
+    ["Have perfect singing ability", "Have perfect dancing ability"],
+    ["Never get stuck in traffic", "Never wait at an airport"],
+    ["Own a classic truck", "Own a modern sports car"],
+    ["Have free coffee forever", "Have free breakfast forever"],
+    ["See the northern lights", "See a total solar eclipse"],
+    ["Have an extra hour every day", "Have an extra day every month"],
+    ["Be great at trivia", "Be unbeatable at word games"],
+    ["Always know the weather", "Always know the traffic"],
+    ["Have your favorite meal once a week", "Try a new restaurant every week"],
+    ["Take photos of everything", "Never use your camera on vacation"],
+    ["Spend the weekend in Nashville", "Spend the weekend in Las Vegas"],
+    ["Be the DJ", "Be the karaoke star"],
+    ["Have one amazing long vacation", "Have four short vacations"],
+    ["Only eat sweet snacks", "Only eat salty snacks"],
+    ["Always have exact change", "Never need cash"],
+    ["Drive at sunrise", "Drive at sunset"],
+    ["Have VIP concert access", "Have courtside basketball seats"],
+    ["Stay up all night", "Wake up before sunrise"],
+    ["Have a beach bonfire", "Have a mountain campfire"],
+    ["Take the back roads", "Take the interstate"],
+    ["Know the answer to every trivia question", "Never lose at any board game"],
+    ["Have a robot assistant", "Have a self-driving car"],
+    ["Visit every U.S. state", "Visit every continent"],
+    ["Have your favorite song play whenever you enter a room", "Have a theme song nobody else can hear"],
+    ["Only watch old movies", "Only watch brand-new movies"],
+    ["Have a perfect sense of direction", "Never forget a name"],
+    ["Be able to stop time for 10 seconds", "Be able to jump 10 years into the future once"],
+    ["Always find the best local food", "Always find the best local music"],
+    ["Ride in a limousine", "Ride in a vintage convertible"],
+    ["Spend a day with no phone", "Spend a day with no TV"],
+    ["Have free tickets to any concert", "Have free tickets to any sporting event"],
+    ["Always get the aisle seat", "Always get the window seat"],
+    ["Have breakfast at midnight", "Have dessert before dinner"],
+    ["See your favorite team win a title", "See your favorite artist win a major award"],
+    ["Have a road trip playlist picked for you", "Pick every song yourself"]
+  );
+
+  scrambles.push(
+    {"word": "AIRPORT", "scramble": "PORTAIR", "hint": "Planes arrive and depart here."},
+    {"word": "CONCERT", "scramble": "CERTCON", "hint": "Live music event."},
+    {"word": "THUNDER", "scramble": "DERTHUN", "hint": "Oklahoma City's NBA team."},
+    {"word": "SOONERS", "scramble": "NERSSOO", "hint": "OU's team nickname."},
+    {"word": "COWBOYS", "scramble": "BOYSCOW", "hint": "OSU's team nickname."},
+    {"word": "TURNPIKE", "scramble": "PIKETURN", "hint": "A toll highway."},
+    {"word": "PARKING", "scramble": "KINGPAR", "hint": "Where the car waits."},
+    {"word": "WEEKEND", "scramble": "ENDWEEK", "hint": "Saturday and Sunday."},
+    {"word": "MUSIC", "scramble": "SICMU", "hint": "What you hear through speakers."},
+    {"word": "SPEAKER", "scramble": "KERSPEA", "hint": "Plays sound."},
+    {"word": "REVIEW", "scramble": "VIEWRE", "hint": "Feedback after a ride."},
+    {"word": "RATING", "scramble": "TINGRA", "hint": "A score, often with stars."},
+    {"word": "TIP", "scramble": "PIT", "hint": "Extra thanks for good service."},
+    {"word": "RIDER", "scramble": "DERRI", "hint": "A passenger."},
+    {"word": "TRIVIA", "scramble": "VIATRI", "hint": "Question-and-answer game."},
+    {"word": "SCRAMBLE", "scramble": "BLESCRAM", "hint": "This word game."},
+    {"word": "FUEL", "scramble": "ELFU", "hint": "What powers many vehicles."},
+    {"word": "ENGINE", "scramble": "GINEEN", "hint": "Makes a vehicle go."},
+    {"word": "ROADTRIP", "scramble": "TRIPROAD", "hint": "A long drive for fun."},
+    {"word": "ADVENTURE", "scramble": "TUREADVEN", "hint": "An exciting experience."},
+    {"word": "DOWNTOWN", "scramble": "TOWNDOWN", "hint": "The city center."},
+    {"word": "MIDTOWN", "scramble": "TOWNMID", "hint": "A central neighborhood."},
+    {"word": "UPTOWN", "scramble": "TOWNUP", "hint": "A neighborhood name in many cities."},
+    {"word": "NORMAN", "scramble": "MANNOR", "hint": "Home of OU."},
+    {"word": "YUKON", "scramble": "KONUY", "hint": "West-metro Oklahoma city."},
+    {"word": "SHAWNEE", "scramble": "NEESHAW", "hint": "Oklahoma city east of the metro."},
+    {"word": "EDMOND", "scramble": "MONDED", "hint": "North-metro Oklahoma city."},
+    {"word": "MOORE", "scramble": "OREMO", "hint": "Oklahoma city south of OKC."},
+    {"word": "TULSA", "scramble": "SATUL", "hint": "Oklahoma's second-largest city."},
+    {"word": "STILLWATER", "scramble": "WATERSTILL", "hint": "Home of Oklahoma State University."},
+    {"word": "WEATHERFORD", "scramble": "FORDWEATHER", "hint": "Oklahoma city on I-40 west of OKC."},
+    {"word": "ELRENO", "scramble": "RENOEL", "hint": "Oklahoma city west of Yukon."},
+    {"word": "HARRAH", "scramble": "RAHHAR", "hint": "Oklahoma city east of OKC."},
+    {"word": "BRUNCH", "scramble": "CHBRUN", "hint": "Late breakfast or early lunch."},
+    {"word": "PANCAKE", "scramble": "CAKEPAN", "hint": "Breakfast food cooked on a griddle."},
+    {"word": "WAFFLE", "scramble": "FLEWAF", "hint": "Grid-pattern breakfast food."},
+    {"word": "BURGER", "scramble": "GERBUR", "hint": "Popular sandwich with a patty."},
+    {"word": "PIZZA", "scramble": "ZAPIZ", "hint": "Round food often topped with cheese."},
+    {"word": "TACO", "scramble": "COTA", "hint": "Folded tortilla favorite."},
+    {"word": "NACHOS", "scramble": "CHOSNA", "hint": "Chips with toppings."},
+    {"word": "CHOCOLATE", "scramble": "LATECHOCO", "hint": "Sweet treat made from cocoa."},
+    {"word": "VANILLA", "scramble": "LAVANIL", "hint": "Classic ice cream flavor."},
+    {"word": "SUNSHINE", "scramble": "SHINESUN", "hint": "Bright daylight."},
+    {"word": "RAINBOW", "scramble": "BOWRAIN", "hint": "Colors seen after rain."},
+    {"word": "THUNDERSTORM", "scramble": "STORMTHUNDER", "hint": "Storm with lightning and thunder."},
+    {"word": "LIGHTNING", "scramble": "NINGLIGHT", "hint": "Electrical flash in a storm."},
+    {"word": "TORNADO", "scramble": "NADOTOR", "hint": "Severe rotating storm."},
+    {"word": "FORECAST", "scramble": "CASTFORE", "hint": "Weather prediction."},
+    {"word": "JACKET", "scramble": "KETJAC", "hint": "Outer layer of clothing."},
+    {"word": "SNEAKERS", "scramble": "KERSSNEA", "hint": "Casual athletic shoes."},
+    {"word": "SUNGLASSES", "scramble": "GLASSESSUN", "hint": "Eyewear for bright days."},
+    {"word": "BACKPACK", "scramble": "PACKBACK", "hint": "Bag carried on your back."},
+    {"word": "SUITCASE", "scramble": "CASESUIT", "hint": "Travel luggage."},
+    {"word": "PASSPORT", "scramble": "PORTPASS", "hint": "International travel document."},
+    {"word": "BOARDING", "scramble": "INGBOARD", "hint": "Getting onto a plane."},
+    {"word": "TERMINAL", "scramble": "MINALTER", "hint": "Airport building area."},
+    {"word": "RUNWAY", "scramble": "WAYRUN", "hint": "Where planes take off and land."},
+    {"word": "SECURITY", "scramble": "RITYSECU", "hint": "Airport screening area."},
+    {"word": "LUGGAGE", "scramble": "GAGELUG", "hint": "Bags you travel with."},
+    {"word": "HEADPHONES", "scramble": "PHONESHEAD", "hint": "Personal audio gear."},
+    {"word": "MICROPHONE", "scramble": "PHONEMICRO", "hint": "Used to amplify a voice."},
+    {"word": "KARAOKE", "scramble": "OKEKARA", "hint": "Singing along to backing music."},
+    {"word": "GUITAR", "scramble": "TARGUI", "hint": "Six-string instrument."},
+    {"word": "DRUMS", "scramble": "MSDRU", "hint": "Percussion instruments."},
+    {"word": "PIANO", "scramble": "ANOPI", "hint": "Keyboard instrument."},
+    {"word": "COUNTRY", "scramble": "TRYCOUN", "hint": "Music genre popular in Oklahoma."},
+    {"word": "ROCK", "scramble": "CKRO", "hint": "Music genre with guitars and drums."},
+    {"word": "PLAYOFFS", "scramble": "OFFSPLAY", "hint": "Postseason competition."},
+    {"word": "CHAMPION", "scramble": "PIONCHAM", "hint": "Winner of a title."},
+    {"word": "TOUCHDOWN", "scramble": "DOWNTOUCH", "hint": "Football scoring play."},
+    {"word": "HOMERUN", "scramble": "RUNHOME", "hint": "Baseball hit around all the bases."}
+  );
+
+
+  const gameDecks = {
+    triviaEasy: [],
+    triviaMedium: [],
+    triviaHard: [],
+    wyr: [],
+    scramble: []
+  };
+
+  function shuffledCopy(arr) {
+    const copy = [...arr];
+
+    for (let i = copy.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+
+    return copy;
+  }
+
+  function drawFromDeck(deckName, source, count) {
+    if (!gameDecks[deckName] || gameDecks[deckName].length < count) {
+      gameDecks[deckName] = shuffledCopy(source);
+    }
+
+    return gameDecks[deckName].splice(0, count);
+  }
+
   function sampleWithoutReplacement(arr, count) {
     const copy = [...arr];
 
@@ -493,9 +798,9 @@
 
   function startTriviaSession() {
     session.trivia = {
-      easy: sampleWithoutReplacement(triviaBank.easy, 5),
-      medium: sampleWithoutReplacement(triviaBank.medium, 5),
-      hard: sampleWithoutReplacement(triviaBank.hard, 5),
+      easy: drawFromDeck("triviaEasy", triviaBank.easy, 5),
+      medium: drawFromDeck("triviaMedium", triviaBank.medium, 5),
+      hard: drawFromDeck("triviaHard", triviaBank.hard, 5),
 
       round: 0,
       correct: 0,
@@ -641,7 +946,7 @@
 
   function startWyrSession() {
     session.wyr = {
-      rounds: sampleWithoutReplacement(wouldYouRather, CONFIG.wyrRounds),
+      rounds: drawFromDeck("wyr", wouldYouRather, CONFIG.wyrRounds),
       round: 0,
       choices: []
     };
@@ -726,7 +1031,7 @@
     clearScrambleTimer();
 
     session.scramble = {
-      rounds: sampleWithoutReplacement(scrambles, CONFIG.scrambleRounds),
+      rounds: drawFromDeck("scramble", scrambles, CONFIG.scrambleRounds),
       round: 0,
       solved: 0,
       streak: 0,
@@ -778,7 +1083,7 @@
         Hint: ${escapeHtml(item.hint)}
       </div>
 
-      <div id="scrambleResult" class="result-text" aria-live="polite">
+      <div id="scrambleResult" class="result-text scramble-result" aria-live="polite">
         Beat the clock.
       </div>
 
@@ -817,10 +1122,16 @@
         state.solved += 1;
         state.streak += 1;
         state.bestStreak = Math.max(state.bestStreak, state.streak);
-        result.textContent = `Solved! ${item.word}`;
+        result.innerHTML = `
+          <span class="scramble-answer-label">Solved!</span>
+          <strong class="scramble-answer-reveal">${escapeHtml(item.word)}</strong>
+        `;
       } else {
         state.streak = 0;
-        result.textContent = `Answer: ${item.word}`;
+        result.innerHTML = `
+          <span class="scramble-answer-label">Answer</span>
+          <strong class="scramble-answer-reveal">${escapeHtml(item.word)}</strong>
+        `;
       }
 
       setTimeout(() => {
@@ -926,6 +1237,7 @@
     openPanel(reviewPanel);
   });
 
+  // The Discover badge doubles as the unobtrusive weekly-program loader.
   loadLocalProgramBtn.addEventListener("click", chooseLocalProgram);
 
   localProgramFile.addEventListener("change", () => {
