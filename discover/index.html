@@ -17,7 +17,7 @@
   <title>Discover with Big Red</title>
 
   <!-- Versioned app assets prevent an old iPad/PWA cache from mixing releases -->
-  <link rel="stylesheet" href="discover.css?v=20260923-v17" />
+  <link rel="stylesheet" href="discover.css?v=20260923-v18" />
 </head>
 <body>
   <main class="experience-shell">
@@ -106,7 +106,6 @@
           <div class="driver-identity-card">
             <div class="driver-photo-frame">
               <img src="Profile Pic.PNG" alt="Big Red Dan" class="driver-profile-photo" />
-              <img src="Official Logo.png" alt="Big Red Connect" class="driver-brand-mark" />
             </div>
             <div class="driver-kicker">YOU'RE RIDING WITH</div>
             <h2>Big Red Dan</h2>
@@ -285,12 +284,18 @@
           <p>Use your phone for the easiest option, or open the form directly on this tablet.</p>
         </div>
 
-        <div class="review-simple-grid">
-          <div class="review-action-card">
-            <div class="review-section-label">ON THIS TABLET</div>
-            <div class="review-stars" aria-hidden="true">★★★★★</div>
-            <p>Open the Big Red rider feedback form in a full page instead of the embedded form.</p>
-            <button id="reviewOpenBtn" class="review-open-button" type="button">Open Review Form</button>
+        <div class="review-grid review-grid-v18">
+          <div class="review-form-wrap">
+            <div class="review-section-label">REVIEW ON THIS TABLET</div>
+            <iframe
+              class="review-form-frame"
+              src="https://docs.google.com/forms/d/e/1FAIpQLSeq6WCnkrG417rWCGwN56i7FplWpNTHlg1lpGuC-IETDEkEHw/viewform?embedded=true"
+              title="Big Red Connect Rider Feedback"
+              loading="lazy"
+            ></iframe>
+            <button id="reviewOpenBtn" class="review-open-button review-fallback-button" type="button">
+              Open Form Full Screen
+            </button>
           </div>
 
           <div class="review-qr-column">
@@ -299,7 +304,7 @@
               <img src="review-form-qr.png" alt="QR code for the Big Red Connect Rider Feedback form" class="review-qr" />
             </div>
             <div class="scan-label">SCAN TO LEAVE A REVIEW</div>
-            <p class="review-privacy">Your review stays on your phone when you use the QR code.</p>
+            <p class="review-privacy">Use the QR code if you would rather complete the review on your phone.</p>
           </div>
         </div>
       </div>
@@ -308,6 +313,6 @@
   </main>
 
   <!-- Versioned JS forces the current game/audio engine to load -->
-  <script src="discover.js?v=20260923-v17"></script>
+  <script src="discover.js?v=20260923-v18"></script>
 </body>
 </html>
