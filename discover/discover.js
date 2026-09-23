@@ -13,7 +13,12 @@
     scrambleRevealMs: 1600,
 
     soundStateStorageKey: "discoverSoundOn",
-    loadingPromptDelayMs: 1600
+    loadingPromptDelayMs: 1600,
+
+    reviewUrl: "https://docs.google.com/forms/d/e/1FAIpQLSeq6WCnkrG417rWCGwN56i7FplWpNTHlg1lpGuC-IETDEkEHw/viewform",
+    weatherCacheMs: 600000,
+    weatherFallbackLat: 35.4676,
+    weatherFallbackLon: -97.5164
   };
 
   const video = document.getElementById("presentationVideo");
@@ -36,15 +41,32 @@
   const volumeLabel = document.getElementById("volumeLabel");
 
   const gamesBtn = document.getElementById("gamesBtn");
+  const weatherBtn = document.getElementById("weatherBtn");
+  const driverBtn = document.getElementById("driverBtn");
   const planBtn = document.getElementById("planBtn");
   const tipBtn = document.getElementById("tipBtn");
   const reviewBtn = document.getElementById("reviewBtn");
 
+  const driverPanel = document.getElementById("driverPanel");
+  const weatherPanel = document.getElementById("weatherPanel");
   const gamesPanel = document.getElementById("gamesPanel");
   const gamePanel = document.getElementById("gamePanel");
   const planPanel = document.getElementById("planPanel");
   const tipPanel = document.getElementById("tipPanel");
   const reviewPanel = document.getElementById("reviewPanel");
+
+  const reviewOpenBtn = document.getElementById("reviewOpenBtn");
+  const weatherLocationLabel = document.getElementById("weatherLocationLabel");
+  const weatherLoading = document.getElementById("weatherLoading");
+  const weatherContent = document.getElementById("weatherContent");
+  const weatherIcon = document.getElementById("weatherIcon");
+  const weatherTemp = document.getElementById("weatherTemp");
+  const weatherCondition = document.getElementById("weatherCondition");
+  const weatherHighLow = document.getElementById("weatherHighLow");
+  const weatherWind = document.getElementById("weatherWind");
+  const weatherRain = document.getElementById("weatherRain");
+  const weatherHourly = document.getElementById("weatherHourly");
+  const refreshWeatherBtn = document.getElementById("refreshWeatherBtn");
 
   const backToGamesBtn = document.getElementById("backToGamesBtn");
   const gameContent = document.getElementById("gameContent");
@@ -59,6 +81,7 @@
   let localProgramLoaded = false;
   let loadingPromptTimer = null;
   let localProgramStatusTimer = null;
+  let weatherCache = null;
 
   function getInitialSoundState() {
     try {
@@ -573,6 +596,8 @@
   }
 
   const anyPanelOpen = () =>
+    !driverPanel.hidden ||
+    !weatherPanel.hidden ||
     !gamesPanel.hidden ||
     !gamePanel.hidden ||
     !planPanel.hidden ||
@@ -580,6 +605,8 @@
     !reviewPanel.hidden;
 
   function goHomeAndReset() {
+    driverPanel.hidden = true;
+    weatherPanel.hidden = true;
     gamesPanel.hidden = true;
     gamePanel.hidden = true;
     planPanel.hidden = true;
@@ -593,6 +620,8 @@
   // Overlays never pause the weekly program.
   // Video and audio continue underneath Games / Plan / Tip.
   function openPanel(panel) {
+    driverPanel.hidden = true;
+    weatherPanel.hidden = true;
     gamesPanel.hidden = true;
     gamePanel.hidden = true;
     planPanel.hidden = true;
@@ -768,6 +797,139 @@
     videoFallback.hidden = true;
     video.load();
     ensureVideoPlayback();
+  }
+
+
+  function weatherDescription(code) {
+    const map = {
+      0: ["Clear", "☀️"],
+      1: ["Mostly clear", "🌤️"],
+      2: ["Partly cloudy", "⛅"],
+      3: ["Cloudy", "☁️"],
+      45: ["Fog", "🌫️"],
+      48: ["Fog", "🌫️"],
+      51: ["Light drizzle", "🌦️"],
+      53: ["Drizzle", "🌦️"],
+      55: ["Heavy drizzle", "🌧️"],
+      61: ["Light rain", "🌦️"],
+      63: ["Rain", "🌧️"],
+      65: ["Heavy rain", "🌧️"],
+      71: ["Light snow", "🌨️"],
+      73: ["Snow", "🌨️"],
+      75: ["Heavy snow", "❄️"],
+      80: ["Rain showers", "🌦️"],
+      81: ["Rain showers", "🌧️"],
+      82: ["Heavy showers", "🌧️"],
+      95: ["Thunderstorms", "⛈️"],
+      96: ["Thunderstorms", "⛈️"],
+      99: ["Thunderstorms", "⛈️"]
+    };
+    return map[code] || ["Current conditions", "🌤️"];
+  }
+
+  function getWeatherPosition() {
+    return new Promise((resolve) => {
+      if (!navigator.geolocation) {
+        resolve({lat: CONFIG.weatherFallbackLat, lon: CONFIG.weatherFallbackLon, label: "Oklahoma City area"});
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => resolve({
+          lat: position.coords.latitude,
+          lon: position.coords.longitude,
+          label: "Near your current location"
+        }),
+        () => resolve({lat: CONFIG.weatherFallbackLat, lon: CONFIG.weatherFallbackLon, label: "Oklahoma City area"}),
+        {enableHighAccuracy: false, timeout: 5000, maximumAge: 600000}
+      );
+    });
+  }
+
+  function renderWeather(data, locationLabel) {
+    const current = data.current || {};
+    const daily = data.daily || {};
+    const hourly = data.hourly || {};
+    const [description, icon] = weatherDescription(current.weather_code);
+
+    weatherLocationLabel.textContent = locationLabel;
+    weatherIcon.textContent = icon;
+    weatherTemp.textContent = Number.isFinite(current.temperature_2m) ? `${Math.round(current.temperature_2m)}°` : "--°";
+    weatherCondition.textContent = description;
+
+    const high = daily.temperature_2m_max?.[0];
+    const low = daily.temperature_2m_min?.[0];
+    weatherHighLow.textContent = Number.isFinite(high) && Number.isFinite(low) ? `${Math.round(high)}° / ${Math.round(low)}°` : "—";
+    weatherWind.textContent = Number.isFinite(current.wind_speed_10m) ? `${Math.round(current.wind_speed_10m)} mph` : "—";
+    const rain = daily.precipitation_probability_max?.[0];
+    weatherRain.textContent = Number.isFinite(rain) ? `${Math.round(rain)}%` : "—";
+
+    weatherHourly.innerHTML = "";
+    const now = Date.now();
+    const times = hourly.time || [];
+    let startIndex = times.findIndex((value) => new Date(value).getTime() >= now - 30 * 60 * 1000);
+    if (startIndex < 0) startIndex = 0;
+
+    for (let i = startIndex; i < Math.min(startIndex + 6, times.length); i += 1) {
+      const time = new Date(times[i]);
+      const temp = hourly.temperature_2m?.[i];
+      const chance = hourly.precipitation_probability?.[i];
+      const item = document.createElement("div");
+      item.className = "weather-hour-item";
+      item.innerHTML = `
+        <span>${time.toLocaleTimeString([], {hour: "numeric"})}</span>
+        <strong>${Number.isFinite(temp) ? Math.round(temp) + "°" : "—"}</strong>
+        <small>${Number.isFinite(chance) ? Math.round(chance) + "% rain" : ""}</small>
+      `;
+      weatherHourly.appendChild(item);
+    }
+
+    weatherLoading.hidden = true;
+    weatherContent.hidden = false;
+  }
+
+  async function loadWeather(force = false) {
+    const now = Date.now();
+    if (!force && weatherCache && now - weatherCache.time < CONFIG.weatherCacheMs) {
+      renderWeather(weatherCache.data, weatherCache.locationLabel);
+      return;
+    }
+
+    weatherLoading.hidden = false;
+    weatherLoading.textContent = "Checking the weather…";
+    weatherContent.hidden = true;
+
+    try {
+      const position = await getWeatherPosition();
+      const url = new URL("https://api.open-meteo.com/v1/forecast");
+      url.searchParams.set("latitude", position.lat);
+      url.searchParams.set("longitude", position.lon);
+      url.searchParams.set("temperature_unit", "fahrenheit");
+      url.searchParams.set("wind_speed_unit", "mph");
+      url.searchParams.set("timezone", "auto");
+      url.searchParams.set("forecast_days", "1");
+      url.searchParams.set("current", "temperature_2m,weather_code,wind_speed_10m");
+      url.searchParams.set("hourly", "temperature_2m,precipitation_probability");
+      url.searchParams.set("daily", "temperature_2m_max,temperature_2m_min,precipitation_probability_max");
+
+      const response = await fetch(url.toString(), {cache: "no-store"});
+      if (!response.ok) throw new Error(`Weather request failed: ${response.status}`);
+      const data = await response.json();
+
+      weatherCache = {time: now, data, locationLabel: position.label};
+      renderWeather(data, position.label);
+    } catch (error) {
+      console.info("Weather could not be loaded.", error);
+      weatherLocationLabel.textContent = "Weather unavailable";
+      weatherLoading.hidden = false;
+      weatherLoading.textContent = "Weather could not load right now. Your Discover program is still available offline.";
+      weatherContent.hidden = true;
+    }
+  }
+
+  function openReviewForm() {
+    const opened = window.open(CONFIG.reviewUrl, "_blank", "noopener,noreferrer");
+    if (!opened) window.location.href = CONFIG.reviewUrl;
   }
 
   function escapeHtml(value) {
@@ -1225,6 +1387,15 @@
     openPanel(gamesPanel);
   });
 
+  driverBtn.addEventListener("click", () => {
+    openPanel(driverPanel);
+  });
+
+  weatherBtn.addEventListener("click", () => {
+    openPanel(weatherPanel);
+    loadWeather(false);
+  });
+
   planBtn.addEventListener("click", () => {
     openPanel(planPanel);
   });
@@ -1236,6 +1407,9 @@
   reviewBtn.addEventListener("click", () => {
     openPanel(reviewPanel);
   });
+
+  reviewOpenBtn.addEventListener("click", openReviewForm);
+  refreshWeatherBtn.addEventListener("click", () => loadWeather(true));
 
   // The Discover badge doubles as the unobtrusive weekly-program loader.
   loadLocalProgramBtn.addEventListener("click", chooseLocalProgram);
