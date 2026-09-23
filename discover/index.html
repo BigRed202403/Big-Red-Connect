@@ -17,7 +17,7 @@
   <title>Discover with Big Red</title>
 
   <!-- Versioned app assets prevent an old iPad/PWA cache from mixing releases -->
-  <link rel="stylesheet" href="discover.css?v=20260920-v15" />
+  <link rel="stylesheet" href="discover.css?v=20260922-v16" />
 </head>
 <body>
   <main class="experience-shell">
@@ -90,9 +90,91 @@
 
       <div class="discover-actions" aria-label="Discover options">
         <button id="gamesBtn" class="action-button" type="button">🎮 Games</button>
-        <button id="planBtn" class="action-button" type="button">📲 Plan Next Ride</button>
-        <button id="tipBtn" class="action-button" type="button">❤️ Tip Big Red</button>
-        <button id="reviewBtn" class="action-button" type="button">⭐ Leave a Review</button>
+        <button id="weatherBtn" class="action-button" type="button">☀️ Weather</button>
+        <button id="driverBtn" class="action-button" type="button">👋 Driver</button>
+        <button id="planBtn" class="action-button" type="button">📲 Plan Ride</button>
+        <button id="tipBtn" class="action-button" type="button">❤️ Tip</button>
+        <button id="reviewBtn" class="action-button" type="button">⭐ Review</button>
+      </div>
+    </section>
+
+    <section id="driverPanel" class="overlay-panel" aria-label="Driver profile" hidden>
+      <div class="panel-card driver-panel-card">
+        <button class="back-button" data-home-reset type="button">← Back to Big Red</button>
+
+        <div class="driver-profile-grid">
+          <div class="driver-identity-card">
+            <img src="Official Logo.png" alt="Big Red Connect" class="driver-logo" />
+            <div class="driver-kicker">YOU'RE RIDING WITH</div>
+            <h2>Big Red Dan</h2>
+            <div class="driver-badges">
+              <span>🇺🇸 Veteran Owned</span>
+              <span>📍 Oklahoma City</span>
+              <span>🚗 Rideshare since 2024</span>
+              <span>⭐ Local • Trusted</span>
+            </div>
+          </div>
+
+          <div class="driver-story-stack">
+            <div class="driver-story-card">
+              <div class="driver-story-label">ASK ME ABOUT</div>
+              <strong>Big Red Connect</strong>
+              <p>Local rides built around planning ahead, straightforward pricing, and one trusted driver.</p>
+            </div>
+
+            <div class="driver-story-card">
+              <div class="driver-story-label">WHY BIG RED?</div>
+              <strong>Simple. Reliable. Personal.</strong>
+              <p>No mystery driver, no complicated process — just clear communication and a ride handled ahead of time.</p>
+            </div>
+
+            <div class="driver-story-card">
+              <div class="driver-story-label">GOOD TO KNOW</div>
+              <strong>Plan ahead when you can.</strong>
+              <p>Short-notice requests are welcome when availability allows.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="weatherPanel" class="overlay-panel" aria-label="Weather" hidden>
+      <div class="panel-card weather-panel-card">
+        <button class="back-button" data-home-reset type="button">← Back to Big Red</button>
+
+        <div class="weather-heading">
+          <div class="eyebrow">CURRENT CONDITIONS</div>
+          <h2>Weather Along the Ride</h2>
+          <p id="weatherLocationLabel">Loading your local weather…</p>
+        </div>
+
+        <div id="weatherLoading" class="weather-loading">Checking the weather…</div>
+
+        <div id="weatherContent" hidden>
+          <div class="weather-current">
+            <div class="weather-temp-wrap">
+              <div id="weatherIcon" class="weather-icon" aria-hidden="true">☀️</div>
+              <div>
+                <div id="weatherTemp" class="weather-temp">--°</div>
+                <div id="weatherCondition" class="weather-condition">—</div>
+              </div>
+            </div>
+
+            <div class="weather-metrics">
+              <div><span>High / Low</span><strong id="weatherHighLow">—</strong></div>
+              <div><span>Wind</span><strong id="weatherWind">—</strong></div>
+              <div><span>Rain</span><strong id="weatherRain">—</strong></div>
+            </div>
+          </div>
+
+          <div class="weather-hourly-label">NEXT FEW HOURS</div>
+          <div id="weatherHourly" class="weather-hourly"></div>
+        </div>
+
+        <div class="weather-footer">
+          <span>Weather updates only when you open this screen.</span>
+          <button id="refreshWeatherBtn" type="button">Refresh</button>
+        </div>
       </div>
     </section>
 
@@ -197,35 +279,24 @@
         <div class="review-heading">
           <div class="eyebrow">THANKS FOR RIDING</div>
           <h2>Leave a Review</h2>
-          <p>Rate your ride right here, or scan the QR code to finish on your phone.</p>
+          <p>Use your phone for the easiest option, or open the form directly on this tablet.</p>
         </div>
 
-        <div class="review-grid">
-          <div class="review-form-wrap">
-            <div class="review-section-label">RATE ON THIS TABLET</div>
-            <iframe
-              class="review-form-frame"
-              src="https://docs.google.com/forms/d/e/1FAIpQLSeq6WCnkrG417rWCGwN56i7FplWpNTHlg1lpGuC-IETDEkEHw/viewform?embedded=true"
-              title="Big Red Connect Rider Feedback form"
-              loading="lazy"
-            ></iframe>
+        <div class="review-simple-grid">
+          <div class="review-action-card">
+            <div class="review-section-label">ON THIS TABLET</div>
+            <div class="review-stars" aria-hidden="true">★★★★★</div>
+            <p>Open the Big Red rider feedback form in a full page instead of the embedded form.</p>
+            <button id="reviewOpenBtn" class="review-open-button" type="button">Open Review Form</button>
           </div>
 
           <div class="review-qr-column">
             <div class="review-section-label">OR USE YOUR PHONE</div>
-
             <div class="review-qr-frame">
-              <img
-                src="review-form-qr.png"
-                alt="QR code for the Big Red Connect Rider Feedback form"
-                class="review-qr"
-              />
+              <img src="review-form-qr.png" alt="QR code for the Big Red Connect Rider Feedback form" class="review-qr" />
             </div>
-
             <div class="scan-label">SCAN TO LEAVE A REVIEW</div>
-            <p class="review-privacy">
-              Your review stays on your phone if you use the QR code.
-            </p>
+            <p class="review-privacy">Your review stays on your phone when you use the QR code.</p>
           </div>
         </div>
       </div>
@@ -234,6 +305,6 @@
   </main>
 
   <!-- Versioned JS forces the current game/audio engine to load -->
-  <script src="discover.js?v=20260920-v15"></script>
+  <script src="discover.js?v=20260922-v16"></script>
 </body>
 </html>
