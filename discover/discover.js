@@ -1,4 +1,4 @@
-// Discover v17 — driver profile image + weather/review release
+// Discover v18 — no-scroll overlays + restored embedded review form
 (() => {
   "use strict";
 
