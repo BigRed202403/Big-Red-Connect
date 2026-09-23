@@ -1351,7 +1351,7 @@ button {
 
 
 /* --------------------------------------------------
-   DISCOVER DRIVER + WEATHER + REVIEW — V16
+   DISCOVER DRIVER + WEATHER + REVIEW — V17
 -------------------------------------------------- */
 
 .discover-actions {
@@ -1393,12 +1393,37 @@ button {
   text-align: center;
 }
 
-.driver-logo {
+.driver-photo-frame {
+  position: relative;
+  width: min(300px, 92%);
+  aspect-ratio: 4 / 5;
+  margin: 0 auto 14px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 22px;
+  background: #0d0d0d;
+  box-shadow: 0 14px 34px rgba(0,0,0,.35);
+}
+
+.driver-profile-photo {
   display: block;
-  width: min(220px, 70%);
-  max-height: 170px;
-  margin: 0 auto 12px;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 28%;
+}
+
+.driver-brand-mark {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  width: 72px;
+  height: 72px;
+  padding: 6px;
   object-fit: contain;
+  border-radius: 16px;
+  background: rgba(0,0,0,.78);
+  box-shadow: 0 6px 16px rgba(0,0,0,.35);
 }
 
 .driver-kicker,
@@ -1620,7 +1645,8 @@ button {
   .driver-panel-card,
   .weather-panel-card { padding-top: 12px; padding-bottom: 12px; }
   .driver-profile-grid { grid-template-columns: 270px minmax(0, 1fr); gap: 12px; margin-top: 8px; }
-  .driver-logo { max-height: 110px; }
+  .driver-photo-frame { width: min(210px, 88%); margin-bottom: 8px; }
+  .driver-brand-mark { width: 54px; height: 54px; right: 7px; bottom: 7px; }
   .driver-badges { gap: 6px; }
   .driver-badges span { padding: 7px 9px; font-size: 14px; }
   .driver-story-card { padding: 12px 15px; }
