@@ -1,4 +1,4 @@
-// Discover v18 — no-scroll overlays + restored embedded review form
+// Discover v19 — tablet fit + active game controls repaired
 (() => {
   "use strict";
 
