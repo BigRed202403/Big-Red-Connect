@@ -1,4 +1,4 @@
-// Discover v19 — tablet fit + active game controls repaired
+// Discover v20 — driver + active games use full tablet height
 (() => {
   "use strict";
 
