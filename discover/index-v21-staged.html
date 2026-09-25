@@ -17,7 +17,7 @@
   <title>Discover with Big Red</title>
 
   <!-- Versioned staged assets keep v21 isolated from the live Discover files -->
-  <link rel="stylesheet" href="discover-v21-staged.css?v=20260925-v21-staged" />
+  <link rel="stylesheet" href="discover-v21-staged.css?v=20260925-v21-music2" />
 </head>
 <body>
   <main class="experience-shell">
@@ -107,20 +107,38 @@
         <div class="music-heading">
           <div class="eyebrow">PICK THE VIBE</div>
           <h2>Request the music</h2>
-          <p>Choose a Big Red playlist. Your request goes to the driver, who stays in control of playback.</p>
+          <p>Choose a Big Red playlist, or request a specific song or artist. Big Red stays in control of playback.</p>
         </div>
 
-        <div class="music-choice-grid" aria-label="Approved Big Red playlists">
+        <div class="music-choice-grid" aria-label="Big Red playlist choices">
+          <button class="music-choice" data-music-choice="Girls' Night Out" type="button">💃 <strong>Girls' Night Out</strong></button>
+          <button class="music-choice" data-music-choice="Guys' Night Out" type="button">🍻 <strong>Guys' Night Out</strong></button>
           <button class="music-choice" data-music-choice="Country" type="button">🤠 <strong>Country</strong></button>
-          <button class="music-choice" data-music-choice="Campus Nights" type="button">🎓 <strong>Campus Nights</strong></button>
-          <button class="music-choice" data-music-choice="Throwbacks" type="button">📼 <strong>Throwbacks</strong></button>
+          <button class="music-choice" data-music-choice="Rock" type="button">🤘 <strong>Rock</strong></button>
           <button class="music-choice" data-music-choice="Christian" type="button">✝️ <strong>Christian</strong></button>
           <button class="music-choice" data-music-choice="Chill" type="button">🌙 <strong>Chill</strong></button>
-          <button class="music-choice" data-music-choice="Rider Requests" type="button">🙋 <strong>Rider Requests</strong></button>
+          <button class="music-choice" data-music-choice="Throwbacks" type="button">📼 <strong>Throwbacks</strong></button>
+          <button class="music-choice" data-music-choice="Campus Nights" type="button">🎓 <strong>Campus Nights</strong></button>
+        </div>
+
+        <div class="music-specific-request">
+          <label for="musicSpecificInput">Request a specific song or artist</label>
+          <div class="music-specific-row">
+            <input
+              id="musicSpecificInput"
+              type="text"
+              maxlength="120"
+              autocomplete="off"
+              placeholder="Song, artist, or both"
+              aria-label="Specific song or artist request"
+            />
+            <button id="musicSpecificSendBtn" type="button">Send Request</button>
+          </div>
+          <div class="music-example">Example: Dolly Parton — Jolene</div>
         </div>
 
         <div id="musicRequestStatus" class="music-request-status" role="status">
-          Pick one and I’ll send the request to Big Red.
+          Pick a playlist or send a specific request to Big Red.
         </div>
       </div>
     </section>
@@ -351,6 +369,6 @@
   </main>
 
   <!-- Versioned staged JS keeps v21 isolated from the live Discover engine -->
-  <script src="discover-v21-staged.js?v=20260925-v21-staged"></script>
+  <script src="discover-v21-staged.js?v=20260925-v21-music2"></script>
 </body>
 </html>
