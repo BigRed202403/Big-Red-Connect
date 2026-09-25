@@ -60,6 +60,8 @@
   const reviewPanel = document.getElementById("reviewPanel");
 
   const musicRequestStatus = document.getElementById("musicRequestStatus");
+  const musicSpecificInput = document.getElementById("musicSpecificInput");
+  const musicSpecificSendBtn = document.getElementById("musicSpecificSendBtn");
   const reviewOpenBtn = document.getElementById("reviewOpenBtn");
   const weatherLocationLabel = document.getElementById("weatherLocationLabel");
   const weatherLoading = document.getElementById("weatherLoading");
@@ -1426,28 +1428,35 @@
   }
 
 
-  async function submitMusicRequest(choice, button) {
-    if (!choice || !musicRequestStatus) return;
+  async function sendMusicRequest(payload, button, pendingLabel, successLabel) {
+    if (!musicRequestStatus) return;
 
     const buttons = [...musicPanel.querySelectorAll("[data-music-choice]")];
     buttons.forEach(candidate => candidate.disabled = true);
-    musicRequestStatus.textContent = `Sending ${choice} to Big Red…`;
+    if (musicSpecificInput) musicSpecificInput.disabled = true;
+    if (musicSpecificSendBtn) musicSpecificSendBtn.disabled = true;
+    musicRequestStatus.textContent = pendingLabel;
 
     try {
       const response = await fetch(CONFIG.musicRequestApi, {
         method: "POST",
         headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({choice}),
+        body: JSON.stringify(payload),
         cache: "no-store"
       });
 
       let result = {};
       try { result = await response.json(); } catch {}
 
-      if (response.status === 409 && result?.request?.choice) {
+      if (response.status === 409 && result?.request) {
+        const waiting =
+          result.request.kind === "specific" && result.request.detail
+            ? `Specific request: ${result.request.detail}`
+            : result.request.choice;
+
         musicRequestStatus.textContent =
-          `Big Red already has a request waiting: ${result.request.choice}.`;
-        return;
+          `Big Red already has a request waiting: ${waiting}.`;
+        return false;
       }
 
       if (!response.ok || !result?.ok) {
@@ -1455,17 +1464,50 @@
       }
 
       if (button) button.classList.add("requested");
-      musicRequestStatus.textContent =
-        `${choice} requested. Big Red will handle playback from the front.`;
+      musicRequestStatus.textContent = successLabel;
+      return true;
     } catch (error) {
       console.info("Music request could not be sent.", error);
       musicRequestStatus.textContent =
         "Music request could not send right now. You can still ask Big Red directly.";
+      return false;
     } finally {
       window.setTimeout(() => {
         buttons.forEach(candidate => candidate.disabled = false);
+        if (musicSpecificInput) musicSpecificInput.disabled = false;
+        if (musicSpecificSendBtn) musicSpecificSendBtn.disabled = false;
       }, 900);
     }
+  }
+
+  async function submitMusicRequest(choice, button) {
+    if (!choice) return;
+
+    await sendMusicRequest(
+      {choice},
+      button,
+      `Sending ${choice} to Big Red…`,
+      `${choice} requested. Big Red will handle playback from the front.`
+    );
+  }
+
+  async function submitSpecificMusicRequest() {
+    const detail = String(musicSpecificInput?.value || "").trim();
+
+    if (!detail) {
+      musicRequestStatus.textContent = "Type a song, artist, or both first.";
+      musicSpecificInput?.focus();
+      return;
+    }
+
+    const sent = await sendMusicRequest(
+      {kind: "specific", detail},
+      null,
+      `Sending “${detail}” to Big Red…`,
+      `“${detail}” requested. Big Red will choose the playback.`
+    );
+
+    if (sent && musicSpecificInput) musicSpecificInput.value = "";
   }
 
   function openReviewForm() {
@@ -1929,14 +1971,28 @@
   });
 
   musicBtn.addEventListener("click", () => {
-    musicRequestStatus.textContent = "Pick one and I’ll send the request to Big Red.";
+    musicRequestStatus.textContent = "Pick a playlist or send a specific request to Big Red.";
     musicPanel.querySelectorAll(".music-choice").forEach(button => button.classList.remove("requested"));
+    if (musicSpecificInput) musicSpecificInput.value = "";
     openPanel(musicPanel);
   });
 
   musicPanel.querySelectorAll("[data-music-choice]").forEach((button) => {
     button.addEventListener("click", () => submitMusicRequest(button.dataset.musicChoice, button));
   });
+
+  if (musicSpecificSendBtn) {
+    musicSpecificSendBtn.addEventListener("click", submitSpecificMusicRequest);
+  }
+
+  if (musicSpecificInput) {
+    musicSpecificInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        submitSpecificMusicRequest();
+      }
+    });
+  }
 
   driverBtn.addEventListener("click", () => {
     openPanel(driverPanel);
