@@ -16,8 +16,8 @@
 
   <title>Discover with Big Red</title>
 
-  <!-- Versioned app assets prevent an old iPad/PWA cache from mixing releases -->
-  <link rel="stylesheet" href="discover.css?v=20260925-v21-staged" />
+  <!-- Versioned staged assets keep v21 isolated from the live Discover files -->
+  <link rel="stylesheet" href="discover-v21-staged.css?v=20260925-v21-staged" />
 </head>
 <body>
   <main class="experience-shell">
@@ -50,6 +50,7 @@
           type="video/quicktime"
         />
       </video>
+
       <input id="localProgramFile" type="file" accept="video/*,.mov,.mp4" hidden />
       <div id="localProgramStatus" class="local-program-status" hidden></div>
 
@@ -58,6 +59,7 @@
           <div class="eyebrow">DISCOVER WITH BIG RED</div>
           <h2 id="videoLoadingTitle">Big Red is loading.</h2>
           <p id="videoLoadingMessage">While it loads, pick something to do.</p>
+
           <div class="loading-actions">
             <button id="loadingGamesBtn" type="button">🎮 Play a Game</button>
             <button id="loadingReviewBtn" type="button">⭐ Leave a Review</button>
@@ -66,7 +68,6 @@
           </div>
         </div>
       </div>
-
 
       <button
         id="loadLocalProgramBtn"
@@ -98,7 +99,6 @@
         <button id="reviewBtn" class="action-button" type="button">⭐ Review</button>
       </div>
     </section>
-
 
     <section id="musicPanel" class="overlay-panel" aria-label="Music requests" hidden>
       <div class="panel-card music-panel-card">
@@ -134,8 +134,10 @@
             <div class="driver-photo-frame">
               <img src="Profile Pic.PNG" alt="Big Red Dan" class="driver-profile-photo" />
             </div>
+
             <div class="driver-kicker">YOU'RE RIDING WITH</div>
             <h2>Big Red Dan</h2>
+
             <div class="driver-badges">
               <span>🇺🇸 Veteran Owned</span>
               <span>📍 Oklahoma City Metro</span>
@@ -315,12 +317,14 @@
         <div class="review-grid review-grid-v18">
           <div class="review-form-wrap">
             <div class="review-section-label">REVIEW ON THIS TABLET</div>
+
             <iframe
               class="review-form-frame"
               src="https://docs.google.com/forms/d/e/1FAIpQLSeq6WCnkrG417rWCGwN56i7FplWpNTHlg1lpGuC-IETDEkEHw/viewform?embedded=true"
               title="Big Red Connect Rider Feedback"
               loading="lazy"
             ></iframe>
+
             <button id="reviewOpenBtn" class="review-open-button review-fallback-button" type="button">
               Open Form Full Screen
             </button>
@@ -328,9 +332,15 @@
 
           <div class="review-qr-column">
             <div class="review-section-label">OR USE YOUR PHONE</div>
+
             <div class="review-qr-frame">
-              <img src="review-form-qr.png" alt="QR code for the Big Red Connect Rider Feedback form" class="review-qr" />
+              <img
+                src="review-form-qr.png"
+                alt="QR code for the Big Red Connect Rider Feedback form"
+                class="review-qr"
+              />
             </div>
+
             <div class="scan-label">SCAN TO LEAVE A REVIEW</div>
             <p class="review-privacy">Use the QR code if you would rather complete the review on your phone.</p>
           </div>
@@ -340,7 +350,7 @@
 
   </main>
 
-  <!-- Versioned JS forces the current game/audio engine to load -->
-  <script src="discover.js?v=20260925-v21-staged"></script>
+  <!-- Versioned staged JS keeps v21 isolated from the live Discover engine -->
+  <script src="discover-v21-staged.js?v=20260925-v21-staged"></script>
 </body>
 </html>
