@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+  <!-- Keep the installed Discover experience from mixing old/new app files -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+
+  <meta name="theme-color" content="#000000" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Discover with Big Red" />
+
+  <title>Discover with Big Red</title>
+
+  <!-- Versioned app assets prevent an old iPad/PWA cache from mixing releases -->
+  <link rel="stylesheet" href="discover.css?v=20260925-v21-staged" />
+</head>
+<body>
+  <main class="experience-shell">
+
+    <button
+      id="volumeBtn"
+      class="volume-control sound-on"
+      type="button"
+      aria-label="Sound On"
+      title="Sound On"
+    >
+      <span id="volumeIcon" class="volume-icon" aria-hidden="true">🔊</span>
+      <span id="volumeLabel" class="volume-label">Sound</span>
+    </button>
+
+    <section id="homeView" class="home-view" aria-label="Discover with Big Red presentation">
+      <video
+        id="presentationVideo"
+        class="presentation-video"
+        autoplay
+        muted
+        loop
+        playsinline
+        webkit-playsinline
+        preload="auto"
+        disablepictureinpicture
+      >
+        <source
+          src="https://media.bigredconnectokc.com/discover-current.mov"
+          type="video/quicktime"
+        />
+      </video>
+      <input id="localProgramFile" type="file" accept="video/*,.mov,.mp4" hidden />
+      <div id="localProgramStatus" class="local-program-status" hidden></div>
+
+      <div id="videoLoading" class="video-loading" hidden>
+        <div class="loading-card">
+          <div class="eyebrow">DISCOVER WITH BIG RED</div>
+          <h2 id="videoLoadingTitle">Big Red is loading.</h2>
+          <p id="videoLoadingMessage">While it loads, pick something to do.</p>
+          <div class="loading-actions">
+            <button id="loadingGamesBtn" type="button">🎮 Play a Game</button>
+            <button id="loadingReviewBtn" type="button">⭐ Leave a Review</button>
+            <button id="loadingTipBtn" type="button">❤️ Tip Big Red</button>
+            <button id="loadingPlanBtn" type="button">📲 Plan Next Ride</button>
+          </div>
+        </div>
+      </div>
+
+
+      <button
+        id="loadLocalProgramBtn"
+        class="discover-badge discover-badge-button"
+        type="button"
+        title="Tap to load the weekly program"
+        aria-label="Discover with Big Red. Tap to load the weekly program."
+      >
+        <span class="discover-badge-dot" aria-hidden="true"></span>
+        Discover with Big Red
+      </button>
+
+      <div id="videoFallback" class="video-fallback" hidden>
+        <div class="fallback-card">
+          <div class="eyebrow">BIG RED CONNECT</div>
+          <h1>Discover with Big Red</h1>
+          <p>The presentation is temporarily unavailable.</p>
+          <button id="retryVideoBtn" type="button">Try Again</button>
+        </div>
+      </div>
+
+      <div class="discover-actions" aria-label="Discover options">
+        <button id="gamesBtn" class="action-button" type="button">🎮 Games</button>
+        <button id="musicBtn" class="action-button" type="button">🎵 Music</button>
+        <button id="weatherBtn" class="action-button" type="button">☀️ Weather</button>
+        <button id="driverBtn" class="action-button" type="button">👋 Driver</button>
+        <button id="planBtn" class="action-button" type="button">📲 Rider Hub</button>
+        <button id="tipBtn" class="action-button" type="button">❤️ Tip</button>
+        <button id="reviewBtn" class="action-button" type="button">⭐ Review</button>
+      </div>
+    </section>
+
+
+    <section id="musicPanel" class="overlay-panel" aria-label="Music requests" hidden>
+      <div class="panel-card music-panel-card">
+        <button class="back-button" data-home-reset type="button">← Back to Big Red</button>
+
+        <div class="music-heading">
+          <div class="eyebrow">PICK THE VIBE</div>
+          <h2>Request the music</h2>
+          <p>Choose a Big Red playlist. Your request goes to the driver, who stays in control of playback.</p>
+        </div>
+
+        <div class="music-choice-grid" aria-label="Approved Big Red playlists">
+          <button class="music-choice" data-music-choice="Country" type="button">🤠 <strong>Country</strong></button>
+          <button class="music-choice" data-music-choice="Campus Nights" type="button">🎓 <strong>Campus Nights</strong></button>
+          <button class="music-choice" data-music-choice="Throwbacks" type="button">📼 <strong>Throwbacks</strong></button>
+          <button class="music-choice" data-music-choice="Christian" type="button">✝️ <strong>Christian</strong></button>
+          <button class="music-choice" data-music-choice="Chill" type="button">🌙 <strong>Chill</strong></button>
+          <button class="music-choice" data-music-choice="Rider Requests" type="button">🙋 <strong>Rider Requests</strong></button>
+        </div>
+
+        <div id="musicRequestStatus" class="music-request-status" role="status">
+          Pick one and I’ll send the request to Big Red.
+        </div>
+      </div>
+    </section>
+
+    <section id="driverPanel" class="overlay-panel" aria-label="Driver profile" hidden>
+      <div class="panel-card driver-panel-card">
+        <button class="back-button" data-home-reset type="button">← Back to Big Red</button>
+
+        <div class="driver-profile-grid">
+          <div class="driver-identity-card">
+            <div class="driver-photo-frame">
+              <img src="Profile Pic.PNG" alt="Big Red Dan" class="driver-profile-photo" />
+            </div>
+            <div class="driver-kicker">YOU'RE RIDING WITH</div>
+            <h2>Big Red Dan</h2>
+            <div class="driver-badges">
+              <span>🇺🇸 Veteran Owned</span>
+              <span>📍 Oklahoma City Metro</span>
+              <span>🚗 Rideshare since 2024</span>
+              <span>⭐ Local • Trusted</span>
+            </div>
+          </div>
+
+          <div class="driver-story-stack">
+            <div class="driver-story-card">
+              <div class="driver-story-label">ASK ME ABOUT</div>
+              <strong>Big Red Connect</strong>
+              <p>Local rides built around planning ahead, straightforward pricing, and one trusted driver.</p>
+            </div>
+
+            <div class="driver-story-card">
+              <div class="driver-story-label">WHY BIG RED?</div>
+              <strong>Simple. Reliable. Personal.</strong>
+              <p>No mystery driver, no complicated process — just clear communication and a ride handled ahead of time.</p>
+            </div>
+
+            <div class="driver-story-card">
+              <div class="driver-story-label">GOOD TO KNOW</div>
+              <strong>Plan ahead when you can.</strong>
+              <p>Short-notice requests are welcome when availability allows.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="weatherPanel" class="overlay-panel" aria-label="Weather" hidden>
+      <div class="panel-card weather-panel-card">
+        <button class="back-button" data-home-reset type="button">← Back to Big Red</button>
+
+        <div class="weather-heading">
+          <div class="eyebrow">CURRENT CONDITIONS</div>
+          <h2>Weather Along the Ride</h2>
+          <p id="weatherLocationLabel">Loading your local weather…</p>
+        </div>
+
+        <div id="weatherLoading" class="weather-loading">Checking the weather…</div>
+
+        <div id="weatherContent" hidden>
+          <div class="weather-current">
+            <div class="weather-temp-wrap">
+              <div id="weatherIcon" class="weather-icon" aria-hidden="true">☀️</div>
+              <div>
+                <div id="weatherTemp" class="weather-temp">--°</div>
+                <div id="weatherCondition" class="weather-condition">—</div>
+              </div>
+            </div>
+
+            <div class="weather-metrics">
+              <div><span>High / Low</span><strong id="weatherHighLow">—</strong></div>
+              <div><span>Wind</span><strong id="weatherWind">—</strong></div>
+              <div><span>Rain</span><strong id="weatherRain">—</strong></div>
+            </div>
+          </div>
+
+          <div class="weather-hourly-label">NEXT FEW HOURS</div>
+          <div id="weatherHourly" class="weather-hourly"></div>
+        </div>
+
+        <div class="weather-footer">
+          <span>Weather updates only when you open this screen.</span>
+          <button id="refreshWeatherBtn" type="button">Refresh</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="gamesPanel" class="overlay-panel" aria-label="Games" hidden>
+      <div class="panel-card">
+        <button class="back-button" data-home-reset type="button">← Back to Big Red</button>
+
+        <div class="panel-heading">
+          <div class="eyebrow">DISCOVER WITH BIG RED</div>
+          <h2>Pick a game</h2>
+          <p>Quick games made for the ride.</p>
+        </div>
+
+        <div class="game-grid">
+          <button class="game-card" data-game="trivia" type="button">
+            <strong>Trivia</strong>
+            <span>15 questions • gets harder as you go</span>
+          </button>
+
+          <button class="game-card" data-game="wyr" type="button">
+            <strong>Would You Rather</strong>
+            <span>10 quick choices</span>
+          </button>
+
+          <button class="game-card" data-game="scramble" type="button">
+            <strong>Word Scramble</strong>
+            <span>10 timed words</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section id="gamePanel" class="overlay-panel" aria-label="Game" hidden>
+      <div class="panel-card game-panel-card">
+        <button id="backToGamesBtn" class="back-button" type="button">← Games</button>
+        <div id="gameContent" class="game-content"></div>
+      </div>
+    </section>
+
+    <section id="planPanel" class="overlay-panel" aria-label="Plan next ride" hidden>
+      <div class="panel-card plan-card">
+        <button class="back-button" data-home-reset type="button">← Back to Big Red</button>
+
+        <div class="eyebrow">KEEP BIG RED HANDY</div>
+        <h2>Save your Rider Hub for next time</h2>
+        <p>Your Rider Hub keeps ride details, tracking, and easy access to Big Red in one place. Save it to your Home Screen after you scan.</p>
+
+        <div class="qr-frame">
+          <img
+            src="rider-hub-qr.png"
+            alt="QR code linking to the Big Red Connect Rider Hub"
+            class="rider-qr"
+          />
+        </div>
+
+        <div class="scan-label">SCAN • OPEN • SAVE TO HOME SCREEN</div>
+        <div class="hub-address">bigredconnectokc.com/rider/</div>
+        <div class="hub-save-contact">Also save Red’s number: <strong>(405) 378-4024</strong></div>
+      </div>
+    </section>
+
+    <section id="tipPanel" class="overlay-panel" aria-label="Tip Big Red" hidden>
+      <div class="panel-card tip-card">
+        <button class="back-button" data-home-reset type="button">← Back to Big Red</button>
+
+        <div class="eyebrow">THANK YOU</div>
+        <h2>Tip Big Red</h2>
+        <p class="tip-note">Tips are appreciated, never expected.</p>
+        <p class="tip-helper">Scan your preferred payment app with your phone.</p>
+
+        <div class="tip-grid">
+          <div class="tip-option">
+            <div class="tip-service">Cash App</div>
+            <div class="tip-qr-frame">
+              <img
+                src="cashapp-tip-qr.png"
+                alt="Cash App QR code for Big Red Transportation"
+                class="tip-qr"
+              />
+            </div>
+            <div class="tip-handle">$BigRedTransport1</div>
+          </div>
+
+          <div class="tip-option">
+            <div class="tip-service">Venmo</div>
+            <div class="tip-qr-frame">
+              <img
+                src="venmo-tip-qr.png"
+                alt="Venmo QR code for Big Red Connect"
+                class="tip-qr"
+              />
+            </div>
+            <div class="tip-handle">@BigRedConnect</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="reviewPanel" class="overlay-panel" aria-label="Leave a Review" hidden>
+      <div class="panel-card review-panel-card">
+        <button class="back-button" data-home-reset type="button">← Back to Big Red</button>
+
+        <div class="review-heading">
+          <div class="eyebrow">THANKS FOR RIDING</div>
+          <h2>Leave a Review</h2>
+          <p>Use your phone for the easiest option, or open the form directly on this tablet.</p>
+        </div>
+
+        <div class="review-grid review-grid-v18">
+          <div class="review-form-wrap">
+            <div class="review-section-label">REVIEW ON THIS TABLET</div>
+            <iframe
+              class="review-form-frame"
+              src="https://docs.google.com/forms/d/e/1FAIpQLSeq6WCnkrG417rWCGwN56i7FplWpNTHlg1lpGuC-IETDEkEHw/viewform?embedded=true"
+              title="Big Red Connect Rider Feedback"
+              loading="lazy"
+            ></iframe>
+            <button id="reviewOpenBtn" class="review-open-button review-fallback-button" type="button">
+              Open Form Full Screen
+            </button>
+          </div>
+
+          <div class="review-qr-column">
+            <div class="review-section-label">OR USE YOUR PHONE</div>
+            <div class="review-qr-frame">
+              <img src="review-form-qr.png" alt="QR code for the Big Red Connect Rider Feedback form" class="review-qr" />
+            </div>
+            <div class="scan-label">SCAN TO LEAVE A REVIEW</div>
+            <p class="review-privacy">Use the QR code if you would rather complete the review on your phone.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Versioned JS forces the current game/audio engine to load -->
+  <script src="discover.js?v=20260925-v21-staged"></script>
+</body>
+</html>
