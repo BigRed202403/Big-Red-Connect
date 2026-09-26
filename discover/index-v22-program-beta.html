@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <meta name="theme-color" content="#000000" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Discover Beta" />
+  <title>Discover with Big Red — Program Rotation Beta</title>
+  <style>
+    :root{--red:#d71920;--panel:rgba(10,10,10,.94);--text:#fff;--muted:#c7c7c7}
+    *{box-sizing:border-box}
+    html,body{margin:0;width:100%;height:100%;background:#000;overflow:hidden;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    .beta-shell{position:fixed;inset:0;background:#000}
+    #discoverFrame{position:absolute;inset:0;width:100%;height:100%;border:0;background:#000}
+    .beta-badge{position:absolute;z-index:50;top:max(10px,env(safe-area-inset-top));left:12px;padding:7px 10px;border:1px solid rgba(255,255,255,.22);border-radius:999px;background:rgba(0,0,0,.72);color:#fff;font-weight:800;font-size:11px;letter-spacing:.08em;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);user-select:none}
+    .beta-badge::before{content:"";display:inline-block;width:7px;height:7px;margin-right:6px;border-radius:50%;background:var(--red);vertical-align:1px}
+    .program-source{position:absolute;z-index:50;top:max(48px,calc(env(safe-area-inset-top) + 38px));left:12px;padding:7px 10px;border:1px solid rgba(255,255,255,.18);border-radius:999px;background:rgba(0,0,0,.72);color:#d0d0d0;font-weight:800;font-size:11px;letter-spacing:.05em;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);user-select:none}
+    .program-source.local{border-color:rgba(77,220,125,.55);color:#a9f4c1}
+    .beta-note{position:absolute;z-index:55;right:12px;top:max(10px,env(safe-area-inset-top));max-width:280px;padding:7px 10px;border-radius:10px;background:rgba(0,0,0,.70);border:1px solid rgba(255,255,255,.12);color:#bbb;font-size:11px;line-height:1.25;text-align:right;pointer-events:none}
+    .dock{position:absolute;z-index:60;left:50%;bottom:max(12px,env(safe-area-inset-bottom));transform:translateX(-50%);width:min(720px,calc(100% - 26px));display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:10px;border:1px solid rgba(255,255,255,.16);border-radius:18px;background:rgba(0,0,0,.82);box-shadow:0 14px 36px rgba(0,0,0,.45);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+    .dock button{min-height:54px;border:1px solid rgba(255,255,255,.17);border-radius:13px;background:#171717;color:#fff;font:800 16px/1.15 system-ui,-apple-system,sans-serif;cursor:pointer;-webkit-tap-highlight-color:transparent}
+    .dock button:active{transform:scale(.985)}
+    .cutin-wrap{position:absolute;z-index:70;inset:0;display:grid;place-items:center;padding:24px;background:rgba(0,0,0,.26);opacity:0;pointer-events:none;transition:opacity 180ms ease}
+    .cutin-wrap.show{opacity:1;pointer-events:auto}
+    .cutin-card{width:min(700px,92vw);border:1px solid rgba(255,255,255,.22);border-radius:24px;background:var(--panel);color:var(--text);padding:clamp(22px,4vw,38px);box-shadow:0 24px 70px rgba(0,0,0,.58);text-align:center;transform:translateY(14px) scale(.985);transition:transform 180ms ease;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+    .cutin-wrap.show .cutin-card{transform:translateY(0) scale(1)}
+    .cutin-eyebrow{color:#ff555a;font-weight:900;font-size:12px;letter-spacing:.13em;margin-bottom:8px}
+    .cutin-icon{font-size:clamp(44px,8vw,74px);line-height:1;margin-bottom:10px}
+    .cutin-title{margin:0;font-size:clamp(30px,5.5vw,54px);line-height:1.02;letter-spacing:-.035em}
+    .cutin-copy{margin:12px auto 20px;max-width:560px;color:var(--muted);font-size:clamp(16px,2.4vw,22px);line-height:1.35}
+    .cutin-actions{display:grid;grid-template-columns:1.2fr .8fr;gap:10px;max-width:520px;margin:0 auto}
+    .cutin-actions button{min-height:52px;border-radius:13px;font:850 16px system-ui,-apple-system,sans-serif;cursor:pointer;-webkit-tap-highlight-color:transparent}
+    #cutinOpenBtn{border:1px solid var(--red);background:var(--red);color:#fff}
+    #cutinDismissBtn{border:1px solid rgba(255,255,255,.18);background:#171717;color:#ddd}
+    .cutin-progress{height:3px;margin:22px auto -4px;max-width:520px;overflow:hidden;border-radius:999px;background:rgba(255,255,255,.12)}
+    .cutin-progress>span{display:block;width:100%;height:100%;background:var(--red);transform-origin:left center}
+    .cutin-wrap.show .cutin-progress>span{animation:cutinTimer 12s linear forwards}
+    @keyframes cutinTimer{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+    @media(max-width:680px){.dock{gap:7px;padding:8px}.dock button{font-size:14px;min-height:50px}.cutin-actions{grid-template-columns:1fr}.beta-note{display:none}}
+  </style>
+</head>
+<body>
+  <main class="beta-shell">
+    <iframe id="discoverFrame" src="index-v21-staged.html?v=20260926-program-beta" title="Discover with Big Red" allow="autoplay; geolocation"></iframe>
+
+    <div class="beta-badge">PROGRAM ROTATION BETA</div>
+    <div id="programSource" class="program-source" role="status">STREAMING PROGRAM</div>
+    <div class="beta-note">Prototype: 3-button dock + rotating interactive feature cut-ins</div>
+
+    <nav class="dock" aria-label="Discover quick actions">
+      <button type="button" data-target="gamesBtn">🎮 Games</button>
+      <button type="button" data-target="musicBtn">🎵 Music</button>
+      <button type="button" data-target="planBtn">📲 Rider Hub</button>
+    </nav>
+
+    <section id="cutinWrap" class="cutin-wrap" aria-live="polite" aria-hidden="true">
+      <div class="cutin-card">
+        <div id="cutinEyebrow" class="cutin-eyebrow">DISCOVER SOMETHING</div>
+        <div id="cutinIcon" class="cutin-icon">☀️</div>
+        <h1 id="cutinTitle" class="cutin-title">Weather along the ride</h1>
+        <p id="cutinCopy" class="cutin-copy">See the current conditions and the next few hours.</p>
+        <div class="cutin-actions">
+          <button id="cutinOpenBtn" type="button">Open Weather</button>
+          <button id="cutinDismissBtn" type="button">Keep Watching</button>
+        </div>
+        <div class="cutin-progress" aria-hidden="true"><span></span></div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+  (() => {
+    "use strict";
+    const frame=document.getElementById("discoverFrame");
+    const cutinWrap=document.getElementById("cutinWrap");
+    const cutinEyebrow=document.getElementById("cutinEyebrow");
+    const cutinIcon=document.getElementById("cutinIcon");
+    const cutinTitle=document.getElementById("cutinTitle");
+    const cutinCopy=document.getElementById("cutinCopy");
+    const cutinOpenBtn=document.getElementById("cutinOpenBtn");
+    const cutinDismissBtn=document.getElementById("cutinDismissBtn");
+    const programSource=document.getElementById("programSource");
+
+    const prompts=[
+      {target:"weatherBtn",eyebrow:"CHECK THE RIDE AHEAD",icon:"☀️",title:"Weather along the ride",copy:"See current conditions and what the next few hours look like.",action:"Open Weather"},
+      {target:"driverBtn",eyebrow:"YOU'RE RIDING WITH",icon:"👋",title:"Meet Big Red Dan",copy:"Veteran owned, local, and built around one trusted driver.",action:"Meet Your Driver"},
+      {target:"gamesBtn",eyebrow:"WANT TO PLAY?",icon:"🎮",title:"Make the ride a little quicker",copy:"Trivia, Would You Rather, and Word Scramble are ready when you are.",action:"Play a Game"},
+      {target:"musicBtn",eyebrow:"PICK THE VIBE",icon:"🎵",title:"Want different music?",copy:"Choose a Big Red playlist or send a specific song or artist request.",action:"Request Music"},
+      {target:"planBtn",eyebrow:"KEEP BIG RED HANDY",icon:"📲",title:"Save your Rider Hub",copy:"Keep ride details, tracking, and easy access to Big Red in one place.",action:"Open Rider Hub"},
+      {target:"reviewBtn",eyebrow:"THANKS FOR RIDING",icon:"⭐",title:"How was the ride?",copy:"A quick review helps future riders know what to expect from Big Red.",action:"Leave a Review"},
+      {target:"tipBtn",eyebrow:"OPTIONAL",icon:"❤️",title:"Want to tip Big Red?",copy:"Tips are appreciated, never expected.",action:"Tip Big Red"}
+    ];
+
+    let promptOrder=[],promptPos=0,lastPromptIndex=-1,currentPrompt=null,cutinTimer=null,scheduleTimer=null,pausedByBeta=false,frameReady=false;
+
+    function frameDoc(){try{return frame.contentDocument||frame.contentWindow.document}catch{return null}}
+    function presentationVideo(){const doc=frameDoc();return doc?doc.getElementById("presentationVideo"):null}
+    function visibleInnerPanel(){const doc=frameDoc();if(!doc)return false;return [...doc.querySelectorAll(".overlay-panel")].some(panel=>!panel.hidden)}
+    function pressInnerButton(id){const doc=frameDoc();const button=doc?doc.getElementById(id):null;if(!button)return false;button.click();return true}
+
+    function shuffle(items){const r=[...items];for(let i=r.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[r[i],r[j]]=[r[j],r[i]]}return r}
+    function rebuildOrder(){
+      promptOrder=shuffle(prompts.map((_,i)=>i));
+      if(promptOrder.length>1&&promptOrder[0]===lastPromptIndex){
+        [promptOrder[0],promptOrder[1]]=[promptOrder[1],promptOrder[0]];
+      }
+      promptPos=0;
+    }
+    function nextPrompt(){
+      if(!promptOrder.length||promptPos>=promptOrder.length)rebuildOrder();
+      const index=promptOrder[promptPos++];
+      lastPromptIndex=index;
+      return prompts[index];
+    }
+
+    function pauseProgram(){const video=presentationVideo();if(!video||video.paused)return;video.pause();pausedByBeta=true}
+    function resumeProgramIfHome(){if(!pausedByBeta||cutinWrap.classList.contains("show")||visibleInnerPanel())return;const video=presentationVideo();if(!video)return;video.play().catch(()=>{});pausedByBeta=false}
+
+    function updateProgramSource(){
+      const video=presentationVideo();
+      const source=video?(video.currentSrc||video.src||""):"";
+      const isLocal=source.startsWith("blob:");
+      programSource.textContent=isLocal?"LOCAL PROGRAM LOADED":"STREAMING PROGRAM";
+      programSource.classList.toggle("local",isLocal);
+    }
+
+    function hideCutin({resume=true}={}){
+      clearTimeout(cutinTimer);
+      cutinWrap.classList.remove("show");
+      cutinWrap.setAttribute("aria-hidden","true");
+      currentPrompt=null;
+      if(resume)setTimeout(resumeProgramIfHome,120);
+      scheduleNext();
+    }
+
+    function showCutin(prompt){
+      if(!frameReady||cutinWrap.classList.contains("show")||visibleInnerPanel()){scheduleNext(12000);return}
+      currentPrompt=prompt;
+      pauseProgram();
+      cutinEyebrow.textContent=prompt.eyebrow;
+      cutinIcon.textContent=prompt.icon;
+      cutinTitle.textContent=prompt.title;
+      cutinCopy.textContent=prompt.copy;
+      cutinOpenBtn.textContent=prompt.action;
+      cutinWrap.classList.add("show");
+      cutinWrap.setAttribute("aria-hidden","false");
+      clearTimeout(cutinTimer);
+      cutinTimer=setTimeout(()=>hideCutin({resume:true}),12000);
+    }
+
+    function scheduleNext(delay){
+      clearTimeout(scheduleTimer);
+      const wait=delay??(35000+Math.round(Math.random()*20000));
+      scheduleTimer=setTimeout(()=>showCutin(nextPrompt()),wait);
+    }
+
+    function installBetaLayer(){
+      const doc=frameDoc();if(!doc)return;
+      frameReady=true;
+      doc.getElementById("programBetaOverrides")?.remove();
+      const style=doc.createElement("style");
+      style.id="programBetaOverrides";
+      style.textContent=".discover-actions{display:none!important}.home-view{padding-bottom:82px!important}";
+      doc.head.appendChild(style);
+      updateProgramSource();
+      scheduleNext(15000);
+    }
+
+    document.querySelectorAll(".dock button[data-target]").forEach(button=>{
+      button.addEventListener("click",()=>{
+        clearTimeout(scheduleTimer);clearTimeout(cutinTimer);
+        if(cutinWrap.classList.contains("show")){
+          cutinWrap.classList.remove("show");
+          cutinWrap.setAttribute("aria-hidden","true");
+        }
+        currentPrompt=null;
+        pauseProgram();
+        pressInnerButton(button.dataset.target);
+        scheduleNext();
+      });
+    });
+
+    cutinOpenBtn.addEventListener("click",()=>{
+      if(!currentPrompt)return;
+      const target=currentPrompt.target;
+      clearTimeout(cutinTimer);
+      cutinWrap.classList.remove("show");
+      cutinWrap.setAttribute("aria-hidden","true");
+      currentPrompt=null;
+      pressInnerButton(target);
+      scheduleNext();
+    });
+
+    cutinDismissBtn.addEventListener("click",()=>hideCutin({resume:true}));
+    frame.addEventListener("load",installBetaLayer);
+
+    setInterval(()=>{
+      updateProgramSource();
+      if(!cutinWrap.classList.contains("show"))resumeProgramIfHome();
+    },1000);
+
+    document.addEventListener("visibilitychange",()=>{
+      if(document.hidden){clearTimeout(scheduleTimer);return}
+      scheduleNext(12000);
+    });
+  })();
+  </script>
+</body>
+</html>
