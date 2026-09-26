@@ -1463,7 +1463,11 @@
         throw new Error(result?.error || `Request failed (${response.status})`);
       }
 
-      if (button) button.classList.add("requested");
+      if (button) {
+        buttons.forEach(candidate => candidate.classList.remove("requested"));
+        button.classList.add("requested");
+        window.setTimeout(() => button.classList.remove("requested"), 1600);
+      }
       musicRequestStatus.textContent = successLabel;
       return true;
     } catch (error) {
