@@ -23,7 +23,7 @@
     .state-button{max-width:310px;padding:8px 11px;border:1px solid rgba(255,255,255,.18);border-radius:999px;background:rgba(0,0,0,.78);color:#ddd;font:800 11px/1.2 system-ui,-apple-system,sans-serif;letter-spacing:.055em;text-align:right;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
     .state-button.ready{border-color:rgba(47,200,94,.72);color:#8df0aa}
     .state-button.warning{border-color:rgba(255,188,63,.72);color:#ffd27a}
-    .dock{position:absolute;z-index:60;left:50%;bottom:max(12px,env(safe-area-inset-bottom));transform:translateX(-50%);width:min(720px,calc(100% - 26px));display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:10px;border:1px solid rgba(255,255,255,.16);border-radius:18px;background:rgba(0,0,0,.82);box-shadow:0 14px 36px rgba(0,0,0,.45);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+    .dock{position:absolute;z-index:60;left:50%;bottom:max(12px,env(safe-area-inset-bottom));transform:translateX(-50%);width:min(820px,calc(100% - 26px));display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;padding:10px;border:1px solid rgba(255,255,255,.16);border-radius:18px;background:rgba(0,0,0,.82);box-shadow:0 14px 36px rgba(0,0,0,.45);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
     .dock button{min-height:54px;border:1px solid rgba(255,255,255,.17);border-radius:13px;background:#171717;color:#fff;font:800 16px/1.15 system-ui,-apple-system,sans-serif;cursor:pointer;-webkit-tap-highlight-color:transparent}
     .dock button:active{transform:scale(.985)}
     .dock.media-active{opacity:0;pointer-events:none;transform:translate(-50%,18px)}
@@ -65,6 +65,7 @@
     <nav id="dock" class="dock" aria-label="Discover quick actions">
       <button type="button" data-target="gamesBtn">🎮 Games</button>
       <button type="button" data-target="musicBtn">🎵 Music</button>
+      <button type="button" data-target="tipBtn">❤️ Tip</button>
       <button type="button" data-target="reviewBtn">⭐ Review</button>
     </nav>
 
