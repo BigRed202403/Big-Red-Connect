@@ -1,4 +1,4 @@
-// Discover v20 — driver + active games use full tablet height
+// Discover v21 STAGED — music requests + larger game banks + Rider Hub reinforcement
 (() => {
   "use strict";
 
@@ -19,7 +19,8 @@
     reviewUrl: "https://docs.google.com/forms/d/e/1FAIpQLSeq6WCnkrG417rWCGwN56i7FplWpNTHlg1lpGuC-IETDEkEHw/viewform",
     weatherCacheMs: 600000,
     weatherFallbackLat: 35.4676,
-    weatherFallbackLon: -97.5164
+    weatherFallbackLon: -97.5164,
+    musicRequestApi: "https://bigred-music-requests.bigredtransportation.workers.dev/api/music/request"
   };
 
   const video = document.getElementById("presentationVideo");
@@ -42,12 +43,14 @@
   const volumeLabel = document.getElementById("volumeLabel");
 
   const gamesBtn = document.getElementById("gamesBtn");
+  const musicBtn = document.getElementById("musicBtn");
   const weatherBtn = document.getElementById("weatherBtn");
   const driverBtn = document.getElementById("driverBtn");
   const planBtn = document.getElementById("planBtn");
   const tipBtn = document.getElementById("tipBtn");
   const reviewBtn = document.getElementById("reviewBtn");
 
+  const musicPanel = document.getElementById("musicPanel");
   const driverPanel = document.getElementById("driverPanel");
   const weatherPanel = document.getElementById("weatherPanel");
   const gamesPanel = document.getElementById("gamesPanel");
@@ -56,6 +59,9 @@
   const tipPanel = document.getElementById("tipPanel");
   const reviewPanel = document.getElementById("reviewPanel");
 
+  const musicRequestStatus = document.getElementById("musicRequestStatus");
+  const musicSpecificInput = document.getElementById("musicSpecificInput");
+  const musicSpecificSendBtn = document.getElementById("musicSpecificSendBtn");
   const reviewOpenBtn = document.getElementById("reviewOpenBtn");
   const weatherLocationLabel = document.getElementById("weatherLocationLabel");
   const weatherLoading = document.getElementById("weatherLoading");
@@ -120,7 +126,94 @@
       { q: "The Oklahoma City Thunder play which sport?", a: ["Baseball","Hockey","Basketball","Soccer"], correct: 2 },
       { q: "Which state borders Oklahoma to the south?", a: ["Kansas","Texas","Colorado","Missouri"], correct: 1 },
       { q: "Which famous highway runs through Oklahoma?", a: ["Route 66","Route 1","Pacific Coast Highway","Blue Ridge Parkway"], correct: 0 }
-    ],
+,
+      { q: "What color is on Oklahoma's state flag background?", a: ["Blue", "Red", "Green", "Gold"], correct: 0 },
+      { q: "Which city is the capital of Oklahoma?", a: ["Tulsa", "Norman", "Oklahoma City", "Lawton"], correct: 2 },
+      { q: "Which NBA team plays in Oklahoma City?", a: ["Mavericks", "Thunder", "Spurs", "Nuggets"], correct: 1 },
+      { q: "OU's main campus is in which city?", a: ["Stillwater", "Norman", "Edmond", "Tulsa"], correct: 1 },
+      { q: "OSU's main campus is in which city?", a: ["Stillwater", "Moore", "Yukon", "Shawnee"], correct: 0 },
+      { q: "Which road vehicle usually carries passengers for hire?", a: ["Tow truck", "Taxi", "Bulldozer", "Tractor"], correct: 1 },
+      { q: "Which device commonly gives turn-by-turn directions?", a: ["GPS", "Toaster", "Printer", "Microwave"], correct: 0 },
+      { q: "Which drink is made from roasted coffee beans?", a: ["Tea", "Coffee", "Soda", "Milk"], correct: 1 },
+      { q: "How many minutes are in one hour?", a: ["30", "45", "60", "90"], correct: 2 },
+      { q: "How many states are in the United States?", a: ["48", "49", "50", "52"], correct: 2 },
+      { q: "Which month comes after September?", a: ["August", "October", "November", "December"], correct: 1 },
+      { q: "Which animal is known for saying 'moo'?", a: ["Horse", "Cow", "Dog", "Goat"], correct: 1 },
+      { q: "What do you call frozen water?", a: ["Steam", "Ice", "Rain", "Snow"], correct: 1 },
+      { q: "Which meal is usually eaten in the morning?", a: ["Dinner", "Lunch", "Breakfast", "Supper"], correct: 2 },
+      { q: "Which color do red and blue make when mixed as paint?", a: ["Green", "Purple", "Orange", "Brown"], correct: 1 },
+      { q: "Which sport is played with a basketball hoop?", a: ["Baseball", "Basketball", "Soccer", "Golf"], correct: 1 },
+      { q: "Which Oklahoma city is south of Oklahoma City along I-35?", a: ["Moore", "Edmond", "Enid", "Woodward"], correct: 0 },
+      { q: "Which city is west of Oklahoma City and known for its Czech heritage?", a: ["Yukon", "Ada", "Durant", "Miami"], correct: 0 },
+      { q: "Which airport serves Oklahoma City as its main commercial airport?", a: ["Will Rogers World Airport", "Tulsa Riverside Airport", "Tinker AFB", "Max Westheimer Airport"], correct: 0 },
+      { q: "Bricktown is best known as part of which city?", a: ["Tulsa", "Oklahoma City", "Norman", "Stillwater"], correct: 1 },
+      { q: "Which highway direction would normally take you from Moore toward Norman on I-35?", a: ["North", "South", "East", "West"], correct: 1 },
+      { q: "What is the opposite of 'arrive'?", a: ["Leave", "Stop", "Wait", "Park"], correct: 0 },
+      { q: "A playlist is a collection of what?", a: ["Roads", "Songs", "Maps", "Receipts"], correct: 1 },
+      { q: "What does a red traffic light mean?", a: ["Go", "Speed up", "Stop", "Turn around"], correct: 2 },
+      { q: "Which season usually includes Christmas in Oklahoma?", a: ["Spring", "Summer", "Fall", "Winter"], correct: 3 },
+      { q: "What does 'OKC' commonly stand for?", a: ["Oklahoma County", "Oklahoma City", "Oklahoma Central", "Oklahoma Corridor"], correct: 1 },
+      { q: "Which venue type usually hosts live bands?", a: ["Concert venue", "Library shelf", "Gas pump", "Car wash"], correct: 0 },
+      { q: "Which of these is a common ride destination?", a: ["Airport", "Attic", "Mailbox", "Driveway cone"], correct: 0 },
+      { q: "Which word means a planned path between two places?", a: ["Route", "Recipe", "Roster", "Riddle"], correct: 0 },
+      { q: "Which app feature can scan a square code with a phone camera?", a: ["QR code", "Compass", "Calculator", "Alarm"], correct: 0 },
+      { q: "Which direction is opposite east?", a: ["North", "South", "West", "Up"], correct: 2 },
+      { q: "Which number comes after 99?", a: ["98", "100", "101", "109"], correct: 1 },
+      { q: "Which holiday is on July 4 in the United States?", a: ["Thanksgiving", "Independence Day", "Memorial Day", "Labor Day"], correct: 1 },
+      { q: "Which Oklahoma college team is nicknamed the Sooners?", a: ["OU", "OSU", "UCO", "OBU"], correct: 0 },
+      { q: "Which city is home to Oklahoma Baptist University?", a: ["Shawnee", "Moore", "Mustang", "Edmond"], correct: 0 }
+    ,
+      { q: "Which Oklahoma city is home to the University of Central Oklahoma?", a: ["Edmond", "Norman", "Lawton", "Tulsa"], correct: 0 },
+      { q: "Which city lies directly south of Moore?", a: ["Norman", "Edmond", "Yukon", "Shawnee"], correct: 0 },
+      { q: "What does a green traffic light mean?", a: ["Stop", "Go when clear", "Back up", "Park"], correct: 1 },
+      { q: "Which device is used to call or text someone?", a: ["Phone", "Toaster", "Thermostat", "Printer"], correct: 0 },
+      { q: "Which day comes after Friday?", a: ["Thursday", "Saturday", "Sunday", "Monday"], correct: 1 },
+      { q: "How many days are in a week?", a: ["5", "6", "7", "8"], correct: 2 },
+      { q: "Which season comes after summer?", a: ["Winter", "Spring", "Fall", "Monsoon"], correct: 2 },
+      { q: "Which month contains Halloween?", a: ["September", "October", "November", "December"], correct: 1 },
+      { q: "Which holiday is celebrated on December 25?", a: ["Thanksgiving", "Christmas", "Labor Day", "Memorial Day"], correct: 1 },
+      { q: "Which sport uses touchdowns?", a: ["Football", "Baseball", "Golf", "Tennis"], correct: 0 },
+      { q: "Which sport uses home runs?", a: ["Basketball", "Baseball", "Hockey", "Soccer"], correct: 1 },
+      { q: "Which sport uses goals and a net?", a: ["Soccer", "Golf", "Bowling", "Baseball"], correct: 0 },
+      { q: "Which drink is typically served hot in a mug?", a: ["Coffee", "Ice water", "Lemonade", "Soda"], correct: 0 },
+      { q: "Which meal is commonly eaten around noon?", a: ["Breakfast", "Lunch", "Dessert", "Brunch only"], correct: 1 },
+      { q: "Which is a common late-night food?", a: ["Pizza", "Cereal box", "Raw flour", "Ice cubes"], correct: 0 },
+      { q: "What color are most stop signs in the U.S.?", a: ["Blue", "Green", "Red", "Purple"], correct: 2 },
+      { q: "Which direction is opposite north?", a: ["East", "West", "South", "Up"], correct: 2 },
+      { q: "Which direction is opposite south?", a: ["East", "North", "West", "Down"], correct: 1 },
+      { q: "How many wheels does a typical car have?", a: ["2", "3", "4", "6"], correct: 2 },
+      { q: "What is fuel used for in a gasoline vehicle?", a: ["Power the engine", "Cool the tires", "Charge a phone only", "Wash the windshield"], correct: 0 },
+      { q: "Which part of a car helps you see behind you?", a: ["Rearview mirror", "Cup holder", "Seat belt", "Floor mat"], correct: 0 },
+      { q: "Which part of a car helps keep passengers restrained?", a: ["Seat belt", "Door handle", "Sun visor", "Radio"], correct: 0 },
+      { q: "Which Oklahoma city is east of Oklahoma City on I-40?", a: ["Shawnee", "Yukon", "El Reno", "Weatherford"], correct: 0 },
+      { q: "Which Oklahoma city is west of Oklahoma City on I-40?", a: ["Yukon", "Shawnee", "Seminole", "Prague"], correct: 0 },
+      { q: "Which city is home to the Oklahoma City Thunder?", a: ["Oklahoma City", "Tulsa", "Norman", "Stillwater"], correct: 0 },
+      { q: "Which university is commonly called OU?", a: ["University of Oklahoma", "Oklahoma State University", "UCO", "OBU"], correct: 0 },
+      { q: "Which university is commonly called OSU?", a: ["Oklahoma State University", "University of Oklahoma", "UCO", "TU"], correct: 0 },
+      { q: "Which Oklahoma team is nicknamed the Cowboys?", a: ["OSU", "OU", "Thunder", "UCO"], correct: 0 },
+      { q: "Which Oklahoma team is nicknamed the Sooners?", a: ["OU", "OSU", "Thunder", "Tulsa"], correct: 0 },
+      { q: "Which word means to reserve something ahead of time?", a: ["Book", "Forget", "Cancel", "Hide"], correct: 0 },
+      { q: "What does 'pickup' mean in a ride?", a: ["Where the rider gets in", "Where the ride ends", "A type of music", "A weather alert"], correct: 0 },
+      { q: "What does 'drop-off' mean in a ride?", a: ["Where the rider exits", "Where the driver starts the day", "A playlist", "A fuel stop"], correct: 0 },
+      { q: "What does 'route' mean?", a: ["Path between places", "Type of snack", "Weather condition", "Music genre"], correct: 0 },
+      { q: "What is a playlist?", a: ["A collection of songs", "A list of roads", "A list of riders", "A weather map"], correct: 0 },
+      { q: "Which button usually starts media playback?", a: ["Play", "Delete", "Print", "Close"], correct: 0 },
+      { q: "Which symbol often represents music?", a: ["🎵", "⚽", "☂️", "✈️"], correct: 0 },
+      { q: "Which symbol often represents weather?", a: ["☀️", "🎵", "☎️", "🚗"], correct: 0 },
+      { q: "Which symbol often represents an airport?", a: ["✈️", "🎸", "🏈", "🎯"], correct: 0 },
+      { q: "Which symbol often represents a phone?", a: ["📱", "🏀", "🚦", "🌧️"], correct: 0 },
+      { q: "Which Oklahoma city is known for Bricktown?", a: ["Oklahoma City", "Edmond", "Tulsa", "Lawton"], correct: 0 },
+      { q: "Which Oklahoma district is known for Campus Corner?", a: ["Norman", "Yukon", "Moore", "Shawnee"], correct: 0 },
+      { q: "Which state borders Oklahoma to the south?", a: ["Texas", "Nebraska", "Iowa", "Colorado only"], correct: 0 },
+      { q: "Which state borders Oklahoma to the north?", a: ["Kansas", "Louisiana", "Arizona", "Mississippi"], correct: 0 },
+      { q: "Which city is farther north: Edmond or Norman?", a: ["Edmond", "Norman", "Same latitude", "Neither"], correct: 0 },
+      { q: "Which city is farther south: Norman or Edmond?", a: ["Norman", "Edmond", "Same latitude", "Neither"], correct: 0 },
+      { q: "What is the common abbreviation for miles per hour?", a: ["mph", "mpg", "rpm", "gps"], correct: 0 },
+      { q: "Which unit is commonly used for temperature in Oklahoma weather reports?", a: ["Fahrenheit", "Kelvin only", "Meters", "Liters"], correct: 0 },
+      { q: "Which app feature can send an alert to your phone?", a: ["Push notification", "Wallpaper", "Calculator", "Keyboard"], correct: 0 },
+      { q: "What is the Big Red Rider Hub designed to help riders access?", a: ["Ride information", "Video games only", "Bank accounts", "Medical records"], correct: 0 },
+      { q: "What should a rider do before leaving the vehicle?", a: ["Check belongings", "Leave the door open", "Forget their phone", "Ignore the destination"], correct: 0 }
+],
     medium: [
       { q: "Which band recorded 'Hotel California'?", a: ["Journey","Eagles","Foreigner","Boston"], correct: 1 },
       { q: "Which movie features a DeLorean time machine?", a: ["Top Gun","Back to the Future","Ghostbusters","Ferris Bueller's Day Off"], correct: 1 },
@@ -137,7 +230,94 @@
       { q: "Which river forms much of Oklahoma's southern border?", a: ["Arkansas River","Red River","Canadian River","Cimarron River"], correct: 1 },
       { q: "Which classic board game uses railroads and properties?", a: ["Clue","Monopoly","Risk","Sorry!"], correct: 1 },
       { q: "Which car brand makes the Acadia?", a: ["GMC","Honda","Jeep","Nissan"], correct: 0 }
-    ],
+,
+      { q: "Which interstate runs north-south through Oklahoma City, Moore, and Norman?", a: ["I-40", "I-35", "I-44", "I-240"], correct: 1 },
+      { q: "Which interstate is the major east-west route through central Oklahoma City?", a: ["I-35", "I-40", "I-49", "I-70"], correct: 1 },
+      { q: "Which Oklahoma City district is known for its canal and entertainment venues?", a: ["Bricktown", "Paseo", "Stockyards City", "Automobile Alley"], correct: 0 },
+      { q: "Which Oklahoma City district is historically associated with cattle and western culture?", a: ["Stockyards City", "Bricktown", "Plaza District", "Deep Deuce"], correct: 0 },
+      { q: "Which Oklahoma City park sits just south of downtown and includes a large urban green space?", a: ["Scissortail Park", "Hafer Park", "Lake Thunderbird", "Myriad Gardens Zoo"], correct: 0 },
+      { q: "Which city is directly north of Oklahoma City along I-35?", a: ["Edmond", "Norman", "Mustang", "Shawnee"], correct: 0 },
+      { q: "Which city is southwest of Oklahoma City near I-44 and SH-37?", a: ["Tuttle", "Mustang", "Choctaw", "Harrah"], correct: 0 },
+      { q: "Which Oklahoma city is home to the University of Oklahoma?", a: ["Norman", "Stillwater", "Lawton", "Enid"], correct: 0 },
+      { q: "Which Oklahoma city is home to Oklahoma State University?", a: ["Stillwater", "Edmond", "Shawnee", "Norman"], correct: 0 },
+      { q: "What does ETA usually mean in transportation?", a: ["Estimated Time of Arrival", "Emergency Traffic Alert", "Exact Travel Address", "Express Transit Area"], correct: 0 },
+      { q: "What is a round trip?", a: ["A ride with a return portion", "A circular parking lot", "A one-way flight", "A road construction detour"], correct: 0 },
+      { q: "Which instrument measures air temperature?", a: ["Barometer", "Thermometer", "Speedometer", "Odometer"], correct: 1 },
+      { q: "Which instrument in a vehicle measures speed?", a: ["Odometer", "Tachometer", "Speedometer", "Altimeter"], correct: 2 },
+      { q: "Which vehicle gauge tracks total distance traveled?", a: ["Odometer", "Fuel gauge", "Compass", "Voltmeter"], correct: 0 },
+      { q: "Which road sign shape is normally used for STOP signs in the U.S.?", a: ["Triangle", "Octagon", "Circle", "Pentagon"], correct: 1 },
+      { q: "Which side of the road do vehicles drive on in the United States?", a: ["Left", "Right", "Either", "Center"], correct: 1 },
+      { q: "Which month begins meteorological fall in the Northern Hemisphere?", a: ["August", "September", "October", "November"], correct: 1 },
+      { q: "What is the common abbreviation for Oklahoma?", a: ["OK", "OA", "OM", "OKL"], correct: 0 },
+      { q: "Which time zone is Oklahoma in?", a: ["Eastern", "Central", "Mountain", "Pacific"], correct: 1 },
+      { q: "Which river runs through the Oklahoma City area and is associated with the Boathouse District?", a: ["Oklahoma River", "Arkansas River", "Red River", "Canadian River"], correct: 0 },
+      { q: "What is the name of Oklahoma City's NBA arena currently known as?", a: ["Paycom Center", "BOK Center", "Ford Center Tulsa", "Gallagher-Iba Arena"], correct: 0 },
+      { q: "Which city is home to the BOK Center?", a: ["Tulsa", "Oklahoma City", "Norman", "Stillwater"], correct: 0 },
+      { q: "Which Oklahoma highway is famous nationally for historic road-trip culture?", a: ["Route 66", "Route 1", "Route 95", "Route 101"], correct: 0 },
+      { q: "What does 'PWA' stand for in web technology?", a: ["Progressive Web App", "Private Wireless Access", "Public Web Account", "Portable Window App"], correct: 0 },
+      { q: "What does GPS use to determine location?", a: ["Satellites", "AM radio", "Streetlights", "Wi-Fi only"], correct: 0 },
+      { q: "Which weather term describes the percentage likelihood of precipitation?", a: ["Humidity", "Chance of rain", "Wind chill", "Visibility"], correct: 1 },
+      { q: "Which unit is commonly used for road distance in the U.S.?", a: ["Kilometers only", "Miles", "Meters", "Nautical miles"], correct: 1 },
+      { q: "Which is usually the safest action when a driver needs to interact with a complex control?", a: ["Do it while turning", "Wait until safely stopped", "Look down for a long time", "Hand off steering"], correct: 1 },
+      { q: "Which Oklahoma City district is known for NW 23rd Street restaurants and nightlife?", a: ["Uptown 23rd", "Stockyards City", "Adventure District", "Boathouse District"], correct: 0 },
+      { q: "Campus Corner is closely associated with which university?", a: ["University of Oklahoma", "Oklahoma State University", "UCO", "OBU"], correct: 0 },
+      { q: "Which city is Grand Casino located near?", a: ["Shawnee", "Norman", "Yukon", "Moore"], correct: 0 },
+      { q: "FireLake is strongly associated with which Oklahoma community?", a: ["Shawnee", "Edmond", "Mustang", "Piedmont"], correct: 0 },
+      { q: "Which city is west of Oklahoma City along I-40 and named after a Canadian territory?", a: ["Yukon", "Moore", "Choctaw", "Harrah"], correct: 0 },
+      { q: "Which city is just west of Oklahoma City and has a well-known high school called the Broncos?", a: ["Mustang", "Edmond", "Shawnee", "Del City"], correct: 0 },
+      { q: "Which Oklahoma City airport code is used for Will Rogers World Airport?", a: ["OKC", "TUL", "OUN", "LAW"], correct: 0 }
+    ,
+      { q: "Which interstate connects Oklahoma City and Norman?", a: ["I-35", "I-40", "I-44", "I-70"], correct: 0 },
+      { q: "Which interstate connects Oklahoma City and Shawnee?", a: ["I-40", "I-35", "I-44", "I-240"], correct: 0 },
+      { q: "Which Oklahoma City highway loops across the south side of the metro?", a: ["I-240", "I-235", "I-244", "I-70"], correct: 0 },
+      { q: "Which highway runs north through central Oklahoma City toward Edmond?", a: ["I-235", "I-40", "I-240", "US-412 only"], correct: 0 },
+      { q: "Which Oklahoma turnpike links Oklahoma City and Tulsa?", a: ["Turner Turnpike", "Kilpatrick Turnpike", "Cimarron Turnpike", "Indian Nation Turnpike"], correct: 0 },
+      { q: "Which turnpike serves the northwest side of the Oklahoma City metro?", a: ["Kilpatrick Turnpike", "Turner Turnpike", "Cherokee Turnpike", "Muskogee Turnpike"], correct: 0 },
+      { q: "What does GPS stand for?", a: ["Global Positioning System", "General Parking Service", "Ground Path Signal", "Geo Passenger System"], correct: 0 },
+      { q: "What does ETA stand for?", a: ["Estimated Time of Arrival", "Exact Travel Address", "Emergency Turn Alert", "Expected Traffic Area"], correct: 0 },
+      { q: "What does PWA stand for?", a: ["Progressive Web App", "Private Web Account", "Portable Wireless Access", "Public Web Archive"], correct: 0 },
+      { q: "What does QR stand for in QR code?", a: ["Quick Response", "Quality Route", "Queued Request", "Quick Ride"], correct: 0 },
+      { q: "Which Oklahoma City district is centered around NW 23rd Street nightlife and dining?", a: ["Uptown 23rd", "Bricktown", "Stockyards City", "Boathouse District"], correct: 0 },
+      { q: "Which district is just west of downtown OKC and known for murals and local businesses?", a: ["Plaza District", "Adventure District", "Deep Deuce", "Stockyards City"], correct: 0 },
+      { q: "Which district north of downtown OKC is known for restaurants and nightlife?", a: ["Midtown", "Bricktown", "Stockyards City", "Adventure District"], correct: 0 },
+      { q: "Which OKC district is associated with western heritage and cattle history?", a: ["Stockyards City", "Paseo", "Plaza", "Automobile Alley"], correct: 0 },
+      { q: "Which district is known for galleries and arts events in OKC?", a: ["Paseo Arts District", "Boathouse District", "Stockyards City", "Airport District"], correct: 0 },
+      { q: "Which Oklahoma attraction is located near NE 50th and Martin Luther King Ave?", a: ["Oklahoma City Zoo", "Scissortail Park", "Lake Hefner", "Will Rogers World Airport"], correct: 0 },
+      { q: "Which lake is on the northwest side of Oklahoma City?", a: ["Lake Hefner", "Lake Thunderbird", "Lake Texoma", "Grand Lake"], correct: 0 },
+      { q: "Which lake is east of Norman?", a: ["Lake Thunderbird", "Lake Hefner", "Arcadia Lake", "Lake Overholser"], correct: 0 },
+      { q: "Which city is home to Tinker Air Force Base?", a: ["Oklahoma City area", "Tulsa", "Lawton", "Enid"], correct: 0 },
+      { q: "Which Oklahoma city is home to Fort Sill?", a: ["Lawton", "Enid", "Norman", "Shawnee"], correct: 0 },
+      { q: "Which Oklahoma city is home to Vance Air Force Base?", a: ["Enid", "Altus", "Lawton", "Ardmore"], correct: 0 },
+      { q: "Which Oklahoma city is home to Altus Air Force Base?", a: ["Altus", "Stillwater", "Shawnee", "Tulsa"], correct: 0 },
+      { q: "Which airport code belongs to Will Rogers World Airport?", a: ["OKC", "TUL", "DFW", "OUN"], correct: 0 },
+      { q: "Which airport code belongs to Tulsa International Airport?", a: ["TUL", "OKC", "LAW", "ADM"], correct: 0 },
+      { q: "Which weather condition is measured with a percentage?", a: ["Humidity", "Temperature in degrees only", "Road speed", "Mileage"], correct: 0 },
+      { q: "Which weather term refers to moving air?", a: ["Wind", "Humidity", "Pressure only", "Visibility only"], correct: 0 },
+      { q: "Which instrument measures atmospheric pressure?", a: ["Barometer", "Thermometer", "Odometer", "Speedometer"], correct: 0 },
+      { q: "Which instrument measures vehicle engine speed in RPM?", a: ["Tachometer", "Odometer", "Altimeter", "Compass"], correct: 0 },
+      { q: "Which term means the distance a vehicle travels per unit of fuel?", a: ["Fuel economy", "Humidity", "Altitude", "Payload"], correct: 0 },
+      { q: "Which common U.S. road sign is triangular?", a: ["Yield", "Stop", "Speed Limit", "Railroad crossing"], correct: 0 },
+      { q: "Which common U.S. road sign is octagonal?", a: ["Stop", "Yield", "School zone", "No parking"], correct: 0 },
+      { q: "Which lane is normally used to pass on a multilane highway in Oklahoma?", a: ["Left lane", "Right shoulder", "Median", "Exit lane only"], correct: 0 },
+      { q: "Which month does the Oklahoma State Fair usually occur?", a: ["September", "January", "April", "December"], correct: 0 },
+      { q: "Which city hosts the Oklahoma State Fair?", a: ["Oklahoma City", "Tulsa", "Norman", "Stillwater"], correct: 0 },
+      { q: "Which city hosts the Tulsa State Fair?", a: ["Tulsa", "Oklahoma City", "Norman", "Shawnee"], correct: 0 },
+      { q: "Which Oklahoma City arena is home to the Thunder?", a: ["Paycom Center", "BOK Center", "Lloyd Noble Center", "Gallagher-Iba Arena"], correct: 0 },
+      { q: "Which arena is home to many major concerts in Tulsa?", a: ["BOK Center", "Paycom Center", "Lloyd Noble Center", "Chesapeake Energy Arena Norman"], correct: 0 },
+      { q: "Which arena is on the University of Oklahoma campus?", a: ["Lloyd Noble Center", "Paycom Center", "BOK Center", "Gallagher-Iba Arena"], correct: 0 },
+      { q: "Which arena is on the Oklahoma State University campus?", a: ["Gallagher-Iba Arena", "Paycom Center", "BOK Center", "Lloyd Noble Center"], correct: 0 },
+      { q: "Which historic highway runs through Oklahoma City and Tulsa?", a: ["Route 66", "Route 1", "US-101", "Pacific Coast Highway"], correct: 0 },
+      { q: "Which river is associated with the Boathouse District in Oklahoma City?", a: ["Oklahoma River", "Red River", "Arkansas River", "Illinois River"], correct: 0 },
+      { q: "Which river runs through Tulsa?", a: ["Arkansas River", "Red River", "Washita River", "Canadian River"], correct: 0 },
+      { q: "Which city is home to the National Weather Center?", a: ["Norman", "Tulsa", "Enid", "Stillwater"], correct: 0 },
+      { q: "Which university partners heavily with the National Weather Center?", a: ["University of Oklahoma", "Oklahoma State University", "UCO", "OBU"], correct: 0 },
+      { q: "What is a designated driver?", a: ["A sober driver responsible for transportation", "A rideshare app account", "A traffic officer", "A valet only"], correct: 0 },
+      { q: "What does 'surge pricing' refer to?", a: ["Higher prices during high demand", "Lower prices after midnight", "Fuel discounts", "Parking fees"], correct: 0 },
+      { q: "What does 'flat rate' usually mean?", a: ["A set price rather than a meter changing constantly", "A road with no hills", "A parking deck", "A type of tire"], correct: 0 },
+      { q: "What does 'deadhead' mean in transportation?", a: ["Driving without a passenger", "Driving too fast", "Missing an exit", "Stopping for fuel"], correct: 0 },
+      { q: "What does 'round trip' mean?", a: ["Travel to a destination and back", "One-way travel", "A circular road", "A short detour"], correct: 0 },
+      { q: "What is the purpose of a fare estimate?", a: ["Give a rider an expected price before the ride", "Track weather", "Play music", "Change traffic lights"], correct: 0 }
+],
     hard: [
       { q: "What is the chemical symbol for tungsten?", a: ["T","Tu","W","Tg"], correct: 2 },
       { q: "Which artist painted 'The Persistence of Memory'?", a: ["Picasso","Dalí","Monet","Van Gogh"], correct: 1 },
@@ -154,7 +334,94 @@
       { q: "Which U.S. president signed Oklahoma statehood into law?", a: ["Theodore Roosevelt","William Howard Taft","Woodrow Wilson","Grover Cleveland"], correct: 0 },
       { q: "Which mathematical constant begins 2.71828?", a: ["Pi","Euler's number","Golden ratio","Tau"], correct: 1 },
       { q: "Which Shakespeare play contains the character Prospero?", a: ["Hamlet","Macbeth","The Tempest","Othello"], correct: 2 }
-    ]
+,
+      { q: "Oklahoma entered the Union in which year?", a: ["1899", "1907", "1912", "1921"], correct: 1 },
+      { q: "Oklahoma was the ___ state admitted to the Union.", a: ["44th", "45th", "46th", "47th"], correct: 2 },
+      { q: "What is Oklahoma's official state bird?", a: ["Scissor-tailed flycatcher", "Cardinal", "Meadowlark", "Blue jay"], correct: 0 },
+      { q: "What is Oklahoma's official state tree?", a: ["Redbud", "Pecan", "Cottonwood", "Oak"], correct: 0 },
+      { q: "Which famous trail historically ended in Abilene, Kansas after passing north from Texas through Indian Territory?", a: ["Chisholm Trail", "Oregon Trail", "Santa Fe Trail", "Natchez Trace"], correct: 0 },
+      { q: "Which Oklahoma City museum focuses on the American West?", a: ["National Cowboy & Western Heritage Museum", "Gilcrease Museum", "Philbrook Museum", "Sam Noble Museum"], correct: 0 },
+      { q: "Which university operates the Sam Noble Oklahoma Museum of Natural History?", a: ["University of Oklahoma", "Oklahoma State University", "UCO", "OBU"], correct: 0 },
+      { q: "Which Oklahoma city hosts the National Cowboy & Western Heritage Museum?", a: ["Oklahoma City", "Tulsa", "Lawton", "Stillwater"], correct: 0 },
+      { q: "Which Oklahoma city is home to the Philbrook Museum of Art?", a: ["Tulsa", "Norman", "Edmond", "Shawnee"], correct: 0 },
+      { q: "Which large lake lies east of Norman?", a: ["Lake Thunderbird", "Lake Hefner", "Lake Overholser", "Arcadia Lake"], correct: 0 },
+      { q: "Which lake is located in northwest Oklahoma City?", a: ["Lake Hefner", "Lake Thunderbird", "Lake Texoma", "Grand Lake"], correct: 0 },
+      { q: "Which Oklahoma City district grew around historic automobile dealerships north of downtown?", a: ["Automobile Alley", "Paseo", "Stockyards City", "Bricktown"], correct: 0 },
+      { q: "Which historic Oklahoma City neighborhood became a center of Black culture and jazz?", a: ["Deep Deuce", "Mesta Park", "Crown Heights", "Heritage Hills"], correct: 0 },
+      { q: "Which Oklahoma City district is known for galleries and Spanish Revival architecture?", a: ["Paseo Arts District", "Bricktown", "Boathouse District", "Stockyards City"], correct: 0 },
+      { q: "Which river forms much of Oklahoma's southern border with Texas?", a: ["Red River", "Arkansas River", "Cimarron River", "Canadian River"], correct: 0 },
+      { q: "Which major river flows through Tulsa?", a: ["Arkansas River", "Red River", "Washita River", "North Canadian River"], correct: 0 },
+      { q: "Which Oklahoma town is closely associated with the National Weather Center?", a: ["Norman", "Enid", "Ada", "Altus"], correct: 0 },
+      { q: "The National Weather Center is on the campus of which university?", a: ["University of Oklahoma", "Oklahoma State University", "UCO", "TU"], correct: 0 },
+      { q: "Which military installation is adjacent to southeast Oklahoma City?", a: ["Tinker Air Force Base", "Fort Sill", "Altus AFB", "Vance AFB"], correct: 0 },
+      { q: "Which Oklahoma city is home to Fort Sill?", a: ["Lawton", "Enid", "Tulsa", "McAlester"], correct: 0 },
+      { q: "Which Oklahoma city is home to Vance Air Force Base?", a: ["Enid", "Altus", "Lawton", "Norman"], correct: 0 },
+      { q: "Which Oklahoma city is home to Altus Air Force Base?", a: ["Altus", "Shawnee", "Ponca City", "Ardmore"], correct: 0 },
+      { q: "Which interstate connects Oklahoma City westward toward Amarillo?", a: ["I-40", "I-35", "I-44", "I-240"], correct: 0 },
+      { q: "Which interstate connects Oklahoma City northeast toward Tulsa?", a: ["I-44", "I-35", "I-40", "I-27"], correct: 0 },
+      { q: "Which turnpike connects the Oklahoma City area toward Tulsa?", a: ["Turner Turnpike", "Kilpatrick Turnpike", "H.E. Bailey Turnpike", "Muskogee Turnpike"], correct: 0 },
+      { q: "Which turnpike loops around the north and west sides of the Oklahoma City metro?", a: ["Kilpatrick Turnpike", "Turner Turnpike", "Indian Nation Turnpike", "Cimarron Turnpike"], correct: 0 },
+      { q: "Which interstate bypass runs along south Oklahoma City?", a: ["I-240", "I-235", "I-244", "I-444"], correct: 0 },
+      { q: "Which north-south highway is also called the Broadway Extension north of downtown OKC?", a: ["US-77", "US-62", "US-270", "US-81"], correct: 0 },
+      { q: "Which Oklahoma City attraction is located in the Adventure District and features extensive animal exhibits?", a: ["Oklahoma City Zoo", "Frontier City Museum", "Science Museum Tulsa", "Sam Noble Museum"], correct: 0 },
+      { q: "Which botanical attraction is in downtown Oklahoma City?", a: ["Myriad Botanical Gardens", "Tulsa Botanic Garden", "Honor Heights Park", "Martin Park Nature Center"], correct: 0 },
+      { q: "Which Oklahoma City sports complex hosts rowing and paddlesports along the Oklahoma River?", a: ["Boathouse District", "Fairgrounds Arena", "Taft Stadium", "Remington Park"], correct: 0 },
+      { q: "Which horse-racing venue is in northeast Oklahoma City?", a: ["Remington Park", "Fair Meadows", "Will Rogers Downs", "Thunderbird Downs"], correct: 0 },
+      { q: "Which city hosts Will Rogers World Airport?", a: ["Oklahoma City", "Tulsa", "Norman", "Edmond"], correct: 0 },
+      { q: "Which city is home to the University of Central Oklahoma?", a: ["Edmond", "Norman", "Shawnee", "Stillwater"], correct: 0 },
+      { q: "Which city is home to Oklahoma Baptist University?", a: ["Shawnee", "Edmond", "Lawton", "Durant"], correct: 0 }
+    ,
+      { q: "Oklahoma became a state on which date?", a: ["November 16, 1907", "July 4, 1907", "January 1, 1908", "April 22, 1889"], correct: 0 },
+      { q: "What is Oklahoma's state motto?", a: ["Labor Omnia Vincit", "E Pluribus Unum", "Live Free or Die", "Excelsior"], correct: 0 },
+      { q: "What is Oklahoma's official state flower?", a: ["Oklahoma rose", "Indian blanket", "Rose rock", "Redbud blossom"], correct: 0 },
+      { q: "What is Oklahoma's official state rock?", a: ["Rose rock", "Granite", "Limestone", "Quartz"], correct: 0 },
+      { q: "Which event opened large portions of Oklahoma Territory to settlement in 1889?", a: ["Land Run of 1889", "Louisiana Purchase", "Trail of Tears", "Homestead Strike"], correct: 0 },
+      { q: "Which city was the first territorial capital of Oklahoma Territory?", a: ["Guthrie", "Oklahoma City", "Tulsa", "Norman"], correct: 0 },
+      { q: "Which city served as Oklahoma's state capital before it moved to Oklahoma City?", a: ["Guthrie", "Tulsa", "Stillwater", "Lawton"], correct: 0 },
+      { q: "In what year did Oklahoma City become the state capital?", a: ["1910", "1907", "1920", "1899"], correct: 0 },
+      { q: "Which Oklahoma museum preserves the history of the 1995 bombing?", a: ["Oklahoma City National Memorial & Museum", "National Cowboy Museum", "Sam Noble Museum", "Philbrook Museum"], correct: 0 },
+      { q: "Which Oklahoma City landmark features empty chairs representing bombing victims?", a: ["Oklahoma City National Memorial", "Scissortail Park", "Paycom Center", "Myriad Gardens"], correct: 0 },
+      { q: "Which tribal nation is headquartered in Ada, Oklahoma?", a: ["Chickasaw Nation", "Cherokee Nation", "Osage Nation", "Muscogee Nation"], correct: 0 },
+      { q: "Which tribal nation is headquartered in Tahlequah, Oklahoma?", a: ["Cherokee Nation", "Chickasaw Nation", "Choctaw Nation", "Comanche Nation"], correct: 0 },
+      { q: "Which tribal nation is headquartered in Durant, Oklahoma?", a: ["Choctaw Nation", "Cherokee Nation", "Osage Nation", "Pawnee Nation"], correct: 0 },
+      { q: "Which tribal nation is headquartered in Okmulgee, Oklahoma?", a: ["Muscogee Nation", "Chickasaw Nation", "Choctaw Nation", "Seminole Nation"], correct: 0 },
+      { q: "Which tribal nation is headquartered in Pawhuska, Oklahoma?", a: ["Osage Nation", "Cherokee Nation", "Chickasaw Nation", "Kiowa Tribe"], correct: 0 },
+      { q: "Which Oklahoma city is home to the University of Tulsa?", a: ["Tulsa", "Norman", "Edmond", "Stillwater"], correct: 0 },
+      { q: "Which Oklahoma city is home to Cameron University?", a: ["Lawton", "Ada", "Enid", "Durant"], correct: 0 },
+      { q: "Which Oklahoma city is home to East Central University?", a: ["Ada", "Durant", "Alva", "Tahlequah"], correct: 0 },
+      { q: "Which Oklahoma city is home to Southeastern Oklahoma State University?", a: ["Durant", "Ada", "Weatherford", "Stillwater"], correct: 0 },
+      { q: "Which Oklahoma city is home to Southwestern Oklahoma State University?", a: ["Weatherford", "Durant", "Tahlequah", "Edmond"], correct: 0 },
+      { q: "Which Oklahoma city is home to Northwestern Oklahoma State University?", a: ["Alva", "Ada", "Lawton", "Shawnee"], correct: 0 },
+      { q: "Which Oklahoma city is home to Northeastern State University?", a: ["Tahlequah", "Alva", "Weatherford", "Durant"], correct: 0 },
+      { q: "Which major reservoir straddles the Oklahoma-Texas border?", a: ["Lake Texoma", "Lake Hefner", "Lake Thunderbird", "Keystone Lake"], correct: 0 },
+      { q: "Which lake near Tulsa was formed by Keystone Dam on the Arkansas River?", a: ["Keystone Lake", "Lake Eufaula", "Grand Lake", "Lake Murray"], correct: 0 },
+      { q: "Which Oklahoma lake is one of the largest wholly within the state?", a: ["Lake Eufaula", "Lake Hefner", "Lake Thunderbird", "Lake Overholser"], correct: 0 },
+      { q: "Which scenic waterfall attraction is near Davis, Oklahoma?", a: ["Turner Falls", "Natural Falls", "Little Niagara", "Blue Hole"], correct: 0 },
+      { q: "Which Oklahoma state park is known for Broken Bow Lake and forested hills?", a: ["Beavers Bend State Park", "Lake Thunderbird State Park", "Roman Nose State Park", "Alabaster Caverns State Park"], correct: 0 },
+      { q: "Which Oklahoma state park is known for gypsum caves?", a: ["Alabaster Caverns State Park", "Beavers Bend State Park", "Robbers Cave State Park", "Lake Murray State Park"], correct: 0 },
+      { q: "Which Oklahoma state park is associated with outlaw hideouts in the Sans Bois Mountains?", a: ["Robbers Cave State Park", "Roman Nose State Park", "Sequoyah State Park", "Lake Murray State Park"], correct: 0 },
+      { q: "Which major interstate follows much of the east-west corridor through Oklahoma City toward Amarillo?", a: ["I-40", "I-35", "I-44", "I-70"], correct: 0 },
+      { q: "Which interstate connects Oklahoma City to Wichita and Dallas?", a: ["I-35", "I-40", "I-44", "I-70"], correct: 0 },
+      { q: "Which interstate connects Oklahoma City toward Tulsa and Lawton in different directions?", a: ["I-44", "I-35", "I-40", "I-27"], correct: 0 },
+      { q: "Which interstate does NOT directly pass through Oklahoma City?", a: ["I-70", "I-35", "I-40", "I-44"], correct: 0 },
+      { q: "Which U.S. highway follows Broadway Extension north of downtown Oklahoma City?", a: ["US-77", "US-81", "US-62", "US-270"], correct: 0 },
+      { q: "Which Oklahoma turnpike connects Tulsa toward Joplin, Missouri?", a: ["Will Rogers Turnpike", "Turner Turnpike", "Kilpatrick Turnpike", "H.E. Bailey Turnpike"], correct: 0 },
+      { q: "Which Oklahoma turnpike runs toward Lawton from the Oklahoma City area?", a: ["H.E. Bailey Turnpike", "Turner Turnpike", "Will Rogers Turnpike", "Cherokee Turnpike"], correct: 0 },
+      { q: "Which Oklahoma City lake is west of downtown and south of Lake Hefner?", a: ["Lake Overholser", "Lake Thunderbird", "Arcadia Lake", "Lake Eufaula"], correct: 0 },
+      { q: "Which city is home to Arcadia Lake?", a: ["Edmond", "Norman", "Tulsa", "Lawton"], correct: 0 },
+      { q: "Which city is home to Frontier City amusement park?", a: ["Oklahoma City", "Tulsa", "Norman", "Stillwater"], correct: 0 },
+      { q: "Which Oklahoma City museum is located next to the zoo in the Adventure District?", a: ["Science Museum Oklahoma", "Sam Noble Museum", "Philbrook Museum", "Museum of Osteology"], correct: 0 },
+      { q: "Which museum in Norman is known for dinosaur exhibits and natural history?", a: ["Sam Noble Oklahoma Museum of Natural History", "Science Museum Oklahoma", "Gilcrease Museum", "National Cowboy Museum"], correct: 0 },
+      { q: "Which Tulsa museum is famous for American West art and Indigenous collections?", a: ["Gilcrease Museum", "Philbrook Museum", "Sam Noble Museum", "National Cowboy Museum"], correct: 0 },
+      { q: "Which Tulsa museum is housed in a historic villa and gardens?", a: ["Philbrook Museum of Art", "Gilcrease Museum", "BOK Center", "Discovery Lab"], correct: 0 },
+      { q: "Which city is home to the Woody Guthrie Center?", a: ["Tulsa", "Norman", "Stillwater", "Lawton"], correct: 0 },
+      { q: "Which Oklahoma-born country star is from Yukon?", a: ["Garth Brooks", "Blake Shelton", "Toby Keith", "Carrie Underwood"], correct: 0 },
+      { q: "Which Oklahoma-born singer is from Checotah?", a: ["Carrie Underwood", "Reba McEntire", "Vince Gill", "Garth Brooks"], correct: 0 },
+      { q: "Which Oklahoma country star was born in Clinton and raised in Moore?", a: ["Toby Keith", "Garth Brooks", "Blake Shelton", "Vince Gill"], correct: 0 },
+      { q: "Which city is home to the American Banjo Museum?", a: ["Oklahoma City", "Tulsa", "Shawnee", "Stillwater"], correct: 0 },
+      { q: "Which Oklahoma town is associated with the birthplace of Will Rogers?", a: ["Oologah", "Yukon", "Ada", "Durant"], correct: 0 },
+      { q: "Which historic Oklahoma fort is near Lawton?", a: ["Fort Sill", "Fort Gibson", "Fort Reno", "Fort Washita"], correct: 0 }
+]
   };
 
   const wouldYouRather = [
@@ -177,7 +444,87 @@
     ["Have a week off work","Get free travel for a weekend"],
     ["Go to a huge concert","Go to a championship game"],
     ["Only listen to 80s music","Only listen to 90s music"],
-    ["Have sunrise views every morning","Have sunset views every evening"]
+    ["Have sunrise views every morning","Have sunset views every evening"],
+    ["Spend a night in Bricktown", "Spend a night in Midtown"],
+    ["Catch an OU game", "Catch a Thunder game"],
+    ["See live country music", "See live rock music"],
+    ["Go to Campus Corner", "Go to the Plaza District"],
+    ["Have perfect parking everywhere", "Have every light turn green"],
+    ["Ride with the windows down", "Ride with the A/C ice cold"],
+    ["Pick every song", "Pick every snack"],
+    ["Always know the fastest route", "Always know the prettiest route"],
+    ["Have free airport rides", "Have free concert rides"],
+    ["Explore Route 66", "Explore downtown OKC"],
+    ["Go to a small local venue", "Go to a huge arena show"],
+    ["Have front-row concert seats", "Have courtside basketball seats"],
+    ["Spend Saturday in Norman", "Spend Saturday in Shawnee"],
+    ["Go to a food festival", "Go to a music festival"],
+    ["Have unlimited breakfast tacos", "Have unlimited late-night pizza"],
+    ["Listen to country all night", "Listen to throwbacks all night"],
+    ["Sing every song out loud", "Know every trivia answer"],
+    ["Never need a phone charger", "Never need to stop for gas"],
+    ["Have a personal DJ", "Have a personal chef"],
+    ["Take a sunrise drive", "Take a midnight drive"],
+    ["Visit every Oklahoma small town", "Visit every Oklahoma state park"],
+    ["See a thunderstorm from a safe porch", "See a snowfall from a warm cabin"],
+    ["Have tickets to every home game", "Have tickets to every concert"],
+    ["Always get the best playlist", "Always get the best parking spot"],
+    ["Drive Route 66 coast to coast", "Take a cross-country train trip"],
+    ["Spend a day at the lake", "Spend a day downtown"],
+    ["Go bowling with friends", "Go to karaoke with friends"],
+    ["Eat at a new local restaurant", "Return to your favorite spot"],
+    ["See fireworks", "See Christmas lights"],
+    ["Go to the State Fair", "Go to a county fair"],
+    ["Have one extra hour every day", "Have one extra day every month"],
+    ["Always remember names", "Always remember song lyrics"],
+    ["Never have a low phone battery", "Never have weak cell service"],
+    ["Have perfect weather on every ride", "Have empty roads on every ride"],
+    ["Take the turnpike", "Take the scenic back roads"],
+    ["Watch a comedy", "Watch an action movie"],
+    ["Go dancing", "Go to live trivia"],
+    ["Have breakfast for dinner", "Have dinner for breakfast"],
+    ["Spend a night in Tulsa", "Spend a night in Oklahoma City"],
+    ["Go to a rodeo", "Go to a basketball game"],
+    ["Have a truck", "Have a sports car"],
+    ["Ride in Big Red", "Ride in a luxury limo"],
+    ["Listen to 2000s hits", "Listen to 2010s hits"],
+    ["Always have the aux cord", "Always control the temperature"],
+    ["Know the weather a week ahead", "Know traffic an hour ahead"],
+    ["Take a group road trip", "Take a solo road trip"],
+    ["Visit the mountains in fall", "Visit the beach in summer"],
+    ["Have a reserved table everywhere", "Have reserved parking everywhere"],
+    ["Go to a comedy show", "Go to a concert"],
+    ["Spend the evening at a casino", "Spend the evening at a live-music venue"],
+    ["Watch college football", "Watch pro basketball"],
+    ["Go to an outdoor concert", "Go to an indoor arena show"],
+    ["Have a favorite local diner", "Have a favorite local coffee shop"],
+    ["Try a new playlist every ride", "Keep the same favorite playlist"],
+    ["Hear the original song", "Hear a great live cover"],
+    ["Sit by the stage", "Sit where the sound is best"],
+    ["Have a quiet ride", "Have a sing-along ride"],
+    ["Plan every weekend early", "Decide everything last minute"],
+    ["Get everywhere 10 minutes early", "Never have to look for parking"],
+    ["Have unlimited road-trip snacks", "Have unlimited coffee"],
+    ["Take a night drive in the city", "Take a night drive in the country"],
+    ["Visit an Oklahoma lake", "Visit an Oklahoma mountain"],
+    ["Go to a Thunder playoff game", "Go to an OU rivalry game"],
+    ["Have a convertible on a perfect day", "Have a heated SUV in winter"],
+    ["Always know where you parked", "Always find your keys instantly"],
+    ["Never hit construction", "Never hit rush-hour traffic"],
+    ["Have free movie tickets", "Have free concert tickets"],
+    ["Go to a street festival", "Go to a county fair"],
+    ["Spend a weekend on Route 66", "Spend a weekend at the lake"],
+    ["Have a playlist named after you", "Have a menu item named after you"],
+    ["Pick the destination", "Pick the music"],
+    ["Get a surprise upgrade", "Get a surprise discount"],
+    ["Watch the sunrise", "Watch the sunset"],
+    ["Have a perfect singing voice", "Have perfect dance moves"],
+    ["Take photos everywhere", "Leave the phone in your pocket"],
+    ["Go to a game with friends", "Go to a concert with friends"],
+    ["Always have a designated driver", "Always have a reserved ride"],
+    ["Discover a hidden local restaurant", "Discover a hidden local music venue"],
+    ["Have one favorite song forever", "Find a new favorite song every week"],
+    ["Ride through a quiet downtown", "Ride through a lively downtown"]
   ];
 
   const scrambles = [
@@ -536,7 +883,157 @@
     {"word": "PLAYOFFS", "scramble": "OFFSPLAY", "hint": "Postseason competition."},
     {"word": "CHAMPION", "scramble": "PIONCHAM", "hint": "Winner of a title."},
     {"word": "TOUCHDOWN", "scramble": "DOWNTOUCH", "hint": "Football scoring play."},
-    {"word": "HOMERUN", "scramble": "RUNHOME", "hint": "Baseball hit around all the bases."}
+    {"word": "HOMERUN", "scramble": "RUNHOME", "hint": "Baseball hit around all the bases."},
+    {"word":"MOONEYS","scramble":"NEYSMOO","hint":"Hollywood Corners live-music stop."},
+    {"word":"BRICKHOUSE","scramble":"HOUSEBRICK","hint":"A Shawnee venue name."},
+    {"word":"FIRELAKE","scramble":"LAKEFIRE","hint":"Shawnee-area entertainment name."},
+    {"word":"GRANDCASINO","scramble":"CASINOGRAND","hint":"Large Shawnee-area casino destination."},
+    {"word":"ROADHOUSE","scramble":"HOUSEROAD","hint":"A west-OKC venue name."},
+    {"word":"RITZ","scramble":"TZRI","hint":"Classic venue name in Shawnee."},
+    {"word":"CAMPUSCORNER","scramble":"CORNERCAMPUS","hint":"Norman nightlife area near OU."},
+    {"word":"HOLLYWOOD","scramble":"YWOODHOLL","hint":"Part of Hollywood Corners."},
+    {"word":"MIDTOWN","scramble":"TOWNMID","hint":"OKC district north of downtown."},
+    {"word":"UPTOWN","scramble":"OWNUPT","hint":"OKC district around NW 23rd."},
+    {"word":"PLAZA","scramble":"AZAPL","hint":"OKC arts and entertainment district."},
+    {"word":"STOCKYARDS","scramble":"YARDSSTOCK","hint":"Historic western district in OKC."},
+    {"word":"SCISSORTAIL","scramble":"ORTAILSCISS","hint":"Large downtown OKC park."},
+    {"word":"PAYCOM","scramble":"COMPAY","hint":"Downtown arena name."},
+    {"word":"FAIRGROUNDS","scramble":"ROUNDSFAIRG","hint":"Home of major fairs and events."},
+    {"word":"WILLROGERS","scramble":"OGERSWILLR","hint":"Name tied to OKC's main airport."},
+    {"word":"TINKER","scramble":"KERTIN","hint":"Air Force base in southeast OKC."},
+    {"word":"MOORE","scramble":"OREMO","hint":"City south of Oklahoma City."},
+    {"word":"EDMOND","scramble":"ONDEDM","hint":"City north of Oklahoma City."},
+    {"word":"MUSTANG","scramble":"TANGMUS","hint":"City west of Oklahoma City."},
+    {"word":"BLANCHARD","scramble":"CHARDBLAN","hint":"Community southwest of the metro."},
+    {"word":"WEATHERFORD","scramble":"ERFORDWEATH","hint":"Western Oklahoma city."},
+    {"word":"LEXINGTON","scramble":"NGTONLEXI","hint":"Oklahoma community south of Norman."},
+    {"word":"KINGFISHER","scramble":"ISHERKINGF","hint":"City northwest of the metro."},
+    {"word":"TURNPIKE","scramble":"PIKETURN","hint":"Toll highway."},
+    {"word":"INTERSTATE","scramble":"STATEINTER","hint":"Major controlled-access highway."},
+    {"word":"EXPRESSWAY","scramble":"SSWAYEXPRE","hint":"Fast multi-lane roadway."},
+    {"word":"PICKUP","scramble":"KUPPIC","hint":"Where the rider gets in."},
+    {"word":"DROPOFF","scramble":"POFFDRO","hint":"Where the rider gets out."},
+    {"word":"PASSENGER","scramble":"ENGERPASS","hint":"Person riding in the vehicle."},
+    {"word":"DRIVER","scramble":"VERDRI","hint":"Person behind the wheel."},
+    {"word":"REQUEST","scramble":"UESTREQ","hint":"What a rider sends for a ride or song."},
+    {"word":"CONFIRMED","scramble":"IRMEDCONF","hint":"A ride that has been accepted."},
+    {"word":"TRACKING","scramble":"KINGTRAC","hint":"Following ride or location progress."},
+    {"word":"RIDERHUB","scramble":"RHUBRIDE","hint":"Big Red rider information center."},
+    {"word":"HOMESCREEN","scramble":"CREENHOMES","hint":"Where a rider can save the Rider Hub."},
+    {"word":"NOTIFICATION","scramble":"CATIONNOTIFI","hint":"An alert sent to a device."},
+    {"word":"SHORTCUT","scramble":"TCUTSHOR","hint":"Apple automation used for music playback."},
+    {"word":"PLAYBACK","scramble":"BACKPLAY","hint":"Music being played."},
+    {"word":"THROWBACKS","scramble":"BACKSTHROW","hint":"Older favorite songs."},
+    {"word":"CHRISTIAN","scramble":"STIANCHRI","hint":"One approved music category."},
+    {"word":"CAMPUS","scramble":"PUSCAM","hint":"College-area theme."},
+    {"word":"CHILL","scramble":"ILLCH","hint":"Relaxed music vibe."},
+    {"word":"PLAYLISTS","scramble":"LISTSPLAY","hint":"Collections of songs."},
+    {"word":"REQUESTS","scramble":"ESTSREQU","hint":"Things riders ask for."},
+    {"word":"VENUE","scramble":"NUEVE","hint":"Place where an event happens."},
+    {"word":"NIGHTLIFE","scramble":"TLIFENIGH","hint":"Evening entertainment."},
+    {"word":"CONNECTION","scramble":"CTIONCONNE","hint":"Link between people or systems."},
+    {"word":"RELIABLE","scramble":"ABLERELI","hint":"Something you can count on."},
+    {"word":"TRUSTED","scramble":"STEDTRU","hint":"Dependable and known."},
+    {"word":"LOCAL","scramble":"CALLO","hint":"Close to home."},
+    {"word":"VETERAN","scramble":"ERANVET","hint":"Someone who served in the military."},
+    {"word":"AFFORDABLE","scramble":"DABLEAFFOR","hint":"Reasonably priced."},
+    {"word":"FLATRATE","scramble":"RATEFLAT","hint":"One clear ride price."},
+    {"word":"NOSURGE","scramble":"URGENOS","hint":"Big Red pricing idea: no surge pricing."},
+    {"word":"TERMINAL","scramble":"INALTERM","hint":"Airport passenger building."},
+    {"word":"DEPARTURE","scramble":"RTUREDEPA","hint":"Leaving for a destination."},
+    {"word":"ARRIVAL","scramble":"IVALARR","hint":"Reaching a destination."},
+    {"word":"SATURDAY","scramble":"RDAYSATU","hint":"Popular weekend night."},
+    {"word":"SUNDAY","scramble":"DAYSUN","hint":"Day after Saturday."},
+    {"word":"MIDNIGHT","scramble":"IGHTMIDN","hint":"12:00 at night."},
+    {"word":"MORNING","scramble":"NINGMOR","hint":"Early part of the day."},
+    {"word":"SUNSET","scramble":"SETSUN","hint":"When the sun goes down."},
+    {"word":"SUNRISE","scramble":"RISESUN","hint":"When the sun comes up."},
+    {"word":"FORECAST","scramble":"CASTFORE","hint":"Prediction of upcoming weather."},
+    {"word":"HUMIDITY","scramble":"DITYHUMI","hint":"Amount of moisture in the air."},
+    {"word":"PRECIPITATION","scramble":"ITATIONPRECIP","hint":"Rain, snow or other water falling."},
+    {"word":"TEMPERATURE","scramble":"RATURETEMPE","hint":"Measure of how hot or cold it is."},
+    {"word":"THUNDERSTORM","scramble":"RSTORMTHUNDE","hint":"Storm with thunder and lightning."},
+    {"word":"LIGHTNING","scramble":"TNINGLIGH","hint":"Electrical flash in a storm."},
+    {"word":"TAILGATE","scramble":"GATETAIL","hint":"Pre-game gathering."},
+    {"word":"SOONERS","scramble":"NERSSOO","hint":"OU team nickname."},
+    {"word":"COWBOYS","scramble":"BOYSCOW","hint":"OSU team nickname."},
+    {"word":"BOOMER","scramble":"MERBOO","hint":"Part of a famous OU chant."},
+    {"word":"BEDLAM","scramble":"LAMBED","hint":"Historic Oklahoma rivalry name."},
+    {"word":"BOATHOUSE","scramble":"HOUSEBOAT","hint":"Part of OKC's river recreation district."},
+    {"word":"PASEO","scramble":"SEOPA","hint":"OKC arts district."},
+    {"word":"AUTOMOBILE","scramble":"OBILEAUTOM","hint":"Part of Automobile Alley."},
+    {"word":"DEEPDEUCE","scramble":"DEUCEDEEP","hint":"Historic OKC district."},
+    {"word":"ROUTE66","scramble":"TE66ROU","hint":"Historic highway through Oklahoma."},
+    {"word":"OKLAHOMACITY","scramble":"MACITYOKLAHO","hint":"State capital."},
+    {"word":"SOONERSTATE","scramble":"RSTATESOONE","hint":"Oklahoma's nickname."},
+    {"word":"REDRIVER","scramble":"IVERREDR","hint":"River forming much of the Texas border."},
+    {"word":"ARKANSAS","scramble":"NSASARKA","hint":"River flowing through Tulsa."},
+    {"word":"CANADIAN","scramble":"DIANCANA","hint":"River name found in Oklahoma."},
+    {"word":"REDBUD","scramble":"BUDRED","hint":"Oklahoma's state tree."},
+    {"word":"TURNER","scramble":"NERTUR","hint":"Turnpike toward Tulsa."},
+    {"word":"KILPATRICK","scramble":"TRICKKILPA","hint":"Turnpike around north/west OKC."},
+    {"word":"ADVENTURE","scramble":"NTUREADVE","hint":"Part of OKC's Adventure District."},
+    {"word":"DESIGNATED","scramble":"NATEDDESIG","hint":"As in designated driver."},
+    {"word":"RESERVATION","scramble":"VATIONRESER","hint":"A ride or table arranged ahead."},
+    {"word":"DESTINATION","scramble":"NATIONDESTI","hint":"Where the ride is going."},
+    {"word":"DIRECTIONS","scramble":"TIONSDIREC","hint":"Instructions for getting somewhere."},
+    {"word":"NAVIGATION","scramble":"ATIONNAVIG","hint":"Guidance along a route."},
+    {"word":"MILEAGE","scramble":"EAGEMIL","hint":"Distance measured in miles."},
+    {"word":"FAIRNESS","scramble":"NESSFAIR","hint":"Part of Big Red's remote-trip pricing logic."},
+    {"word":"SCHEDULED","scramble":"DULEDSCHE","hint":"Planned for a specific time."},
+    {"word":"WEEKLY","scramble":"KLYWEE","hint":"Happening each week."},
+    {"word":"DISCOVER","scramble":"OVERDISC","hint":"Name of the rear-seat Big Red experience."},
+    {"word":"BIGRED","scramble":"REDBIG","hint":"The ride you're in."},
+    {"word":"OKC","scramble":"CKO","hint":"Common shorthand for Oklahoma City."},
+    {"word":"RIDER","scramble":"DERRI","hint":"Person taking the ride."},
+    {"word":"AIRPORT","scramble":"PORTAIR","hint":"A common Big Red trip destination."},
+    {"word":"LUGGAGE","scramble":"GAGELUG","hint":"Bags taken on a trip."},
+    {"word":"WEATHER","scramble":"THERWEA","hint":"Conditions outside."},
+    {"word":"THUNDER","scramble":"NDERTHU","hint":"Sound that follows lightning."},
+    {"word":"RAIN","scramble":"INRA","hint":"Water falling from clouds."},
+    {"word":"WIND","scramble":"NDWI","hint":"Moving air."},
+    {"word":"SUNSHINE","scramble":"HINESUNS","hint":"Bright daylight from the sun."},
+    {"word":"TRIVIA","scramble":"VIATRI","hint":"Question-and-answer game."},
+    {"word":"SCRAMBLE","scramble":"MBLESCRA","hint":"A mixed-up word game."},
+    {"word":"MUSIC","scramble":"SICMU","hint":"Sound organized into songs."},
+    {"word":"GENRE","scramble":"NREGE","hint":"A category of music."},
+    {"word":"SONG","scramble":"NGSO","hint":"A single piece of music."},
+    {"word":"ARTIST","scramble":"ISTART","hint":"Person or group performing music."},
+    {"word":"ALBUM","scramble":"BUMAL","hint":"Collection of recorded songs."},
+    {"word":"RIDERREQUESTS","scramble":"EQUESTSRIDERR","hint":"Playlist for rider-requested music."},
+    {"word":"PLAY","scramble":"AYPL","hint":"Start media."},
+    {"word":"PAUSE","scramble":"USEPA","hint":"Temporarily stop media."},
+    {"word":"VOLUME","scramble":"UMEVOL","hint":"How loud the sound is."},
+    {"word":"BLUETOOTH","scramble":"TOOTHBLUE","hint":"Wireless audio connection."},
+    {"word":"CARPLAY","scramble":"PLAYCAR","hint":"Apple in-car phone interface."},
+    {"word":"TABLET","scramble":"LETTAB","hint":"Portable touchscreen device."},
+    {"word":"IPAD","scramble":"ADIP","hint":"Apple tablet."},
+    {"word":"SHORTCUTS","scramble":"TCUTSSHOR","hint":"Apple automation app."},
+    {"word":"CLOUDFLARE","scramble":"FLARECLOUD","hint":"Big Red edge and Worker platform."},
+    {"word":"WORKER","scramble":"KERWOR","hint":"Cloudflare serverless code."},
+    {"word":"GITHUB","scramble":"HUBGIT","hint":"Code repository service."},
+    {"word":"DISPATCH","scramble":"ATCHDISP","hint":"Ride management function."},
+    {"word":"ADMIN","scramble":"MINAD","hint":"Internal control role."},
+    {"word":"STATUS","scramble":"TUSSTA","hint":"Current operating condition."},
+    {"word":"ONLINE","scramble":"INEONL","hint":"Available or connected."},
+    {"word":"OFFLINE","scramble":"LINEOFF","hint":"Not currently connected or available."},
+    {"word":"TRACKER","scramble":"CKERTRA","hint":"Something that follows status or location."},
+    {"word":"MAP","scramble":"PAM","hint":"Visual representation of places."},
+    {"word":"DESTINATION","scramble":"NATIONDESTI","hint":"Where the ride is headed."},
+    {"word":"ROUTE","scramble":"UTERO","hint":"Path between locations."},
+    {"word":"MILES","scramble":"LESMI","hint":"Common U.S. road distance unit."},
+    {"word":"FARE","scramble":"REFA","hint":"Price of a ride."},
+    {"word":"ESTIMATE","scramble":"MATEESTI","hint":"Expected price or amount."},
+    {"word":"WAITING","scramble":"TINGWAI","hint":"Time spent before departure."},
+    {"word":"STOP","scramble":"OPST","hint":"A brief added location on a ride."},
+    {"word":"BOOKING","scramble":"KINGBOO","hint":"A requested or reserved ride."},
+    {"word":"CONFIRMATION","scramble":"MATIONCONFIR","hint":"Message showing a ride is accepted."},
+    {"word":"PICKUPTIME","scramble":"PTIMEPICKU","hint":"Scheduled time to get the rider."},
+    {"word":"RETURNRIDE","scramble":"NRIDERETUR","hint":"A ride back from a destination."},
+    {"word":"PLANAHEAD","scramble":"AHEADPLAN","hint":"Big Red habit: arrange rides before the rush."},
+    {"word":"RIDERNIGHT","scramble":"NIGHTRIDER","hint":"A night out from the rider's point of view."},
+    {"word":"LOCALRIDE","scramble":"LRIDELOCA","hint":"A ride around the local area."},
+    {"word":"NIGHTDRIVE","scramble":"DRIVENIGHT","hint":"A drive after dark."}
   );
 
 
@@ -606,6 +1103,7 @@
     !reviewPanel.hidden;
 
   function goHomeAndReset() {
+    musicPanel.hidden = true;
     driverPanel.hidden = true;
     weatherPanel.hidden = true;
     gamesPanel.hidden = true;
@@ -621,6 +1119,7 @@
   // Overlays never pause the weekly program.
   // Video and audio continue underneath Games / Plan / Tip.
   function openPanel(panel) {
+    musicPanel.hidden = true;
     driverPanel.hidden = true;
     weatherPanel.hidden = true;
     gamesPanel.hidden = true;
@@ -926,6 +1425,93 @@
       weatherLoading.textContent = "Weather could not load right now. Your Discover program is still available offline.";
       weatherContent.hidden = true;
     }
+  }
+
+
+  async function sendMusicRequest(payload, button, pendingLabel, successLabel) {
+    if (!musicRequestStatus) return;
+
+    const buttons = [...musicPanel.querySelectorAll("[data-music-choice]")];
+    buttons.forEach(candidate => candidate.disabled = true);
+    if (musicSpecificInput) musicSpecificInput.disabled = true;
+    if (musicSpecificSendBtn) musicSpecificSendBtn.disabled = true;
+    musicRequestStatus.textContent = pendingLabel;
+
+    try {
+      const response = await fetch(CONFIG.musicRequestApi, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(payload),
+        cache: "no-store"
+      });
+
+      let result = {};
+      try { result = await response.json(); } catch {}
+
+      if (response.status === 409 && result?.request) {
+        const waiting =
+          result.request.kind === "specific" && result.request.detail
+            ? `Specific request: ${result.request.detail}`
+            : result.request.choice;
+
+        musicRequestStatus.textContent =
+          `Big Red already has a request waiting: ${waiting}.`;
+        return false;
+      }
+
+      if (!response.ok || !result?.ok) {
+        throw new Error(result?.error || `Request failed (${response.status})`);
+      }
+
+      if (button) {
+        buttons.forEach(candidate => candidate.classList.remove("requested"));
+        button.classList.add("requested");
+        window.setTimeout(() => button.classList.remove("requested"), 1600);
+      }
+      musicRequestStatus.textContent = successLabel;
+      return true;
+    } catch (error) {
+      console.info("Music request could not be sent.", error);
+      musicRequestStatus.textContent =
+        "Music request could not send right now. You can still ask Big Red directly.";
+      return false;
+    } finally {
+      window.setTimeout(() => {
+        buttons.forEach(candidate => candidate.disabled = false);
+        if (musicSpecificInput) musicSpecificInput.disabled = false;
+        if (musicSpecificSendBtn) musicSpecificSendBtn.disabled = false;
+      }, 900);
+    }
+  }
+
+  async function submitMusicRequest(choice, button) {
+    if (!choice) return;
+
+    await sendMusicRequest(
+      {choice},
+      button,
+      `Sending ${choice} to Big Red…`,
+      `${choice} requested. Big Red will handle playback from the front.`
+    );
+  }
+
+  async function submitSpecificMusicRequest() {
+    const detail = String(musicSpecificInput?.value || "").trim();
+
+    if (!detail) {
+      musicRequestStatus.textContent = "Type a song, artist, or both first.";
+      musicSpecificInput?.focus();
+      return;
+    }
+
+    const sent = await sendMusicRequest(
+      {kind: "specific", detail},
+      null,
+      `Sending “${detail}” to Big Red…`,
+      `“${detail}” requested. Big Red will choose the playback.`
+    );
+
+    if (sent && musicSpecificInput) musicSpecificInput.value = "";
   }
 
   function openReviewForm() {
@@ -1387,6 +1973,30 @@
   gamesBtn.addEventListener("click", () => {
     openPanel(gamesPanel);
   });
+
+  musicBtn.addEventListener("click", () => {
+    musicRequestStatus.textContent = "Pick a playlist or send a specific request to Big Red.";
+    musicPanel.querySelectorAll(".music-choice").forEach(button => button.classList.remove("requested"));
+    if (musicSpecificInput) musicSpecificInput.value = "";
+    openPanel(musicPanel);
+  });
+
+  musicPanel.querySelectorAll("[data-music-choice]").forEach((button) => {
+    button.addEventListener("click", () => submitMusicRequest(button.dataset.musicChoice, button));
+  });
+
+  if (musicSpecificSendBtn) {
+    musicSpecificSendBtn.addEventListener("click", submitSpecificMusicRequest);
+  }
+
+  if (musicSpecificInput) {
+    musicSpecificInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        submitSpecificMusicRequest();
+      }
+    });
+  }
 
   driverBtn.addEventListener("click", () => {
     openPanel(driverPanel);
