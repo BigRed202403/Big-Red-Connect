@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <meta name="theme-color" content="#000000" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Discover Beta" />
+  <title>Discover with Big Red — Rotation Engine Beta</title>
+  <style>
+    :root{--red:#d71920;--panel:rgba(10,10,10,.94);--text:#fff;--muted:#c7c7c7}
+    *{box-sizing:border-box}
+    html,body{margin:0;width:100%;height:100%;background:#000;overflow:hidden;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    .beta-shell{position:fixed;inset:0;background:#000}
+    #discoverFrame{position:absolute;inset:0;width:100%;height:100%;border:0;background:#000}
+    .beta-badge{position:absolute;z-index:50;top:max(10px,env(safe-area-inset-top));left:12px;padding:7px 10px;border:1px solid rgba(255,255,255,.22);border-radius:999px;background:rgba(0,0,0,.72);color:#fff;font-weight:800;font-size:11px;letter-spacing:.08em;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);user-select:none}
+    .beta-badge::before{content:"";display:inline-block;width:7px;height:7px;margin-right:6px;border-radius:50%;background:var(--red);vertical-align:1px}
+    .status-stack{position:absolute;z-index:65;right:12px;top:max(10px,env(safe-area-inset-top));display:flex;flex-direction:column;align-items:flex-end;gap:7px}
+    .state-button{max-width:310px;padding:8px 11px;border:1px solid rgba(255,255,255,.18);border-radius:999px;background:rgba(0,0,0,.78);color:#ddd;font:800 11px/1.2 system-ui,-apple-system,sans-serif;letter-spacing:.055em;text-align:right;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+    .state-button.ready{border-color:rgba(47,200,94,.72);color:#8df0aa}
+    .state-button.warning{border-color:rgba(255,188,63,.72);color:#ffd27a}
+    .dock{position:absolute;z-index:60;left:50%;bottom:max(12px,env(safe-area-inset-bottom));transform:translateX(-50%);width:min(720px,calc(100% - 26px));display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:10px;border:1px solid rgba(255,255,255,.16);border-radius:18px;background:rgba(0,0,0,.82);box-shadow:0 14px 36px rgba(0,0,0,.45);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+    .dock button{min-height:54px;border:1px solid rgba(255,255,255,.17);border-radius:13px;background:#171717;color:#fff;font:800 16px/1.15 system-ui,-apple-system,sans-serif;cursor:pointer;-webkit-tap-highlight-color:transparent}
+    .dock button:active{transform:scale(.985)}
+    .dock.media-active{opacity:0;pointer-events:none;transform:translate(-50%,18px)}
+    .media-wrap{position:absolute;z-index:80;inset:0;display:none;background:#000}
+    .media-wrap.show{display:block}
+    .media-wrap video{width:100%;height:100%;display:block;object-fit:contain;background:#000}
+    .media-label{position:absolute;left:50%;bottom:max(18px,env(safe-area-inset-bottom));transform:translateX(-50%);padding:7px 11px;border:1px solid rgba(255,255,255,.16);border-radius:999px;background:rgba(0,0,0,.68);color:#ddd;font-size:11px;font-weight:800;letter-spacing:.08em}
+    .cutin-wrap{position:absolute;z-index:70;inset:0;display:grid;place-items:center;padding:24px;background:rgba(0,0,0,.26);opacity:0;pointer-events:none;transition:opacity 180ms ease}
+    .cutin-wrap.show{opacity:1;pointer-events:auto}
+    .cutin-card{width:min(700px,92vw);border:1px solid rgba(255,255,255,.22);border-radius:24px;background:var(--panel);color:var(--text);padding:clamp(22px,4vw,38px);box-shadow:0 24px 70px rgba(0,0,0,.58);text-align:center;transform:translateY(14px) scale(.985);transition:transform 180ms ease;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+    .cutin-wrap.show .cutin-card{transform:translateY(0) scale(1)}
+    .cutin-eyebrow{color:#ff555a;font-weight:900;font-size:12px;letter-spacing:.13em;margin-bottom:8px}
+    .cutin-icon{font-size:clamp(44px,8vw,74px);line-height:1;margin-bottom:10px}
+    .cutin-title{margin:0;font-size:clamp(30px,5.5vw,54px);line-height:1.02;letter-spacing:-.035em}
+    .cutin-copy{margin:12px auto 20px;max-width:560px;color:var(--muted);font-size:clamp(16px,2.4vw,22px);line-height:1.35}
+    .cutin-actions{display:grid;grid-template-columns:1.2fr .8fr;gap:10px;max-width:520px;margin:0 auto}
+    .cutin-actions button{min-height:52px;border-radius:13px;font:850 16px system-ui,-apple-system,sans-serif;cursor:pointer;-webkit-tap-highlight-color:transparent}
+    #cutinOpenBtn{border:1px solid var(--red);background:var(--red);color:#fff}
+    #cutinDismissBtn{border:1px solid rgba(255,255,255,.18);background:#171717;color:#ddd}
+    .cutin-progress{height:3px;margin:22px auto -4px;max-width:520px;overflow:hidden;border-radius:999px;background:rgba(255,255,255,.12)}
+    .cutin-progress>span{display:block;width:100%;height:100%;background:var(--red);transform-origin:left center}
+    .cutin-wrap.show .cutin-progress>span{animation:cutinTimer 12s linear forwards}
+    @keyframes cutinTimer{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+    @media(max-width:680px){.dock{gap:7px;padding:8px}.dock button{font-size:14px;min-height:50px}.cutin-actions{grid-template-columns:1fr}.status-stack{top:48px}.state-button{max-width:250px;font-size:10px}}
+  </style>
+</head>
+<body>
+  <main class="beta-shell">
+    <iframe id="discoverFrame" src="index-v21-staged.html?v=20260926-rotation-beta" title="Discover with Big Red" allow="autoplay; geolocation"></iframe>
+
+    <div class="beta-badge">ROTATION ENGINE BETA</div>
+
+    <div class="status-stack" aria-label="Program readiness">
+      <button id="programState" class="state-button warning" type="button">STREAMING PROGRAM</button>
+      <button id="rotationState" class="state-button warning" type="button">LOAD ROTATION MEDIA</button>
+      <input id="rotationFile" type="file" accept="video/mp4,.mp4" hidden />
+    </div>
+
+    <nav id="dock" class="dock" aria-label="Discover quick actions">
+      <button type="button" data-target="gamesBtn">🎮 Games</button>
+      <button type="button" data-target="musicBtn">🎵 Music</button>
+      <button type="button" data-target="reviewBtn">⭐ Review</button>
+    </nav>
+
+    <section id="mediaWrap" class="media-wrap" aria-hidden="true">
+      <video id="insertVideo" playsinline webkit-playsinline preload="auto" disablepictureinpicture></video>
+      <div id="mediaLabel" class="media-label">BIG RED PROGRAM</div>
+    </section>
+
+    <section id="cutinWrap" class="cutin-wrap" aria-live="polite" aria-hidden="true">
+      <div class="cutin-card">
+        <div id="cutinEyebrow" class="cutin-eyebrow">DISCOVER SOMETHING</div>
+        <div id="cutinIcon" class="cutin-icon">☀️</div>
+        <h1 id="cutinTitle" class="cutin-title">Weather along the ride</h1>
+        <p id="cutinCopy" class="cutin-copy">See the current conditions and the next few hours.</p>
+        <div class="cutin-actions">
+          <button id="cutinOpenBtn" type="button">Open Weather</button>
+          <button id="cutinDismissBtn" type="button">Keep Watching</button>
+        </div>
+        <div class="cutin-progress" aria-hidden="true"><span></span></div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+  (() => {
+    "use strict";
+    const frame=document.getElementById("discoverFrame");
+    const dock=document.getElementById("dock");
+    const cutinWrap=document.getElementById("cutinWrap");
+    const cutinEyebrow=document.getElementById("cutinEyebrow");
+    const cutinIcon=document.getElementById("cutinIcon");
+    const cutinTitle=document.getElementById("cutinTitle");
+    const cutinCopy=document.getElementById("cutinCopy");
+    const cutinOpenBtn=document.getElementById("cutinOpenBtn");
+    const cutinDismissBtn=document.getElementById("cutinDismissBtn");
+    const programState=document.getElementById("programState");
+    const rotationState=document.getElementById("rotationState");
+    const rotationFile=document.getElementById("rotationFile");
+    const mediaWrap=document.getElementById("mediaWrap");
+    const insertVideo=document.getElementById("insertVideo");
+    const mediaLabel=document.getElementById("mediaLabel");
+
+    const fastMode=new URLSearchParams(location.search).has("fast");
+    const pageStartedAt=Date.now();
+    const timing=fastMode
+      ?{first:12000,min:18000,max:28000,tipAfter:60000}
+      :{first:150000,min:150000,max:240000,tipAfter:720000};
+
+    const rotationPattern=["commercial","feature","short","commercial","feature","commercial","short","feature"];
+
+    const commercialClips=[
+      {start:0,end:24.18,label:"PLAN AHEAD WITH BIG RED"},
+      {start:24.30,end:48.45,label:"AIRPORT RIDES"},
+      {start:48.566,end:72.71,label:"ONE TRUSTED LOCAL DRIVER"},
+      {start:72.833,end:96.98,label:"CONSISTENT PRICING"},
+      {start:97.10,end:121.24,label:"SKIP THE LATE-NIGHT SCRAMBLE"},
+      {start:121.366,end:145.51,label:"DISCOVER THE IN-CAR EXPERIENCE"}
+    ];
+
+    const shortClips=[
+      {start:145.633,end:163.04,label:"BIG RED SHORT"},
+      {start:163.166,end:177.77,label:"BIG RED SHORT"},
+      {start:177.90,end:190.01,label:"BIG RED SHORT"},
+      {start:190.135,end:205.66,label:"BIG RED SHORT"}
+    ];
+
+    const prompts=[
+      {target:"weatherBtn",eyebrow:"CHECK THE RIDE AHEAD",icon:"☀️",title:"Weather along the ride",copy:"See current conditions and what the next few hours look like.",action:"Open Weather"},
+      {target:"driverBtn",eyebrow:"YOU'RE RIDING WITH",icon:"👋",title:"Meet Big Red Dan",copy:"Veteran owned, local, and built around one trusted driver.",action:"Meet Your Driver"},
+      {target:"gamesBtn",eyebrow:"WANT TO PLAY?",icon:"🎮",title:"Make the ride a little quicker",copy:"Trivia, Would You Rather, and Word Scramble are ready when you are.",action:"Play a Game"},
+      {target:"musicBtn",eyebrow:"PICK THE VIBE",icon:"🎵",title:"Want different music?",copy:"Choose a Big Red playlist or send a specific song or artist request.",action:"Request Music"},
+      {target:"planBtn",eyebrow:"KEEP BIG RED HANDY",icon:"📲",title:"Save your Rider Hub",copy:"Keep ride details, tracking, and easy access to Big Red in one place.",action:"Open Rider Hub"},
+      {target:"tipBtn",eyebrow:"OPTIONAL",icon:"❤️",title:"Want to tip Big Red?",copy:"Tips are appreciated, never expected.",action:"Tip Big Red",lateOnly:true}
+    ];
+
+    let promptOrder=[];
+    let promptPos=0;
+    let commercialOrder=[];
+    let commercialPos=0;
+    let shortOrder=[];
+    let shortPos=0;
+    let patternPos=0;
+    let currentPrompt=null;
+    let cutinTimer=null;
+    let scheduleTimer=null;
+    let pausedByBeta=false;
+    let frameReady=false;
+    let rotationReady=false;
+    let rotationUrl="";
+    let activeClip=null;
+    let lastPromptTarget="";
+    let lastCommercialIndex=-1;
+    let lastShortIndex=-1;
+
+    function frameDoc(){try{return frame.contentDocument||frame.contentWindow.document}catch{return null}}
+    function presentationVideo(){const doc=frameDoc();return doc?doc.getElementById("presentationVideo"):null}
+    function visibleInnerPanel(){const doc=frameDoc();if(!doc)return false;return [...doc.querySelectorAll(".overlay-panel")].some(panel=>!panel.hidden)}
+    function pressInnerButton(id){const doc=frameDoc();const button=doc?doc.getElementById(id):null;if(!button)return false;button.click();return true}
+
+    function shuffle(items){const r=[...items];for(let i=r.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[r[i],r[j]]=[r[j],r[i]]}return r}
+    function shuffledIndices(length,lastIndex=-1){
+      const order=shuffle(Array.from({length},(_,i)=>i));
+      if(order.length>1&&order[0]===lastIndex)[order[0],order[1]]=[order[1],order[0]];
+      return order;
+    }
+
+    function eligiblePrompts(){
+      const tipUnlocked=Date.now()-pageStartedAt>=timing.tipAfter;
+      return prompts.filter(prompt=>!prompt.lateOnly||tipUnlocked);
+    }
+
+    function nextPrompt(){
+      const eligible=eligiblePrompts();
+      const eligibleTargets=new Set(eligible.map(prompt=>prompt.target));
+      promptOrder=promptOrder.filter(index=>eligibleTargets.has(prompts[index]?.target));
+      if(!promptOrder.length||promptPos>=promptOrder.length){
+        promptOrder=shuffle(prompts.map((prompt,index)=>({prompt,index})).filter(item=>eligibleTargets.has(item.prompt.target)).map(item=>item.index));
+        if(promptOrder.length>1&&prompts[promptOrder[0]].target===lastPromptTarget)[promptOrder[0],promptOrder[1]]=[promptOrder[1],promptOrder[0]];
+        promptPos=0;
+      }
+      const prompt=prompts[promptOrder[promptPos++]];
+      lastPromptTarget=prompt.target;
+      return prompt;
+    }
+
+    function nextClip(kind){
+      if(kind==="commercial"){
+        if(!commercialOrder.length||commercialPos>=commercialOrder.length){commercialOrder=shuffledIndices(commercialClips.length,lastCommercialIndex);commercialPos=0}
+        const index=commercialOrder[commercialPos++];lastCommercialIndex=index;return commercialClips[index];
+      }
+      if(!shortOrder.length||shortPos>=shortOrder.length){shortOrder=shuffledIndices(shortClips.length,lastShortIndex);shortPos=0}
+      const index=shortOrder[shortPos++];lastShortIndex=index;return shortClips[index];
+    }
+
+    function pauseProgram(){const video=presentationVideo();if(!video||video.paused)return;video.pause();pausedByBeta=true}
+    function resumeProgramIfHome(){
+      if(!pausedByBeta||cutinWrap.classList.contains("show")||mediaWrap.classList.contains("show")||visibleInnerPanel())return;
+      const video=presentationVideo();if(!video)return;
+      video.play().catch(()=>{});pausedByBeta=false;
+    }
+
+    function setProgramState(){
+      const doc=frameDoc();
+      const localStatus=doc?doc.getElementById("localProgramStatus"):null;
+      const localVideo=presentationVideo();
+      const localLoaded=Boolean((localStatus&&!localStatus.hidden)||localVideo?.src?.startsWith("blob:"));
+      programState.textContent=localLoaded?"LOCAL PROGRAM LOADED":"STREAMING PROGRAM";
+      programState.classList.toggle("ready",localLoaded);
+      programState.classList.toggle("warning",!localLoaded);
+    }
+
+    function hideCutin({resume=true}={}){
+      clearTimeout(cutinTimer);
+      cutinWrap.classList.remove("show");
+      cutinWrap.setAttribute("aria-hidden","true");
+      currentPrompt=null;
+      if(resume)setTimeout(resumeProgramIfHome,120);
+      scheduleNext();
+    }
+
+    function showCutin(prompt){
+      if(!prompt||!frameReady||cutinWrap.classList.contains("show")||mediaWrap.classList.contains("show")||visibleInnerPanel()){scheduleNext(12000);return}
+      currentPrompt=prompt;
+      pauseProgram();
+      cutinEyebrow.textContent=prompt.eyebrow;
+      cutinIcon.textContent=prompt.icon;
+      cutinTitle.textContent=prompt.title;
+      cutinCopy.textContent=prompt.copy;
+      cutinOpenBtn.textContent=prompt.action;
+      cutinWrap.classList.add("show");
+      cutinWrap.setAttribute("aria-hidden","false");
+      clearTimeout(cutinTimer);
+      cutinTimer=setTimeout(()=>hideCutin({resume:true}),12000);
+    }
+
+    function finishMedia(){
+      insertVideo.pause();
+      activeClip=null;
+      mediaWrap.classList.remove("show");
+      mediaWrap.setAttribute("aria-hidden","true");
+      dock.classList.remove("media-active");
+      resumeProgramIfHome();
+      scheduleNext();
+    }
+
+    function playMedia(kind){
+      if(!rotationReady){showCutin(nextPrompt());return}
+      const clip=nextClip(kind);
+      const mainVideo=presentationVideo();
+      activeClip={...clip,kind};
+      pauseProgram();
+      mediaLabel.textContent=clip.label;
+      insertVideo.muted=kind==="commercial"?true:Boolean(mainVideo?.muted);
+      insertVideo.volume=kind==="short"?Math.max(0,Math.min(0.35,mainVideo?.volume??0.25)):0;
+      mediaWrap.classList.add("show");
+      mediaWrap.setAttribute("aria-hidden","false");
+      dock.classList.add("media-active");
+      const startPlayback=()=>{
+        insertVideo.currentTime=clip.start;
+        insertVideo.play().catch(()=>{
+          rotationState.textContent="ROTATION READY — TAP TO ENABLE";
+          rotationState.classList.add("warning");
+          finishMedia();
+        });
+      };
+      if(insertVideo.readyState>=1)startPlayback();else insertVideo.addEventListener("loadedmetadata",startPlayback,{once:true});
+    }
+
+    function runNextInsert(){
+      if(!frameReady||visibleInnerPanel()||cutinWrap.classList.contains("show")||mediaWrap.classList.contains("show")){scheduleNext(12000);return}
+      const kind=rotationPattern[patternPos++%rotationPattern.length];
+      if(kind==="feature")showCutin(nextPrompt());else playMedia(kind);
+    }
+
+    function scheduleNext(delay){
+      clearTimeout(scheduleTimer);
+      const wait=delay??(timing.min+Math.round(Math.random()*(timing.max-timing.min)));
+      scheduleTimer=setTimeout(runNextInsert,wait);
+    }
+
+    function installBetaLayer(){
+      const doc=frameDoc();if(!doc)return;
+      frameReady=true;
+      const style=doc.createElement("style");
+      style.id="programBetaOverrides";
+      style.textContent=".discover-actions{display:none!important}.home-view{padding-bottom:82px!important}";
+      doc.head.appendChild(style);
+      setProgramState();
+      scheduleNext(timing.first);
+    }
+
+    document.querySelectorAll(".dock button[data-target]").forEach(button=>{
+      button.addEventListener("click",()=>{
+        clearTimeout(scheduleTimer);clearTimeout(cutinTimer);
+        if(cutinWrap.classList.contains("show")){
+          cutinWrap.classList.remove("show");
+          cutinWrap.setAttribute("aria-hidden","true");
+        }
+        currentPrompt=null;
+        pauseProgram();
+        pressInnerButton(button.dataset.target);
+        scheduleNext();
+      });
+    });
+
+    cutinOpenBtn.addEventListener("click",()=>{
+      if(!currentPrompt)return;
+      const target=currentPrompt.target;
+      clearTimeout(cutinTimer);
+      cutinWrap.classList.remove("show");
+      cutinWrap.setAttribute("aria-hidden","true");
+      currentPrompt=null;
+      pressInnerButton(target);
+      scheduleNext();
+    });
+
+    cutinDismissBtn.addEventListener("click",()=>hideCutin({resume:true}));
+    programState.addEventListener("click",()=>{
+      const doc=frameDoc();
+      const loadButton=doc?doc.getElementById("loadLocalProgramBtn"):null;
+      if(loadButton)loadButton.click();
+    });
+    rotationState.addEventListener("click",()=>{rotationFile.value="";rotationFile.click()});
+    rotationFile.addEventListener("change",()=>{
+      const file=rotationFile.files&&rotationFile.files[0];if(!file)return;
+      if(rotationUrl)URL.revokeObjectURL(rotationUrl);
+      rotationUrl=URL.createObjectURL(file);
+      insertVideo.src=rotationUrl;
+      insertVideo.load();
+      rotationState.textContent="CHECKING ROTATION MEDIA…";
+      rotationState.classList.remove("ready");
+      rotationState.classList.add("warning");
+      insertVideo.addEventListener("loadedmetadata",()=>{
+        const valid=insertVideo.duration>=204&&insertVideo.duration<=207;
+        rotationReady=valid;
+        rotationState.textContent=valid?"ROTATION MEDIA READY — 10/10":"SELECT BIG RED ROTATION PACK";
+        rotationState.classList.toggle("ready",valid);
+        rotationState.classList.toggle("warning",!valid);
+        if(valid){
+          insertVideo.muted=false;
+          insertVideo.volume=0.25;
+          insertVideo.play().then(()=>{insertVideo.pause();insertVideo.currentTime=0}).catch(()=>{});
+        }
+      },{once:true});
+    });
+    insertVideo.addEventListener("timeupdate",()=>{
+      if(activeClip&&insertVideo.currentTime>=activeClip.end)finishMedia();
+    });
+    insertVideo.addEventListener("ended",finishMedia);
+    frame.addEventListener("load",installBetaLayer);
+
+    setInterval(()=>{
+      setProgramState();
+      if(!cutinWrap.classList.contains("show")&&!mediaWrap.classList.contains("show"))resumeProgramIfHome();
+    },1000);
+
+    document.addEventListener("visibilitychange",()=>{
+      if(document.hidden){clearTimeout(scheduleTimer);return}
+      scheduleNext(12000);
+    });
+  })();
+  </script>
+</body>
+</html>
