@@ -74,7 +74,6 @@
       <div id="mediaLabel" class="media-label">BIG RED PROGRAM</div>
     </section>
 
-    <audio id="backgroundAudio" preload="auto" loop aria-hidden="true"></audio>
 
     <section id="cutinWrap" class="cutin-wrap" aria-live="polite" aria-hidden="true">
       <div class="cutin-card">
@@ -109,7 +108,6 @@
     const mediaWrap=document.getElementById("mediaWrap");
     const insertVideo=document.getElementById("insertVideo");
     const mediaLabel=document.getElementById("mediaLabel");
-    const backgroundAudio=document.getElementById("backgroundAudio");
 
     const fastMode=new URLSearchParams(location.search).has("fast");
     const pageStartedAt=Date.now();
@@ -162,59 +160,11 @@
     let lastPromptTarget="";
     let lastCommercialIndex=-1;
     let lastShortIndex=-1;
-    let backgroundAudioSource="";
-    let backgroundAudioReady=false;
-    let backgroundPausedForShort=false;
 
     function frameDoc(){try{return frame.contentDocument||frame.contentWindow.document}catch{return null}}
     function presentationVideo(){const doc=frameDoc();return doc?doc.getElementById("presentationVideo"):null}
     function visibleInnerPanel(){const doc=frameDoc();if(!doc)return false;return [...doc.querySelectorAll(".overlay-panel")].some(panel=>!panel.hidden)}
     function pressInnerButton(id){const doc=frameDoc();const button=doc?doc.getElementById(id):null;if(!button)return false;button.click();return true}
-    function soundIsOn(){const doc=frameDoc();return Boolean(doc?.getElementById("volumeBtn")?.classList.contains("sound-on"))}
-
-    function applySharedSoundState(){
-      const mainVideo=presentationVideo();
-      const soundOn=soundIsOn();
-      if(backgroundAudioReady&&mainVideo)mainVideo.muted=true;
-      backgroundAudio.muted=!soundOn;
-      if(activeClip?.kind==="short")insertVideo.muted=!soundOn;
-    }
-
-    function playBackgroundAudio(){
-      if(!backgroundAudioReady||backgroundPausedForShort)return;
-      applySharedSoundState();
-      backgroundAudio.play().catch(()=>{});
-    }
-
-    function useProgramAudioAsBackground(){
-      const mainVideo=presentationVideo();
-      const source=mainVideo?.currentSrc||mainVideo?.src||"";
-      if(!source.startsWith("blob:")||source===backgroundAudioSource)return;
-      backgroundAudio.pause();
-      backgroundAudioReady=false;
-      backgroundAudioSource=source;
-      backgroundAudio.src=source;
-      backgroundAudio.loop=true;
-      backgroundAudio.volume=1;
-      backgroundAudio.load();
-      backgroundAudio.addEventListener("canplay",()=>{
-        backgroundAudioReady=true;
-        if(mainVideo)mainVideo.muted=true;
-        applySharedSoundState();
-        playBackgroundAudio();
-      },{once:true});
-    }
-
-    function pauseBackgroundForShort(){
-      backgroundPausedForShort=true;
-      backgroundAudio.pause();
-    }
-
-    function resumeBackgroundAfterShort(){
-      backgroundPausedForShort=false;
-      playBackgroundAudio();
-    }
-
     function shuffle(items){const r=[...items];for(let i=r.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[r[i],r[j]]=[r[j],r[i]]}return r}
     function shuffledIndices(length,lastIndex=-1){
       const order=shuffle(Array.from({length},(_,i)=>i));
@@ -279,7 +229,6 @@
     function showCutin(prompt){
       if(!prompt||!frameReady||cutinWrap.classList.contains("show")||mediaWrap.classList.contains("show")||visibleInnerPanel()){scheduleNext(12000);return}
       currentPrompt=prompt;
-      pauseProgram();
       cutinEyebrow.textContent=prompt.eyebrow;
       cutinIcon.textContent=prompt.icon;
       cutinTitle.textContent=prompt.title;
@@ -292,13 +241,11 @@
     }
 
     function finishMedia(){
-      const finishedKind=activeClip?.kind;
       insertVideo.pause();
       activeClip=null;
       mediaWrap.classList.remove("show");
       mediaWrap.setAttribute("aria-hidden","true");
       dock.classList.remove("media-active");
-      if(finishedKind==="short")resumeBackgroundAfterShort();
       resumeProgramIfHome();
       scheduleNext();
     }
@@ -308,10 +255,9 @@
       const clip=nextClip(kind);
       const mainVideo=presentationVideo();
       activeClip={...clip,kind};
-      pauseProgram();
+      if(kind==="short")pauseProgram();
       mediaLabel.textContent=clip.label;
-      if(kind==="short")pauseBackgroundForShort();
-      insertVideo.muted=kind==="commercial"?true:!soundIsOn();
+      insertVideo.muted=kind==="commercial"?true:Boolean(mainVideo?.muted);
       insertVideo.volume=kind==="short"?0.35:0;
       mediaWrap.classList.add("show");
       mediaWrap.setAttribute("aria-hidden","false");
@@ -346,11 +292,6 @@
       style.id="programBetaOverrides";
       style.textContent=".discover-actions{display:none!important}.home-view{padding-bottom:82px!important}";
       doc.head.appendChild(style);
-      const volumeButton=doc.getElementById("volumeBtn");
-      const localProgramFile=doc.getElementById("localProgramFile");
-      if(volumeButton)volumeButton.addEventListener("click",()=>setTimeout(()=>{applySharedSoundState();playBackgroundAudio()},0));
-      if(localProgramFile)localProgramFile.addEventListener("change",()=>setTimeout(useProgramAudioAsBackground,250));
-      doc.addEventListener("pointerdown",playBackgroundAudio,{passive:true});
       setProgramState();
       scheduleNext(timing.first);
     }
@@ -363,7 +304,6 @@
           cutinWrap.setAttribute("aria-hidden","true");
         }
         currentPrompt=null;
-        pauseProgram();
         pressInnerButton(button.dataset.target);
         scheduleNext();
       });
@@ -417,14 +357,11 @@
 
     setInterval(()=>{
       setProgramState();
-      useProgramAudioAsBackground();
-      applySharedSoundState();
       if(!cutinWrap.classList.contains("show")&&!mediaWrap.classList.contains("show"))resumeProgramIfHome();
     },1000);
 
     document.addEventListener("visibilitychange",()=>{
       if(document.hidden){clearTimeout(scheduleTimer);return}
-      playBackgroundAudio();
       scheduleNext(12000);
     });
   })();
