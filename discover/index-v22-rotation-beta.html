@@ -17,9 +17,10 @@
     html,body{margin:0;width:100%;height:100%;background:#000;overflow:hidden;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
     .beta-shell{position:fixed;inset:0;background:#000}
     #discoverFrame{position:absolute;inset:0;width:100%;height:100%;border:0;background:#000}
-    .beta-badge{position:absolute;z-index:50;top:max(10px,env(safe-area-inset-top));left:12px;padding:7px 10px;border:1px solid rgba(255,255,255,.22);border-radius:999px;background:rgba(0,0,0,.72);color:#fff;font-weight:800;font-size:11px;letter-spacing:.08em;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);user-select:none}
+    .beta-badge{position:absolute;z-index:50;top:max(10px,env(safe-area-inset-top));left:12px;padding:7px 10px;border:1px solid rgba(255,255,255,.22);border-radius:999px;background:rgba(0,0,0,.72);color:#fff;font-weight:800;font-size:11px;letter-spacing:.08em;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);user-select:none;cursor:pointer}
     .beta-badge::before{content:"";display:inline-block;width:7px;height:7px;margin-right:6px;border-radius:50%;background:var(--red);vertical-align:1px}
-    .status-stack{position:absolute;z-index:65;left:12px;top:calc(max(10px,env(safe-area-inset-top)) + 38px);display:flex;flex-direction:column;align-items:flex-start;gap:7px}
+    .status-stack{position:absolute;z-index:65;left:12px;top:calc(max(10px,env(safe-area-inset-top)) + 38px);display:flex;flex-direction:column;align-items:flex-start;gap:7px;opacity:1;transform:translateY(0);transition:opacity 180ms ease,transform 180ms ease}
+    .status-stack.hidden-ready{opacity:0;transform:translateY(-6px);pointer-events:none}
     .status-toggle{padding:7px 10px;border:1px solid rgba(255,255,255,.2);border-radius:999px;background:rgba(0,0,0,.72);color:#ddd;font:850 10px/1.2 system-ui,-apple-system,sans-serif;letter-spacing:.07em;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
     .status-toggle.ready{border-color:rgba(47,200,94,.62);color:#8df0aa}
     .status-details{display:flex;flex-direction:column;align-items:flex-start;gap:7px;max-height:110px;opacity:1;transform:translateY(0);transition:opacity 180ms ease,transform 180ms ease,max-height 180ms ease}
@@ -58,7 +59,7 @@
   <main class="beta-shell">
     <iframe id="discoverFrame" src="index-v21-staged.html?v=20260926-rotation-beta" title="Discover with Big Red" allow="autoplay; geolocation"></iframe>
 
-    <div class="beta-badge">ROTATION ENGINE BETA</div>
+    <button id="betaBadge" class="beta-badge" type="button" aria-label="Show media status">ROTATION ENGINE BETA</button>
 
     <div id="statusStack" class="status-stack" aria-label="Program readiness">
       <button id="statusToggle" class="status-toggle" type="button" aria-expanded="true">MEDIA STATUS</button>
@@ -109,6 +110,7 @@
     const cutinCopy=document.getElementById("cutinCopy");
     const cutinOpenBtn=document.getElementById("cutinOpenBtn");
     const cutinDismissBtn=document.getElementById("cutinDismissBtn");
+    const betaBadge=document.getElementById("betaBadge");
     const statusStack=document.getElementById("statusStack");
     const statusToggle=document.getElementById("statusToggle");
     const programState=document.getElementById("programState");
@@ -168,6 +170,7 @@
     let rotationReady=false;
     let rotationUrl="";
     let activeClip=null;
+    let clipSeeking=false;
     let lastPromptTarget="";
     let lastCommercialIndex=-1;
     let lastShortIndex=-1;
@@ -223,11 +226,15 @@
       statusStack.classList.add("collapsed");
       statusToggle.setAttribute("aria-expanded","false");
     }
+    function hideReadyStatus(){
+      clearTimeout(statusHideTimer);
+      statusStack.classList.add("hidden-ready");
+    }
     function revealStatus(autoHide=false){
       clearTimeout(statusHideTimer);
-      statusStack.classList.remove("collapsed");
+      statusStack.classList.remove("hidden-ready","collapsed");
       statusToggle.setAttribute("aria-expanded","true");
-      if(autoHide&&programReady&&rotationReady)statusHideTimer=setTimeout(collapseStatus,5000);
+      if(autoHide&&programReady&&rotationReady)statusHideTimer=setTimeout(hideReadyStatus,5000);
     }
     function syncStatusUI(reveal=false){
       const allReady=programReady&&rotationReady;
@@ -273,6 +280,7 @@
 
     function finishMedia(){
       insertVideo.pause();
+      clipSeeking=false;
       activeClip=null;
       mediaWrap.classList.remove("show");
       mediaWrap.setAttribute("aria-hidden","true");
@@ -293,13 +301,21 @@
       mediaWrap.classList.add("show");
       mediaWrap.setAttribute("aria-hidden","false");
       dock.classList.add("media-active");
-      const startPlayback=()=>{
-        insertVideo.currentTime=clip.start;
+      const beginAfterSeek=()=>{
+        if(!activeClip||activeClip.start!==clip.start||activeClip.kind!==kind)return;
+        clipSeeking=false;
         insertVideo.play().catch(()=>{
           rotationState.textContent="ROTATION READY — TAP TO ENABLE";
           rotationState.classList.add("warning");
           finishMedia();
         });
+      };
+      const startPlayback=()=>{
+        insertVideo.pause();
+        clipSeeking=true;
+        insertVideo.currentTime=clip.start;
+        if(!insertVideo.seeking&&Math.abs(insertVideo.currentTime-clip.start)<0.25)beginAfterSeek();
+        else insertVideo.addEventListener("seeked",beginAfterSeek,{once:true});
       };
       if(insertVideo.readyState>=1)startPlayback();else insertVideo.addEventListener("loadedmetadata",startPlayback,{once:true});
     }
@@ -352,6 +368,7 @@
     });
 
     cutinDismissBtn.addEventListener("click",()=>hideCutin({resume:true}));
+    betaBadge.addEventListener("click",()=>revealStatus(programReady&&rotationReady));
     statusToggle.addEventListener("click",()=>{
       if(statusStack.classList.contains("collapsed"))revealStatus(false);else collapseStatus();
     });
@@ -386,7 +403,7 @@
       },{once:true});
     });
     insertVideo.addEventListener("timeupdate",()=>{
-      if(activeClip&&insertVideo.currentTime>=activeClip.end)finishMedia();
+      if(activeClip&&!clipSeeking&&insertVideo.currentTime>=activeClip.end)finishMedia();
     });
     insertVideo.addEventListener("ended",finishMedia);
     frame.addEventListener("load",installBetaLayer);
