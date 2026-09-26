@@ -19,8 +19,12 @@
     #discoverFrame{position:absolute;inset:0;width:100%;height:100%;border:0;background:#000}
     .beta-badge{position:absolute;z-index:50;top:max(10px,env(safe-area-inset-top));left:12px;padding:7px 10px;border:1px solid rgba(255,255,255,.22);border-radius:999px;background:rgba(0,0,0,.72);color:#fff;font-weight:800;font-size:11px;letter-spacing:.08em;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);user-select:none}
     .beta-badge::before{content:"";display:inline-block;width:7px;height:7px;margin-right:6px;border-radius:50%;background:var(--red);vertical-align:1px}
-    .status-stack{position:absolute;z-index:65;right:12px;top:max(10px,env(safe-area-inset-top));display:flex;flex-direction:column;align-items:flex-end;gap:7px}
-    .state-button{max-width:310px;padding:8px 11px;border:1px solid rgba(255,255,255,.18);border-radius:999px;background:rgba(0,0,0,.78);color:#ddd;font:800 11px/1.2 system-ui,-apple-system,sans-serif;letter-spacing:.055em;text-align:right;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+    .status-stack{position:absolute;z-index:65;left:12px;top:calc(max(10px,env(safe-area-inset-top)) + 38px);display:flex;flex-direction:column;align-items:flex-start;gap:7px}
+    .status-toggle{padding:7px 10px;border:1px solid rgba(255,255,255,.2);border-radius:999px;background:rgba(0,0,0,.72);color:#ddd;font:850 10px/1.2 system-ui,-apple-system,sans-serif;letter-spacing:.07em;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+    .status-toggle.ready{border-color:rgba(47,200,94,.62);color:#8df0aa}
+    .status-details{display:flex;flex-direction:column;align-items:flex-start;gap:7px;max-height:110px;opacity:1;transform:translateY(0);transition:opacity 180ms ease,transform 180ms ease,max-height 180ms ease}
+    .status-stack.collapsed .status-details{max-height:0;opacity:0;transform:translateY(-6px);pointer-events:none;overflow:hidden}
+    .state-button{max-width:310px;padding:8px 11px;border:1px solid rgba(255,255,255,.18);border-radius:999px;background:rgba(0,0,0,.78);color:#ddd;font:800 11px/1.2 system-ui,-apple-system,sans-serif;letter-spacing:.055em;text-align:left;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
     .state-button.ready{border-color:rgba(47,200,94,.72);color:#8df0aa}
     .state-button.warning{border-color:rgba(255,188,63,.72);color:#ffd27a}
     .dock{position:absolute;z-index:60;left:50%;bottom:max(12px,env(safe-area-inset-bottom));transform:translateX(-50%);width:min(820px,calc(100% - 26px));display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;padding:10px;border:1px solid rgba(255,255,255,.16);border-radius:18px;background:rgba(0,0,0,.82);box-shadow:0 14px 36px rgba(0,0,0,.45);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
@@ -47,7 +51,7 @@
     .cutin-progress>span{display:block;width:100%;height:100%;background:var(--red);transform-origin:left center}
     .cutin-wrap.show .cutin-progress>span{animation:cutinTimer 12s linear forwards}
     @keyframes cutinTimer{from{transform:scaleX(1)}to{transform:scaleX(0)}}
-    @media(max-width:680px){.dock{gap:7px;padding:8px}.dock button{font-size:14px;min-height:50px}.cutin-actions{grid-template-columns:1fr}.status-stack{top:48px}.state-button{max-width:250px;font-size:10px}}
+    @media(max-width:680px){.dock{gap:7px;padding:8px}.dock button{font-size:14px;min-height:50px}.cutin-actions{grid-template-columns:1fr}.status-stack{top:calc(max(10px,env(safe-area-inset-top)) + 38px)}.state-button{max-width:250px;font-size:10px}}
   </style>
 </head>
 <body>
@@ -56,9 +60,12 @@
 
     <div class="beta-badge">ROTATION ENGINE BETA</div>
 
-    <div class="status-stack" aria-label="Program readiness">
-      <button id="programState" class="state-button warning" type="button">STREAMING PROGRAM</button>
-      <button id="rotationState" class="state-button warning" type="button">LOAD ROTATION MEDIA</button>
+    <div id="statusStack" class="status-stack" aria-label="Program readiness">
+      <button id="statusToggle" class="status-toggle" type="button" aria-expanded="true">MEDIA STATUS</button>
+      <div id="statusDetails" class="status-details">
+        <button id="programState" class="state-button warning" type="button">STREAMING PROGRAM</button>
+        <button id="rotationState" class="state-button warning" type="button">LOAD ROTATION MEDIA</button>
+      </div>
       <input id="rotationFile" type="file" accept="video/mp4,.mp4" hidden />
     </div>
 
@@ -102,6 +109,8 @@
     const cutinCopy=document.getElementById("cutinCopy");
     const cutinOpenBtn=document.getElementById("cutinOpenBtn");
     const cutinDismissBtn=document.getElementById("cutinDismissBtn");
+    const statusStack=document.getElementById("statusStack");
+    const statusToggle=document.getElementById("statusToggle");
     const programState=document.getElementById("programState");
     const rotationState=document.getElementById("rotationState");
     const rotationFile=document.getElementById("rotationFile");
@@ -152,8 +161,10 @@
     let currentPrompt=null;
     let cutinTimer=null;
     let scheduleTimer=null;
+    let statusHideTimer=null;
     let pausedByBeta=false;
     let frameReady=false;
+    let programReady=false;
     let rotationReady=false;
     let rotationUrl="";
     let activeClip=null;
@@ -207,14 +218,34 @@
       video.play().catch(()=>{});pausedByBeta=false;
     }
 
+    function collapseStatus(){
+      clearTimeout(statusHideTimer);
+      statusStack.classList.add("collapsed");
+      statusToggle.setAttribute("aria-expanded","false");
+    }
+    function revealStatus(autoHide=false){
+      clearTimeout(statusHideTimer);
+      statusStack.classList.remove("collapsed");
+      statusToggle.setAttribute("aria-expanded","true");
+      if(autoHide&&programReady&&rotationReady)statusHideTimer=setTimeout(collapseStatus,5000);
+    }
+    function syncStatusUI(reveal=false){
+      const allReady=programReady&&rotationReady;
+      statusToggle.textContent=allReady?"MEDIA READY ✓":"MEDIA STATUS";
+      statusToggle.classList.toggle("ready",allReady);
+      if(reveal)revealStatus(allReady);
+    }
     function setProgramState(){
       const doc=frameDoc();
       const localStatus=doc?doc.getElementById("localProgramStatus"):null;
       const localVideo=presentationVideo();
       const localLoaded=Boolean((localStatus&&!localStatus.hidden)||localVideo?.src?.startsWith("blob:"));
+      const changed=localLoaded!==programReady;
+      programReady=localLoaded;
       programState.textContent=localLoaded?"LOCAL PROGRAM LOADED":"STREAMING PROGRAM";
       programState.classList.toggle("ready",localLoaded);
       programState.classList.toggle("warning",!localLoaded);
+      syncStatusUI(changed);
     }
 
     function hideCutin({resume=true}={}){
@@ -321,6 +352,9 @@
     });
 
     cutinDismissBtn.addEventListener("click",()=>hideCutin({resume:true}));
+    statusToggle.addEventListener("click",()=>{
+      if(statusStack.classList.contains("collapsed"))revealStatus(false);else collapseStatus();
+    });
     programState.addEventListener("click",()=>{
       const doc=frameDoc();
       const loadButton=doc?doc.getElementById("loadLocalProgramBtn"):null;
@@ -333,6 +367,7 @@
       rotationUrl=URL.createObjectURL(file);
       insertVideo.src=rotationUrl;
       insertVideo.load();
+      revealStatus(false);
       rotationState.textContent="CHECKING ROTATION MEDIA…";
       rotationState.classList.remove("ready");
       rotationState.classList.add("warning");
@@ -342,6 +377,7 @@
         rotationState.textContent=valid?"ROTATION MEDIA READY — 10/10":"SELECT BIG RED ROTATION PACK";
         rotationState.classList.toggle("ready",valid);
         rotationState.classList.toggle("warning",!valid);
+        syncStatusUI(true);
         if(valid){
           insertVideo.muted=false;
           insertVideo.volume=0.25;
