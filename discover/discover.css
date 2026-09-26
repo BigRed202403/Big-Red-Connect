@@ -1351,7 +1351,7 @@ button {
 
 
 /* --------------------------------------------------
-   DISCOVER DRIVER + WEATHER + REVIEW — V20
+   DISCOVER DRIVER + WEATHER + REVIEW — V21 STAGED
 -------------------------------------------------- */
 
 .discover-actions {
@@ -2609,5 +2609,236 @@ button {
 
   .wyr-choice {
     min-height: 120px;
+  }
+}
+
+
+/* --------------------------------------------------
+   DISCOVER MUSIC + RIDER HUB — V21 STAGED
+-------------------------------------------------- */
+
+.discover-actions {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.music-panel-card {
+  width: min(980px, 96vw);
+  overflow: hidden;
+}
+
+.music-heading {
+  margin: 14px auto 10px;
+  text-align: center;
+}
+
+.music-heading h2 {
+  margin: 5px 0 7px;
+  font-size: clamp(34px, 5vw, 52px);
+  line-height: 1;
+}
+
+.music-heading p {
+  max-width: 760px;
+  margin: 0 auto;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.35;
+}
+
+.music-choice-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 9px;
+  margin: 12px auto 10px;
+}
+
+.music-choice {
+  min-height: 76px;
+  padding: 10px 8px;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: #181818;
+  color: #fff;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.music-choice strong {
+  display: block;
+  margin-top: 3px;
+  font-size: 16px;
+  line-height: 1.12;
+}
+
+.music-choice.requested {
+  border-color: var(--red);
+  background: rgba(215,25,32,.20);
+}
+
+.music-choice:disabled {
+  opacity: .58;
+}
+
+.music-specific-request {
+  margin-top: 6px;
+  padding: 11px 12px;
+  border: 1px solid #333;
+  border-radius: 14px;
+  background: #101010;
+}
+
+.music-specific-request label {
+  display: block;
+  margin-bottom: 7px;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 850;
+}
+
+.music-specific-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.music-specific-row input {
+  min-width: 0;
+  min-height: 48px;
+  padding: 10px 12px;
+  border: 1px solid #4a4a4a;
+  border-radius: 11px;
+  background: #080808;
+  color: #fff;
+  font: 700 16px system-ui, -apple-system, sans-serif;
+}
+
+.music-specific-row input::placeholder {
+  color: #888;
+}
+
+.music-specific-row button {
+  min-height: 48px;
+  padding: 9px 16px;
+  border: 0;
+  border-radius: 11px;
+  background: var(--red);
+  color: #fff;
+  font: 850 15px system-ui, -apple-system, sans-serif;
+}
+
+.music-specific-row button:disabled,
+.music-specific-row input:disabled {
+  opacity: .58;
+}
+
+.music-example {
+  margin-top: 6px;
+  color: #888;
+  font-size: 12px;
+}
+
+.music-request-status {
+  min-height: 42px;
+  display: grid;
+  place-items: center;
+  margin-top: 7px;
+  padding: 8px 12px;
+  border-radius: 13px;
+  border: 1px solid #333;
+  background: #090909;
+  color: #ddd;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.hub-save-contact {
+  margin-top: 7px;
+  color: #ddd;
+  font-size: 13px;
+}
+
+@media (max-width: 700px) {
+  .music-panel-card {
+    overflow-y: auto;
+  }
+
+  .music-choice-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .music-choice {
+    min-height: 68px;
+  }
+
+  .music-specific-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 850px) {
+  .action-button {
+    font-size: 16px;
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+
+  .music-panel-card {
+    height: calc(100dvh - 12px);
+    padding: 9px 14px;
+  }
+
+  .music-heading {
+    margin: 6px auto 7px;
+  }
+
+  .music-heading h2 {
+    font-size: 34px;
+  }
+
+  .music-heading p {
+    font-size: 13px;
+  }
+
+  .music-choice-grid {
+    flex: 0 0 auto;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 7px;
+    margin: 8px auto 7px;
+  }
+
+  .music-choice {
+    min-height: 64px;
+    padding: 7px 5px;
+    font-size: 21px;
+  }
+
+  .music-choice strong {
+    font-size: 14px;
+  }
+
+  .music-specific-request {
+    padding: 8px 10px;
+  }
+
+  .music-specific-request label {
+    margin-bottom: 5px;
+    font-size: 13px;
+  }
+
+  .music-specific-row input,
+  .music-specific-row button {
+    min-height: 42px;
+  }
+
+  .music-example {
+    display: none;
+  }
+
+  .music-request-status {
+    min-height: 36px;
+    margin-top: 5px;
+    padding: 6px 10px;
+    font-size: 12px;
   }
 }
