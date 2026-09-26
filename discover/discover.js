@@ -1,4 +1,4 @@
-// Discover v21 STAGED — music requests + larger game banks + Rider Hub reinforcement
+// Discover v21 — music requests + larger game banks + Rider Hub reinforcement
 (() => {
   "use strict";
 
