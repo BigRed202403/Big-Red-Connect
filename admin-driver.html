@@ -2310,9 +2310,166 @@ window.addEventListener("load",()=>{
 });
 </script>
 
+
+<script id="secureMusicRequestAlerts">
+(() => {
+  "use strict";
+
+  if (!location.pathname.startsWith("/secure-admin/")) return;
+
+  const STORAGE_KEY = "bigRedLastAnnouncedMusicRequestId";
+  const POLL_MS = 10000;
+  let alertsArmed = false;
+  let audioContext = null;
+  let pollBusy = false;
+  let alertButton = null;
+
+  function requestLabel(request) {
+    if (!request) return "";
+    return request.kind === "specific"
+      ? (request.detail || "Specific song or artist")
+      : (request.choice || "Playlist request");
+  }
+
+  function showRequestBanner(request) {
+    let banner = document.getElementById("musicRequestAlertBanner");
+    if (!banner) {
+      banner = document.createElement("button");
+      banner.id = "musicRequestAlertBanner";
+      banner.type = "button";
+      banner.setAttribute("aria-label", "Dismiss music request alert");
+      banner.innerHTML = '<strong>🎵 Music request received</strong><span></span>';
+      banner.addEventListener("click", () => banner.classList.remove("show"));
+      document.body.appendChild(banner);
+    }
+    banner.querySelector("span").textContent = requestLabel(request);
+    banner.classList.add("show");
+    clearTimeout(showRequestBanner.hideTimer);
+    showRequestBanner.hideTimer = setTimeout(() => banner.classList.remove("show"), 8000);
+  }
+
+  function playRequestAlert() {
+    if (!alertsArmed) {
+      if (alertButton) alertButton.textContent = "🔔 Tap to enable request sound";
+      return;
+    }
+
+    try {
+      if (audioContext && audioContext.state === "suspended") audioContext.resume();
+      if (audioContext) {
+        const oscillator = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+        oscillator.type = "sine";
+        oscillator.frequency.setValueAtTime(880, audioContext.currentTime);
+        oscillator.frequency.setValueAtTime(1175, audioContext.currentTime + 0.16);
+        gain.gain.setValueAtTime(0.0001, audioContext.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.18, audioContext.currentTime + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.34);
+        oscillator.connect(gain);
+        gain.connect(audioContext.destination);
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + 0.36);
+      }
+    } catch (error) {
+      console.info("Music request chime unavailable.", error);
+    }
+
+    try {
+      if ("speechSynthesis" in window) {
+        speechSynthesis.cancel();
+        const message = new SpeechSynthesisUtterance("Music request received.");
+        message.rate = 0.95;
+        message.volume = 1;
+        speechSynthesis.speak(message);
+      }
+    } catch (error) {
+      console.info("Music request announcement unavailable.", error);
+    }
+  }
+
+  async function armRequestAlerts() {
+    try {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (AudioContextClass && !audioContext) audioContext = new AudioContextClass();
+      if (audioContext && audioContext.state === "suspended") await audioContext.resume();
+      alertsArmed = true;
+      if (alertButton) {
+        alertButton.textContent = "🔔 Request sound on";
+        alertButton.classList.add("ready");
+        alertButton.setAttribute("aria-pressed", "true");
+      }
+      if (typeof showToast === "function") showToast("Music request sound enabled");
+    } catch (error) {
+      console.info("Music request sound could not be enabled.", error);
+      if (alertButton) alertButton.textContent = "🔔 Tap to retry request sound";
+    }
+  }
+
+  function installAlertControls() {
+    const card = document.getElementById("musicRequestCard");
+    const state = document.getElementById("musicRequestState");
+    if (!card || !state || document.getElementById("musicRequestAlertEnable")) return false;
+
+    alertButton = document.createElement("button");
+    alertButton.id = "musicRequestAlertEnable";
+    alertButton.type = "button";
+    alertButton.className = "btn btn-secondary music-alert-enable";
+    alertButton.textContent = "🔔 Enable request sound";
+    alertButton.setAttribute("aria-pressed", "false");
+    alertButton.addEventListener("click", armRequestAlerts);
+    state.insertAdjacentElement("beforebegin", alertButton);
+    return true;
+  }
+
+  async function checkForNewMusicRequest() {
+    if (document.hidden || pollBusy) return;
+    pollBusy = true;
+    try {
+      const response = await fetch("/secure-admin/music/request", { cache: "no-store" });
+      const result = await response.json();
+      if (!response.ok || !result.ok) return;
+      const request = result.request;
+      if (!request || request.status !== "PENDING" || !request.id) return;
+
+      const lastAnnounced = sessionStorage.getItem(STORAGE_KEY);
+      if (String(request.id) === lastAnnounced) return;
+
+      sessionStorage.setItem(STORAGE_KEY, String(request.id));
+      showRequestBanner(request);
+      playRequestAlert();
+    } catch (error) {
+      console.info("Music request alert check unavailable.", error);
+    } finally {
+      pollBusy = false;
+    }
+  }
+
+  const style = document.createElement("style");
+  style.textContent = [
+    ".music-alert-enable{margin:0 0 8px;min-height:38px;padding:6px 10px;font-size:.78rem}",
+    ".music-alert-enable.ready{border-color:#0a5;color:#baffd8}",
+    "#musicRequestAlertBanner{position:fixed;z-index:10000;top:max(78px,calc(env(safe-area-inset-top) + 60px));left:50%;transform:translate(-50%,-14px);width:min(520px,calc(100% - 24px));padding:14px 16px;border:2px solid var(--red);border-radius:14px;background:#0b0b0b;color:#fff;box-shadow:0 16px 42px rgba(0,0,0,.7);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;text-align:left}",
+    "#musicRequestAlertBanner.show{opacity:1;pointer-events:auto;transform:translate(-50%,0)}",
+    "#musicRequestAlertBanner strong{display:block;font-size:1.05rem}",
+    "#musicRequestAlertBanner span{display:block;margin-top:4px;color:#ddd;font-size:.9rem}"
+  ].join("");
+  document.head.appendChild(style);
+
+  window.addEventListener("load", () => {
+    if (!installAlertControls()) {
+      const retry = setInterval(() => {
+        if (installAlertControls()) clearInterval(retry);
+      }, 250);
+      setTimeout(() => clearInterval(retry), 10000);
+    }
+    checkForNewMusicRequest();
+    setInterval(checkForNewMusicRequest, POLL_MS);
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) checkForNewMusicRequest();
+    });
+  });
+})();
+</script>
+
 </body>
 </html>
-
-
-
-
