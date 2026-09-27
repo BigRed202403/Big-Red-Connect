@@ -2115,7 +2115,7 @@
         .appendChild(style);
 
 
-      const badge =
+      let badge =
         doc.getElementById(
           "loadLocalProgramBtn"
         );
@@ -2143,6 +2143,22 @@
           badge.dataset.unifiedMediaMenu !==
           "ready"
         ){
+
+          // Replace the staged button in place so its original single-file
+          // picker listener cannot compete with the unified three-file menu.
+          const replacement =
+            badge.cloneNode(
+              true
+            );
+
+
+          badge.replaceWith(
+            replacement
+          );
+
+
+          badge =
+            replacement;
 
           badge.dataset.unifiedMediaMenu =
             "ready";
