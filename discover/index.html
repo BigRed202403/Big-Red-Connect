@@ -389,6 +389,13 @@
         </button>
 
         <button
+          id="musicState"
+          class="state-button warning"
+          type="button">
+          LOAD BACKGROUND MUSIC
+        </button>
+
+        <button
           id="rotationState"
           class="state-button warning"
           type="button">
@@ -396,6 +403,12 @@
         </button>
 
       </div>
+
+      <input
+        id="backgroundMusicFile"
+        type="file"
+        accept="audio/*,.m4a,.mp3,.wav,.mov,.mp4"
+        hidden />
 
       <input
         id="rotationFile"
@@ -557,8 +570,14 @@
     const programState =
       document.getElementById("programState");
 
+    const musicState =
+      document.getElementById("musicState");
+
     const rotationState =
       document.getElementById("rotationState");
+
+    const backgroundMusicFile =
+      document.getElementById("backgroundMusicFile");
 
     const rotationFile =
       document.getElementById("rotationFile");
@@ -768,6 +787,8 @@
 
     let programReady = false;
 
+    let musicReady = false;
+
     let rotationReady = false;
 
     let rotationUrl = "";
@@ -782,7 +803,7 @@
 
     let lastShortIndex = -1;
 
-    let backgroundAudioSource = "";
+    let backgroundAudioUrl = "";
 
     let backgroundAudioReady = false;
 
@@ -923,49 +944,47 @@
     }
 
 
-    function useProgramAudioAsBackground(){
+    function loadBackgroundMusic(file){
 
-      const mainVideo =
-        presentationVideo();
-
-      const source =
-        mainVideo?.currentSrc ||
-        mainVideo?.src ||
-        "";
-
-
-      if(
-        !source.startsWith("blob:") ||
-        source === backgroundAudioSource
-      ){
+      if(!file){
         return;
+      }
+
+
+      if(backgroundAudioUrl){
+        URL.revokeObjectURL(
+          backgroundAudioUrl
+        );
       }
 
 
       backgroundAudio.pause();
 
-      backgroundAudioReady =
-        false;
+      backgroundAudioReady = false;
+      musicReady = false;
 
-      backgroundAudioSource =
-        source;
+      backgroundAudioUrl =
+        URL.createObjectURL(file);
 
       backgroundAudio.src =
-        source;
+        backgroundAudioUrl;
 
-      backgroundAudio.loop =
-        true;
-
-      backgroundAudio.volume =
-        1;
-
-      backgroundAudio.load();
-
-      // Start the request while the file-picker change event still carries
-      // the rider's gesture. Safari may fulfill it only after canplay.
+      backgroundAudio.loop = true;
+      backgroundAudio.volume = 1;
       backgroundAudio.muted =
         !soundIsOn();
 
+      musicState.textContent =
+        "CHECKING BACKGROUND MUSIC…";
+
+      musicState.classList.remove("ready");
+      musicState.classList.add("warning");
+
+      syncStatusUI(true);
+      backgroundAudio.load();
+
+      // The file-picker change is a direct rider gesture. Starting playback
+      // here is the most reliable way to unlock separate audio on iPad.
       backgroundAudio
         .play()
         .catch(()=>{});
@@ -976,18 +995,18 @@
           "canplay",
           ()=>{
 
-            backgroundAudioReady =
-              true;
+            backgroundAudioReady = true;
+            musicReady = true;
 
+            musicState.textContent =
+              "BACKGROUND MUSIC LOADED";
 
-            if(mainVideo){
-              mainVideo.muted = true;
-            }
-
+            musicState.classList.add("ready");
+            musicState.classList.remove("warning");
 
             applySharedSoundState();
-
             playBackgroundAudio();
+            syncStatusUI(true);
 
           },
           {once:true}
@@ -999,17 +1018,16 @@
           "error",
           ()=>{
 
-            backgroundAudioReady =
-              false;
+            backgroundAudioReady = false;
+            musicReady = false;
 
+            musicState.textContent =
+              "SELECT BACKGROUND MUSIC";
 
-            const controller =
-              audioController();
+            musicState.classList.remove("ready");
+            musicState.classList.add("warning");
 
-
-            if(controller){
-              controller.apply();
-            }
+            syncStatusUI(true);
 
           },
           {once:true}
@@ -1450,6 +1468,7 @@
       if(
         autoHide &&
         programReady &&
+        musicReady &&
         rotationReady
       ){
 
@@ -1470,6 +1489,7 @@
 
       const allReady =
         programReady &&
+        musicReady &&
         rotationReady;
 
 
@@ -2049,12 +2069,6 @@
         );
 
 
-      const localProgramFile =
-        doc.getElementById(
-          "localProgramFile"
-        );
-
-
       if(volumeButton){
 
         volumeButton
@@ -2064,17 +2078,6 @@
               applySharedSoundState();
               playBackgroundAudio();
             }
-          );
-
-      }
-
-
-      if(localProgramFile){
-
-        localProgramFile
-          .addEventListener(
-            "change",
-            useProgramAudioAsBackground
           );
 
       }
@@ -2304,8 +2307,6 @@
                     }
 
 
-                    useProgramAudioAsBackground();
-
                     applySharedSoundState();
 
                     playBackgroundAudio();
@@ -2328,6 +2329,33 @@
             fileInput.click();
 
           }
+
+        }
+      );
+
+
+    musicState
+      .addEventListener(
+        "click",
+        ()=>{
+
+          backgroundMusicFile.value = "";
+          backgroundMusicFile.click();
+
+        }
+      );
+
+
+    backgroundMusicFile
+      .addEventListener(
+        "change",
+        ()=>{
+
+          const file =
+            backgroundMusicFile.files &&
+            backgroundMusicFile.files[0];
+
+          loadBackgroundMusic(file);
 
         }
       );
@@ -2578,8 +2606,6 @@
 
         setProgramState();
 
-        useProgramAudioAsBackground();
-
         applySharedSoundState();
 
 
@@ -2630,6 +2656,22 @@
           );
 
         }
+      );
+
+
+    window
+      .addEventListener(
+        "pagehide",
+        ()=>{
+
+          if(backgroundAudioUrl){
+            URL.revokeObjectURL(
+              backgroundAudioUrl
+            );
+          }
+
+        },
+        {once:true}
       );
 
   })();
