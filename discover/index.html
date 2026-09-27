@@ -52,8 +52,8 @@
     .status-stack{
       position:absolute;
       z-index:65;
-      left:12px;
-      top:calc(max(10px,env(safe-area-inset-top)) + 72px);
+      left:18px;
+      top:max(16px,env(safe-area-inset-top));
       display:flex;
       flex-direction:column;
       align-items:flex-start;
@@ -70,21 +70,37 @@
     }
 
     .status-toggle{
-      display:none;
-      padding:7px 10px;
-      border:1px solid rgba(255,255,255,.2);
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:9px 13px;
+      border:1px solid rgba(255,255,255,.16);
       border-radius:999px;
-      background:rgba(0,0,0,.72);
-      color:#ddd;
-      font:850 10px/1.2 system-ui,-apple-system,sans-serif;
-      letter-spacing:.07em;
+      background:rgba(0,0,0,.66);
+      color:#fff;
+      font:850 14px/1 system-ui,-apple-system,sans-serif;
+      letter-spacing:.02em;
       backdrop-filter:blur(10px);
       -webkit-backdrop-filter:blur(10px);
     }
 
+    .status-dot{
+      width:10px;
+      height:10px;
+      flex:0 0 auto;
+      border-radius:50%;
+      background:#e11;
+      box-shadow:0 0 10px rgba(225,17,17,.45);
+    }
+
     .status-toggle.ready{
       border-color:rgba(47,200,94,.62);
-      color:#8df0aa;
+      color:#fff;
+    }
+
+    .status-toggle.ready .status-dot{
+      background:#2fc85e;
+      box-shadow:0 0 10px rgba(47,200,94,.7);
     }
 
     .status-details{
@@ -344,7 +360,7 @@
       }
 
       .status-stack{
-        top:calc(max(10px,env(safe-area-inset-top)) + 72px);
+        top:max(16px,env(safe-area-inset-top));
       }
 
       .state-button{
@@ -377,7 +393,8 @@
         title="Manage local Discover media"
         aria-label="Discover with Big Red. Manage local program media."
         aria-expanded="true">
-        DISCOVER WITH BIG RED
+        <span id="statusDot" class="status-dot" aria-hidden="true"></span>
+        <span id="statusLabel">Discover with Big Red</span>
       </button>
 
       <div
@@ -569,6 +586,9 @@
 
     const statusToggle =
       document.getElementById("statusToggle");
+
+    const statusLabel =
+      document.getElementById("statusLabel");
 
     const programState =
       document.getElementById("programState");
@@ -1535,10 +1555,8 @@
         rotationReady;
 
 
-      statusToggle.textContent =
-        allReady
-          ? "DISCOVER WITH BIG RED ✓"
-          : "DISCOVER WITH BIG RED";
+      statusLabel.textContent =
+        "Discover with Big Red";
 
 
       statusToggle
@@ -2102,11 +2120,7 @@
 
         ".home-view{padding-bottom:82px!important}",
 
-        "#loadLocalProgramBtn{pointer-events:auto!important;cursor:pointer!important}",
-
-        "#loadLocalProgramBtn.media-ready{border-color:rgba(47,200,94,.72)!important;color:#8df0aa!important}",
-
-        "#loadLocalProgramBtn.media-ready .discover-badge-dot{background:#2fc85e!important;box-shadow:0 0 10px rgba(47,200,94,.7)!important}"
+        "#loadLocalProgramBtn{display:none!important}"
 
       ].join("");
 
@@ -2115,7 +2129,7 @@
         .appendChild(style);
 
 
-      let badge =
+      const badge =
         doc.getElementById(
           "loadLocalProgramBtn"
         );
@@ -2123,83 +2137,14 @@
 
       if(badge){
 
-        badge.removeAttribute(
-          "aria-disabled"
-        );
-
-
-        badge.removeAttribute(
-          "tabindex"
-        );
-
-
         badge.setAttribute(
-          "aria-haspopup",
+          "aria-hidden",
           "true"
         );
 
-
-        if(
-          badge.dataset.unifiedMediaMenu !==
-          "ready"
-        ){
-
-          // Replace the staged button in place so its original single-file
-          // picker listener cannot compete with the unified three-file menu.
-          const replacement =
-            badge.cloneNode(
-              true
-            );
-
-
-          badge.replaceWith(
-            replacement
-          );
-
-
-          badge =
-            replacement;
-
-          badge.dataset.unifiedMediaMenu =
-            "ready";
-
-
-          badge.addEventListener(
-            "click",
-            event=>{
-
-              event.preventDefault();
-              event.stopImmediatePropagation();
-
-
-              if(
-                statusStack.classList.contains(
-                  "collapsed"
-                ) ||
-                statusStack.classList.contains(
-                  "hidden-ready"
-                )
-              ){
-
-                revealStatus(
-                  false
-                );
-
-              }else{
-
-                collapseStatus();
-
-              }
-
-            },
-            true
-          );
-
-        }
-
-
-        syncStatusUI(
-          false
+        badge.setAttribute(
+          "tabindex",
+          "-1"
         );
 
       }
