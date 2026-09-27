@@ -1170,17 +1170,28 @@
     updateSoundControl();
   }
 
-  async function unlockAudioIfNeeded() {
-    if (audioUnlocked) return;
+  function unlockAndPlaySound() {
     audioUnlocked = true;
+    soundOn = true;
+    saveSoundState();
+    video.volume = 1;
     applySoundState();
 
-    try {
-      await video.play();
-      videoFallback.hidden = true;
-    } catch (error) {
-      console.info("Sound will begin on the next rider interaction.", error);
-    }
+    const playback = video.play();
+    Promise.resolve(playback)
+      .then(() => {
+        videoFallback.hidden = true;
+      })
+      .catch((error) => {
+        console.info("Sound will begin on the next rider interaction.", error);
+      });
+
+    return Promise.resolve(playback);
+  }
+
+  async function unlockAudioIfNeeded() {
+    if (audioUnlocked) return;
+    await unlockAndPlaySound();
   }
 
   async function toggleSound() {
@@ -1276,6 +1287,7 @@
       video.src = localProgramUrl;
       video.loop = true;
       video.load();
+      applySoundState();
 
       showLocalProgramStatus(`Local program loaded: ${file.name}`, 5000);
 
@@ -2106,6 +2118,17 @@
   }
 
   applySoundState();
+  window.DiscoverAudioController = Object.freeze({
+    unlockAndPlay: unlockAndPlaySound,
+    ensurePlayback: ensureVideoPlayback,
+    apply: applySoundState,
+    state: () => ({
+      unlocked: audioUnlocked,
+      soundOn,
+      muted: video.muted,
+      paused: video.paused
+    })
+  });
   ensureVideoPlayback();
   window.addEventListener("beforeunload", () => {
     if (localProgramUrl) URL.revokeObjectURL(localProgramUrl);
