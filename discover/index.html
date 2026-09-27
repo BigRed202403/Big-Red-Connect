@@ -373,8 +373,10 @@
         id="statusToggle"
         class="status-toggle"
         type="button"
+        title="Manage local Discover media"
+        aria-label="Discover with Big Red. Manage local program media."
         aria-expanded="true">
-        MEDIA STATUS
+        DISCOVER WITH BIG RED
       </button>
 
       <div
@@ -1434,9 +1436,9 @@
       );
 
 
-      statusStack
-        .classList
-        .add("hidden-ready");
+      // Keep the Discover badge available after setup. Only collapse the
+      // unified loader menu once all three local media files are ready.
+      collapseStatus();
 
     }
 
@@ -1495,8 +1497,8 @@
 
       statusToggle.textContent =
         allReady
-          ? "MEDIA READY ✓"
-          : "MEDIA STATUS";
+          ? "DISCOVER WITH BIG RED ✓"
+          : "DISCOVER WITH BIG RED";
 
 
       statusToggle
