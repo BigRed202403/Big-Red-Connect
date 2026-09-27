@@ -2069,6 +2069,53 @@
         );
 
 
+      const mainVideo =
+        presentationVideo();
+
+
+      if(
+        mainVideo &&
+        mainVideo.dataset.backgroundMusicBridge !== "ready"
+      ){
+
+        mainVideo.dataset.backgroundMusicBridge =
+          "ready";
+
+
+        // The staged page resumes its slideshow after closing an overlay.
+        // On iPad that video play call can take audio focus from the separate
+        // soundtrack even though the slideshow is muted. Reassert the mute
+        // first, then restore the already-unlocked soundtrack just afterward.
+        mainVideo
+          .addEventListener(
+            "play",
+            ()=>{
+
+              if(
+                !backgroundAudioReady ||
+                backgroundPausedForShort
+              ){
+                return;
+              }
+
+
+              mainVideo.muted = true;
+
+
+              window.setTimeout(
+                ()=>{
+                  applySharedSoundState();
+                  playBackgroundAudio();
+                },
+                120
+              );
+
+            }
+          );
+
+      }
+
+
       if(volumeButton){
 
         volumeButton
@@ -2607,6 +2654,17 @@
         setProgramState();
 
         applySharedSoundState();
+
+
+        if(
+          backgroundAudioReady &&
+          backgroundAudio.paused &&
+          !backgroundPausedForShort
+        ){
+
+          playBackgroundAudio();
+
+        }
 
 
         if(
