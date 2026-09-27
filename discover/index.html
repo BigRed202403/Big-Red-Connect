@@ -449,6 +449,14 @@
 
     </section>
 
+    <audio
+      id="backgroundAudio"
+      preload="auto"
+      loop
+      playsinline
+      aria-hidden="true">
+    </audio>
+
     <section
       id="cutinWrap"
       class="cutin-wrap"
@@ -563,6 +571,9 @@
 
     const mediaLabel =
       document.getElementById("mediaLabel");
+
+    const backgroundAudio =
+      document.getElementById("backgroundAudio");
 
 
     const fastMode =
@@ -771,6 +782,12 @@
 
     let lastShortIndex = -1;
 
+    let backgroundAudioSource = "";
+
+    let backgroundAudioReady = false;
+
+    let backgroundPausedForShort = false;
+
 
     function frameDoc(){
 
@@ -816,6 +833,207 @@
         return null;
 
       }
+
+    }
+
+
+    function soundIsOn(){
+
+      const controller =
+        audioController();
+
+      if(controller){
+
+        try{
+          return Boolean(
+            controller.state().soundOn
+          );
+        }catch{}
+
+      }
+
+
+      const doc =
+        frameDoc();
+
+
+      return Boolean(
+        doc
+          ?.getElementById("volumeBtn")
+          ?.classList
+          .contains("sound-on")
+      );
+
+    }
+
+
+    function applySharedSoundState(){
+
+      const mainVideo =
+        presentationVideo();
+
+      const soundOn =
+        soundIsOn();
+
+
+      if(
+        backgroundAudioReady &&
+        mainVideo
+      ){
+
+        mainVideo.muted =
+          true;
+
+      }
+
+
+      backgroundAudio.muted =
+        !soundOn;
+
+
+      if(
+        activeClip?.kind === "short"
+      ){
+
+        insertVideo.muted =
+          !soundOn;
+
+      }
+
+    }
+
+
+    function playBackgroundAudio(){
+
+      if(
+        !backgroundAudioReady ||
+        backgroundPausedForShort
+      ){
+        return;
+      }
+
+
+      applySharedSoundState();
+
+
+      backgroundAudio
+        .play()
+        .catch(()=>{});
+
+    }
+
+
+    function useProgramAudioAsBackground(){
+
+      const mainVideo =
+        presentationVideo();
+
+      const source =
+        mainVideo?.currentSrc ||
+        mainVideo?.src ||
+        "";
+
+
+      if(
+        !source.startsWith("blob:") ||
+        source === backgroundAudioSource
+      ){
+        return;
+      }
+
+
+      backgroundAudio.pause();
+
+      backgroundAudioReady =
+        false;
+
+      backgroundAudioSource =
+        source;
+
+      backgroundAudio.src =
+        source;
+
+      backgroundAudio.loop =
+        true;
+
+      backgroundAudio.volume =
+        1;
+
+      backgroundAudio.load();
+
+      // Start the request while the file-picker change event still carries
+      // the rider's gesture. Safari may fulfill it only after canplay.
+      backgroundAudio.muted =
+        !soundIsOn();
+
+      backgroundAudio
+        .play()
+        .catch(()=>{});
+
+
+      backgroundAudio
+        .addEventListener(
+          "canplay",
+          ()=>{
+
+            backgroundAudioReady =
+              true;
+
+
+            if(mainVideo){
+              mainVideo.muted = true;
+            }
+
+
+            applySharedSoundState();
+
+            playBackgroundAudio();
+
+          },
+          {once:true}
+        );
+
+
+      backgroundAudio
+        .addEventListener(
+          "error",
+          ()=>{
+
+            backgroundAudioReady =
+              false;
+
+
+            const controller =
+              audioController();
+
+
+            if(controller){
+              controller.apply();
+            }
+
+          },
+          {once:true}
+        );
+
+    }
+
+
+    function pauseBackgroundForShort(){
+
+      backgroundPausedForShort =
+        true;
+
+      backgroundAudio.pause();
+
+    }
+
+
+    function resumeBackgroundAfterShort(){
+
+      backgroundPausedForShort =
+        false;
+
+      playBackgroundAudio();
 
     }
 
@@ -1464,6 +1682,9 @@
 
     function finishMedia(){
 
+      const finishedKind =
+        activeClip?.kind;
+
       insertVideo.pause();
 
 
@@ -1490,6 +1711,15 @@
       dock
         .classList
         .remove("media-active");
+
+
+      if(
+        finishedKind === "short"
+      ){
+
+        resumeBackgroundAfterShort();
+
+      }
 
 
       resumeProgramIfHome();
@@ -1535,6 +1765,8 @@
 
         pauseProgram();
 
+        pauseBackgroundForShort();
+
       }
 
 
@@ -1545,9 +1777,7 @@
       insertVideo.muted =
         kind === "commercial"
           ? true
-          : Boolean(
-              mainVideo?.muted
-            );
+          : !soundIsOn();
 
 
       insertVideo.volume =
@@ -1813,6 +2043,50 @@
       }
 
 
+      const volumeButton =
+        doc.getElementById(
+          "volumeBtn"
+        );
+
+
+      const localProgramFile =
+        doc.getElementById(
+          "localProgramFile"
+        );
+
+
+      if(volumeButton){
+
+        volumeButton
+          .addEventListener(
+            "click",
+            ()=>{
+              applySharedSoundState();
+              playBackgroundAudio();
+            }
+          );
+
+      }
+
+
+      if(localProgramFile){
+
+        localProgramFile
+          .addEventListener(
+            "change",
+            useProgramAudioAsBackground
+          );
+
+      }
+
+
+      doc.addEventListener(
+        "pointerdown",
+        playBackgroundAudio,
+        {passive:true}
+      );
+
+
       setProgramState();
 
 
@@ -2029,6 +2303,13 @@
 
                     }
 
+
+                    useProgramAudioAsBackground();
+
+                    applySharedSoundState();
+
+                    playBackgroundAudio();
+
                   },
                   250
                 );
@@ -2217,12 +2498,15 @@
                     };
 
 
+                  // Validation must remain silent. Briefly playing a second
+                  // unmuted video can take audio focus away from the main
+                  // program in iPad Safari even after the insert is paused.
                   insertVideo.muted =
-                    false;
+                    true;
 
 
                   insertVideo.volume =
-                    0.25;
+                    0;
 
 
                   insertVideo
@@ -2294,6 +2578,10 @@
 
         setProgramState();
 
+        useProgramAudioAsBackground();
+
+        applySharedSoundState();
+
 
         if(
           !cutinWrap
@@ -2332,6 +2620,9 @@
             return;
 
           }
+
+
+          playBackgroundAudio();
 
 
           scheduleNext(
