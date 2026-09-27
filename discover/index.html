@@ -53,7 +53,7 @@
       position:absolute;
       z-index:65;
       left:12px;
-      top:calc(max(10px,env(safe-area-inset-top)) + 38px);
+      top:calc(max(10px,env(safe-area-inset-top)) + 72px);
       display:flex;
       flex-direction:column;
       align-items:flex-start;
@@ -70,6 +70,7 @@
     }
 
     .status-toggle{
+      display:none;
       padding:7px 10px;
       border:1px solid rgba(255,255,255,.2);
       border-radius:999px;
@@ -343,7 +344,7 @@
       }
 
       .status-stack{
-        top:calc(max(10px,env(safe-area-inset-top)) + 38px);
+        top:calc(max(10px,env(safe-area-inset-top)) + 72px);
       }
 
       .state-button{
@@ -826,6 +827,21 @@
         return null;
 
       }
+
+    }
+
+
+    function embeddedDiscoverBadge(){
+
+      const doc =
+        frameDoc();
+
+
+      return doc
+        ? doc.getElementById(
+            "loadLocalProgramBtn"
+          )
+        : null;
 
     }
 
@@ -1426,6 +1442,18 @@
           "false"
         );
 
+
+      const badge =
+        embeddedDiscoverBadge();
+
+
+      if(badge){
+        badge.setAttribute(
+          "aria-expanded",
+          "false"
+        );
+      }
+
     }
 
 
@@ -1465,6 +1493,18 @@
           "aria-expanded",
           "true"
         );
+
+
+      const badge =
+        embeddedDiscoverBadge();
+
+
+      if(badge){
+        badge.setAttribute(
+          "aria-expanded",
+          "true"
+        );
+      }
 
 
       if(
@@ -1507,6 +1547,34 @@
           "ready",
           allReady
         );
+
+
+      const badge =
+        embeddedDiscoverBadge();
+
+
+      if(badge){
+
+        badge.classList.toggle(
+          "media-ready",
+          allReady
+        );
+
+
+        badge.setAttribute(
+          "aria-label",
+          allReady
+            ? "Discover with Big Red. All local media ready. Manage media."
+            : "Discover with Big Red. Manage local program media."
+        );
+
+
+        badge.title =
+          allReady
+            ? "All local media ready — tap to manage"
+            : "Tap to load local program media";
+
+      }
 
 
       if(reveal){
@@ -2034,7 +2102,11 @@
 
         ".home-view{padding-bottom:82px!important}",
 
-        "#loadLocalProgramBtn{pointer-events:none!important;cursor:default!important}"
+        "#loadLocalProgramBtn{pointer-events:auto!important;cursor:pointer!important}",
+
+        "#loadLocalProgramBtn.media-ready{border-color:rgba(47,200,94,.72)!important;color:#8df0aa!important}",
+
+        "#loadLocalProgramBtn.media-ready .discover-badge-dot{background:#2fc85e!important;box-shadow:0 0 10px rgba(47,200,94,.7)!important}"
 
       ].join("");
 
@@ -2051,15 +2123,67 @@
 
       if(badge){
 
-        badge.setAttribute(
-          "aria-disabled",
-          "true"
+        badge.removeAttribute(
+          "aria-disabled"
+        );
+
+
+        badge.removeAttribute(
+          "tabindex"
         );
 
 
         badge.setAttribute(
-          "tabindex",
-          "-1"
+          "aria-haspopup",
+          "true"
+        );
+
+
+        if(
+          badge.dataset.unifiedMediaMenu !==
+          "ready"
+        ){
+
+          badge.dataset.unifiedMediaMenu =
+            "ready";
+
+
+          badge.addEventListener(
+            "click",
+            event=>{
+
+              event.preventDefault();
+              event.stopImmediatePropagation();
+
+
+              if(
+                statusStack.classList.contains(
+                  "collapsed"
+                ) ||
+                statusStack.classList.contains(
+                  "hidden-ready"
+                )
+              ){
+
+                revealStatus(
+                  false
+                );
+
+              }else{
+
+                collapseStatus();
+
+              }
+
+            },
+            true
+          );
+
+        }
+
+
+        syncStatusUI(
+          false
         );
 
       }
