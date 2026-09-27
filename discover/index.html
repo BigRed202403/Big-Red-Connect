@@ -359,7 +359,7 @@
 
     <iframe
       id="discoverFrame"
-      src="index-v21-staged.html?v=20260926-rotation-live-fix2"
+      src="index-v21-staged.html?v=20260927-audio-bridge1"
       title="Discover with Big Red"
       allow="autoplay; geolocation">
     </iframe>
@@ -802,6 +802,24 @@
     }
 
 
+    function audioController(){
+
+      try{
+
+        return (
+          frame.contentWindow &&
+          frame.contentWindow.DiscoverAudioController
+        ) || null;
+
+      }catch{
+
+        return null;
+
+      }
+
+    }
+
+
     function visibleInnerPanel(){
 
       const doc =
@@ -1128,9 +1146,23 @@
       }
 
 
-      video
-        .play()
-        .catch(()=>{});
+      const controller =
+        audioController();
+
+
+      if(controller){
+
+        controller
+          .ensurePlayback()
+          .catch(()=>{});
+
+      }else{
+
+        video
+          .play()
+          .catch(()=>{});
+
+      }
 
 
       pausedByBeta = false;
@@ -1954,16 +1986,8 @@
           }
 
 
-          const mainVideo =
-            doc.getElementById(
-              "presentationVideo"
-            );
-
-
-          const volumeButton =
-            doc.getElementById(
-              "volumeBtn"
-            );
+          const controller =
+            audioController();
 
 
           const fileInput =
@@ -1972,28 +1996,10 @@
             );
 
 
-          if(
-            mainVideo?.muted &&
-            volumeButton
-          ){
+          if(controller){
 
-            volumeButton.click();
-
-          }
-
-
-          if(mainVideo){
-
-            mainVideo.muted =
-              false;
-
-
-            mainVideo.volume =
-              1;
-
-
-            mainVideo
-              .play()
+            controller
+              .unlockAndPlay()
               .catch(()=>{});
 
           }
@@ -2011,28 +2017,17 @@
                 window.setTimeout(
                   ()=>{
 
-                    const video =
-                      doc.getElementById(
-                        "presentationVideo"
-                      );
+                    const currentController =
+                      audioController();
 
 
-                    if(!video){
-                      return;
+                    if(currentController){
+
+                      currentController
+                        .ensurePlayback()
+                        .catch(()=>{});
+
                     }
-
-
-                    video.muted =
-                      false;
-
-
-                    video.volume =
-                      1;
-
-
-                    video
-                      .play()
-                      .catch(()=>{});
 
                   },
                   250
@@ -2190,22 +2185,28 @@
                       }
 
 
-                      mainVideo.muted =
-                        false;
-
-
-                      mainVideo.volume =
-                        1;
-
-
                       if(mainWasPlaying){
 
                         window.setTimeout(
                           ()=>{
 
-                            mainVideo
-                              .play()
-                              .catch(()=>{});
+                            const controller =
+                              audioController();
+
+
+                            if(controller){
+
+                              controller
+                                .ensurePlayback()
+                                .catch(()=>{});
+
+                            }else{
+
+                              mainVideo
+                                .play()
+                                .catch(()=>{});
+
+                            }
 
                           },
                           100
