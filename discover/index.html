@@ -1792,7 +1792,7 @@
 
     function finishMedia(){
 
-      clearTimeout(
+      clearInterval(
         mediaFinishTimer
       );
 
@@ -1966,31 +1966,142 @@
             );
 
 
-          clearTimeout(
+          activeClip.lastObservedTime =
+            insertVideo.currentTime;
+
+
+          activeClip.lastProgressAt =
+            Date.now();
+
+
+          activeClip.stallCount =
+            0;
+
+
+          clearInterval(
             mediaFinishTimer
           );
 
 
           mediaFinishTimer =
-            setTimeout(
+            setInterval(
               ()=>{
 
                 if(
-                  activeClip &&
-                  activeClip.start ===
-                    clip.start &&
-                  activeClip.kind ===
+                  !activeClip ||
+                  activeClip.start !==
+                    clip.start ||
+                  activeClip.kind !==
                     kind
                 ){
-                  finishMedia();
+                  return;
                 }
 
+
+                const now =
+                  Date.now();
+
+
+                const mediaTime =
+                  insertVideo.currentTime;
+
+
+                const advanced =
+                  mediaTime -
+                  activeClip.lastObservedTime;
+
+
+                if(
+                  advanced > 0.03
+                ){
+
+                  activeClip.lastObservedTime =
+                    mediaTime;
+
+
+                  activeClip.lastProgressAt =
+                    now;
+
+
+                  if(advanced > 0.15){
+                    activeClip.stallCount = 0;
+                  }
+
+
+                  return;
+
+                }
+
+
+                if(
+                  now -
+                    activeClip.lastProgressAt <
+                    1200
+                ){
+                  return;
+                }
+
+
+                activeClip.lastProgressAt =
+                  now;
+
+
+                activeClip.stallCount +=
+                  1;
+
+
+                // iPad Safari can leave an unmuted video technically
+                // "playing" while its picture is frozen. Nudge the decoder,
+                // then fall back to muted playback after a repeated stall so
+                // the rider sees the complete moving short.
+                if(
+                  kind === "short" &&
+                  activeClip.stallCount >= 2
+                ){
+                  insertVideo.muted = true;
+                }
+
+
+                const nudgeTo =
+                  Math.min(
+                    clip.end - 0.25,
+                    Math.max(
+                      clip.start + 0.05,
+                      mediaTime + 0.05
+                    )
+                  );
+
+
+                if(
+                  Number.isFinite(nudgeTo) &&
+                  nudgeTo > mediaTime + 0.01
+                ){
+                  insertVideo.currentTime =
+                    nudgeTo;
+                }
+
+
+                insertVideo
+                  .play()
+                  .catch(()=>{
+
+                    if(kind === "short"){
+
+                      insertVideo.muted = true;
+
+
+                      insertVideo
+                        .play()
+                        .catch(playbackFailed);
+
+                    }else{
+                      playbackFailed();
+                    }
+
+                  });
+
               },
-              (
-                clip.end -
-                clip.start
-              ) * 1000 +
-              350
+              500
             );
 
         };
