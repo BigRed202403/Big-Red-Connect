@@ -201,6 +201,12 @@
       display:block;
     }
 
+    .media-wrap.preparing{
+      display:block;
+      opacity:0;
+      pointer-events:none;
+    }
+
     .media-wrap video{
       width:100%;
       height:100%;
@@ -1816,7 +1822,10 @@
 
       mediaWrap
         .classList
-        .remove("show");
+        .remove(
+          "show",
+          "preparing"
+        );
 
 
       mediaWrap
@@ -1906,19 +1915,24 @@
 
       mediaWrap
         .classList
-        .add("show");
+        .remove("show");
+
+
+      mediaWrap
+        .classList
+        .add("preparing");
 
 
       mediaWrap
         .setAttribute(
           "aria-hidden",
-          "false"
+          "true"
         );
 
 
       dock
         .classList
-        .add("media-active");
+        .remove("media-active");
 
 
       const beginAfterSeek = ()=>{
@@ -1953,6 +1967,28 @@
 
           activeClip.startedAt =
             Date.now();
+
+
+          mediaWrap
+            .classList
+            .remove("preparing");
+
+
+          mediaWrap
+            .classList
+            .add("show");
+
+
+          mediaWrap
+            .setAttribute(
+              "aria-hidden",
+              "false"
+            );
+
+
+          dock
+            .classList
+            .add("media-active");
 
 
           activeClip.minimumPlayMs =
@@ -2036,7 +2072,7 @@
                 if(
                   now -
                     activeClip.lastProgressAt <
-                    1200
+                    2800
                 ){
                   return;
                 }
@@ -2051,9 +2087,10 @@
 
 
                 // iPad Safari can leave an unmuted video technically
-                // "playing" while its picture is frozen. Nudge the decoder,
-                // then fall back to muted playback after a repeated stall so
-                // the rider sees the complete moving short.
+                // "playing" while its picture is frozen. Give the decoder a
+                // generous recovery window, then restart playback without
+                // advancing currentTime; repeated playhead nudges make local
+                // clips look like they are constantly buffering.
                 if(
                   kind === "short" &&
                   activeClip.stallCount >= 2
@@ -2062,43 +2099,45 @@
                 }
 
 
-                const nudgeTo =
-                  Math.min(
-                    clip.end - 0.25,
-                    Math.max(
-                      clip.start + 0.05,
-                      mediaTime + 0.05
-                    )
-                  );
+                insertVideo.pause();
 
 
-                if(
-                  Number.isFinite(nudgeTo) &&
-                  nudgeTo > mediaTime + 0.01
-                ){
-                  insertVideo.currentTime =
-                    nudgeTo;
-                }
+                window.setTimeout(
+                  ()=>{
 
-
-                insertVideo
-                  .play()
-                  .catch(()=>{
-
-                    if(kind === "short"){
-
-                      insertVideo.muted = true;
-
-
-                      insertVideo
-                        .play()
-                        .catch(playbackFailed);
-
-                    }else{
-                      playbackFailed();
+                    if(
+                      !activeClip ||
+                      activeClip.start !==
+                        clip.start ||
+                      activeClip.kind !==
+                        kind
+                    ){
+                      return;
                     }
 
-                  });
+
+                    insertVideo
+                      .play()
+                      .catch(()=>{
+
+                        if(kind === "short"){
+
+                          insertVideo.muted = true;
+
+
+                          insertVideo
+                            .play()
+                            .catch(playbackFailed);
+
+                        }else{
+                          playbackFailed();
+                        }
+
+                      });
+
+                  },
+                  140
+                );
 
               },
               500
