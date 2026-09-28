@@ -7,6 +7,7 @@
     inactivityMs: 180000,
 
     triviaRounds: 15,
+    triviaSeconds: 15,
     wyrRounds: 10,
     scrambleRounds: 10,
 
@@ -80,6 +81,8 @@
 
   let inactivityTimer = null;
   let activeGame = null;
+  let triviaTimer = null;
+  let triviaDeadline = 0;
   let scrambleTimer = null;
   let scrambleDeadline = 0;
 
@@ -1175,6 +1178,13 @@
     return copy.slice(0, count);
   }
 
+  function clearTriviaTimer() {
+    if (triviaTimer) {
+      clearInterval(triviaTimer);
+      triviaTimer = null;
+    }
+  }
+
   function clearScrambleTimer() {
     if (scrambleTimer) {
       clearInterval(scrambleTimer);
@@ -1701,7 +1711,97 @@
     };
   }
 
+  function ensureGameLayoutFixStyles() {
+    if (document.getElementById("gameLayoutFix20260928")) return;
+
+    const style = document.createElement("style");
+    style.id = "gameLayoutFix20260928";
+    style.textContent = `
+      #gamePanel {
+        padding-bottom: calc(108px + var(--safe-bottom, 0px)) !important;
+      }
+
+      #gamePanel .game-panel-card {
+        height: calc(100dvh - 132px) !important;
+        max-height: calc(100dvh - 132px) !important;
+        overflow: hidden !important;
+      }
+
+      #gamePanel .game-content {
+        min-height: 0 !important;
+        overflow-y: auto !important;
+        align-content: start !important;
+        gap: 10px !important;
+        padding: 10px 8px 4px !important;
+      }
+
+      #gamePanel .game-statusbar {
+        margin-bottom: 0 !important;
+      }
+
+      #gamePanel .game-title {
+        font-size: clamp(30px, 4.8vw, 50px) !important;
+        line-height: 1 !important;
+      }
+
+      #gamePanel .game-prompt {
+        margin: 2px auto 8px !important;
+        font-size: clamp(22px, 3.5vw, 34px) !important;
+      }
+
+      #gamePanel .answer-grid {
+        gap: 10px !important;
+      }
+
+      #gamePanel .answer-btn,
+      #gamePanel .next-btn,
+      #gamePanel .secondary-game-btn {
+        min-height: 52px !important;
+        padding: 11px 15px !important;
+      }
+
+      #gamePanel .result-text {
+        min-height: 24px !important;
+        margin: 0 !important;
+      }
+
+      #gamePanel .next-row {
+        margin-top: 0 !important;
+        padding-bottom: 2px !important;
+      }
+
+      #gamePanel .timer-pill-warning {
+        border-color: rgba(255, 188, 63, .72) !important;
+        color: #ffd27a !important;
+      }
+
+      #gamePanel .timer-pill-danger {
+        border-color: rgba(255, 74, 80, .78) !important;
+        color: #ff8b8f !important;
+      }
+
+      #gamePanel .scramble-word {
+        margin: 4px auto 4px !important;
+        font-size: clamp(38px, 6.4vw, 68px) !important;
+      }
+
+      #gamePanel .timer-wrap {
+        margin: 0 auto 2px !important;
+      }
+
+      #gamePanel .scramble-credit-note,
+      #gamePanel .scramble-hint {
+        margin-top: 0 !important;
+        margin-bottom: 2px !important;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
   function renderTrivia() {
+    clearTriviaTimer();
+    ensureGameLayoutFixStyles();
+
     const state = session.trivia;
 
     if (state.round >= CONFIG.triviaRounds) {
@@ -1710,6 +1810,9 @@
 
     const current = getTriviaRound();
     const item = current.item;
+    let finished = false;
+    let remaining = CONFIG.triviaSeconds;
+    triviaDeadline = Date.now() + (CONFIG.triviaSeconds * 1000);
 
     gameContent.innerHTML = `
       <div class="game-statusbar">
@@ -1717,6 +1820,7 @@
         <div class="game-status-pill">Score <strong>${state.points}</strong></div>
         <div class="game-status-pill">Streak <strong>${state.streak}</strong></div>
         <div class="difficulty-pill difficulty-${current.difficulty}">${current.label}</div>
+        <div id="triviaTimerPill" class="game-status-pill">Time <strong id="triviaTimerNumber">${remaining}s</strong></div>
       </div>
 
       <h2 class="game-title">Trivia</h2>
@@ -1742,47 +1846,75 @@
     const answerButtons = gameContent.querySelectorAll("[data-answer]");
     const resultText = document.getElementById("resultText");
     const nextButton = document.getElementById("nextTriviaBtn");
+    const timerNumber = document.getElementById("triviaTimerNumber");
+    const timerPill = document.getElementById("triviaTimerPill");
+
+    function finishTriviaRound(selected = null) {
+      if (finished) return;
+      finished = true;
+      clearTriviaTimer();
+
+      const timedOut = selected === null;
+      const correct = !timedOut && selected === item.correct;
+
+      answerButtons.forEach((candidate,index) => {
+        candidate.disabled = true;
+
+        if (index === item.correct) {
+          candidate.classList.add("correct");
+        }
+
+        if (!timedOut && index === selected && !correct) {
+          candidate.classList.add("wrong");
+        }
+      });
+
+      if (correct) {
+        state.correct += 1;
+        state.points += current.points;
+        state.streak += 1;
+        state.bestStreak = Math.max(state.bestStreak, state.streak);
+
+        resultText.textContent =
+          current.points === 1
+            ? "Correct! +1"
+            : `Correct! +${current.points}`;
+      } else {
+        state.streak = 0;
+        resultText.textContent = timedOut
+          ? `Time's up! Answer: ${item.a[item.correct]}`
+          : `Answer: ${item.a[item.correct]}`;
+      }
+
+      timerPill?.classList.remove("timer-pill-warning", "timer-pill-danger");
+      nextButton.hidden = false;
+      nextButton.scrollIntoView({block:"nearest", behavior:"smooth"});
+    }
 
     answerButtons.forEach((button) => {
       button.addEventListener("click", () => {
-        const selected = Number(button.dataset.answer);
-        const correct = selected === item.correct;
-
-        answerButtons.forEach((candidate,index) => {
-          candidate.disabled = true;
-
-          if (index === item.correct) {
-            candidate.classList.add("correct");
-          }
-
-          if (index === selected && !correct) {
-            candidate.classList.add("wrong");
-          }
-        });
-
-        if (correct) {
-          state.correct += 1;
-          state.points += current.points;
-          state.streak += 1;
-          state.bestStreak = Math.max(state.bestStreak, state.streak);
-
-          resultText.textContent =
-            current.points === 1
-              ? "Correct! +1"
-              : `Correct! +${current.points}`;
-        } else {
-          state.streak = 0;
-          resultText.textContent = `Answer: ${item.a[item.correct]}`;
-        }
-
-        nextButton.hidden = false;
+        finishTriviaRound(Number(button.dataset.answer));
       }, {once:true});
     });
 
     nextButton.addEventListener("click", () => {
+      clearTriviaTimer();
       state.round += 1;
       renderTrivia();
     });
+
+    triviaTimer = setInterval(() => {
+      const msLeft = Math.max(0, triviaDeadline - Date.now());
+      remaining = Math.ceil(msLeft / 1000);
+      timerNumber.textContent = `${remaining}s`;
+
+      timerPill.classList.toggle("timer-pill-warning", remaining <= 7 && remaining > 3);
+      timerPill.classList.toggle("timer-pill-danger", remaining <= 3);
+
+      if (msLeft <= 0) {
+        finishTriviaRound(null);
+      }
+    }, 100);
   }
 
   function renderTriviaResults() {
@@ -1903,6 +2035,7 @@
 
   function renderScramble() {
     clearScrambleTimer();
+    ensureGameLayoutFixStyles();
 
     const state = session.scramble;
 
@@ -2156,6 +2289,7 @@
   });
 
   backToGamesBtn.addEventListener("click", () => {
+    clearTriviaTimer();
     clearScrambleTimer();
     activeGame = null;
     openPanel(gamesPanel);
@@ -2196,7 +2330,7 @@
 
         if (!audioUnlocked && !tappedVolumeControl) {
           unlockAudioIfNeeded();
-        } else {
+        } else if (video.paused || video.ended || video.readyState < 2) {
           ensureVideoPlayback();
         }
       },
