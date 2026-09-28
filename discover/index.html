@@ -20,12 +20,9 @@
       --muted:#c7c7c7;
     }
 
-    *{
-      box-sizing:border-box;
-    }
+    *{box-sizing:border-box}
 
-    html,
-    body{
+    html,body{
       margin:0;
       width:100%;
       height:100%;
@@ -63,12 +60,6 @@
       transition:opacity 180ms ease,transform 180ms ease;
     }
 
-    .status-stack.hidden-ready{
-      opacity:0;
-      transform:translateY(-6px);
-      pointer-events:none;
-    }
-
     .status-toggle{
       display:inline-flex;
       align-items:center;
@@ -95,7 +86,6 @@
 
     .status-toggle.ready{
       border-color:rgba(47,200,94,.62);
-      color:#fff;
     }
 
     .status-toggle.ready .status-dot{
@@ -108,13 +98,10 @@
       flex-direction:column;
       align-items:flex-start;
       gap:7px;
-      max-height:110px;
+      max-height:90px;
       opacity:1;
       transform:translateY(0);
-      transition:
-        opacity 180ms ease,
-        transform 180ms ease,
-        max-height 180ms ease;
+      transition:opacity 180ms ease,transform 180ms ease,max-height 180ms ease;
     }
 
     .status-stack.collapsed .status-details{
@@ -179,56 +166,7 @@
       -webkit-tap-highlight-color:transparent;
     }
 
-    .dock button:active{
-      transform:scale(.985);
-    }
-
-    .dock.media-active{
-      opacity:0;
-      pointer-events:none;
-      transform:translate(-50%,18px);
-    }
-
-    .media-wrap{
-      position:absolute;
-      z-index:80;
-      inset:0;
-      display:none;
-      background:#000;
-    }
-
-    .media-wrap.show{
-      display:block;
-    }
-
-    .media-wrap.preparing{
-      display:block;
-      opacity:0;
-      pointer-events:none;
-    }
-
-    .media-wrap video{
-      width:100%;
-      height:100%;
-      display:block;
-      object-fit:contain;
-      background:#000;
-    }
-
-    .media-label{
-      position:absolute;
-      left:50%;
-      bottom:max(18px,env(safe-area-inset-bottom));
-      transform:translateX(-50%);
-      padding:7px 11px;
-      border:1px solid rgba(255,255,255,.16);
-      border-radius:999px;
-      background:rgba(0,0,0,.68);
-      color:#ddd;
-      font-size:11px;
-      font-weight:800;
-      letter-spacing:.08em;
-    }
+    .dock button:active{transform:scale(.985)}
 
     .cutin-wrap{
       position:absolute;
@@ -263,9 +201,7 @@
       -webkit-backdrop-filter:blur(16px);
     }
 
-    .cutin-wrap.show .cutin-card{
-      transform:translateY(0) scale(1);
-    }
+    .cutin-wrap.show .cutin-card{transform:translateY(0) scale(1)}
 
     .cutin-eyebrow{
       color:#ff555a;
@@ -351,28 +287,10 @@
     }
 
     @media(max-width:680px){
-      .dock{
-        gap:7px;
-        padding:8px;
-      }
-
-      .dock button{
-        font-size:14px;
-        min-height:50px;
-      }
-
-      .cutin-actions{
-        grid-template-columns:1fr;
-      }
-
-      .status-stack{
-        top:max(16px,env(safe-area-inset-top));
-      }
-
-      .state-button{
-        max-width:250px;
-        font-size:10px;
-      }
+      .dock{gap:7px;padding:8px}
+      .dock button{font-size:14px;min-height:50px}
+      .cutin-actions{grid-template-columns:1fr}
+      .state-button{max-width:250px;font-size:10px}
     }
   </style>
 </head>
@@ -382,15 +300,12 @@
 
     <iframe
       id="discoverFrame"
-      src="index-v21-staged.html?v=20260927-short-stability1"
+      src="index-v21-staged.html?v=20260928-merged-program1"
       title="Discover with Big Red"
       allow="autoplay; geolocation">
     </iframe>
 
-    <div
-      id="statusStack"
-      class="status-stack"
-      aria-label="Program readiness">
+    <div id="statusStack" class="status-stack" aria-label="Program readiness">
 
       <button
         id="statusToggle"
@@ -399,13 +314,11 @@
         title="Manage local Discover media"
         aria-label="Discover with Big Red. Manage local program media."
         aria-expanded="true">
-        <span id="statusDot" class="status-dot" aria-hidden="true"></span>
-        <span id="statusLabel">Discover with Big Red</span>
+        <span class="status-dot" aria-hidden="true"></span>
+        <span>Discover with Big Red</span>
       </button>
 
-      <div
-        id="statusDetails"
-        class="status-details">
+      <div id="statusDetails" class="status-details">
 
         <button
           id="programState"
@@ -421,13 +334,6 @@
           LOAD BACKGROUND MUSIC
         </button>
 
-        <button
-          id="rotationState"
-          class="state-button warning"
-          type="button">
-          LOAD ROTATION MEDIA
-        </button>
-
       </div>
 
       <input
@@ -436,57 +342,14 @@
         accept="audio/*,.m4a,.mp3,.wav,.mov,.mp4"
         hidden />
 
-      <input
-        id="rotationFile"
-        type="file"
-        accept="video/mp4,.mp4"
-        hidden />
-
     </div>
 
-    <nav
-      id="dock"
-      class="dock"
-      aria-label="Discover quick actions">
-
-      <button type="button" data-target="gamesBtn">
-        🎮 Games
-      </button>
-
-      <button type="button" data-target="musicBtn">
-        🎵 Music
-      </button>
-
-      <button type="button" data-target="tipBtn">
-        ❤️ Tip
-      </button>
-
-      <button type="button" data-target="reviewBtn">
-        ⭐ Review
-      </button>
-
+    <nav id="dock" class="dock" aria-label="Discover quick actions">
+      <button type="button" data-target="gamesBtn">🎮 Games</button>
+      <button type="button" data-target="musicBtn">🎵 Music</button>
+      <button type="button" data-target="tipBtn">❤️ Tip</button>
+      <button type="button" data-target="reviewBtn">⭐ Review</button>
     </nav>
-
-    <section
-      id="mediaWrap"
-      class="media-wrap"
-      aria-hidden="true">
-
-      <video
-        id="insertVideo"
-        playsinline
-        webkit-playsinline
-        preload="auto"
-        disablepictureinpicture>
-      </video>
-
-      <div
-        id="mediaLabel"
-        class="media-label">
-        BIG RED PROGRAM
-      </div>
-
-    </section>
 
     <audio
       id="backgroundAudio"
@@ -504,54 +367,21 @@
 
       <div class="cutin-card">
 
-        <div
-          id="cutinEyebrow"
-          class="cutin-eyebrow">
-          DISCOVER SOMETHING
-        </div>
-
-        <div
-          id="cutinIcon"
-          class="cutin-icon">
-          ☀️
-        </div>
-
-        <h1
-          id="cutinTitle"
-          class="cutin-title">
-          Weather along the ride
-        </h1>
-
-        <p
-          id="cutinCopy"
-          class="cutin-copy">
+        <div id="cutinEyebrow" class="cutin-eyebrow">DISCOVER SOMETHING</div>
+        <div id="cutinIcon" class="cutin-icon">☀️</div>
+        <h1 id="cutinTitle" class="cutin-title">Weather along the ride</h1>
+        <p id="cutinCopy" class="cutin-copy">
           See the current conditions and the next few hours.
         </p>
 
         <div class="cutin-actions">
-
-          <button
-            id="cutinOpenBtn"
-            type="button">
-            Open Weather
-          </button>
-
-          <button
-            id="cutinDismissBtn"
-            type="button">
-            Keep Watching
-          </button>
-
+          <button id="cutinOpenBtn" type="button">Open Weather</button>
+          <button id="cutinDismissBtn" type="button">Keep Watching</button>
         </div>
 
-        <div
-          class="cutin-progress"
-          aria-hidden="true">
-          <span></span>
-        </div>
+        <div class="cutin-progress" aria-hidden="true"><span></span></div>
 
       </div>
-
     </section>
 
   </main>
@@ -560,179 +390,63 @@
   (() => {
     "use strict";
 
-    const frame =
-      document.getElementById("discoverFrame");
+    const frame = document.getElementById("discoverFrame");
+    const dock = document.getElementById("dock");
 
-    const dock =
-      document.getElementById("dock");
+    const cutinWrap = document.getElementById("cutinWrap");
+    const cutinEyebrow = document.getElementById("cutinEyebrow");
+    const cutinIcon = document.getElementById("cutinIcon");
+    const cutinTitle = document.getElementById("cutinTitle");
+    const cutinCopy = document.getElementById("cutinCopy");
+    const cutinOpenBtn = document.getElementById("cutinOpenBtn");
+    const cutinDismissBtn = document.getElementById("cutinDismissBtn");
 
-    const cutinWrap =
-      document.getElementById("cutinWrap");
+    const statusStack = document.getElementById("statusStack");
+    const statusToggle = document.getElementById("statusToggle");
+    const programState = document.getElementById("programState");
+    const musicState = document.getElementById("musicState");
 
-    const cutinEyebrow =
-      document.getElementById("cutinEyebrow");
-
-    const cutinIcon =
-      document.getElementById("cutinIcon");
-
-    const cutinTitle =
-      document.getElementById("cutinTitle");
-
-    const cutinCopy =
-      document.getElementById("cutinCopy");
-
-    const cutinOpenBtn =
-      document.getElementById("cutinOpenBtn");
-
-    const cutinDismissBtn =
-      document.getElementById("cutinDismissBtn");
-
-    const statusStack =
-      document.getElementById("statusStack");
-
-    const statusToggle =
-      document.getElementById("statusToggle");
-
-    const statusLabel =
-      document.getElementById("statusLabel");
-
-    const programState =
-      document.getElementById("programState");
-
-    const musicState =
-      document.getElementById("musicState");
-
-    const rotationState =
-      document.getElementById("rotationState");
-
-    const backgroundMusicFile =
-      document.getElementById("backgroundMusicFile");
-
-    const rotationFile =
-      document.getElementById("rotationFile");
-
-    const mediaWrap =
-      document.getElementById("mediaWrap");
-
-    const insertVideo =
-      document.getElementById("insertVideo");
-
-    const mediaLabel =
-      document.getElementById("mediaLabel");
-
-    const backgroundAudio =
-      document.getElementById("backgroundAudio");
-
+    const backgroundMusicFile = document.getElementById("backgroundMusicFile");
+    const backgroundAudio = document.getElementById("backgroundAudio");
 
     const fastMode =
       new URLSearchParams(location.search).has("fast");
 
-    const pageStartedAt =
-      Date.now();
+    const pageStartedAt = Date.now();
 
+    // Preserve the existing feature-card cadence.
+    const timing = fastMode
+      ? {
+          first:12000,
+          min:18000,
+          max:28000,
+          tipAfter:60000
+        }
+      : {
+          first:45000,
+          min:50000,
+          max:75000,
+          tipAfter:720000
+        };
 
-    const timing =
-      fastMode
-
-        ? {
-            first:12000,
-            min:18000,
-            max:28000,
-            tipAfter:60000
-          }
-
-        : {
-            first:45000,
-            min:50000,
-            max:75000,
-            tipAfter:720000
-          };
-
-
-    const rotationPattern = [
-      "commercial",
+    /*
+      Commercials and shorts are now baked into the single local program.
+      We keep the old 8-slot pattern only as a timing mask so feature cards
+      appear at the same approximate frequency as before. Non-feature slots
+      simply pass without showing another video insert.
+    */
+    const featureTimingPattern = [
+      "program",
       "feature",
-      "short",
-      "commercial",
+      "program",
+      "program",
       "feature",
-      "commercial",
-      "short",
+      "program",
+      "program",
       "feature"
     ];
 
-
-    const commercialClips = [
-
-      {
-        start:0,
-        end:24.18,
-        label:"PLAN AHEAD WITH BIG RED"
-      },
-
-      {
-        start:24.30,
-        end:48.45,
-        label:"AIRPORT RIDES"
-      },
-
-      {
-        start:48.566,
-        end:72.71,
-        label:"ONE TRUSTED LOCAL DRIVER"
-      },
-
-      {
-        start:72.833,
-        end:96.98,
-        label:"CONSISTENT PRICING"
-      },
-
-      {
-        start:97.10,
-        end:121.24,
-        label:"SKIP THE LATE-NIGHT SCRAMBLE"
-      },
-
-      {
-        start:121.366,
-        end:145.51,
-        label:"DISCOVER THE IN-CAR EXPERIENCE"
-      }
-
-    ];
-
-
-    const shortClips = [
-
-      {
-        start:145.633,
-        end:163.04,
-        label:"BIG RED SHORT"
-      },
-
-      {
-        start:163.166,
-        end:177.77,
-        label:"BIG RED SHORT"
-      },
-
-      {
-        start:177.90,
-        end:190.01,
-        label:"BIG RED SHORT"
-      },
-
-      {
-        start:190.135,
-        end:205.66,
-        label:"BIG RED SHORT"
-      }
-
-    ];
-
-
     const prompts = [
-
       {
         target:"weatherBtn",
         eyebrow:"CHECK THE RIDE AHEAD",
@@ -741,7 +455,6 @@
         copy:"See current conditions and what the next few hours look like.",
         action:"Open Weather"
       },
-
       {
         target:"driverBtn",
         eyebrow:"YOU'RE RIDING WITH",
@@ -750,7 +463,6 @@
         copy:"Veteran owned, local, and built around one trusted driver.",
         action:"Meet Your Driver"
       },
-
       {
         target:"gamesBtn",
         eyebrow:"WANT TO PLAY?",
@@ -759,7 +471,6 @@
         copy:"Trivia, Would You Rather, and Word Scramble are ready when you are.",
         action:"Play a Game"
       },
-
       {
         target:"musicBtn",
         eyebrow:"PICK THE VIBE",
@@ -768,7 +479,6 @@
         copy:"Choose a Big Red playlist or send a specific song or artist request.",
         action:"Request Music"
       },
-
       {
         target:"planBtn",
         eyebrow:"KEEP BIG RED HANDY",
@@ -777,7 +487,6 @@
         copy:"Keep ride details, tracking, and easy access to Big Red in one place.",
         action:"Open Rider Hub"
       },
-
       {
         target:"tipBtn",
         eyebrow:"OPTIONAL",
@@ -787,140 +496,64 @@
         action:"Tip Big Red",
         lateOnly:true
       }
-
     ];
-
 
     let promptOrder = [];
     let promptPos = 0;
-
-    let commercialOrder = [];
-    let commercialPos = 0;
-
-    let shortOrder = [];
-    let shortPos = 0;
-
-    let patternPos = 0;
-
+    let timingPos = 0;
     let currentPrompt = null;
 
     let cutinTimer = null;
-
     let scheduleTimer = null;
-
-    let mediaFinishTimer = null;
-
     let statusHideTimer = null;
 
-    let pausedByBeta = false;
-
     let frameReady = false;
-
     let programReady = false;
-
     let musicReady = false;
 
-    let rotationReady = false;
-
-    let rotationUrl = "";
-
-    let activeClip = null;
-
-    let clipSeeking = false;
-
     let lastPromptTarget = "";
-
-    let lastCommercialIndex = -1;
-
-    let lastShortIndex = -1;
-
     let backgroundAudioUrl = "";
-
     let backgroundAudioReady = false;
 
-
     function frameDoc(){
-
       try{
-
-        return (
-          frame.contentDocument ||
-          frame.contentWindow.document
-        );
-
+        return frame.contentDocument || frame.contentWindow.document;
       }catch{
-
         return null;
-
       }
-
     }
-
 
     function embeddedDiscoverBadge(){
-
-      const doc =
-        frameDoc();
-
-
-      return doc
-        ? doc.getElementById(
-            "loadLocalProgramBtn"
-          )
-        : null;
-
+      const doc = frameDoc();
+      return doc ? doc.getElementById("loadLocalProgramBtn") : null;
     }
-
 
     function presentationVideo(){
-
-      const doc =
-        frameDoc();
-
-      return doc
-        ? doc.getElementById("presentationVideo")
-        : null;
-
+      const doc = frameDoc();
+      return doc ? doc.getElementById("presentationVideo") : null;
     }
 
-
     function audioController(){
-
       try{
-
         return (
           frame.contentWindow &&
           frame.contentWindow.DiscoverAudioController
         ) || null;
-
       }catch{
-
         return null;
-
       }
-
     }
 
-
     function soundIsOn(){
-
-      const controller =
-        audioController();
+      const controller = audioController();
 
       if(controller){
-
         try{
-          return Boolean(
-            controller.state().soundOn
-          );
+          return Boolean(controller.state().soundOn);
         }catch{}
-
       }
 
-
-      const doc =
-        frameDoc();
-
+      const doc = frameDoc();
 
       return Boolean(
         doc
@@ -928,2130 +561,619 @@
           ?.classList
           .contains("sound-on")
       );
-
     }
-
 
     function applySharedSoundState(){
+      const soundOn = soundIsOn();
+      const mainVideo = presentationVideo();
 
-      const mainVideo =
-        presentationVideo();
-
-      const soundOn =
-        soundIsOn();
-
-
-      if(
-        backgroundAudioReady &&
-        mainVideo
-      ){
-
-        mainVideo.muted =
-          true;
-
+      /*
+        The merged program now contains the commercial/short audio.
+        Keep that audio available when sound is on. Background music
+        is a separate continuous layer, so both may play together.
+      */
+      if(mainVideo){
+        mainVideo.muted = !soundOn;
       }
 
-
-      backgroundAudio.muted =
-        !soundOn;
-
-
-      if(
-        activeClip?.kind === "short"
-      ){
-
-        insertVideo.muted =
-          !soundOn;
-
-      }
-
+      backgroundAudio.muted = !soundOn;
     }
 
-
     function playBackgroundAudio(){
-
-      if(
-        !backgroundAudioReady
-      ){
+      if(!backgroundAudioReady){
         return;
       }
 
-
       applySharedSoundState();
-
 
       backgroundAudio
         .play()
         .catch(()=>{});
-
     }
 
-
     function loadBackgroundMusic(file){
-
       if(!file){
         return;
       }
 
-
       if(backgroundAudioUrl){
-        URL.revokeObjectURL(
-          backgroundAudioUrl
-        );
+        URL.revokeObjectURL(backgroundAudioUrl);
       }
-
 
       backgroundAudio.pause();
 
       backgroundAudioReady = false;
       musicReady = false;
 
-      backgroundAudioUrl =
-        URL.createObjectURL(file);
-
-      backgroundAudio.src =
-        backgroundAudioUrl;
-
+      backgroundAudioUrl = URL.createObjectURL(file);
+      backgroundAudio.src = backgroundAudioUrl;
       backgroundAudio.loop = true;
       backgroundAudio.volume = 1;
-      backgroundAudio.muted =
-        !soundIsOn();
+      backgroundAudio.muted = !soundIsOn();
 
-      musicState.textContent =
-        "CHECKING BACKGROUND MUSIC…";
-
+      musicState.textContent = "CHECKING BACKGROUND MUSIC…";
       musicState.classList.remove("ready");
       musicState.classList.add("warning");
 
       syncStatusUI(true);
+
       backgroundAudio.load();
 
-      // The file-picker change is a direct rider gesture. Starting playback
-      // here is the most reliable way to unlock separate audio on iPad.
-      backgroundAudio
-        .play()
-        .catch(()=>{});
+      // File selection is the rider's direct gesture; use it to unlock audio.
+      backgroundAudio.play().catch(()=>{});
 
+      backgroundAudio.addEventListener(
+        "canplay",
+        ()=>{
+          backgroundAudioReady = true;
+          musicReady = true;
 
-      backgroundAudio
-        .addEventListener(
-          "canplay",
-          ()=>{
+          musicState.textContent = "BACKGROUND MUSIC LOADED";
+          musicState.classList.add("ready");
+          musicState.classList.remove("warning");
 
-            backgroundAudioReady = true;
-            musicReady = true;
+          applySharedSoundState();
+          playBackgroundAudio();
+          syncStatusUI(true);
+        },
+        {once:true}
+      );
 
-            musicState.textContent =
-              "BACKGROUND MUSIC LOADED";
+      backgroundAudio.addEventListener(
+        "error",
+        ()=>{
+          backgroundAudioReady = false;
+          musicReady = false;
 
-            musicState.classList.add("ready");
-            musicState.classList.remove("warning");
+          musicState.textContent = "SELECT BACKGROUND MUSIC";
+          musicState.classList.remove("ready");
+          musicState.classList.add("warning");
 
-            applySharedSoundState();
-            playBackgroundAudio();
-            syncStatusUI(true);
-
-          },
-          {once:true}
-        );
-
-
-      backgroundAudio
-        .addEventListener(
-          "error",
-          ()=>{
-
-            backgroundAudioReady = false;
-            musicReady = false;
-
-            musicState.textContent =
-              "SELECT BACKGROUND MUSIC";
-
-            musicState.classList.remove("ready");
-            musicState.classList.add("warning");
-
-            syncStatusUI(true);
-
-          },
-          {once:true}
-        );
-
+          syncStatusUI(true);
+        },
+        {once:true}
+      );
     }
 
-
     function visibleInnerPanel(){
-
-      const doc =
-        frameDoc();
+      const doc = frameDoc();
 
       if(!doc){
         return false;
       }
 
-      return [
-        ...doc.querySelectorAll(".overlay-panel")
-      ].some(
-        panel => !panel.hidden
-      );
-
+      return [...doc.querySelectorAll(".overlay-panel")]
+        .some(panel => !panel.hidden);
     }
 
-
     function pressInnerButton(id){
-
-      const doc =
-        frameDoc();
-
-      const button =
-        doc
-          ? doc.getElementById(id)
-          : null;
+      const doc = frameDoc();
+      const button = doc ? doc.getElementById(id) : null;
 
       if(!button){
         return false;
       }
 
       button.click();
-
       return true;
-
     }
 
-
     function shuffle(items){
+      const result = [...items];
 
-      const result =
-        [...items];
-
-      for(
-        let i = result.length - 1;
-        i > 0;
-        i--
-      ){
-
-        const j =
-          Math.floor(
-            Math.random() *
-            (i + 1)
-          );
-
-        [
-          result[i],
-          result[j]
-        ] = [
-          result[j],
-          result[i]
-        ];
-
+      for(let i = result.length - 1; i > 0; i--){
+        const j = Math.floor(Math.random() * (i + 1));
+        [result[i], result[j]] = [result[j], result[i]];
       }
 
       return result;
-
     }
-
-
-    function shuffledIndices(
-      length,
-      lastIndex = -1
-    ){
-
-      const order =
-        shuffle(
-          Array.from(
-            {length},
-            (_,i)=>i
-          )
-        );
-
-      if(
-        order.length > 1 &&
-        order[0] === lastIndex
-      ){
-
-        [
-          order[0],
-          order[1]
-        ] = [
-          order[1],
-          order[0]
-        ];
-
-      }
-
-      return order;
-
-    }
-
 
     function eligiblePrompts(){
-
       const tipUnlocked =
-        Date.now() -
-        pageStartedAt >=
-        timing.tipAfter;
+        Date.now() - pageStartedAt >= timing.tipAfter;
 
       return prompts.filter(
-        prompt =>
-          !prompt.lateOnly ||
-          tipUnlocked
+        prompt => !prompt.lateOnly || tipUnlocked
       );
-
     }
 
-
     function nextPrompt(){
-
-      const eligible =
-        eligiblePrompts();
-
+      const eligible = eligiblePrompts();
       const eligibleTargets =
-        new Set(
-          eligible.map(
-            prompt =>
-              prompt.target
-          )
-        );
+        new Set(eligible.map(prompt => prompt.target));
 
-
-      promptOrder =
-        promptOrder.filter(
-          index =>
-            eligibleTargets.has(
-              prompts[index]?.target
-            )
-        );
-
+      promptOrder = promptOrder.filter(
+        index => eligibleTargets.has(prompts[index]?.target)
+      );
 
       if(
         !promptOrder.length ||
         promptPos >= promptOrder.length
       ){
-
-        promptOrder =
-          shuffle(
-
-            prompts
-              .map(
-                (prompt,index)=>({
-                  prompt,
-                  index
-                })
-              )
-              .filter(
-                item =>
-                  eligibleTargets.has(
-                    item.prompt.target
-                  )
-              )
-              .map(
-                item =>
-                  item.index
-              )
-
-          );
-
+        promptOrder = shuffle(
+          prompts
+            .map((prompt,index)=>({prompt,index}))
+            .filter(
+              item => eligibleTargets.has(item.prompt.target)
+            )
+            .map(item => item.index)
+        );
 
         if(
           promptOrder.length > 1 &&
-          prompts[promptOrder[0]].target ===
-          lastPromptTarget
+          prompts[promptOrder[0]].target === lastPromptTarget
         ){
-
-          [
-            promptOrder[0],
-            promptOrder[1]
-          ] = [
-            promptOrder[1],
-            promptOrder[0]
-          ];
-
+          [promptOrder[0], promptOrder[1]] =
+            [promptOrder[1], promptOrder[0]];
         }
-
 
         promptPos = 0;
-
       }
 
-
-      const prompt =
-        prompts[
-          promptOrder[
-            promptPos++
-          ]
-        ];
-
-
-      lastPromptTarget =
-        prompt.target;
-
+      const prompt = prompts[promptOrder[promptPos++]];
+      lastPromptTarget = prompt.target;
 
       return prompt;
-
     }
-
-
-    function nextClip(kind){
-
-      if(
-        kind === "commercial"
-      ){
-
-        if(
-          !commercialOrder.length ||
-          commercialPos >=
-          commercialOrder.length
-        ){
-
-          commercialOrder =
-            shuffledIndices(
-              commercialClips.length,
-              lastCommercialIndex
-            );
-
-          commercialPos = 0;
-
-        }
-
-
-        const index =
-          commercialOrder[
-            commercialPos++
-          ];
-
-
-        lastCommercialIndex =
-          index;
-
-
-        return commercialClips[
-          index
-        ];
-
-      }
-
-
-      if(
-        !shortOrder.length ||
-        shortPos >=
-        shortOrder.length
-      ){
-
-        shortOrder =
-          shuffledIndices(
-            shortClips.length,
-            lastShortIndex
-          );
-
-        shortPos = 0;
-
-      }
-
-
-      const index =
-        shortOrder[
-          shortPos++
-        ];
-
-
-      lastShortIndex =
-        index;
-
-
-      return shortClips[
-        index
-      ];
-
-    }
-
-
-    function pauseProgram(){
-
-      const video =
-        presentationVideo();
-
-      if(
-        !video ||
-        video.paused
-      ){
-        return;
-      }
-
-
-      video.pause();
-
-      pausedByBeta = true;
-
-    }
-
-
-    function resumeProgramIfHome(){
-
-      if(
-        !pausedByBeta ||
-        cutinWrap.classList.contains("show") ||
-        mediaWrap.classList.contains("show") ||
-        visibleInnerPanel()
-      ){
-        return;
-      }
-
-
-      const video =
-        presentationVideo();
-
-
-      if(!video){
-        return;
-      }
-
-
-      const controller =
-        audioController();
-
-
-      if(controller){
-
-        controller
-          .ensurePlayback()
-          .catch(()=>{});
-
-      }else{
-
-        video
-          .play()
-          .catch(()=>{});
-
-      }
-
-
-      pausedByBeta = false;
-
-    }
-
 
     function collapseStatus(){
+      clearTimeout(statusHideTimer);
 
-      clearTimeout(
-        statusHideTimer
-      );
+      statusStack.classList.add("collapsed");
+      statusToggle.setAttribute("aria-expanded","false");
 
-
-      statusStack
-        .classList
-        .add("collapsed");
-
-
-      statusToggle
-        .setAttribute(
-          "aria-expanded",
-          "false"
-        );
-
-
-      const badge =
-        embeddedDiscoverBadge();
-
+      const badge = embeddedDiscoverBadge();
 
       if(badge){
-        badge.setAttribute(
-          "aria-expanded",
-          "false"
-        );
+        badge.setAttribute("aria-expanded","false");
       }
-
     }
 
+    function revealStatus(autoHide = false){
+      clearTimeout(statusHideTimer);
 
-    function hideReadyStatus(){
+      statusStack.classList.remove("collapsed");
+      statusToggle.setAttribute("aria-expanded","true");
 
-      clearTimeout(
-        statusHideTimer
-      );
-
-
-      // Keep the Discover badge available after setup. Only collapse the
-      // unified loader menu once all three local media files are ready.
-      collapseStatus();
-
-    }
-
-
-    function revealStatus(
-      autoHide = false
-    ){
-
-      clearTimeout(
-        statusHideTimer
-      );
-
-
-      statusStack
-        .classList
-        .remove(
-          "hidden-ready",
-          "collapsed"
-        );
-
-
-      statusToggle
-        .setAttribute(
-          "aria-expanded",
-          "true"
-        );
-
-
-      const badge =
-        embeddedDiscoverBadge();
-
+      const badge = embeddedDiscoverBadge();
 
       if(badge){
-        badge.setAttribute(
-          "aria-expanded",
-          "true"
-        );
+        badge.setAttribute("aria-expanded","true");
       }
-
 
       if(
         autoHide &&
         programReady &&
-        musicReady &&
-        rotationReady
+        musicReady
       ){
-
         statusHideTimer =
-          setTimeout(
-            hideReadyStatus,
-            5000
-          );
-
+          setTimeout(collapseStatus,5000);
       }
-
     }
 
-
-    function syncStatusUI(
-      reveal = false
-    ){
-
+    function syncStatusUI(reveal = false){
       const allReady =
         programReady &&
-        musicReady &&
-        rotationReady;
+        musicReady;
 
+      statusToggle.classList.toggle("ready",allReady);
 
-      statusLabel.textContent =
-        "Discover with Big Red";
-
-
-      statusToggle
-        .classList
-        .toggle(
-          "ready",
-          allReady
-        );
-
-
-      const badge =
-        embeddedDiscoverBadge();
-
+      const badge = embeddedDiscoverBadge();
 
       if(badge){
-
-        badge.classList.toggle(
-          "media-ready",
-          allReady
-        );
-
+        badge.classList.toggle("media-ready",allReady);
 
         badge.setAttribute(
           "aria-label",
           allReady
-            ? "Discover with Big Red. All local media ready. Manage media."
+            ? "Discover with Big Red. Program and background music ready. Manage media."
             : "Discover with Big Red. Manage local program media."
         );
 
-
         badge.title =
           allReady
-            ? "All local media ready — tap to manage"
+            ? "Program and background music ready — tap to manage"
             : "Tap to load local program media";
-
       }
-
 
       if(reveal){
-        revealStatus(
-          allReady
-        );
+        revealStatus(allReady);
       }
-
     }
 
-
     function setProgramState(){
-
-      const doc =
-        frameDoc();
-
+      const doc = frameDoc();
 
       const localStatus =
         doc
-          ? doc.getElementById(
-              "localProgramStatus"
-            )
+          ? doc.getElementById("localProgramStatus")
           : null;
 
+      const localVideo = presentationVideo();
 
-      const localVideo =
-        presentationVideo();
-
-
-      const localLoaded =
-        Boolean(
-
-          (
-            localStatus &&
-            !localStatus.hidden
-          )
-
-          ||
-
-          localVideo?.src?.startsWith(
-            "blob:"
-          )
-
-        );
-
+      const localLoaded = Boolean(
+        (
+          localStatus &&
+          !localStatus.hidden
+        )
+        ||
+        localVideo?.src?.startsWith("blob:")
+      );
 
       const changed =
-        localLoaded !==
-        programReady;
+        localLoaded !== programReady;
 
-
-      programReady =
-        localLoaded;
-
+      programReady = localLoaded;
 
       programState.textContent =
         localLoaded
           ? "LOCAL PROGRAM LOADED"
           : "STREAMING PROGRAM";
 
+      programState.classList.toggle("ready",localLoaded);
+      programState.classList.toggle("warning",!localLoaded);
 
-      programState
-        .classList
-        .toggle(
-          "ready",
-          localLoaded
-        );
-
-
-      programState
-        .classList
-        .toggle(
-          "warning",
-          !localLoaded
-        );
-
-
-      syncStatusUI(
-        changed
-      );
-
+      syncStatusUI(changed);
     }
-
-
-    function hideCutin({
-      resume = true
-    } = {}){
-
-      clearTimeout(
-        cutinTimer
-      );
-
-
-      cutinWrap
-        .classList
-        .remove("show");
-
-
-      cutinWrap
-        .setAttribute(
-          "aria-hidden",
-          "true"
-        );
-
-
-      currentPrompt =
-        null;
-
-
-      if(resume){
-
-        setTimeout(
-          resumeProgramIfHome,
-          120
-        );
-
-      }
-
-
-      scheduleNext();
-
-    }
-
-
-    function showCutin(prompt){
-
-      if(
-        !prompt ||
-        !frameReady ||
-        cutinWrap.classList.contains("show") ||
-        mediaWrap.classList.contains("show") ||
-        visibleInnerPanel()
-      ){
-
-        scheduleNext(
-          12000
-        );
-
-        return;
-
-      }
-
-
-      currentPrompt =
-        prompt;
-
-
-      cutinEyebrow.textContent =
-        prompt.eyebrow;
-
-
-      cutinIcon.textContent =
-        prompt.icon;
-
-
-      cutinTitle.textContent =
-        prompt.title;
-
-
-      cutinCopy.textContent =
-        prompt.copy;
-
-
-      cutinOpenBtn.textContent =
-        prompt.action;
-
-
-      cutinWrap
-        .classList
-        .add("show");
-
-
-      cutinWrap
-        .setAttribute(
-          "aria-hidden",
-          "false"
-        );
-
-
-      clearTimeout(
-        cutinTimer
-      );
-
-
-      cutinTimer =
-        setTimeout(
-          ()=>hideCutin({
-            resume:true
-          }),
-          12000
-        );
-
-    }
-
-
-    function finishMedia(){
-
-      clearInterval(
-        mediaFinishTimer
-      );
-
-
-      mediaFinishTimer =
-        null;
-
-      insertVideo.pause();
-
-
-      clipSeeking =
-        false;
-
-
-      activeClip =
-        null;
-
-
-      mediaWrap
-        .classList
-        .remove(
-          "show",
-          "preparing"
-        );
-
-
-      mediaWrap
-        .setAttribute(
-          "aria-hidden",
-          "true"
-        );
-
-
-      dock
-        .classList
-        .remove("media-active");
-
-
-      resumeProgramIfHome();
-
-
-      scheduleNext();
-
-    }
-
-
-    function playMedia(kind){
-
-      if(
-        !rotationReady
-      ){
-
-        showCutin(
-          nextPrompt()
-        );
-
-        return;
-
-      }
-
-
-      const clip =
-        nextClip(kind);
-
-
-      activeClip = {
-        ...clip,
-        kind
-      };
-
-
-      if(
-        kind === "short"
-      ){
-
-        pauseProgram();
-
-      }
-
-
-      mediaLabel.textContent =
-        clip.label;
-
-
-      // Stability-first iPad playback:
-      // rotation inserts start muted so Safari does not reject or stall
-      // later short segments because of timed unmuted playback.
-      // Background music continues underneath every insert.
-      insertVideo.muted =
-        true;
-
-
-      insertVideo.volume =
-        0;
-
-
-      mediaWrap
-        .classList
-        .remove("show");
-
-
-      mediaWrap
-        .classList
-        .add("preparing");
-
-
-      mediaWrap
-        .setAttribute(
-          "aria-hidden",
-          "true"
-        );
-
-
-      dock
-        .classList
-        .remove("media-active");
-
-
-      const beginAfterSeek = ()=>{
-
-        if(
-          !activeClip ||
-          activeClip.start !==
-            clip.start ||
-          activeClip.kind !==
-            kind
-        ){
-          return;
-        }
-
-
-        clipSeeking =
-          false;
-
-
-        const confirmPlayback = ()=>{
-
-          if(
-            !activeClip ||
-            activeClip.start !==
-              clip.start ||
-            activeClip.kind !==
-              kind
-          ){
-            return;
-          }
-
-
-          activeClip.startedAt =
-            Date.now();
-
-
-          mediaWrap
-            .classList
-            .remove("preparing");
-
-
-          mediaWrap
-            .classList
-            .add("show");
-
-
-          mediaWrap
-            .setAttribute(
-              "aria-hidden",
-              "false"
-            );
-
-
-          dock
-            .classList
-            .add("media-active");
-
-
-          activeClip.minimumPlayMs =
-            Math.max(
-              1000,
-              (
-                clip.end -
-                clip.start
-              ) * 1000 -
-              500
-            );
-
-
-          activeClip.lastObservedTime =
-            insertVideo.currentTime;
-
-
-          activeClip.lastProgressAt =
-            Date.now();
-
-
-          activeClip.stallCount =
-            0;
-
-
-          clearInterval(
-            mediaFinishTimer
-          );
-
-
-          mediaFinishTimer =
-            setInterval(
-              ()=>{
-
-                if(
-                  !activeClip ||
-                  activeClip.start !==
-                    clip.start ||
-                  activeClip.kind !==
-                    kind
-                ){
-                  return;
-                }
-
-
-                const now =
-                  Date.now();
-
-
-                const mediaTime =
-                  insertVideo.currentTime;
-
-
-                const advanced =
-                  mediaTime -
-                  activeClip.lastObservedTime;
-
-
-                if(
-                  advanced > 0.03
-                ){
-
-                  activeClip.lastObservedTime =
-                    mediaTime;
-
-
-                  activeClip.lastProgressAt =
-                    now;
-
-
-                  if(advanced > 0.15){
-                    activeClip.stallCount = 0;
-                  }
-
-
-                  return;
-
-                }
-
-
-                if(
-                  now -
-                    activeClip.lastProgressAt <
-                    2800
-                ){
-                  return;
-                }
-
-
-                activeClip.lastProgressAt =
-                  now;
-
-
-                activeClip.stallCount +=
-                  1;
-
-
-                // Keep recovery identical for commercials and shorts.
-                // Do not change audio state or nudge the playhead during
-                // playback; just restart the already-seeked muted segment.
-                insertVideo.pause();
-
-
-                window.setTimeout(
-                  ()=>{
-
-                    if(
-                      !activeClip ||
-                      activeClip.start !==
-                        clip.start ||
-                      activeClip.kind !==
-                        kind
-                    ){
-                      return;
-                    }
-
-
-                    insertVideo
-                      .play()
-                      .catch(playbackFailed);
-
-                  },
-                  140
-                );
-
-              },
-              500
-            );
-
-        };
-
-
-        const playbackFailed = ()=>{
-
-          rotationState.textContent =
-            "ROTATION READY — TAP TO ENABLE";
-
-
-          rotationState
-            .classList
-            .add("warning");
-
-
-          finishMedia();
-
-        };
-
-
-        insertVideo
-          .play()
-          .then(confirmPlayback)
-          .catch(playbackFailed);
-
-      };
-
-
-      const startPlayback = ()=>{
-
-        insertVideo.pause();
-
-
-        clipSeeking =
-          true;
-
-
-        insertVideo.currentTime =
-          clip.start;
-
-
-        if(
-          !insertVideo.seeking &&
-          Math.abs(
-            insertVideo.currentTime -
-            clip.start
-          ) < 0.25
-        ){
-
-          beginAfterSeek();
-
-        }else{
-
-          insertVideo
-            .addEventListener(
-              "seeked",
-              beginAfterSeek,
-              {once:true}
-            );
-
-        }
-
-      };
-
-
-      if(
-        insertVideo.readyState >= 1
-      ){
-
-        startPlayback();
-
-      }else{
-
-        insertVideo
-          .addEventListener(
-            "loadedmetadata",
-            startPlayback,
-            {once:true}
-          );
-
-      }
-
-    }
-
-
-    function runNextInsert(){
-
-      if(
-        !frameReady ||
-        visibleInnerPanel() ||
-        cutinWrap.classList.contains("show") ||
-        mediaWrap.classList.contains("show")
-      ){
-
-        scheduleNext(
-          12000
-        );
-
-        return;
-
-      }
-
-
-      const kind =
-        rotationPattern[
-          patternPos++ %
-          rotationPattern.length
-        ];
-
-
-      if(
-        kind === "feature"
-      ){
-
-        showCutin(
-          nextPrompt()
-        );
-
-      }else{
-
-        playMedia(kind);
-
-      }
-
-    }
-
 
     function scheduleNext(delay){
-
-      clearTimeout(
-        scheduleTimer
-      );
-
+      clearTimeout(scheduleTimer);
 
       const wait =
-        delay
-        ??
+        delay ??
         (
           timing.min +
           Math.round(
             Math.random() *
-            (
-              timing.max -
-              timing.min
-            )
+            (timing.max - timing.min)
           )
         );
 
-
       scheduleTimer =
-        setTimeout(
-          runNextInsert,
-          wait
-        );
-
+        setTimeout(runNextFeatureSlot,wait);
     }
 
+    function hideCutin(){
+      clearTimeout(cutinTimer);
+
+      cutinWrap.classList.remove("show");
+      cutinWrap.setAttribute("aria-hidden","true");
+
+      currentPrompt = null;
+
+      scheduleNext();
+    }
+
+    function showCutin(prompt){
+      if(
+        !prompt ||
+        !frameReady ||
+        cutinWrap.classList.contains("show") ||
+        visibleInnerPanel()
+      ){
+        scheduleNext(12000);
+        return;
+      }
+
+      currentPrompt = prompt;
+
+      cutinEyebrow.textContent = prompt.eyebrow;
+      cutinIcon.textContent = prompt.icon;
+      cutinTitle.textContent = prompt.title;
+      cutinCopy.textContent = prompt.copy;
+      cutinOpenBtn.textContent = prompt.action;
+
+      cutinWrap.classList.add("show");
+      cutinWrap.setAttribute("aria-hidden","false");
+
+      clearTimeout(cutinTimer);
+
+      cutinTimer =
+        setTimeout(hideCutin,12000);
+    }
+
+    function runNextFeatureSlot(){
+      if(
+        !frameReady ||
+        visibleInnerPanel() ||
+        cutinWrap.classList.contains("show")
+      ){
+        scheduleNext(12000);
+        return;
+      }
+
+      const slot =
+        featureTimingPattern[
+          timingPos++ %
+          featureTimingPattern.length
+        ];
+
+      if(slot === "feature"){
+        showCutin(nextPrompt());
+      }else{
+        scheduleNext();
+      }
+    }
 
     function installBetaLayer(){
-
-      const doc =
-        frameDoc();
-
+      const doc = frameDoc();
 
       if(!doc){
         return;
       }
 
-
-      frameReady =
-        true;
-
+      frameReady = true;
 
       const oldStyle =
-        doc.getElementById(
-          "programBetaOverrides"
-        );
-
+        doc.getElementById("programBetaOverrides");
 
       if(oldStyle){
         oldStyle.remove();
       }
 
-
-      const style =
-        doc.createElement(
-          "style"
-        );
-
-
-      style.id =
-        "programBetaOverrides";
-
-
+      const style = doc.createElement("style");
+      style.id = "programBetaOverrides";
       style.textContent = [
-
         ".discover-actions{display:none!important}",
-
         ".home-view{padding-bottom:82px!important}",
-
         "#loadLocalProgramBtn{display:none!important}"
-
       ].join("");
 
-
-      doc.head
-        .appendChild(style);
-
+      doc.head.appendChild(style);
 
       const badge =
-        doc.getElementById(
-          "loadLocalProgramBtn"
-        );
-
+        doc.getElementById("loadLocalProgramBtn");
 
       if(badge){
-
-        badge.setAttribute(
-          "aria-hidden",
-          "true"
-        );
-
-        badge.setAttribute(
-          "tabindex",
-          "-1"
-        );
-
+        badge.setAttribute("aria-hidden","true");
+        badge.setAttribute("tabindex","-1");
       }
 
-
       const volumeButton =
-        doc.getElementById(
-          "volumeBtn"
-        );
+        doc.getElementById("volumeBtn");
 
-
-      const mainVideo =
-        presentationVideo();
-
+      const mainVideo = presentationVideo();
 
       if(
         mainVideo &&
-        mainVideo.dataset.backgroundMusicBridge !== "ready"
+        mainVideo.dataset.mergedProgramAudioBridge !== "ready"
       ){
+        mainVideo.dataset.mergedProgramAudioBridge = "ready";
 
-        mainVideo.dataset.backgroundMusicBridge =
-          "ready";
+        mainVideo.addEventListener(
+          "play",
+          ()=>{
+            // Keep the merged program's embedded insert audio available.
+            applySharedSoundState();
 
-
-        // The staged page resumes its slideshow after closing an overlay.
-        // On iPad that video play call can take audio focus from the separate
-        // soundtrack even though the slideshow is muted. Reassert the mute
-        // first, then restore the already-unlocked soundtrack just afterward.
-        mainVideo
-          .addEventListener(
-            "play",
-            ()=>{
-
-              if(
-                !backgroundAudioReady
-              ){
-                return;
-              }
-
-
-              mainVideo.muted = true;
-
-
-              window.setTimeout(
-                ()=>{
-                  applySharedSoundState();
-                  playBackgroundAudio();
-                },
-                120
-              );
-
-            }
-          );
-
+            window.setTimeout(
+              playBackgroundAudio,
+              120
+            );
+          }
+        );
       }
-
 
       if(volumeButton){
-
-        volumeButton
-          .addEventListener(
-            "click",
-            ()=>{
-              applySharedSoundState();
-              playBackgroundAudio();
-            }
-          );
-
+        volumeButton.addEventListener(
+          "click",
+          ()=>{
+            applySharedSoundState();
+            playBackgroundAudio();
+          }
+        );
       }
-
 
       doc.addEventListener(
         "pointerdown",
-        playBackgroundAudio,
+        ()=>{
+          applySharedSoundState();
+          playBackgroundAudio();
+        },
         {passive:true}
       );
 
-
       setProgramState();
 
-
-      scheduleNext(
-        timing.first
-      );
-
+      scheduleNext(timing.first);
     }
 
-
     document
-      .querySelectorAll(
-        ".dock button[data-target]"
-      )
+      .querySelectorAll(".dock button[data-target]")
       .forEach(button=>{
-
         button.addEventListener(
           "click",
           ()=>{
+            clearTimeout(scheduleTimer);
+            clearTimeout(cutinTimer);
 
-            clearTimeout(
-              scheduleTimer
-            );
-
-
-            clearTimeout(
-              cutinTimer
-            );
-
-
-            if(
-              cutinWrap
-                .classList
-                .contains("show")
-            ){
-
-              cutinWrap
-                .classList
-                .remove("show");
-
-
-              cutinWrap
-                .setAttribute(
-                  "aria-hidden",
-                  "true"
-                );
-
+            if(cutinWrap.classList.contains("show")){
+              cutinWrap.classList.remove("show");
+              cutinWrap.setAttribute("aria-hidden","true");
             }
 
+            currentPrompt = null;
 
-            currentPrompt =
-              null;
-
-
-            pressInnerButton(
-              button.dataset.target
-            );
-
+            pressInnerButton(button.dataset.target);
 
             scheduleNext();
-
           }
         );
-
       });
 
-
-    cutinOpenBtn
-      .addEventListener(
-        "click",
-        ()=>{
-
-          if(
-            !currentPrompt
-          ){
-            return;
-          }
-
-
-          const target =
-            currentPrompt.target;
-
-
-          clearTimeout(
-            cutinTimer
-          );
-
-
-          cutinWrap
-            .classList
-            .remove("show");
-
-
-          cutinWrap
-            .setAttribute(
-              "aria-hidden",
-              "true"
-            );
-
-
-          currentPrompt =
-            null;
-
-
-          pressInnerButton(
-            target
-          );
-
-
-          scheduleNext();
-
+    cutinOpenBtn.addEventListener(
+      "click",
+      ()=>{
+        if(!currentPrompt){
+          return;
         }
-      );
 
+        const target = currentPrompt.target;
 
-    cutinDismissBtn
-      .addEventListener(
-        "click",
-        ()=>hideCutin({
-          resume:true
-        })
-      );
+        clearTimeout(cutinTimer);
 
+        cutinWrap.classList.remove("show");
+        cutinWrap.setAttribute("aria-hidden","true");
 
-    statusToggle
-      .addEventListener(
-        "click",
-        ()=>{
+        currentPrompt = null;
 
-          if(
-            statusStack
-              .classList
-              .contains(
-                "collapsed"
-              )
-          ){
+        pressInnerButton(target);
 
-            revealStatus(
-              false
-            );
+        scheduleNext();
+      }
+    );
 
-          }else{
+    cutinDismissBtn.addEventListener(
+      "click",
+      hideCutin
+    );
 
-            collapseStatus();
-
-          }
-
+    statusToggle.addEventListener(
+      "click",
+      ()=>{
+        if(statusStack.classList.contains("collapsed")){
+          revealStatus(false);
+        }else{
+          collapseStatus();
         }
-      );
+      }
+    );
 
+    programState.addEventListener(
+      "click",
+      ()=>{
+        const doc = frameDoc();
 
-    /*
-      MEDIA STATUS owns local program loading.
+        if(!doc){
+          return;
+        }
 
-      This click is a real user gesture on iPad,
-      so we use it to unlock the inner video audio
-      before opening the hidden file picker.
-    */
+        const controller = audioController();
+        const fileInput =
+          doc.getElementById("localProgramFile");
 
-    programState
-      .addEventListener(
-        "click",
-        ()=>{
+        if(controller){
+          controller
+            .unlockAndPlay()
+            .catch(()=>{});
+        }
 
-          const doc =
-            frameDoc();
+        if(fileInput){
+          fileInput.value = "";
 
-
-          if(!doc){
-            return;
-          }
-
-
-          const controller =
-            audioController();
-
-
-          const fileInput =
-            doc.getElementById(
-              "localProgramFile"
-            );
-
-
-          if(controller){
-
-            controller
-              .unlockAndPlay()
-              .catch(()=>{});
-
-          }
-
-
-          if(fileInput){
-
-            fileInput.value =
-              "";
-
-
-            const restoreAudioAfterSelection =
+          const restoreAfterSelection = ()=>{
+            window.setTimeout(
               ()=>{
-
-                window.setTimeout(
-                  ()=>{
-
-                    const currentController =
-                      audioController();
-
-
-                    if(currentController){
-
-                      currentController
-                        .ensurePlayback()
-                        .catch(()=>{});
-
-                    }
-
-
-                    applySharedSoundState();
-
-                    playBackgroundAudio();
-
-                  },
-                  250
-                );
-
-              };
-
-
-            fileInput
-              .addEventListener(
-                "change",
-                restoreAudioAfterSelection,
-                {once:true}
-              );
-
-
-            fileInput.click();
-
-          }
-
-        }
-      );
-
-
-    musicState
-      .addEventListener(
-        "click",
-        ()=>{
-
-          backgroundMusicFile.value = "";
-          backgroundMusicFile.click();
-
-        }
-      );
-
-
-    backgroundMusicFile
-      .addEventListener(
-        "change",
-        ()=>{
-
-          const file =
-            backgroundMusicFile.files &&
-            backgroundMusicFile.files[0];
-
-          loadBackgroundMusic(file);
-
-        }
-      );
-
-
-    rotationState
-      .addEventListener(
-        "click",
-        ()=>{
-
-          rotationFile.value =
-            "";
-
-
-          rotationFile.click();
-
-        }
-      );
-
-
-    rotationFile
-      .addEventListener(
-        "change",
-        ()=>{
-
-          const file =
-            rotationFile.files &&
-            rotationFile.files[0];
-
-
-          if(!file){
-            return;
-          }
-
-
-          if(rotationUrl){
-
-            URL.revokeObjectURL(
-              rotationUrl
-            );
-
-          }
-
-
-          rotationUrl =
-            URL.createObjectURL(
-              file
-            );
-
-
-          insertVideo.src =
-            rotationUrl;
-
-
-          // Prime the local rotation file muted. This keeps the same
-          // playback mode used later for both commercials and shorts and
-          // avoids iPad Safari audio-policy stalls on timed inserts.
-          insertVideo.muted =
-            true;
-
-
-          insertVideo.volume =
-            0;
-
-
-          insertVideo.load();
-
-
-          const rotationAudioUnlock =
-            insertVideo.play();
-
-
-          revealStatus(
-            false
-          );
-
-
-          rotationState.textContent =
-            "CHECKING ROTATION MEDIA…";
-
-
-          rotationState
-            .classList
-            .remove("ready");
-
-
-          rotationState
-            .classList
-            .add("warning");
-
-
-          insertVideo
-            .addEventListener(
-              "loadedmetadata",
-              ()=>{
-
-                const valid =
-                  insertVideo.duration >= 204 &&
-                  insertVideo.duration <= 207;
-
-
-                rotationReady =
-                  valid;
-
-
-                rotationState.textContent =
-                  valid
-                    ? "ROTATION MEDIA READY — 10/10"
-                    : "SELECT BIG RED ROTATION PACK";
-
-
-                rotationState
-                  .classList
-                  .toggle(
-                    "ready",
-                    valid
-                  );
-
-
-                rotationState
-                  .classList
-                  .toggle(
-                    "warning",
-                    !valid
-                  );
-
-
-                syncStatusUI(
-                  true
-                );
-
-
-                if(valid){
-
-                  const mainVideo =
-                    presentationVideo();
-
-
-                  const mainWasPlaying =
-                    Boolean(
-                      mainVideo &&
-                      !mainVideo.paused
-                    );
-
-
-                  const restoreMainAudio =
-                    ()=>{
-
-                      if(!mainVideo){
-                        return;
-                      }
-
-
-                      if(mainWasPlaying){
-
-                        window.setTimeout(
-                          ()=>{
-
-                            const controller =
-                              audioController();
-
-
-                            if(controller){
-
-                              controller
-                                .ensurePlayback()
-                                .catch(()=>{});
-
-                            }else{
-
-                              mainVideo
-                                .play()
-                                .catch(()=>{});
-
-                            }
-
-                          },
-                          100
-                        );
-
-                      }
-
-                    };
-
-
-                  rotationAudioUnlock
-                    .then(
-                      ()=>{
-
-                        insertVideo.pause();
-
-
-                        insertVideo.currentTime =
-                          0;
-
-
-                        insertVideo.muted =
-                          true;
-
-
-                        insertVideo.volume =
-                          0;
-
-
-                        restoreMainAudio();
-
-
-                        window.setTimeout(
-                          playBackgroundAudio,
-                          120
-                        );
-
-                      }
-                    )
-                    .catch(()=>{
-
-                      insertVideo.muted =
-                        true;
-
-
-                      insertVideo.volume =
-                        0;
-
-
-                      restoreMainAudio();
-
-
-                      playBackgroundAudio();
-
-                    });
-
+                const currentController =
+                  audioController();
+
+                if(currentController){
+                  currentController
+                    .ensurePlayback()
+                    .catch(()=>{});
                 }
 
+                applySharedSoundState();
+                playBackgroundAudio();
               },
-              {once:true}
+              250
             );
+          };
 
+          fileInput.addEventListener(
+            "change",
+            restoreAfterSelection,
+            {once:true}
+          );
+
+          fileInput.click();
         }
-      );
+      }
+    );
 
+    musicState.addEventListener(
+      "click",
+      ()=>{
+        backgroundMusicFile.value = "";
+        backgroundMusicFile.click();
+      }
+    );
 
-    insertVideo
-      .addEventListener(
-        "timeupdate",
-        ()=>{
+    backgroundMusicFile.addEventListener(
+      "change",
+      ()=>{
+        const file =
+          backgroundMusicFile.files &&
+          backgroundMusicFile.files[0];
 
-          if(
-            activeClip &&
-            !clipSeeking &&
-            insertVideo.currentTime >=
-              activeClip.end &&
-            Date.now() -
-              (activeClip.startedAt || Date.now()) >=
-              (activeClip.minimumPlayMs || 0)
-          ){
+        loadBackgroundMusic(file);
+      }
+    );
 
-            finishMedia();
-
-          }
-
-        }
-      );
-
-
-    insertVideo
-      .addEventListener(
-        "ended",
-        ()=>{
-
-          if(!activeClip){
-            return;
-          }
-
-
-          const elapsed =
-            Date.now() -
-            (activeClip.startedAt || Date.now());
-
-
-          if(
-            elapsed >=
-              (activeClip.minimumPlayMs || 0)
-          ){
-
-            finishMedia();
-
-            return;
-
-          }
-
-
-          const resumeAt =
-            Math.min(
-              activeClip.end - 0.25,
-              activeClip.start +
-                elapsed / 1000
-            );
-
-
-          if(
-            Number.isFinite(resumeAt) &&
-            resumeAt > activeClip.start
-          ){
-
-            insertVideo.currentTime =
-              resumeAt;
-
-
-            insertVideo
-              .play()
-              .catch(()=>{});
-
-          }
-
-        }
-      );
-
-
-    frame
-      .addEventListener(
-        "load",
-        installBetaLayer
-      );
-
+    frame.addEventListener(
+      "load",
+      installBetaLayer
+    );
 
     setInterval(
       ()=>{
-
         setProgramState();
-
         applySharedSoundState();
-
 
         if(
           backgroundAudioReady &&
           backgroundAudio.paused
         ){
-
           playBackgroundAudio();
-
         }
-
-
-        if(
-          !cutinWrap
-            .classList
-            .contains("show")
-
-          &&
-
-          !mediaWrap
-            .classList
-            .contains("show")
-        ){
-
-          resumeProgramIfHome();
-
-        }
-
       },
       1000
     );
 
-
-    document
-      .addEventListener(
-        "visibilitychange",
-        ()=>{
-
-          if(
-            document.hidden
-          ){
-
-            clearTimeout(
-              scheduleTimer
-            );
-
-            return;
-
-          }
-
-
-          playBackgroundAudio();
-
-
-          scheduleNext(
-            12000
-          );
-
+    document.addEventListener(
+      "visibilitychange",
+      ()=>{
+        if(document.hidden){
+          clearTimeout(scheduleTimer);
+          return;
         }
-      );
 
+        applySharedSoundState();
+        playBackgroundAudio();
+        scheduleNext(12000);
+      }
+    );
 
-    window
-      .addEventListener(
-        "pagehide",
-        ()=>{
-
-          if(backgroundAudioUrl){
-            URL.revokeObjectURL(
-              backgroundAudioUrl
-            );
-          }
-
-        },
-        {once:true}
-      );
+    window.addEventListener(
+      "pagehide",
+      ()=>{
+        if(backgroundAudioUrl){
+          URL.revokeObjectURL(backgroundAudioUrl);
+        }
+      },
+      {once:true}
+    );
 
   })();
   </script>
