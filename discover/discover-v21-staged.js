@@ -161,8 +161,7 @@
       { q: "Which number comes after 99?", a: ["98", "100", "101", "109"], correct: 1 },
       { q: "Which holiday is on July 4 in the United States?", a: ["Thanksgiving", "Independence Day", "Memorial Day", "Labor Day"], correct: 1 },
       { q: "Which Oklahoma college team is nicknamed the Sooners?", a: ["OU", "OSU", "UCO", "OBU"], correct: 0 },
-      { q: "Which city is home to Oklahoma Baptist University?", a: ["Shawnee", "Moore", "Mustang", "Edmond"], correct: 0 }
-    ,
+      { q: "Which city is home to Oklahoma Baptist University?", a: ["Shawnee", "Moore", "Mustang", "Edmond"], correct: 0 },
       { q: "Which Oklahoma city is home to the University of Central Oklahoma?", a: ["Edmond", "Norman", "Lawton", "Tulsa"], correct: 0 },
       { q: "Which city lies directly south of Moore?", a: ["Norman", "Edmond", "Yukon", "Shawnee"], correct: 0 },
       { q: "What does a green traffic light mean?", a: ["Stop", "Go when clear", "Back up", "Park"], correct: 1 },
@@ -213,7 +212,7 @@
       { q: "Which app feature can send an alert to your phone?", a: ["Push notification", "Wallpaper", "Calculator", "Keyboard"], correct: 0 },
       { q: "What is the Big Red Rider Hub designed to help riders access?", a: ["Ride information", "Video games only", "Bank accounts", "Medical records"], correct: 0 },
       { q: "What should a rider do before leaving the vehicle?", a: ["Check belongings", "Leave the door open", "Forget their phone", "Ignore the destination"], correct: 0 }
-],
+    ],
     medium: [
       { q: "Which band recorded 'Hotel California'?", a: ["Journey","Eagles","Foreigner","Boston"], correct: 1 },
       { q: "Which movie features a DeLorean time machine?", a: ["Top Gun","Back to the Future","Ghostbusters","Ferris Bueller's Day Off"], correct: 1 },
@@ -265,8 +264,7 @@
       { q: "FireLake is strongly associated with which Oklahoma community?", a: ["Shawnee", "Edmond", "Mustang", "Piedmont"], correct: 0 },
       { q: "Which city is west of Oklahoma City along I-40 and named after a Canadian territory?", a: ["Yukon", "Moore", "Choctaw", "Harrah"], correct: 0 },
       { q: "Which city is just west of Oklahoma City and has a well-known high school called the Broncos?", a: ["Mustang", "Edmond", "Shawnee", "Del City"], correct: 0 },
-      { q: "Which Oklahoma City airport code is used for Will Rogers World Airport?", a: ["OKC", "TUL", "OUN", "LAW"], correct: 0 }
-    ,
+      { q: "Which Oklahoma City airport code is used for Will Rogers World Airport?", a: ["OKC", "TUL", "OUN", "LAW"], correct: 0 },
       { q: "Which interstate connects Oklahoma City and Norman?", a: ["I-35", "I-40", "I-44", "I-70"], correct: 0 },
       { q: "Which interstate connects Oklahoma City and Shawnee?", a: ["I-40", "I-35", "I-44", "I-240"], correct: 0 },
       { q: "Which Oklahoma City highway loops across the south side of the metro?", a: ["I-240", "I-235", "I-244", "I-70"], correct: 0 },
@@ -317,7 +315,7 @@
       { q: "What does 'deadhead' mean in transportation?", a: ["Driving without a passenger", "Driving too fast", "Missing an exit", "Stopping for fuel"], correct: 0 },
       { q: "What does 'round trip' mean?", a: ["Travel to a destination and back", "One-way travel", "A circular road", "A short detour"], correct: 0 },
       { q: "What is the purpose of a fare estimate?", a: ["Give a rider an expected price before the ride", "Track weather", "Play music", "Change traffic lights"], correct: 0 }
-],
+    ],
     hard: [
       { q: "What is the chemical symbol for tungsten?", a: ["T","Tu","W","Tg"], correct: 2 },
       { q: "Which artist painted 'The Persistence of Memory'?", a: ["Picasso","Dalí","Monet","Van Gogh"], correct: 1 },
@@ -369,8 +367,7 @@
       { q: "Which horse-racing venue is in northeast Oklahoma City?", a: ["Remington Park", "Fair Meadows", "Will Rogers Downs", "Thunderbird Downs"], correct: 0 },
       { q: "Which city hosts Will Rogers World Airport?", a: ["Oklahoma City", "Tulsa", "Norman", "Edmond"], correct: 0 },
       { q: "Which city is home to the University of Central Oklahoma?", a: ["Edmond", "Norman", "Shawnee", "Stillwater"], correct: 0 },
-      { q: "Which city is home to Oklahoma Baptist University?", a: ["Shawnee", "Edmond", "Lawton", "Durant"], correct: 0 }
-    ,
+      { q: "Which city is home to Oklahoma Baptist University?", a: ["Shawnee", "Edmond", "Lawton", "Durant"], correct: 0 },
       { q: "Oklahoma became a state on which date?", a: ["November 16, 1907", "July 4, 1907", "January 1, 1908", "April 22, 1889"], correct: 0 },
       { q: "What is Oklahoma's state motto?", a: ["Labor Omnia Vincit", "E Pluribus Unum", "Live Free or Die", "Excelsior"], correct: 0 },
       { q: "What is Oklahoma's official state flower?", a: ["Oklahoma rose", "Indian blanket", "Rose rock", "Redbud blossom"], correct: 0 },
@@ -421,7 +418,7 @@
       { q: "Which city is home to the American Banjo Museum?", a: ["Oklahoma City", "Tulsa", "Shawnee", "Stillwater"], correct: 0 },
       { q: "Which Oklahoma town is associated with the birthplace of Will Rogers?", a: ["Oologah", "Yukon", "Ada", "Durant"], correct: 0 },
       { q: "Which historic Oklahoma fort is near Lawton?", a: ["Fort Sill", "Fort Gibson", "Fort Reno", "Fort Washita"], correct: 0 }
-]
+    ]
   };
 
   const wouldYouRather = [
@@ -1036,6 +1033,109 @@
     {"word":"NIGHTDRIVE","scramble":"DRIVENIGHT","hint":"A drive after dark."}
   );
 
+
+// --------------------------------------------------
+  // FALL MIX-IN — 2026
+  // Seasonal content is mixed into the normal banks.
+  // The core game logic, round counts, scoring, and UI
+  // remain unchanged. A 100% seasonal takeover can be
+  // done separately for the actual holiday week.
+  // --------------------------------------------------
+
+  triviaBank.easy.push(
+    { q: "Which school does Harry Potter attend?", a: ["Beauxbatons", "Hogwarts", "Durmstrang", "Ilvermorny"], correct: 1 },
+    { q: "What is the name of Harry Potter's owl?", a: ["Crookshanks", "Fawkes", "Hedwig", "Scabbers"], correct: 2 },
+    { q: "Which sport is played on flying broomsticks in Harry Potter?", a: ["Quidditch", "Gobstones", "Wizard chess", "Dueling"], correct: 0 },
+    { q: "How many Hogwarts houses are there?", a: ["3", "4", "5", "6"], correct: 1 },
+    { q: "Which Hogwarts house is Harry Potter sorted into?", a: ["Hufflepuff", "Ravenclaw", "Slytherin", "Gryffindor"], correct: 3 },
+    { q: "What month contains Halloween?", a: ["September", "October", "November", "December"], correct: 1 },
+    { q: "What color do many tree leaves turn in fall?", a: ["Orange", "Blue", "Purple only", "Silver"], correct: 0 },
+    { q: "Which fruit is commonly carved into a jack-o'-lantern?", a: ["Apple", "Pumpkin", "Pear", "Peach"], correct: 1 },
+    { q: "Which season comes between summer and winter?", a: ["Spring", "Fall", "Monsoon", "Dry season"], correct: 1 },
+    { q: "Which drink is often served warm during fall?", a: ["Apple cider", "Lemonade", "Iced tea only", "Sports drink"], correct: 0 }
+  );
+
+  triviaBank.medium.push(
+    { q: "From which platform does the Hogwarts Express depart at King's Cross?", a: ["7½", "8¾", "9¾", "10½"], correct: 2 },
+    { q: "What kind of creature is Dobby?", a: ["Goblin", "House-elf", "Centaur", "Ghost"], correct: 1 },
+    { q: "Which professor teaches Potions during Harry's early years at Hogwarts?", a: ["McGonagall", "Snape", "Flitwick", "Sprout"], correct: 1 },
+    { q: "What form does Harry Potter's Patronus take?", a: ["Wolf", "Stag", "Otter", "Phoenix"], correct: 1 },
+    { q: "What is the wizarding village near Hogwarts called?", a: ["Godric's Hollow", "Hogsmeade", "Little Whinging", "Ottery St Catchpole"], correct: 1 },
+    { q: "What pigment disappears from many leaves as days shorten in fall?", a: ["Chlorophyll", "Melanin", "Keratin", "Hemoglobin"], correct: 0 },
+    { q: "The autumnal equinox happens when day and night are approximately what?", a: ["Equal in length", "Six hours each", "All daylight", "All darkness"], correct: 0 },
+    { q: "Which crop is most strongly associated with traditional fall corn mazes?", a: ["Corn", "Rice", "Cotton", "Soybeans only"], correct: 0 },
+    { q: "What is another common name for the fall season?", a: ["Autumn", "Solstice", "Monsoon", "Thaw"], correct: 0 },
+    { q: "Which spice is commonly paired with pumpkin flavor in fall drinks and desserts?", a: ["Cinnamon", "Dill", "Paprika", "Cumin"], correct: 0 }
+  );
+
+  triviaBank.hard.push(
+    { q: "What are the nicknames of the four creators of the Marauder's Map?", a: ["Moony, Wormtail, Padfoot, Prongs", "Fang, Fluffy, Norbert, Buckbeak", "Fred, George, Lee, Percy", "Albus, Aberforth, Ariana, Elphias"], correct: 0 },
+    { q: "Which core is inside Harry Potter's wand?", a: ["Dragon heartstring", "Unicorn hair", "Phoenix feather", "Thestral hair"], correct: 2 },
+    { q: "What is the name of the spell used to summon an object?", a: ["Alohomora", "Accio", "Lumos", "Expelliarmus"], correct: 1 },
+    { q: "Which two schools visit Hogwarts for the Triwizard Tournament?", a: ["Beauxbatons and Durmstrang", "Ilvermorny and Mahoutokoro", "Durmstrang and Ilvermorny", "Beauxbatons and Castelobruxo"], correct: 0 },
+    { q: "What is Sirius Black's Animagus form?", a: ["Black dog", "Stag", "Rat", "Cat"], correct: 0 },
+    { q: "Which pigments help produce yellow and orange colors in autumn leaves?", a: ["Carotenoids", "Hemoglobin", "Melanin", "Keratin"], correct: 0 },
+    { q: "In the Northern Hemisphere, astronomical fall begins around which event?", a: ["Autumnal equinox", "Winter solstice", "Summer solstice", "Vernal equinox"], correct: 0 },
+    { q: "What botanical type of fruit is a pumpkin?", a: ["Pepo", "Drupe", "Pome", "Legume"], correct: 0 },
+    { q: "Halloween is immediately followed by which date?", a: ["November 1", "October 30", "November 2 only", "December 1"], correct: 0 },
+    { q: "Which compound group contributes many red and purple colors to fall leaves?", a: ["Anthocyanins", "Proteins", "Starches", "Silicates"], correct: 0 }
+  );
+
+  wouldYouRather.push(
+    ["Spend an evening in Hogsmeade", "Spend an evening in Diagon Alley"],
+    ["Take a Hogwarts class", "Play in a Quidditch match"],
+    ["Have an invisibility cloak", "Have a flying broomstick"],
+    ["Explore Hogwarts after dark", "Explore a giant enchanted library"],
+    ["Be sorted into your favorite Hogwarts house", "Choose your house yourself"],
+    ["Visit a pumpkin patch", "Visit a corn maze"],
+    ["Take a fall hayride", "Sit around a bonfire"],
+    ["Spend a cool fall night at a football game", "Spend it at an outdoor concert"],
+    ["Drink hot apple cider", "Drink hot chocolate"],
+    ["Carve a pumpkin", "Decorate fall cookies"],
+    ["See brilliant fall leaves in the mountains", "Spend a crisp fall weekend in the city"],
+    ["Watch a spooky movie", "Watch a Harry Potter marathon"],
+    ["Go to a haunted house", "Go on a nighttime hayride"],
+    ["Wear a hoodie all day", "Wear a flannel all day"],
+    ["Have perfect sweater weather", "Have perfect patio weather"],
+    ["Spend Halloween at a costume party", "Spend Halloween watching movies at home"],
+    ["Have unlimited caramel apples", "Have unlimited pumpkin pie"],
+    ["Go to a fall festival", "Go to a football tailgate"],
+    ["Walk through crunchy leaves", "Sit beside a warm fireplace"],
+    ["Have one magical fall weekend", "Have perfect fall weather for an entire month"]
+  );
+
+  scrambles.push(
+    { word: "HOGWARTS", scramble: "WARTSHOG", hint: "Harry Potter's school." },
+    { word: "QUIDDITCH", scramble: "DITCHQUID", hint: "Wizarding sport played on broomsticks." },
+    { word: "HEDWIG", scramble: "WIGHED", hint: "Harry Potter's owl." },
+    { word: "HAGRID", scramble: "GRIDHA", hint: "Hogwarts gamekeeper and Harry's friend." },
+    { word: "PATRONUS", scramble: "NUSPATRO", hint: "Protective magical charm." },
+    { word: "HOGSMEADE", scramble: "MEADEHOGS", hint: "Wizarding village near Hogwarts." },
+    { word: "DIAGONALLEY", scramble: "ALLE YDIAGON".replace(" ", ""), hint: "Wizard shopping street in London." },
+    { word: "GRYFFINDOR", scramble: "DORGRYFFIN", hint: "Harry Potter's Hogwarts house." },
+    { word: "SLYTHERIN", scramble: "THERINSLY", hint: "One of the four Hogwarts houses." },
+    { word: "BROOMSTICK", scramble: "STICKBROOM", hint: "Wizarding transportation." },
+    { word: "PUMPKIN", scramble: "KINPUMP", hint: "Classic fall gourd." },
+    { word: "AUTUMN", scramble: "TUMNAU", hint: "Another word for fall." },
+    { word: "HARVEST", scramble: "VESTHAR", hint: "Gathering crops at the end of the growing season." },
+    { word: "HAYRIDE", scramble: "RIDEHAY", hint: "Classic fall wagon ride." },
+    { word: "CORNMAZE", scramble: "MAZECORN", hint: "Fall attraction with winding paths." },
+    { word: "BONFIRE", scramble: "FIREBON", hint: "Large outdoor fire." },
+    { word: "SWEATER", scramble: "TERSWEA", hint: "Cool-weather clothing." },
+    { word: "CIDER", scramble: "DERCI", hint: "Popular fall apple drink." },
+    { word: "ACORN", scramble: "ORNAC", hint: "Oak tree seed." },
+    { word: "LEAVES", scramble: "VESLEA", hint: "They change color in fall." },
+    { word: "HALLOWEEN", scramble: "WEENHALLO", hint: "October 31 holiday." },
+    { word: "COSTUME", scramble: "TUMECOS", hint: "Something worn for Halloween." },
+    { word: "HAUNTED", scramble: "TEDHAUN", hint: "A spooky description." },
+    { word: "FOOTBALL", scramble: "BALLFOOT", hint: "A major fall sport." },
+    { word: "TAILGATE", scramble: "GATETAIL", hint: "Pre-game fall gathering." },
+    { word: "FLANNEL", scramble: "NELFLAN", hint: "Popular cool-weather fabric." },
+    { word: "CINNAMON", scramble: "MONCINNA", hint: "Warm spice common in fall treats." },
+    { word: "CARAMEL", scramble: "MELCARA", hint: "Sweet coating often paired with apples." },
+    { word: "FIREPLACE", scramble: "PLACEFIRE", hint: "Warm indoor spot on a cool night." },
+    { word: "OCTOBER", scramble: "BEROCTO", hint: "Peak fall month with Halloween." }
+  );
 
   const gameDecks = {
     triviaEasy: [],
