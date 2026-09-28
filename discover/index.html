@@ -382,7 +382,7 @@
 
     <iframe
       id="discoverFrame"
-      src="index-v21-staged.html?v=20260927-audio-bridge1"
+      src="index-v21-staged.html?v=20260927-short-stability1"
       title="Discover with Big Red"
       allow="autoplay; geolocation">
     </iframe>
@@ -1860,16 +1860,16 @@
         clip.label;
 
 
+      // Stability-first iPad playback:
+      // rotation inserts start muted so Safari does not reject or stall
+      // later short segments because of timed unmuted playback.
+      // Background music continues underneath every insert.
       insertVideo.muted =
-        kind === "commercial"
-          ? true
-          : !soundIsOn();
+        true;
 
 
       insertVideo.volume =
-        kind === "short"
-          ? 0.35
-          : 0;
+        0;
 
 
       mediaWrap
@@ -2045,19 +2045,9 @@
                   1;
 
 
-                // iPad Safari can leave an unmuted video technically
-                // "playing" while its picture is frozen. Give the decoder a
-                // generous recovery window, then restart playback without
-                // advancing currentTime; repeated playhead nudges make local
-                // clips look like they are constantly buffering.
-                if(
-                  kind === "short" &&
-                  activeClip.stallCount >= 2
-                ){
-                  insertVideo.muted = true;
-                }
-
-
+                // Keep recovery identical for commercials and shorts.
+                // Do not change audio state or nudge the playhead during
+                // playback; just restart the already-seeked muted segment.
                 insertVideo.pause();
 
 
@@ -2077,22 +2067,7 @@
 
                     insertVideo
                       .play()
-                      .catch(()=>{
-
-                        if(kind === "short"){
-
-                          insertVideo.muted = true;
-
-
-                          insertVideo
-                            .play()
-                            .catch(playbackFailed);
-
-                        }else{
-                          playbackFailed();
-                        }
-
-                      });
+                      .catch(playbackFailed);
 
                   },
                   140
@@ -2124,27 +2099,7 @@
         insertVideo
           .play()
           .then(confirmPlayback)
-          .catch(()=>{
-
-            if(kind !== "short"){
-              playbackFailed();
-              return;
-            }
-
-
-            // Delayed unmuted playback can be rejected by iPad Safari even
-            // though the local rotation file was selected successfully.
-            // Keep the complete short visible as a silent fallback instead
-            // of immediately dismissing it.
-            insertVideo.muted = true;
-
-
-            insertVideo
-              .play()
-              .then(confirmPlayback)
-              .catch(playbackFailed);
-
-          });
+          .catch(playbackFailed);
 
       };
 
@@ -2744,15 +2699,15 @@
             rotationUrl;
 
 
-          // Request unmuted playback directly inside the file-picker change
-          // gesture. This primes iPad Safari to allow the shorts' own audio
-          // when they are played later by the rotation timer.
+          // Prime the local rotation file muted. This keeps the same
+          // playback mode used later for both commercials and shorts and
+          // avoids iPad Safari audio-policy stalls on timed inserts.
           insertVideo.muted =
-            false;
+            true;
 
 
           insertVideo.volume =
-            0.01;
+            0;
 
 
           insertVideo.load();
