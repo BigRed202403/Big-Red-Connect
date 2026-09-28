@@ -838,8 +838,6 @@
 
     let backgroundAudioReady = false;
 
-    let backgroundPausedForShort = false;
-
 
     function frameDoc(){
 
@@ -973,8 +971,7 @@
     function playBackgroundAudio(){
 
       if(
-        !backgroundAudioReady ||
-        backgroundPausedForShort
+        !backgroundAudioReady
       ){
         return;
       }
@@ -1078,26 +1075,6 @@
           },
           {once:true}
         );
-
-    }
-
-
-    function pauseBackgroundForShort(){
-
-      backgroundPausedForShort =
-        true;
-
-      backgroundAudio.pause();
-
-    }
-
-
-    function resumeBackgroundAfterShort(){
-
-      backgroundPausedForShort =
-        false;
-
-      playBackgroundAudio();
 
     }
 
@@ -1806,9 +1783,6 @@
       mediaFinishTimer =
         null;
 
-      const finishedKind =
-        activeClip?.kind;
-
       insertVideo.pause();
 
 
@@ -1840,15 +1814,6 @@
         .remove("media-active");
 
 
-      if(
-        finishedKind === "short"
-      ){
-
-        resumeBackgroundAfterShort();
-
-      }
-
-
       resumeProgramIfHome();
 
 
@@ -1876,10 +1841,6 @@
         nextClip(kind);
 
 
-      const mainVideo =
-        presentationVideo();
-
-
       activeClip = {
         ...clip,
         kind
@@ -1891,8 +1852,6 @@
       ){
 
         pauseProgram();
-
-        pauseBackgroundForShort();
 
       }
 
@@ -2421,8 +2380,7 @@
             ()=>{
 
               if(
-                !backgroundAudioReady ||
-                backgroundPausedForShort
+                !backgroundAudioReady
               ){
                 return;
               }
@@ -3067,8 +3025,7 @@
 
         if(
           backgroundAudioReady &&
-          backgroundAudio.paused &&
-          !backgroundPausedForShort
+          backgroundAudio.paused
         ){
 
           playBackgroundAudio();
