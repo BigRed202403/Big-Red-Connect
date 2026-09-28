@@ -802,6 +802,8 @@
 
     let scheduleTimer = null;
 
+    let mediaFinishTimer = null;
+
     let statusHideTimer = null;
 
     let pausedByBeta = false;
@@ -1790,6 +1792,14 @@
 
     function finishMedia(){
 
+      clearTimeout(
+        mediaFinishTimer
+      );
+
+
+      mediaFinishTimer =
+        null;
+
       const finishedKind =
         activeClip?.kind;
 
@@ -1928,20 +1938,102 @@
           false;
 
 
+        const confirmPlayback = ()=>{
+
+          if(
+            !activeClip ||
+            activeClip.start !==
+              clip.start ||
+            activeClip.kind !==
+              kind
+          ){
+            return;
+          }
+
+
+          activeClip.startedAt =
+            Date.now();
+
+
+          activeClip.minimumPlayMs =
+            Math.max(
+              1000,
+              (
+                clip.end -
+                clip.start
+              ) * 1000 -
+              500
+            );
+
+
+          clearTimeout(
+            mediaFinishTimer
+          );
+
+
+          mediaFinishTimer =
+            setTimeout(
+              ()=>{
+
+                if(
+                  activeClip &&
+                  activeClip.start ===
+                    clip.start &&
+                  activeClip.kind ===
+                    kind
+                ){
+                  finishMedia();
+                }
+
+              },
+              (
+                clip.end -
+                clip.start
+              ) * 1000 +
+              350
+            );
+
+        };
+
+
+        const playbackFailed = ()=>{
+
+          rotationState.textContent =
+            "ROTATION READY — TAP TO ENABLE";
+
+
+          rotationState
+            .classList
+            .add("warning");
+
+
+          finishMedia();
+
+        };
+
+
         insertVideo
           .play()
+          .then(confirmPlayback)
           .catch(()=>{
 
-            rotationState.textContent =
-              "ROTATION READY — TAP TO ENABLE";
+            if(kind !== "short"){
+              playbackFailed();
+              return;
+            }
 
 
-            rotationState
-              .classList
-              .add("warning");
+            // Delayed unmuted playback can be rejected by iPad Safari even
+            // though the local rotation file was selected successfully.
+            // Keep the complete short visible as a silent fallback instead
+            // of immediately dismissing it.
+            insertVideo.muted = true;
 
 
-            finishMedia();
+            insertVideo
+              .play()
+              .then(confirmPlayback)
+              .catch(playbackFailed);
 
           });
 
@@ -2544,7 +2636,22 @@
             rotationUrl;
 
 
+          // Request unmuted playback directly inside the file-picker change
+          // gesture. This primes iPad Safari to allow the shorts' own audio
+          // when they are played later by the rotation timer.
+          insertVideo.muted =
+            false;
+
+
+          insertVideo.volume =
+            0.01;
+
+
           insertVideo.load();
+
+
+          const rotationAudioUnlock =
+            insertVideo.play();
 
 
           revealStatus(
@@ -2660,19 +2767,7 @@
                     };
 
 
-                  // Validation must remain silent. Briefly playing a second
-                  // unmuted video can take audio focus away from the main
-                  // program in iPad Safari even after the insert is paused.
-                  insertVideo.muted =
-                    true;
-
-
-                  insertVideo.volume =
-                    0;
-
-
-                  insertVideo
-                    .play()
+                  rotationAudioUnlock
                     .then(
                       ()=>{
 
@@ -2683,13 +2778,40 @@
                           0;
 
 
+                        insertVideo.muted =
+                          true;
+
+
+                        insertVideo.volume =
+                          0;
+
+
                         restoreMainAudio();
+
+
+                        window.setTimeout(
+                          playBackgroundAudio,
+                          120
+                        );
 
                       }
                     )
-                    .catch(
-                      restoreMainAudio
-                    );
+                    .catch(()=>{
+
+                      insertVideo.muted =
+                        true;
+
+
+                      insertVideo.volume =
+                        0;
+
+
+                      restoreMainAudio();
+
+
+                      playBackgroundAudio();
+
+                    });
 
                 }
 
@@ -2710,7 +2832,10 @@
             activeClip &&
             !clipSeeking &&
             insertVideo.currentTime >=
-              activeClip.end
+              activeClip.end &&
+            Date.now() -
+              (activeClip.startedAt || Date.now()) >=
+              (activeClip.minimumPlayMs || 0)
           ){
 
             finishMedia();
@@ -2724,7 +2849,54 @@
     insertVideo
       .addEventListener(
         "ended",
-        finishMedia
+        ()=>{
+
+          if(!activeClip){
+            return;
+          }
+
+
+          const elapsed =
+            Date.now() -
+            (activeClip.startedAt || Date.now());
+
+
+          if(
+            elapsed >=
+              (activeClip.minimumPlayMs || 0)
+          ){
+
+            finishMedia();
+
+            return;
+
+          }
+
+
+          const resumeAt =
+            Math.min(
+              activeClip.end - 0.25,
+              activeClip.start +
+                elapsed / 1000
+            );
+
+
+          if(
+            Number.isFinite(resumeAt) &&
+            resumeAt > activeClip.start
+          ){
+
+            insertVideo.currentTime =
+              resumeAt;
+
+
+            insertVideo
+              .play()
+              .catch(()=>{});
+
+          }
+
+        }
       );
 
 
