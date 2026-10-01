@@ -217,6 +217,14 @@ button {
   font-weight: 800;
 }
 
+/* Slightly lower Back to Big Red placement on the rider interaction overlays. */
+#musicPanel .back-button,
+#reviewPanel .back-button,
+#gamesPanel .back-button,
+#gamePanel .back-button {
+  margin-top: 10px;
+}
+
 .eyebrow {
   color: #ff4a50;
 
@@ -685,7 +693,6 @@ button {
   background: var(--red);
 }
 
-
 .discover-badge-button {
   appearance: none;
   -webkit-appearance: none;
@@ -696,7 +703,6 @@ button {
 .discover-badge-button:active {
   transform: scale(0.98);
 }
-
 
 .game-statusbar {
   display: flex;
@@ -1269,7 +1275,6 @@ button {
   .review-qr-column { min-height: 290px; }
 }
 
-
 /* --------------------------------------------------
    WORD SCRAMBLE — V10
 -------------------------------------------------- */
@@ -1304,7 +1309,6 @@ button {
 .loading-actions button{min-height:58px;padding:12px 16px;border:1px solid rgba(255,255,255,.16);border-radius:15px;background:#181818;color:#fff;font-size:17px;font-weight:850}
 .loading-actions button:active{transform:scale(.98)}
 @media(max-width:760px){.local-program-status{top:calc(60px + var(--safe-top))}.loading-card{padding:24px 18px}.loading-actions{grid-template-columns:1fr;gap:9px}.loading-actions button{min-height:52px;font-size:16px}}
-
 
 /* --------------------------------------------------
    WORD SCRAMBLE ANSWER REVEAL — V14
@@ -1348,7 +1352,6 @@ button {
     font-size: clamp(54px, 8.5vw, 88px);
   }
 }
-
 
 /* --------------------------------------------------
    DISCOVER DRIVER + WEATHER + REVIEW — V21 STAGED
@@ -1412,7 +1415,6 @@ button {
   object-fit: cover;
   object-position: center 28%;
 }
-
 
 .driver-kicker,
 .driver-story-label {
@@ -1644,7 +1646,6 @@ button {
   .weather-temp { font-size: 58px; }
   .weather-hour-item { min-height: 84px; }
 }
-
 
 /* --------------------------------------------------
    DISCOVER OVERLAY FIT — V18
@@ -2073,7 +2074,6 @@ button {
   }
 }
 
-
 /* --------------------------------------------------
    DISCOVER TABLET FIT + GAME REPAIR — V19
    Final overrides for the older rear-seat iPad.
@@ -2367,7 +2367,6 @@ button {
   }
 }
 
-
 /* --------------------------------------------------
    DISCOVER TABLET HEIGHT UTILIZATION — V20
    Driver + active games deliberately use the full
@@ -2611,7 +2610,6 @@ button {
     min-height: 120px;
   }
 }
-
 
 /* --------------------------------------------------
    DISCOVER MUSIC + RIDER HUB — V21 STAGED
