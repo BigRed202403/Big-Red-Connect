@@ -1196,6 +1196,7 @@
   }
 
   function resetGameSession() {
+    clearTriviaTimer();
     clearScrambleTimer();
 
     session.trivia = null;
@@ -1207,6 +1208,7 @@
   }
 
   const anyPanelOpen = () =>
+    !musicPanel.hidden ||
     !driverPanel.hidden ||
     !weatherPanel.hidden ||
     !gamesPanel.hidden ||
@@ -1227,6 +1229,7 @@
 
     clearInactivityTimer();
     resetGameSession();
+    ensureVideoPlayback();
   }
 
   // Overlays never pause the weekly program.
