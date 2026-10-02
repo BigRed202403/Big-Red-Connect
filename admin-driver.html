@@ -3,6 +3,7 @@ FILE: /admin-driver.html
 Big Red Admin / Driver Console
 
 UPDATED — COMPACT TWO-COLUMN BILINGUAL AUDIO PANEL + EXTENDED TRIP PRICING PARITY:
+- FIX: Specific song/artist requests now launch Big Red Song Request with the exact rider request as Shortcut Input; clipboard remains a fallback only.
 - Adds persistent English / Spanish selector to the Driver Audio Panel.
 - Keeps audio buttons in two columns even in the narrow dashboard window to reduce scrolling.
 - Keeps the same soundboard buttons; selected language controls playback.
@@ -23,6 +24,7 @@ UPDATED — COMPACT TWO-COLUMN BILINGUAL AUDIO PANEL + EXTENDED TRIP PRICING PAR
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<base href="/">
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Big Red Admin / Driver Console</title>
@@ -238,6 +240,17 @@ body.mode-admin .driver-only{display:none;}
 <p class="tagline">Veteran Owned • Affordable • Local • Trusted</p>
 
 <div style="text-align:center;"><div id="status-pill" class="offline">Status: OFFLINE • loading…</div></div>
+
+<section id="musicRequestCard" style="max-width:680px;margin:12px auto;padding:14px;" aria-label="Rider music request">
+  <h2>🎵 Rider Music Request</h2>
+  <p id="musicRequestState" role="status">Checking for rider requests…</p>
+  <div id="musicRequestActions" style="display:none;gap:8px;flex-wrap:wrap;">
+    <button class="btn btn-primary" type="button" id="musicPlayBtn">Open playlist Shortcut</button>
+    <button class="btn btn-secondary" type="button" id="musicMarkBtn">Mark playing</button>
+    <button class="btn btn-secondary" type="button" id="musicDismissBtn">Dismiss</button>
+    <button class="btn btn-secondary" type="button" id="musicClearBtn">Clear</button>
+  </div>
+</section>
 
 <div class="layout">
   <div>
@@ -527,14 +540,14 @@ body.mode-admin .driver-only{display:none;}
 </div>
 
 <script>
-const STATUS_WORKER="https://bigred-status-updater.bigredtransportation.workers.dev";
-const LOCATION_WORKER="https://update-location.bigredtransportation.workers.dev";
-const POST_WORKER="https://post-to-live-beta.bigredtransportation.workers.dev";
-const PUSH_WORKER="https://bigred-push.bigredtransportation.workers.dev";
-const TICKER_WORKER="https://homepage-ticker.bigredtransportation.workers.dev";
-const BOOKINGS_API="https://bigred-bookings.bigredtransportation.workers.dev";
+const STATUS_WORKER="/secure-admin/status";
+const LOCATION_WORKER="/secure-admin/location";
+const POST_WORKER="/secure-admin/post";
+const PUSH_WORKER="/secure-admin/push";
+const TICKER_WORKER="/secure-admin/ticker";
+const BOOKINGS_API="/secure-admin/bookings";
 
-const AUTH_SECRET="BigRedPrivateKey2025";
+
 const TZ="America/Chicago";
 const HOME_URL="https://bigredconnectokc.com/";
 const RIDER_LOGIN_BASE=`${HOME_URL}rider.html`;
@@ -1014,7 +1027,7 @@ async function postToLive(){
   try{
     const r=await fetch(POST_WORKER,{
       method:"POST",
-      headers:{"Content-Type":"application/json","X-Admin-Secret":AUTH_SECRET},
+      headers:{"Content-Type":"application/json"},
       body:JSON.stringify({caption:c,image:LIVE_IMAGES[imgIndex]||"",status:$("statusSelect").value})
     });
     showToast(r.ok?"Live map updated":"Update failed");
@@ -1064,7 +1077,7 @@ async function saveTicker(){
     log("Ticker PUT … "+JSON.stringify(payload));
     const r=await fetch(TICKER_WORKER,{
       method:"PUT",
-      headers:{"Content-Type":"application/json","X-Admin-Secret":AUTH_SECRET},
+      headers:{"Content-Type":"application/json"},
       body:JSON.stringify(payload)
     });
     const txt=await r.text();
@@ -1080,7 +1093,7 @@ async function clearTicker(){
     log("Ticker clear PUT … "+JSON.stringify(payload));
     const r=await fetch(TICKER_WORKER,{
       method:"PUT",
-      headers:{"Content-Type":"application/json","X-Admin-Secret":AUTH_SECRET},
+      headers:{"Content-Type":"application/json"},
       body:JSON.stringify(payload)
     });
     const txt=await r.text();
@@ -1121,7 +1134,7 @@ async function sendPush(payload){
   try{
     const r=await fetch(PUSH_WORKER,{
       method:"POST",
-      headers:{"Content-Type":"application/json","X-Admin-Secret":AUTH_SECRET},
+      headers:{"Content-Type":"application/json"},
       body:JSON.stringify(payload)
     });
     const txt=await r.text();
@@ -1186,7 +1199,7 @@ async function updateStatus(){
     if(vehicleCode)payload.vehicleCode=vehicleCode;
     const res=await fetch(STATUS_WORKER+"/status",{
       method:"PUT",
-      headers:{"Content-Type":"application/json","X-Auth-Token":AUTH_SECRET},
+      headers:{"Content-Type":"application/json"},
       body:JSON.stringify(payload)
     });
     const bodyText=await res.text();
@@ -1263,7 +1276,7 @@ function startGpsPings(){
       try{
         const response=await fetch(LOCATION_WORKER,{
           method:"PUT",
-          headers:{"Content-Type":"application/json","X-Auth-Token":AUTH_SECRET},
+          headers:{"Content-Type":"application/json"},
           body:JSON.stringify({lat,lng,accuracy:pos.coords.accuracy,updated:ts,source:"admin-gps"})
         });
         const body=await response.text();
@@ -1866,7 +1879,7 @@ async function createManualRide(){
     log("Manual ride POST /api/admin/bookings/manual … "+JSON.stringify(payload));
     const r=await fetch(`${BOOKINGS_API}/api/admin/bookings/manual`,{
       method:"POST",
-      headers:{"Content-Type":"application/json","X-Admin-Secret":AUTH_SECRET},
+      headers:{"Content-Type":"application/json"},
       body:JSON.stringify(payload)
     });
     const txt=await r.text();
@@ -2050,7 +2063,7 @@ async function updateBookingStatus(bookingId,newStatus){
     log(`Status change → ${bookingId}: ${prev} -> ${newStatus}`);
     const r=await fetch(`${BOOKINGS_API}/api/driver/bookings/${encodeURIComponent(bookingId)}`,{
       method:"PUT",
-      headers:{"Content-Type":"application/json","X-Admin-Secret":AUTH_SECRET},
+      headers:{"Content-Type":"application/json"},
       body:JSON.stringify({status:newStatus})
     });
     const txt=await r.text();
@@ -2137,7 +2150,7 @@ async function saveEditModal(){
     log(`Admin edit PUT ${editingBookingId} … ${JSON.stringify(payload)}`);
     const r=await fetch(`${BOOKINGS_API}/api/driver/bookings/${encodeURIComponent(editingBookingId)}`,{
       method:"PUT",
-      headers:{"Content-Type":"application/json","X-Admin-Secret":AUTH_SECRET},
+      headers:{"Content-Type":"application/json"},
       body:JSON.stringify(payload)
     });
     const txt=await r.text();
@@ -2308,168 +2321,96 @@ window.addEventListener("load",()=>{
   loadTicker();
   initializeDispatch();
 });
-</script>
 
-
-<script id="secureMusicRequestAlerts">
+// Same-origin, Access-protected music requests in the staged driver console.
 (() => {
-  "use strict";
+  const $music = id => document.getElementById(id);
+  let currentMusic = null;
+  let musicBusy = false;
+  const state = message => { $music('musicRequestState').textContent = message; };
+  const draw = item => {
+    currentMusic = item;
+    const requestText = item
+      ? (item.kind === 'specific'
+          ? (item.detail || 'Specific song or artist')
+          : (item.choice || 'Playlist request'))
+      : '';
 
-  if (!location.pathname.startsWith("/secure-admin/")) return;
+    $music('musicRequestActions').style.display = item ? 'flex' : 'none';
+    $music('musicPlayBtn').style.display = item?.status === 'PENDING' ? '' : 'none';
+    $music('musicMarkBtn').style.display = item?.status === 'PENDING' ? '' : 'none';
+    $music('musicDismissBtn').style.display = item?.status === 'PENDING' ? '' : 'none';
+    $music('musicClearBtn').style.display = item && item.status !== 'PENDING' ? '' : 'none';
 
-  const STORAGE_KEY = "bigRedLastAnnouncedMusicRequestId";
-  const POLL_MS = 10000;
-  let alertsArmed = false;
-  let audioContext = null;
-  let pollBusy = false;
-  let alertButton = null;
-
-  function requestLabel(request) {
-    if (!request) return "";
-    return request.kind === "specific"
-      ? (request.detail || "Specific song or artist")
-      : (request.choice || "Playlist request");
-  }
-
-  function showRequestBanner(request) {
-    let banner = document.getElementById("musicRequestAlertBanner");
-    if (!banner) {
-      banner = document.createElement("button");
-      banner.id = "musicRequestAlertBanner";
-      banner.type = "button";
-      banner.setAttribute("aria-label", "Dismiss music request alert");
-      banner.innerHTML = '<strong>🎵 Music request received</strong><span></span>';
-      banner.addEventListener("click", () => banner.classList.remove("show"));
-      document.body.appendChild(banner);
-    }
-    banner.querySelector("span").textContent = requestLabel(request);
-    banner.classList.add("show");
-    clearTimeout(showRequestBanner.hideTimer);
-    showRequestBanner.hideTimer = setTimeout(() => banner.classList.remove("show"), 8000);
-  }
-
-  function playRequestAlert() {
-    if (!alertsArmed) {
-      if (alertButton) alertButton.textContent = "🔔 Tap to enable request sound";
-      return;
+    if (item?.status === 'PENDING') {
+      $music('musicPlayBtn').textContent =
+        item.kind === 'specific' ? 'Open song Shortcut' : 'Open playlist Shortcut';
     }
 
-    try {
-      if (audioContext && audioContext.state === "suspended") audioContext.resume();
-      if (audioContext) {
-        const oscillator = audioContext.createOscillator();
-        const gain = audioContext.createGain();
-        oscillator.type = "sine";
-        oscillator.frequency.setValueAtTime(880, audioContext.currentTime);
-        oscillator.frequency.setValueAtTime(1175, audioContext.currentTime + 0.16);
-        gain.gain.setValueAtTime(0.0001, audioContext.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.18, audioContext.currentTime + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.34);
-        oscillator.connect(gain);
-        gain.connect(audioContext.destination);
-        oscillator.start();
-        oscillator.stop(audioContext.currentTime + 0.36);
-      }
-    } catch (error) {
-      console.info("Music request chime unavailable.", error);
-    }
-
-    try {
-      if ("speechSynthesis" in window) {
-        speechSynthesis.cancel();
-        const message = new SpeechSynthesisUtterance("Music request received.");
-        message.rate = 0.95;
-        message.volume = 1;
-        speechSynthesis.speak(message);
-      }
-    } catch (error) {
-      console.info("Music request announcement unavailable.", error);
-    }
-  }
-
-  async function armRequestAlerts() {
-    try {
-      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-      if (AudioContextClass && !audioContext) audioContext = new AudioContextClass();
-      if (audioContext && audioContext.state === "suspended") await audioContext.resume();
-      alertsArmed = true;
-      if (alertButton) {
-        alertButton.textContent = "🔔 Request sound on";
-        alertButton.classList.add("ready");
-        alertButton.setAttribute("aria-pressed", "true");
-      }
-      if (typeof showToast === "function") showToast("Music request sound enabled");
-    } catch (error) {
-      console.info("Music request sound could not be enabled.", error);
-      if (alertButton) alertButton.textContent = "🔔 Tap to retry request sound";
-    }
-  }
-
-  function installAlertControls() {
-    const card = document.getElementById("musicRequestCard");
-    const state = document.getElementById("musicRequestState");
-    if (!card || !state || document.getElementById("musicRequestAlertEnable")) return false;
-
-    alertButton = document.createElement("button");
-    alertButton.id = "musicRequestAlertEnable";
-    alertButton.type = "button";
-    alertButton.className = "btn btn-secondary music-alert-enable";
-    alertButton.textContent = "🔔 Enable request sound";
-    alertButton.setAttribute("aria-pressed", "false");
-    alertButton.addEventListener("click", armRequestAlerts);
-    state.insertAdjacentElement("beforebegin", alertButton);
-    return true;
-  }
-
-  async function checkForNewMusicRequest() {
-    if (document.hidden || pollBusy) return;
-    pollBusy = true;
-    try {
-      const response = await fetch("/secure-admin/music/request", { cache: "no-store" });
-      const result = await response.json();
-      if (!response.ok || !result.ok) return;
-      const request = result.request;
-      if (!request || request.status !== "PENDING" || !request.id) return;
-
-      const lastAnnounced = sessionStorage.getItem(STORAGE_KEY);
-      if (String(request.id) === lastAnnounced) return;
-
-      sessionStorage.setItem(STORAGE_KEY, String(request.id));
-      showRequestBanner(request);
-      playRequestAlert();
-    } catch (error) {
-      console.info("Music request alert check unavailable.", error);
-    } finally {
-      pollBusy = false;
-    }
-  }
-
-  const style = document.createElement("style");
-  style.textContent = [
-    ".music-alert-enable{margin:0 0 8px;min-height:38px;padding:6px 10px;font-size:.78rem}",
-    ".music-alert-enable.ready{border-color:#0a5;color:#baffd8}",
-    "#musicRequestAlertBanner{position:fixed;z-index:10000;top:max(78px,calc(env(safe-area-inset-top) + 60px));left:50%;transform:translate(-50%,-14px);width:min(520px,calc(100% - 24px));padding:14px 16px;border:2px solid var(--red);border-radius:14px;background:#0b0b0b;color:#fff;box-shadow:0 16px 42px rgba(0,0,0,.7);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;text-align:left}",
-    "#musicRequestAlertBanner.show{opacity:1;pointer-events:auto;transform:translate(-50%,0)}",
-    "#musicRequestAlertBanner strong{display:block;font-size:1.05rem}",
-    "#musicRequestAlertBanner span{display:block;margin-top:4px;color:#ddd;font-size:.9rem}"
-  ].join("");
-  document.head.appendChild(style);
-
-  window.addEventListener("load", () => {
-    if (!installAlertControls()) {
-      const retry = setInterval(() => {
-        if (installAlertControls()) clearInterval(retry);
-      }, 250);
-      setTimeout(() => clearInterval(retry), 10000);
-    }
-    checkForNewMusicRequest();
-    setInterval(checkForNewMusicRequest, POLL_MS);
-    document.addEventListener("visibilitychange", () => {
-      if (!document.hidden) checkForNewMusicRequest();
+    state(item ? `${requestText} • ${item.status.toLowerCase()}` : 'No rider music request waiting.');
+  };
+  async function musicApi(path, body) {
+    const response = await fetch('/secure-admin/music/' + path, {
+      method: body ? 'POST' : 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      ...(body ? { body: JSON.stringify(body) } : {}),
+      cache: 'no-store'
     });
+    const result = await response.json();
+    if (!response.ok || !result.ok) throw new Error(result.error || `HTTP ${response.status}`);
+    return result;
+  }
+  async function pollMusic() {
+    if (document.hidden || musicBusy) return;
+    musicBusy = true;
+    try { draw((await musicApi('request')).request); }
+    catch (error) { state(`Music connection: ${error.message}`); }
+    finally { musicBusy = false; }
+  }
+  async function resolveMusic(status) {
+    if (!currentMusic || musicBusy) return;
+    musicBusy = true;
+    try {
+      draw((await musicApi('resolve', { id: currentMusic.id, status })).request);
+    } catch (error) { state(`Music request: ${error.message}`); }
+    finally { musicBusy = false; }
+  }
+  window.addEventListener('load', () => {
+    $music('musicPlayBtn').addEventListener('click', () => {
+      if (!currentMusic || musicBusy) return;
+
+      const specific = currentMusic.kind === 'specific';
+      const shortcutName = specific ? 'Big Red Song Request' : 'Big Red Music';
+      const shortcutInput = String(
+        specific ? (currentMusic.detail || '') : (currentMusic.choice || '')
+      ).trim();
+
+      if (!shortcutInput) {
+        state('Music request is missing request text.');
+        return;
+      }
+
+      // Direct Shortcut Input is the primary handoff.
+      // Clipboard copy is only a safety fallback for specific song/artist requests.
+      if (specific && navigator.clipboard?.writeText) {
+        navigator.clipboard.writeText(shortcutInput).catch(() => {});
+      }
+
+      window.location.href =
+        `shortcuts://run-shortcut?name=${encodeURIComponent(shortcutName)}` +
+        `&input=text&text=${encodeURIComponent(shortcutInput)}`;
+    });
+    $music('musicMarkBtn').addEventListener('click', () => resolveMusic('PLAYING'));
+    $music('musicDismissBtn').addEventListener('click', () => resolveMusic('DISMISSED'));
+    $music('musicClearBtn').addEventListener('click', () => resolveMusic('CLEARED'));
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) pollMusic(); });
+    setInterval(pollMusic, 10000);
+    pollMusic();
   });
 })();
 </script>
 
 </body>
 </html>
+
+
