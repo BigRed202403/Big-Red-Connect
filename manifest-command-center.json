@@ -1,0 +1,21 @@
+{
+  "name": "Big Red Command Center",
+  "short_name": "Big Red Command",
+  "start_url": "/secure-admin/command-center",
+  "scope": "/secure-admin/",
+  "display": "standalone",
+  "background_color": "#050505",
+  "theme_color": "#050505",
+  "icons": [
+    {
+      "src": "/Official Logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/Official Logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
