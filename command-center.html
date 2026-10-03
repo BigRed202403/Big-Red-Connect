@@ -18,7 +18,7 @@
 <style>
 :root{color-scheme:dark;--red:#d31212;--red2:#8d0909;--bg:#050505;--panel:#101010;--panel2:#171717;--line:#2a2a2a;--muted:#a4a4a4;--good:#32d583;--warn:#f7b84b;--bad:#ff5d5d;--touch:48px}
 *{box-sizing:border-box}html,body{min-height:100%;margin:0;background:var(--bg);color:#fff;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif;-webkit-text-size-adjust:100%}body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}button,input,select,textarea{font:inherit}button{touch-action:manipulation}.shell{min-height:100vh;display:flex;flex-direction:column}.topbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:12px;padding:10px 14px;background:rgba(5,5,5,.94);backdrop-filter:blur(18px);border-bottom:1px solid #261010}.brand{display:flex;align-items:center;gap:10px;min-width:0}.brand img{width:44px;height:44px;object-fit:contain;border-radius:9px}.brand-copy{min-width:0}.brand-title{font-weight:850;letter-spacing:.02em;white-space:nowrap}.brand-sub{font-size:.72rem;color:var(--muted);white-space:nowrap}.top-actions{margin-left:auto;display:flex;gap:8px;align-items:center}.chip,.btn{min-height:var(--touch);border-radius:12px;border:1px solid #3a3a3a;background:#151515;color:#fff;padding:9px 12px;font-weight:750}.chip{display:inline-flex;align-items:center;gap:7px;font-size:.78rem;white-space:nowrap}.btn{cursor:pointer;text-decoration:none}.btn:active{transform:scale(.985)}.btn.red{background:linear-gradient(180deg,#d51515,#9f0808);border-color:#ef3434}.btn.ghost{background:#090909}.btn.good{border-color:#16784d;color:#bff7da}.btn.warn{border-color:#805f1c;color:#ffe3a1}.btn.small{min-height:42px;padding:7px 10px;font-size:.78rem}.status-dot{width:8px;height:8px;border-radius:50%;background:#777;box-shadow:0 0 0 3px rgba(255,255,255,.05)}.status-dot.good{background:var(--good)}.status-dot.warn{background:var(--warn)}.status-dot.bad{background:var(--bad)}
-.workspace{display:grid;grid-template-columns:minmax(340px,.72fr) minmax(460px,1.28fr);gap:12px;padding:12px;max-width:1500px;width:100%;margin:0 auto}.control-column,.glance-column{display:flex;flex-direction:column;gap:12px;min-width:0}.admin-only{}body.mode-driver .admin-only{display:none!important}.panel{background:linear-gradient(180deg,#121212,#0c0c0c);border:1px solid var(--line);border-radius:18px;padding:14px;box-shadow:0 12px 30px rgba(0,0,0,.2)}.panel h2{margin:0;font-size:.95rem;letter-spacing:.02em}.panel-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}.panel-head .right{margin-left:auto}.eyebrow{font-size:.68rem;color:#ff7d7d;text-transform:uppercase;letter-spacing:.14em;font-weight:850}.muted{color:var(--muted)}.fine{font-size:.73rem}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.stack{display:flex;flex-direction:column;gap:8px}.grow{flex:1 1 auto;min-width:0}.field{width:100%;min-height:46px;border:1px solid #383838;border-radius:11px;background:#090909;color:#fff;padding:10px 11px}.field:focus{outline:2px solid rgba(211,18,18,.45);border-color:var(--red)}textarea.field{min-height:100px;resize:vertical}.status-control{display:grid;grid-template-columns:1fr auto auto;gap:8px}.status-control select{min-width:0}.stat-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:10px}.stat{background:#090909;border:1px solid #262626;border-radius:12px;padding:9px}.stat b{display:block;font-size:.86rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.stat span{font-size:.67rem;color:var(--muted)}
+.workspace{display:grid;grid-template-columns:minmax(340px,.72fr) minmax(460px,1.28fr);gap:12px;padding:12px;max-width:1500px;width:100%;margin:0 auto}.control-column,.glance-column{display:flex;flex-direction:column;gap:12px;min-width:0}.admin-only{}.driver-only{}body.mode-driver .admin-only{display:none!important}body.mode-admin .driver-only{display:none!important}.dispatch-panel.dispatch-collapsed .dispatch-list{display:none}.dispatch-panel.dispatch-collapsed{padding-bottom:14px}.panel{background:linear-gradient(180deg,#121212,#0c0c0c);border:1px solid var(--line);border-radius:18px;padding:14px;box-shadow:0 12px 30px rgba(0,0,0,.2)}.panel h2{margin:0;font-size:.95rem;letter-spacing:.02em}.panel-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}.panel-head .right{margin-left:auto}.eyebrow{font-size:.68rem;color:#ff7d7d;text-transform:uppercase;letter-spacing:.14em;font-weight:850}.muted{color:var(--muted)}.fine{font-size:.73rem}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.stack{display:flex;flex-direction:column;gap:8px}.grow{flex:1 1 auto;min-width:0}.field{width:100%;min-height:46px;border:1px solid #383838;border-radius:11px;background:#090909;color:#fff;padding:10px 11px}.field:focus{outline:2px solid rgba(211,18,18,.45);border-color:var(--red)}textarea.field{min-height:100px;resize:vertical}.status-control{display:grid;grid-template-columns:1fr auto auto;gap:8px}.status-control select{min-width:0}.stat-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:10px}.stat{background:#090909;border:1px solid #262626;border-radius:12px;padding:9px}.stat b{display:block;font-size:.86rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.stat span{font-size:.67rem;color:var(--muted)}
 .ride-pair{display:grid;grid-template-columns:1fr 1fr;gap:9px}.ride-summary{background:#090909;border:1px solid #292929;border-radius:14px;padding:11px;min-height:118px}.ride-summary.current{border-color:#6e1515}.ride-summary .label{font-size:.65rem;letter-spacing:.12em;color:#ff8585;text-transform:uppercase;font-weight:850}.ride-summary .name{font-size:.95rem;font-weight:850;margin:6px 0}.route{font-size:.76rem;color:#d8d8d8;line-height:1.35}.route div{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .music-card{border-color:#4c1c1c;background:radial-gradient(circle at 100% 0,rgba(211,18,18,.11),transparent 44%),linear-gradient(180deg,#141111,#0c0c0c)}.music-request{display:flex;gap:12px;align-items:flex-start}.music-icon{width:48px;height:48px;border-radius:13px;display:grid;place-items:center;background:#260909;border:1px solid #6b1717;font-size:1.35rem;flex:0 0 auto}.request-title{font-weight:850}.request-detail{font-size:.82rem;margin-top:3px;color:#ddd;white-space:pre-wrap}.alert-toggle[aria-pressed="true"]{border-color:#158657;color:#c6ffe1}.alert-toggle[aria-pressed="false"]{border-color:#653434;color:#ffb4b4}.request-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:11px}
 .quick-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}.quick{min-height:64px;display:flex;flex-direction:column;gap:3px;align-items:flex-start;justify-content:center;text-align:left;padding:9px}.quick strong{font-size:.76rem}.quick span{font-size:.65rem;color:var(--muted)}
@@ -66,7 +66,7 @@
         </div>
       </section>
 
-      <section class="panel">
+      <section class="panel admin-only">
         <div class="panel-head"><div><div class="eyebrow">Ride glance</div><h2>Current & Next Ride</h2></div><button class="btn small ghost right" id="dispatchRefreshBtn" type="button">Refresh</button></div>
         <div class="ride-pair"><div class="ride-summary current" id="currentRide"></div><div class="ride-summary" id="nextRide"></div></div>
       </section>
@@ -88,8 +88,12 @@
         </div>
       </section>
 
-      <section class="panel">
-        <div class="dispatch-head"><div><div class="eyebrow">Live queue</div><h2>Dispatch Board</h2></div><div class="dispatch-tabs"><button class="btn tab active" data-scope="active">Active</button><button class="btn tab admin-only" data-scope="all">All</button></div></div>
+      <section class="panel dispatch-panel" id="dispatchPanel">
+        <div class="dispatch-head">
+          <div><div class="eyebrow">Live queue</div><h2>Dispatch Board</h2></div>
+          <button class="btn small ghost right driver-only" id="dispatchCollapseBtn" type="button" aria-expanded="false">Show Rides ▸</button>
+          <div class="dispatch-tabs admin-only"><button class="btn tab active" data-scope="active">Active</button><button class="btn tab" data-scope="all">All</button></div>
+        </div>
         <div class="dispatch-list" id="dispatchList"><div class="empty">Loading dispatch…</div></div>
       </section>
     </div>
@@ -102,7 +106,7 @@
         <p class="fine muted">Select the same weekly movie from the shared iCloud Files folder. It plays silently and loops on this iPad; the rear iPad remains independent.</p>
       </section>
 
-      <section class="panel">
+      <section class="panel admin-only">
         <div class="panel-head"><div><div class="eyebrow">Ride context</div><h2>Glance Notes</h2></div></div>
         <div class="stack" id="contextNotes"><div class="context-overlay"><b>No active trip context yet</b><p>Ride-aware notes appear after dispatch loads.</p></div></div>
       </section>
@@ -131,6 +135,29 @@ const TZ='America/Chicago',HQ={lat:35.31810,lng:-97.49453},FRESH_MS=15*60*1000;
 const $=id=>document.getElementById(id);
 const state={status:'offline',tracking:localStorage.getItem('trackingEnabled')==='true',bookings:[],scope:'active',music:null,audioLang:localStorage.getItem('bigRedAudioLanguage')||'en',health:{},gpsTimer:null,estimate:null};
 const MODE_KEY='bigRedCommandCenterMode';
+const DRIVER_DISPATCH_COLLAPSE_KEY='bigRedDriverDispatchCollapsed';
+function driverDispatchCollapsed(){
+  const saved=localStorage.getItem(DRIVER_DISPATCH_COLLAPSE_KEY);
+  return saved===null?true:saved==='true';
+}
+function applyDispatchVisibility(){
+  const panel=$('dispatchPanel');
+  const list=$('dispatchList');
+  const btn=$('dispatchCollapseBtn');
+  if(!panel||!list)return;
+  const collapsed=currentMode()==='driver'&&driverDispatchCollapsed();
+  panel.classList.toggle('dispatch-collapsed',collapsed);
+  list.hidden=collapsed;
+  if(btn){
+    btn.setAttribute('aria-expanded',String(!collapsed));
+    btn.textContent=collapsed?'Show Rides ▸':'Hide Rides ▾';
+  }
+}
+function toggleDriverDispatch(){
+  if(currentMode()!=='driver')return;
+  localStorage.setItem(DRIVER_DISPATCH_COLLAPSE_KEY,String(!driverDispatchCollapsed()));
+  applyDispatchVisibility();
+}
 function currentMode(){return document.body.classList.contains('mode-admin')?'admin':'driver'}
 function applyMode(mode,{refresh=false}={}){
   const next=mode==='admin'?'admin':'driver';
@@ -151,6 +178,7 @@ function applyMode(mode,{refresh=false}={}){
     document.querySelectorAll('[data-scope]').forEach(b=>b.classList.toggle('active',b.dataset.scope==='active'));
     renderDispatch();
   }
+  applyDispatchVisibility();
   if(refresh) loadBookings();
 }
 function toggleMode(){applyMode(currentMode()==='driver'?'admin':'driver',{refresh:true})}
@@ -236,7 +264,7 @@ function loadLocalDiscoverPreview(file){
 }
 async function checkHealth(){await Promise.allSettled([loadStatus(),loadBookings(),pollMusic(),loadTicker()])}
 function wire(){
-  $('notificationBtn').onclick=enableNotifications;$('modeToggleBtn').onclick=toggleMode;$('refreshBtn').onclick=()=>location.reload();$('saveStatusBtn').onclick=saveStatus;$('trackingBtn').onclick=toggleTracking;$('dispatchRefreshBtn').onclick=loadBookings;if($('healthRefreshBtn'))$('healthRefreshBtn').onclick=checkHealth;
+  $('notificationBtn').onclick=enableNotifications;$('modeToggleBtn').onclick=toggleMode;$('refreshBtn').onclick=()=>location.reload();$('saveStatusBtn').onclick=saveStatus;$('trackingBtn').onclick=toggleTracking;$('dispatchRefreshBtn').onclick=loadBookings;if($('dispatchCollapseBtn'))$('dispatchCollapseBtn').onclick=toggleDriverDispatch;if($('healthRefreshBtn'))$('healthRefreshBtn').onclick=checkHealth;
   $('musicAlertToggle').onclick=setAlertPreference;$('musicOpenBtn').onclick=openMusicShortcut;$('musicPlayingBtn').onclick=()=>resolveMusic('PLAYING');$('musicDismissBtn').onclick=()=>resolveMusic('DISMISSED');$('musicClearBtn').onclick=()=>resolveMusic('CLEARED');
   document.addEventListener('pointerdown',()=>{if(alertPreference()&&!alertArmed)armMusicAudio()},{passive:true});
   document.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>openDrawer(b.dataset.open));document.querySelectorAll('[data-close]').forEach(b=>b.onclick=closeDrawers);document.querySelectorAll('.drawer').forEach(d=>d.onclick=e=>{if(e.target===d)closeDrawers()});
@@ -248,7 +276,7 @@ function wire(){
   $('discoverPreview').onload=()=>{if(localDiscoverObjectUrl)return;markHealth('discover',true,'Page loaded here');$('discoverState').innerHTML='<i class="status-dot good"></i> Preview ready';muteDiscover()};$('discoverPreview').onerror=()=>{markHealth('discover',false,'Preview failed');$('discoverState').innerHTML='<i class="status-dot bad"></i> Unavailable'};
   document.addEventListener('visibilitychange',()=>{if(!document.hidden){loadBookings();pollMusic();muteDiscover();if(localDiscoverObjectUrl)$('localDiscoverPreview').play().catch(()=>{})}});window.addEventListener('pagehide',()=>{if(state.gpsTimer)clearInterval(state.gpsTimer)});
 }
-window.addEventListener('load',()=>{applyMode(localStorage.getItem(MODE_KEY)||'driver');renderHealth();renderStatus();renderAlertToggle();renderAudio();renderRideGlance();wire();initAutocomplete();loadStatus();loadBookings();pollMusic();setInterval(pollMusic,10000);setInterval(()=>{if(!document.hidden&&state.scope==='active')loadBookings()},60000);setInterval(muteDiscover,3000)});
+window.addEventListener('load',()=>{applyMode(localStorage.getItem(MODE_KEY)||'driver');renderHealth();renderStatus();renderAlertToggle();renderAudio();renderRideGlance();wire();applyDispatchVisibility();initAutocomplete();loadStatus();loadBookings();pollMusic();setInterval(pollMusic,10000);setInterval(()=>{if(!document.hidden&&state.scope==='active')loadBookings()},60000);setInterval(muteDiscover,3000)});
 </script>
 </body>
 </html>
