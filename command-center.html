@@ -24,8 +24,29 @@
 .quick-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}.quick{min-height:64px;display:flex;flex-direction:column;gap:3px;align-items:flex-start;justify-content:center;text-align:left;padding:9px}.quick strong{font-size:.76rem}.quick span{font-size:.65rem;color:var(--muted)}
 .dispatch-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}.dispatch-tabs{display:flex;gap:6px;margin-left:auto}.tab{min-height:38px;border-radius:10px;padding:6px 9px;font-size:.73rem}.tab.active{background:#321010;border-color:#9b2020}.dispatch-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;max-height:410px;overflow:auto;padding-right:2px}.ride-card{background:#090909;border:1px solid #292929;border-radius:13px;padding:10px}.ride-card.requested{border-color:#7b2424}.ride-top{display:flex;gap:6px;justify-content:space-between}.ride-name{font-size:.83rem;font-weight:850}.badge{font-size:.61rem;border:1px solid #4b4b4b;border-radius:999px;padding:3px 7px;white-space:nowrap}.ride-meta{font-size:.7rem;color:#bbb;margin-top:6px;line-height:1.35}.ride-card select{width:100%;min-height:40px;margin-top:8px}.empty{padding:18px;color:#777;text-align:center;border:1px dashed #303030;border-radius:12px;grid-column:1/-1}
 .audio-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.audio-grid .btn{font-size:.72rem;line-height:1.12;min-height:52px;padding:7px}.lang-toggle{display:flex;gap:6px;margin-left:auto}.lang-toggle .active{background:#771010;border-color:#d32a2a}
-.preview-frame{position:relative;aspect-ratio:16/10;background:#000;border:1px solid #333;border-radius:14px;overflow:hidden}.preview-frame iframe,.preview-frame video{width:100%;height:100%;border:0;pointer-events:none;transform:translateZ(0)}.preview-frame video{object-fit:contain;background:#000}.preview-shield{position:absolute;inset:0;background:linear-gradient(180deg,transparent 75%,rgba(0,0,0,.75));pointer-events:none}.preview-label{position:absolute;left:9px;bottom:8px;font-size:.66rem;background:rgba(0,0,0,.72);border:1px solid #444;border-radius:999px;padding:4px 8px}.preview-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:9px}.preview-file-name{flex:1 1 160px;min-width:0;font-size:.68rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.health-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.health-item{display:flex;gap:8px;align-items:center;background:#090909;border:1px solid #292929;border-radius:12px;padding:9px}.health-copy{min-width:0}.health-copy b{display:block;font-size:.75rem}.health-copy span{display:block;font-size:.64rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.context-overlay{background:#090909;border:1px solid #292929;border-left:3px solid var(--red);border-radius:12px;padding:11px}.context-overlay b{font-size:.78rem}.context-overlay p{font-size:.72rem;color:#bbb;margin:4px 0 0}
+.preview-frame{position:relative;aspect-ratio:16/9;background:#000;border:1px solid #333;border-radius:14px;overflow:hidden}.slide-layer{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;opacity:0;transition:opacity 1.2s ease;pointer-events:none}.slide-layer.active{opacity:1}.preview-shield{position:absolute;inset:0;background:linear-gradient(180deg,transparent 78%,rgba(0,0,0,.72));pointer-events:none}.preview-label{position:absolute;left:9px;bottom:8px;font-size:.66rem;background:rgba(0,0,0,.72);border:1px solid #444;border-radius:999px;padding:4px 8px}.preview-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:9px}.preview-file-name{flex:1 1 160px;min-width:0;font-size:.68rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.health-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.health-item{display:flex;gap:8px;align-items:center;background:#090909;border:1px solid #292929;border-radius:12px;padding:9px}.health-copy{min-width:0}.health-copy b{display:block;font-size:.75rem}.health-copy span{display:block;font-size:.64rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.context-overlay{background:#090909;border:1px solid #292929;border-left:3px solid var(--red);border-radius:12px;padding:11px}.context-overlay b{font-size:.78rem}.context-overlay p{font-size:.72rem;color:#bbb;margin:4px 0 0}
 .drawer{position:fixed;inset:0;z-index:100;display:none;background:rgba(0,0,0,.74);padding:12px;align-items:center;justify-content:center}.drawer.show{display:flex}.drawer-card{width:min(760px,100%);max-height:calc(100vh - 24px);overflow:auto;background:#0c0c0c;border:1px solid #3a3a3a;border-radius:18px;padding:15px;box-shadow:0 24px 80px #000}.drawer-head{position:sticky;top:-15px;z-index:2;background:#0c0c0c;padding:10px 0 12px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #272727;margin-bottom:12px}.drawer-head h2{margin:0;font-size:1rem}.drawer-head button{margin-left:auto}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.span2{grid-column:1/-1}.estimate{font-size:.75rem;line-height:1.45;background:#080808;border:1px solid #303030;border-radius:12px;padding:10px;white-space:pre-line}.toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));z-index:200;transform:translate(-50%,20px);opacity:0;pointer-events:none;background:#151515;border:1px solid #7e1717;border-radius:999px;padding:10px 16px;font-size:.78rem;transition:.22s}.toast.show{opacity:1;transform:translate(-50%,0)}
+.rider-music-overlay{position:fixed;inset:0;z-index:180;display:none;background:#050505;color:#fff;padding:max(18px,env(safe-area-inset-top)) max(18px,env(safe-area-inset-right)) max(18px,env(safe-area-inset-bottom)) max(18px,env(safe-area-inset-left));overflow:auto}
+.rider-music-overlay.show{display:flex;align-items:center;justify-content:center}
+.rider-music-card{width:min(900px,100%);background:linear-gradient(180deg,#141414,#0a0a0a);border:1px solid #3a3a3a;border-radius:24px;padding:22px;box-shadow:0 30px 90px #000}
+.rider-music-head{display:flex;align-items:flex-start;gap:14px;margin-bottom:18px}
+.rider-music-head img{width:54px;height:54px;object-fit:contain;border-radius:10px}
+.rider-music-head h2{margin:0;font-size:1.45rem}
+.rider-music-head p{margin:5px 0 0;color:#aaa;font-size:.9rem}
+.rider-music-close{margin-left:auto}
+.rider-choice-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:16px 0 20px}
+.rider-choice{min-height:72px;border-radius:14px;border:1px solid #4a4a4a;background:#111;color:#fff;font-weight:800;padding:12px;cursor:pointer}
+.rider-choice:active{transform:scale(.985)}
+.rider-choice.requested{border-color:#e32b2b;background:#3b0b0b}
+.rider-song-box{border-top:1px solid #2c2c2c;padding-top:18px;margin-top:4px}
+.rider-song-row{display:grid;grid-template-columns:1fr auto;gap:10px;margin-top:9px}
+.rider-song-input{min-height:52px;border:1px solid #444;border-radius:12px;background:#080808;color:#fff;padding:12px 14px}
+.rider-request-status{min-height:24px;margin-top:14px;color:#d0d0d0;font-size:.9rem}
+.rider-request-status.good{color:#bff7da}
+.rider-request-status.bad{color:#ffb4b4}
+body.rider-music-open{overflow:hidden}
+@media(max-width:760px){.rider-choice-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.rider-music-card{padding:16px}.rider-song-row{grid-template-columns:1fr}}
+
 @media(max-width:1050px){.workspace{grid-template-columns:minmax(310px,.74fr) minmax(380px,1.26fr)}.quick-grid{grid-template-columns:repeat(3,1fr)}.audio-grid{grid-template-columns:repeat(2,1fr)}.dispatch-list{grid-template-columns:1fr}.stat-strip{grid-template-columns:1fr 1fr}}
 @media(max-width:760px){.workspace{grid-template-columns:1fr;padding:8px}.glance-column{display:grid;grid-template-columns:1fr 1fr}.glance-column .panel:first-child{grid-column:1/-1}.topbar{padding:8px}.brand-sub{display:none}.top-actions .chip span.label{display:none}.ride-pair{grid-template-columns:1fr 1fr}.quick-grid{grid-template-columns:repeat(3,1fr)}.dispatch-list{grid-template-columns:1fr 1fr}}
 @media(max-width:560px){:root{--touch:46px}.brand-title{font-size:.9rem}.brand img{width:38px;height:38px}.workspace{padding:7px;gap:8px}.panel{padding:11px;border-radius:15px}.glance-column{display:flex}.status-control{grid-template-columns:1fr auto}.status-control .save-status{grid-column:1/-1}.ride-pair,.dispatch-list,.form-grid{grid-template-columns:1fr}.quick-grid{grid-template-columns:repeat(2,1fr)}.audio-grid{grid-template-columns:repeat(2,1fr)}.top-actions .fallback-link{display:none}}
@@ -74,6 +95,9 @@
       <section class="panel music-card" id="musicPanel">
         <div class="panel-head"><div><div class="eyebrow">Rider request</div><h2>Music Request</h2></div><button class="btn small alert-toggle right" id="musicAlertToggle" aria-pressed="false" type="button">🔇 Alert OFF</button></div>
         <div class="music-request"><div class="music-icon">🎵</div><div class="grow"><div class="request-title" id="musicState">Checking for rider requests…</div><div class="request-detail" id="musicDetail"></div><div class="request-actions" id="musicActions" hidden><button class="btn red small" id="musicOpenBtn" type="button">Open Shortcut</button><button class="btn ghost small" id="musicPlayingBtn" type="button">Mark Playing</button><button class="btn ghost small" id="musicDismissBtn" type="button">Dismiss</button><button class="btn ghost small" id="musicClearBtn" type="button">Clear</button></div></div></div>
+        <div class="request-actions" style="margin-top:12px">
+          <button class="btn red small" id="openRiderMusicBtn" type="button">🎵 Rider Request</button>
+        </div>
         <div class="fine muted" id="musicAlertHint" style="margin-top:10px">Music-request sound is separate from all other alerts.</div>
       </section>
 
@@ -100,10 +124,19 @@
 
     <aside class="glance-column">
       <section class="panel">
-        <div class="panel-head"><div><div class="eyebrow">Rear tablet</div><h2>Discover Preview</h2></div><span class="right chip" id="discoverState"><i class="status-dot"></i> Checking</span></div>
-        <div class="preview-frame"><iframe id="discoverPreview" src="/discover/" title="Silent read-only Discover browser preview" tabindex="-1" aria-hidden="true"></iframe><video id="localDiscoverPreview" muted loop playsinline preload="metadata" hidden aria-label="Selected local Discover program preview"></video><div class="preview-shield"></div><span class="preview-label" id="previewLabel">Silent • browser preview</span></div>
-        <div class="preview-controls"><button class="btn red small" id="loadDiscoverPreviewBtn" type="button">Load Discover Preview</button><span class="preview-file-name" id="discoverPreviewFile">No local program selected</span><input id="discoverPreviewFileInput" type="file" accept="video/*,.mov,.mp4" hidden></div>
-        <p class="fine muted">Select the same weekly movie from the shared iCloud Files folder. It plays silently and loops on this iPad; the rear iPad remains independent.</p>
+        <div class="panel-head"><div><div class="eyebrow">Weekly deck</div><h2>Discover Preview</h2></div><span class="right chip" id="discoverState"><i class="status-dot"></i> No slides</span></div>
+        <div class="preview-frame" id="slidePreviewFrame">
+          <img id="slideLayerA" class="slide-layer active" alt="Discover slide preview">
+          <img id="slideLayerB" class="slide-layer" alt="" aria-hidden="true">
+          <div class="preview-shield"></div>
+          <span class="preview-label" id="previewLabel">Load weekly slides</span>
+        </div>
+        <div class="preview-controls">
+          <button class="btn red small" id="loadDiscoverPreviewBtn" type="button">Load Weekly Slides</button>
+          <span class="preview-file-name" id="discoverPreviewFile">No slide set selected</span>
+          <input id="discoverPreviewFileInput" type="file" accept="image/jpeg,image/png,image/webp" multiple hidden>
+        </div>
+        <p class="fine muted">Select all exported Keynote slide images at once. They are sorted automatically by the trailing slide number (for example .001 through .041), crossfade every 10 seconds, and loop continuously.</p>
       </section>
 
       <section class="panel admin-only">
@@ -117,6 +150,40 @@
       </section>
     </aside>
   </main>
+</div>
+
+
+<div class="rider-music-overlay" id="riderMusicOverlay" aria-hidden="true">
+  <div class="rider-music-card" role="dialog" aria-modal="true" aria-labelledby="riderMusicTitle">
+    <div class="rider-music-head">
+      <img src="Official Logo.png" alt="Big Red Connect">
+      <div>
+        <div class="eyebrow">Your ride • your music</div>
+        <h2 id="riderMusicTitle">Request Music</h2>
+        <p>Pick a playlist vibe or ask for a specific song or artist.</p>
+      </div>
+      <button class="btn ghost rider-music-close" id="closeRiderMusicBtn" type="button">Back to Big Red</button>
+    </div>
+
+    <div class="rider-choice-grid" id="riderChoiceGrid">
+      <button class="rider-choice" type="button" data-rider-choice="Country">🤠 Country</button>
+      <button class="rider-choice" type="button" data-rider-choice="Campus Nights">🎓 Campus Nights</button>
+      <button class="rider-choice" type="button" data-rider-choice="Throwbacks">📼 Throwbacks</button>
+      <button class="rider-choice" type="button" data-rider-choice="Christian">✨ Christian</button>
+      <button class="rider-choice" type="button" data-rider-choice="Chill">🌙 Chill</button>
+      <button class="rider-choice" type="button" data-rider-choice="Rider Requests">🎶 Rider Requests</button>
+    </div>
+
+    <div class="rider-song-box">
+      <div class="eyebrow">Specific song or artist</div>
+      <div class="rider-song-row">
+        <input class="rider-song-input" id="riderSongInput" type="text" maxlength="120" autocomplete="off" placeholder="Type a song, artist, or both">
+        <button class="btn red" id="submitRiderSongBtn" type="button">Send Request</button>
+      </div>
+    </div>
+
+    <div class="rider-request-status" id="riderMusicStatus">Choose one option and I’ll send it to Big Red.</div>
+  </div>
 </div>
 
 <div class="drawer" id="liveMapDrawer"><div class="drawer-card"><div class="drawer-head"><h2>📍 Live Map</h2><button class="btn small" data-close>Close</button></div><div class="stack"><img id="liveImage" src="Official Logo.png" alt="Live Map image" style="width:100%;max-height:250px;object-fit:contain;background:#000;border-radius:12px"><div class="row"><button class="btn small ghost" id="prevImage">Previous Image</button><button class="btn small ghost" id="nextImage">Next Image</button></div><textarea class="field" id="liveCaption" placeholder="Live Map caption"></textarea><button class="btn red" id="postLiveBtn">Post to Live Map</button></div></div></div>
@@ -223,6 +290,107 @@ async function pollMusic(){if(document.hidden)return;try{const data=await jsonFe
 function openMusicShortcut(){const i=state.music;if(!i||i.status!=='PENDING')return;const specific=i.kind==='specific',name=specific?'Big Red Song Request':'Big Red Music',input=specific?(i.detail||''):(i.choice||'');location.href=`shortcuts://run-shortcut?name=${encodeURIComponent(name)}&input=text&text=${encodeURIComponent(input)}`}
 async function resolveMusic(status){if(!state.music)return;try{const d=await jsonFetch(`${API.music}/resolve`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:state.music.id,status})},'music');state.music=d.request||null;renderMusic();toast(`Request ${status.toLowerCase()}`)}catch{toast('Music request update failed')}}
 
+const RIDER_PLAYLIST_CHOICES=new Set(['Country','Campus Nights','Throwbacks','Christian','Chill','Rider Requests']);
+let riderRequestBusy=false;
+let riderOverlayCloseTimer=null;
+
+function setRiderMusicStatus(message,type=''){
+  const el=$('riderMusicStatus');
+  if(!el)return;
+  el.textContent=message;
+  el.classList.remove('good','bad');
+  if(type)el.classList.add(type);
+}
+
+function openRiderMusicOverlay(){
+  if(riderOverlayCloseTimer){clearTimeout(riderOverlayCloseTimer);riderOverlayCloseTimer=null}
+  const overlay=$('riderMusicOverlay');
+  if(!overlay)return;
+  overlay.classList.add('show');
+  overlay.setAttribute('aria-hidden','false');
+  document.body.classList.add('rider-music-open');
+  document.querySelectorAll('[data-rider-choice]').forEach(b=>b.classList.remove('requested'));
+  $('riderSongInput').value='';
+  setRiderMusicStatus('Choose one option and I’ll send it to Big Red.');
+}
+
+function closeRiderMusicOverlay(){
+  if(riderOverlayCloseTimer){clearTimeout(riderOverlayCloseTimer);riderOverlayCloseTimer=null}
+  const overlay=$('riderMusicOverlay');
+  if(!overlay)return;
+  overlay.classList.remove('show');
+  overlay.setAttribute('aria-hidden','true');
+  document.body.classList.remove('rider-music-open');
+}
+
+function lockRiderMusicControls(locked){
+  document.querySelectorAll('[data-rider-choice]').forEach(b=>b.disabled=locked);
+  $('riderSongInput').disabled=locked;
+  $('submitRiderSongBtn').disabled=locked;
+}
+
+async function createRiderMusicRequest(payload,selectedButton=null){
+  if(riderRequestBusy)return;
+  riderRequestBusy=true;
+  lockRiderMusicControls(true);
+  setRiderMusicStatus('Sending your request to Big Red…');
+
+  try{
+    const response=await fetch(`${API.music}/request`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload),
+      cache:'no-store'
+    });
+    let result={};
+    try{result=await response.json()}catch{}
+
+    if(response.status===409){
+      const waiting=result?.request;
+      const waitingLabel=waiting?.kind==='specific'
+        ? (waiting.detail||'another song request')
+        : (waiting?.choice||'another music request');
+      setRiderMusicStatus(`Big Red already has a request waiting: ${waitingLabel}.`,'bad');
+      return;
+    }
+
+    if(!response.ok||!result?.ok)throw new Error(result?.error||`Request failed (${response.status})`);
+
+    if(selectedButton)selectedButton.classList.add('requested');
+    state.music=result.request||null;
+    renderMusic();
+
+    const label=payload.kind==='specific'
+      ? (payload.detail||'Song request')
+      : (payload.choice||'Music request');
+    setRiderMusicStatus(`${label} sent to Big Red. Thanks!`,'good');
+
+    riderOverlayCloseTimer=setTimeout(closeRiderMusicOverlay,2600);
+  }catch(error){
+    console.info('Front rider music request failed.',error);
+    setRiderMusicStatus('That request could not send right now. Please ask Big Red directly.','bad');
+  }finally{
+    riderRequestBusy=false;
+    lockRiderMusicControls(false);
+  }
+}
+
+function submitRiderPlaylist(choice,button){
+  if(!RIDER_PLAYLIST_CHOICES.has(choice))return;
+  createRiderMusicRequest({kind:'playlist',choice},button);
+}
+
+function submitRiderSpecific(){
+  const detail=$('riderSongInput').value.trim();
+  if(!detail){
+    setRiderMusicStatus('Type a song or artist first.','bad');
+    $('riderSongInput').focus();
+    return;
+  }
+  createRiderMusicRequest({kind:'specific',detail});
+}
+
+
 const AUDIO={en:{welcome:'Welcome%20Aboard%202.MOV',welcomeBack:'Welcome%20Back.mov',airportWelcome:'Airport%20Welcome%20Aboard.MOV',who:'Who%20Is%20Big%20Red%20Connect.mov',why:'Why%20Choose%20Red%3F.MOV',think:'Think%20Big%20Red.MOV',save:'Save%20To%20Home%20Screen.MOV',nextStop:'Next%20Stop.mov',continueJourney:'Continue%20Journey.mov',airportArrive:'Airport%20Arrival.MOV',arrival:'Destination%20Arrival%202.MOV'},es:{welcome:'%F0%9F%87%B2%F0%9F%87%BD%201.%20Bienvenida%20%E2%80%94%20Welcome%20Aboard.mov',welcomeBack:'%F0%9F%87%B2%F0%9F%87%BD%2011.%20Bienvenidos%20de%20Nuevo%20%E2%80%94%20Welcome%20Back.mov',airportWelcome:'%F0%9F%87%B2%F0%9F%87%BD%205.%20Bienvenida%20desde%20el%20Aeropuerto%20%E2%80%94%20Airport%20Welcome%20Aboard.mov',who:'%F0%9F%87%B2%F0%9F%87%BD%2010.%20%C2%BFQuie%CC%81n%20es%20Big%20Red%3F%20%E2%80%94%20Who%20Is%20Big%20Red.mov',why:'%F0%9F%87%B2%F0%9F%87%BD%209.%20%C2%BFPor%20que%CC%81%20elegir%20Big%20Red%3F%20%E2%80%94%20Why%20Choose%20Red.mov',think:'%F0%9F%87%B2%F0%9F%87%BD%208.%20Piensa%20en%20Big%20Red%20%E2%80%94%20Think%20Big%20Red.mov',save:'%F0%9F%87%B2%F0%9F%87%BD%207.%20Guardar%20en%20la%20Pantalla%20de%20Inicio%20%E2%80%94%20Save%20to%20Home%20Screen.mov',nextStop:'%F0%9F%87%B2%F0%9F%87%BD%202.%20Pro%CC%81xima%20Parada%20%E2%80%94%20Next%20Stop.mov',continueJourney:'%F0%9F%87%B2%F0%9F%87%BD%203.%20Continuamos%20el%20Viaje%20%E2%80%94%20Continue%20Journey.mov',airportArrive:'%F0%9F%87%B2%F0%9F%87%BD%206.%20Llegada%20al%20Aeropuerto%20%E2%80%94%20Airport%20Arrival.mov',arrival:'%F0%9F%87%B2%F0%9F%87%BD%204.%20Llegada%20al%20Destino%20%E2%80%94%20Destination%20Arrival.mov'}};
 const audioButtons=[['welcome','Welcome Aboard'],['welcomeBack','Welcome Back'],['airportWelcome','Airport Welcome'],['who','Who Is Big Red?'],['why','Why Choose Red?'],['save','Save to Home'],['think','Think Big Red'],['nextStop','Next Stop'],['continueJourney','Continue Journey'],['airportArrive','Airport Arrival'],['arrival','End Ride']];
 function renderAudio(){document.querySelectorAll('[data-lang]').forEach(b=>b.classList.toggle('active',b.dataset.lang===state.audioLang));$('audioGrid').innerHTML=audioButtons.map(([k,l])=>`<button class="btn ${k==='welcome'||k==='arrival'?'red':'ghost'}" data-audio="${k}">${l}</button>`).join('')+'<button class="btn ghost" data-audio="stop">⏹ Stop</button>'}
@@ -249,34 +417,149 @@ function initAutocomplete(){if(!(window.google&&google.maps&&google.maps.places)
 
 function openDrawer(name){closeDrawers();$(`${name}Drawer`).classList.add('show');if(name==='liveMap')loadLiveMap();if(name==='ticker')loadTicker()}
 function closeDrawers(){document.querySelectorAll('.drawer').forEach(d=>d.classList.remove('show'))}
-let localDiscoverObjectUrl='';
-function muteDiscover(){const local=$('localDiscoverPreview');if(local){local.muted=true;local.volume=0}try{const doc=$('discoverPreview').contentDocument;doc?.querySelectorAll('audio,video').forEach(m=>{m.muted=true;m.volume=0})}catch{}}
-function loadLocalDiscoverPreview(file){
-  if(!file)return;
-  if(!String(file.type||'').startsWith('video/')&&!/\.(mov|mp4|m4v)$/i.test(file.name||'')){toast('Choose a video file');return}
-  const video=$('localDiscoverPreview'),frame=$('discoverPreview');
-  if(localDiscoverObjectUrl)URL.revokeObjectURL(localDiscoverObjectUrl);
-  localDiscoverObjectUrl=URL.createObjectURL(file);
-  video.pause();video.src=localDiscoverObjectUrl;video.muted=true;video.volume=0;video.loop=true;video.hidden=false;frame.hidden=true;
-  $('discoverPreviewFile').textContent=file.name||'Local Discover program';$('previewLabel').textContent='Silent • local program preview';
-  $('discoverState').innerHTML='<i class="status-dot good"></i> Local loaded';markHealth('discover',true,`Local preview: ${file.name||'selected video'}`);
-  video.play().catch(()=>toast('Tap Load Discover Preview again to start'));
+
+const slidePreview={files:[],urls:[],index:0,timer:null,activeLayer:'A'};
+const SLIDE_INTERVAL_MS=10000;
+
+function slideNumberFromName(name){
+  const s=String(name||'');
+  const match=s.match(/(?:^|[._\-\s])(\d{1,4})(?=\.[^.]+$|$)/);
+  if(match)return Number(match[1]);
+  const numbers=s.match(/\d+/g);
+  return numbers&&numbers.length?Number(numbers[numbers.length-1]):Number.MAX_SAFE_INTEGER;
 }
+
+function sortSlideFiles(files){
+  return [...files].sort((a,b)=>{
+    const na=slideNumberFromName(a.name);
+    const nb=slideNumberFromName(b.name);
+    if(na!==nb)return na-nb;
+    return a.name.localeCompare(b.name,undefined,{numeric:true,sensitivity:'base'});
+  });
+}
+
+function revokeSlideUrls(){
+  slidePreview.urls.forEach(url=>{try{URL.revokeObjectURL(url)}catch{}});
+  slidePreview.urls=[];
+}
+
+function stopSlideShow(){
+  if(slidePreview.timer){
+    clearInterval(slidePreview.timer);
+    slidePreview.timer=null;
+  }
+}
+
+function renderSlideStatus(){
+  const count=slidePreview.files.length;
+  const stateEl=$('discoverState');
+  const label=$('previewLabel');
+  const fileEl=$('discoverPreviewFile');
+
+  if(!count){
+    if(stateEl)stateEl.innerHTML='<i class="status-dot"></i> No slides';
+    if(label)label.textContent='Load weekly slides';
+    if(fileEl)fileEl.textContent='No slide set selected';
+    return;
+  }
+
+  const current=slidePreview.files[slidePreview.index];
+  if(stateEl)stateEl.innerHTML=`<i class="status-dot good"></i> ${count} slides loaded`;
+  if(label)label.textContent=`Slide ${slidePreview.index+1} of ${count}`;
+  if(fileEl)fileEl.textContent=current?.name||`${count} slides`;
+}
+
+function showSlide(index,{immediate=false}={}){
+  const count=slidePreview.urls.length;
+  if(!count)return;
+
+  slidePreview.index=((index%count)+count)%count;
+  const nextUrl=slidePreview.urls[slidePreview.index];
+  const useA=slidePreview.activeLayer!=='A';
+  const incoming=useA?$('slideLayerA'):$('slideLayerB');
+  const outgoing=useA?$('slideLayerB'):$('slideLayerA');
+
+  if(!incoming||!outgoing)return;
+
+  incoming.src=nextUrl;
+
+  const activate=()=>{
+    incoming.classList.add('active');
+    outgoing.classList.remove('active');
+    slidePreview.activeLayer=useA?'A':'B';
+    renderSlideStatus();
+  };
+
+  if(immediate){
+    incoming.style.transition='none';
+    outgoing.style.transition='none';
+    activate();
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      incoming.style.transition='';
+      outgoing.style.transition='';
+    }));
+  }else if(incoming.complete){
+    requestAnimationFrame(activate);
+  }else{
+    incoming.onload=()=>requestAnimationFrame(activate);
+  }
+
+  const preloadIndex=(slidePreview.index+1)%count;
+  const preload=new Image();
+  preload.src=slidePreview.urls[preloadIndex];
+}
+
+function startSlideShow(){
+  stopSlideShow();
+  if(slidePreview.urls.length<2)return;
+  slidePreview.timer=setInterval(()=>showSlide(slidePreview.index+1),SLIDE_INTERVAL_MS);
+}
+
+function loadSlideFiles(fileList){
+  const images=[...fileList].filter(file=>
+    /^image\/(jpeg|png|webp)$/i.test(file.type) ||
+    /\.(jpe?g|png|webp)$/i.test(file.name)
+  );
+
+  if(!images.length){
+    toast('No slide images selected');
+    return;
+  }
+
+  stopSlideShow();
+  revokeSlideUrls();
+
+  slidePreview.files=sortSlideFiles(images);
+  slidePreview.urls=slidePreview.files.map(file=>URL.createObjectURL(file));
+  slidePreview.index=0;
+  slidePreview.activeLayer='B';
+
+  showSlide(0,{immediate:true});
+  startSlideShow();
+  toast(`${slidePreview.files.length} slides loaded`);
+}
+
 async function checkHealth(){await Promise.allSettled([loadStatus(),loadBookings(),pollMusic(),loadTicker()])}
 function wire(){
   $('notificationBtn').onclick=enableNotifications;$('modeToggleBtn').onclick=toggleMode;$('refreshBtn').onclick=()=>location.reload();$('saveStatusBtn').onclick=saveStatus;$('trackingBtn').onclick=toggleTracking;$('dispatchRefreshBtn').onclick=loadBookings;if($('dispatchCollapseBtn'))$('dispatchCollapseBtn').onclick=toggleDriverDispatch;if($('healthRefreshBtn'))$('healthRefreshBtn').onclick=checkHealth;
   $('musicAlertToggle').onclick=setAlertPreference;$('musicOpenBtn').onclick=openMusicShortcut;$('musicPlayingBtn').onclick=()=>resolveMusic('PLAYING');$('musicDismissBtn').onclick=()=>resolveMusic('DISMISSED');$('musicClearBtn').onclick=()=>resolveMusic('CLEARED');
+  $('openRiderMusicBtn').onclick=openRiderMusicOverlay;
+  $('closeRiderMusicBtn').onclick=closeRiderMusicOverlay;
+  $('riderChoiceGrid').onclick=e=>{const b=e.target.closest('[data-rider-choice]');if(b)submitRiderPlaylist(b.dataset.riderChoice,b)};
+  $('submitRiderSongBtn').onclick=submitRiderSpecific;
+  $('riderSongInput').addEventListener('keydown',e=>{if(e.key==='Enter')submitRiderSpecific()});
+  $('riderMusicOverlay').addEventListener('click',e=>{if(e.target===$('riderMusicOverlay'))closeRiderMusicOverlay()});
+
   document.addEventListener('pointerdown',()=>{if(alertPreference()&&!alertArmed)armMusicAudio()},{passive:true});
   document.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>openDrawer(b.dataset.open));document.querySelectorAll('[data-close]').forEach(b=>b.onclick=closeDrawers);document.querySelectorAll('.drawer').forEach(d=>d.onclick=e=>{if(e.target===d)closeDrawers()});
   document.querySelectorAll('[data-scope]').forEach(b=>b.onclick=()=>{state.scope=b.dataset.scope;document.querySelectorAll('[data-scope]').forEach(x=>x.classList.toggle('active',x===b));loadBookings()});
   $('dispatchList').onchange=e=>{if(e.target.dataset.rideStatus)updateRide(e.target.dataset.rideStatus,e.target.value)};
   document.querySelectorAll('[data-lang]').forEach(b=>b.onclick=()=>{state.audioLang=b.dataset.lang;localStorage.setItem('bigRedAudioLanguage',state.audioLang);renderAudio()});$('audioGrid').onclick=e=>{const b=e.target.closest('[data-audio]');if(b)playDriverAudio(b.dataset.audio)};
   $('prevImage').onclick=()=>setLiveImage(liveImageIndex-1);$('nextImage').onclick=()=>setLiveImage(liveImageIndex+1);$('postLiveBtn').onclick=postLive;$('saveTickerBtn').onclick=saveTicker;$('sendPushBtn').onclick=sendPush;$('estimateBtn').onclick=estimateManual;$('createRideBtn').onclick=createManual;
-  $('loadDiscoverPreviewBtn').onclick=()=>$('discoverPreviewFileInput').click();$('discoverPreviewFileInput').onchange=e=>loadLocalDiscoverPreview(e.target.files?.[0]);
-  $('discoverPreview').onload=()=>{if(localDiscoverObjectUrl)return;markHealth('discover',true,'Page loaded here');$('discoverState').innerHTML='<i class="status-dot good"></i> Preview ready';muteDiscover()};$('discoverPreview').onerror=()=>{markHealth('discover',false,'Preview failed');$('discoverState').innerHTML='<i class="status-dot bad"></i> Unavailable'};
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden){loadBookings();pollMusic();muteDiscover();if(localDiscoverObjectUrl)$('localDiscoverPreview').play().catch(()=>{})}});window.addEventListener('pagehide',()=>{if(state.gpsTimer)clearInterval(state.gpsTimer)});
+  $('loadDiscoverPreviewBtn').onclick=()=>$('discoverPreviewFileInput').click();$('discoverPreviewFileInput').onchange=e=>{loadSlideFiles(e.target.files||[]);e.target.value='';};
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden){loadBookings();pollMusic()}});window.addEventListener('pagehide',()=>{if(state.gpsTimer)clearInterval(state.gpsTimer);stopSlideShow();revokeSlideUrls()});
 }
-window.addEventListener('load',()=>{applyMode(localStorage.getItem(MODE_KEY)||'driver');renderHealth();renderStatus();renderAlertToggle();renderAudio();renderRideGlance();wire();applyDispatchVisibility();initAutocomplete();loadStatus();loadBookings();pollMusic();setInterval(pollMusic,10000);setInterval(()=>{if(!document.hidden&&state.scope==='active')loadBookings()},60000);setInterval(muteDiscover,3000)});
+window.addEventListener('load',()=>{applyMode(localStorage.getItem(MODE_KEY)||'driver');renderHealth();renderStatus();renderAlertToggle();renderAudio();renderRideGlance();wire();renderSlideStatus();applyDispatchVisibility();initAutocomplete();loadStatus();loadBookings();pollMusic();setInterval(pollMusic,10000);setInterval(()=>{if(!document.hidden&&state.scope==='active')loadBookings()},60000)});
 </script>
 </body>
 </html>
