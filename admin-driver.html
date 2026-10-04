@@ -3,7 +3,6 @@ FILE: /admin-driver.html
 Big Red Admin / Driver Console
 
 UPDATED — COMPACT TWO-COLUMN BILINGUAL AUDIO PANEL + EXTENDED TRIP PRICING PARITY:
-- FIX: Specific song/artist requests now launch Big Red Song Request with the exact rider request as Shortcut Input; clipboard remains a fallback only.
 - Adds persistent English / Spanish selector to the Driver Audio Panel.
 - Keeps audio buttons in two columns even in the narrow dashboard window to reduce scrolling.
 - Keeps the same soundboard buttons; selected language controls playback.
@@ -244,6 +243,7 @@ body.mode-admin .driver-only{display:none;}
 <section id="musicRequestCard" style="max-width:680px;margin:12px auto;padding:14px;" aria-label="Rider music request">
   <h2>🎵 Rider Music Request</h2>
   <p id="musicRequestState" role="status">Checking for rider requests…</p>
+  <p id="musicRequestDetail" style="display:none;font-size:1.15rem;font-weight:700;white-space:pre-wrap;"></p>
   <div id="musicRequestActions" style="display:none;gap:8px;flex-wrap:wrap;">
     <button class="btn btn-primary" type="button" id="musicPlayBtn">Open playlist Shortcut</button>
     <button class="btn btn-secondary" type="button" id="musicMarkBtn">Mark playing</button>
@@ -251,6 +251,28 @@ body.mode-admin .driver-only{display:none;}
     <button class="btn btn-secondary" type="button" id="musicClearBtn">Clear</button>
   </div>
 </section>
+
+<div id="musicRequestPopupBackdrop" aria-hidden="true">
+  <div id="musicRequestPopupBox" role="dialog" aria-modal="true" aria-labelledby="musicRequestPopupTitle">
+    <div class="mrp-head">
+      <div class="mrp-icon">🎵</div>
+      <div style="flex:1 1 auto">
+        <div class="mrp-kicker">New rider request</div>
+        <div class="mrp-title" id="musicRequestPopupTitle">Rider Music Request</div>
+      </div>
+      <button class="mrp-close" id="musicRequestPopupClose" type="button" aria-label="Close">×</button>
+    </div>
+    <div class="mrp-body">
+      <div class="mrp-request" id="musicRequestPopupRequest">Music request received.</div>
+      <div class="mrp-detail" id="musicRequestPopupDetail"></div>
+    </div>
+    <div class="mrp-actions">
+      <button class="btn btn-primary" id="musicRequestPopupOpen" type="button">Open Shortcut</button>
+      <button class="btn btn-secondary" id="musicRequestPopupPlaying" type="button">Mark playing</button>
+      <button class="btn btn-secondary" id="musicRequestPopupDismiss" type="button">Dismiss</button>
+    </div>
+  </div>
+</div>
 
 <div class="layout">
   <div>
@@ -546,8 +568,6 @@ const POST_WORKER="/secure-admin/post";
 const PUSH_WORKER="/secure-admin/push";
 const TICKER_WORKER="/secure-admin/ticker";
 const BOOKINGS_API="/secure-admin/bookings";
-
-
 const TZ="America/Chicago";
 const HOME_URL="https://bigredconnectokc.com/";
 const RIDER_LOGIN_BASE=`${HOME_URL}rider.html`;
@@ -2321,8 +2341,11 @@ window.addEventListener("load",()=>{
   loadTicker();
   initializeDispatch();
 });
+</script>
 
-// Same-origin, Access-protected music requests in the staged driver console.
+
+<script id="secureMusicRequestCard">
+// Same-origin, Access-protected music requests in the secure driver console.
 (() => {
   const $music = id => document.getElementById(id);
   let currentMusic = null;
@@ -2330,24 +2353,24 @@ window.addEventListener("load",()=>{
   const state = message => { $music('musicRequestState').textContent = message; };
   const draw = item => {
     currentMusic = item;
-    const requestText = item
-      ? (item.kind === 'specific'
-          ? (item.detail || 'Specific song or artist')
-          : (item.choice || 'Playlist request'))
-      : '';
-
+    const specific = item?.kind === 'specific';
+    const detail = $music('musicRequestDetail');
+    detail.textContent = specific ? (item?.detail || '') : '';
+    detail.style.display = specific ? '' : 'none';
     $music('musicRequestActions').style.display = item ? 'flex' : 'none';
     $music('musicPlayBtn').style.display = item?.status === 'PENDING' ? '' : 'none';
+    $music('musicPlayBtn').textContent = specific
+      ? 'Open Song Request Shortcut'
+      : 'Open playlist Shortcut';
     $music('musicMarkBtn').style.display = item?.status === 'PENDING' ? '' : 'none';
     $music('musicDismissBtn').style.display = item?.status === 'PENDING' ? '' : 'none';
     $music('musicClearBtn').style.display = item && item.status !== 'PENDING' ? '' : 'none';
-
-    if (item?.status === 'PENDING') {
-      $music('musicPlayBtn').textContent =
-        item.kind === 'specific' ? 'Open song Shortcut' : 'Open playlist Shortcut';
-    }
-
-    state(item ? `${requestText} • ${item.status.toLowerCase()}` : 'No rider music request waiting.');
+    const requestLabel = specific
+      ? `Specific song / artist: ${item?.detail || 'Request details unavailable'}`
+      : item?.choice;
+    state(item
+      ? `${requestLabel} • ${item.status.toLowerCase()}`
+      : 'No rider music request waiting.');
   };
   async function musicApi(path, body) {
     const response = await fetch('/secure-admin/music/' + path, {
@@ -2378,27 +2401,10 @@ window.addEventListener("load",()=>{
   window.addEventListener('load', () => {
     $music('musicPlayBtn').addEventListener('click', () => {
       if (!currentMusic || musicBusy) return;
-
       const specific = currentMusic.kind === 'specific';
       const shortcutName = specific ? 'Big Red Song Request' : 'Big Red Music';
-      const shortcutInput = String(
-        specific ? (currentMusic.detail || '') : (currentMusic.choice || '')
-      ).trim();
-
-      if (!shortcutInput) {
-        state('Music request is missing request text.');
-        return;
-      }
-
-      // Direct Shortcut Input is the primary handoff.
-      // Clipboard copy is only a safety fallback for specific song/artist requests.
-      if (specific && navigator.clipboard?.writeText) {
-        navigator.clipboard.writeText(shortcutInput).catch(() => {});
-      }
-
-      window.location.href =
-        `shortcuts://run-shortcut?name=${encodeURIComponent(shortcutName)}` +
-        `&input=text&text=${encodeURIComponent(shortcutInput)}`;
+      const shortcutInput = specific ? currentMusic.detail : currentMusic.choice;
+      window.location.href = `shortcuts://run-shortcut?name=${encodeURIComponent(shortcutName)}&input=text&text=${encodeURIComponent(shortcutInput || '')}`;
     });
     $music('musicMarkBtn').addEventListener('click', () => resolveMusic('PLAYING'));
     $music('musicDismissBtn').addEventListener('click', () => resolveMusic('DISMISSED'));
@@ -2410,7 +2416,288 @@ window.addEventListener("load",()=>{
 })();
 </script>
 
+
+<script id="secureMusicRequestAlerts">
+(() => {
+  "use strict";
+
+  if (!location.pathname.startsWith("/secure-admin/")) return;
+
+  const SEEN_STORAGE_KEY = "bigRedLastSeenMusicRequestId";
+  const AUDIBLE_STORAGE_KEY = "bigRedLastAudibleMusicRequestId";
+  const POLL_MS = 10000;
+  let alertsArmed = false;
+  let alertAudio = null;
+  let pollBusy = false;
+  let alertButton = null;
+  let activeUtterance = null;
+
+  function requestLabel(request) {
+    if (!request) return "";
+    return request.kind === "specific"
+      ? (request.detail || "Specific song or artist")
+      : (request.choice || "Playlist request");
+  }
+
+  function hideRequestPopup() {
+    const popup = document.getElementById("musicRequestPopupBackdrop");
+    if (!popup) return;
+    popup.classList.remove("show");
+    popup.setAttribute("aria-hidden", "true");
+  }
+
+  function showRequestPopup(request) {
+    const popup = document.getElementById("musicRequestPopupBackdrop");
+    if (!popup) return;
+    const specific = request?.kind === "specific";
+    document.getElementById("musicRequestPopupRequest").textContent = specific
+      ? "Specific song / artist request"
+      : (request?.choice || "Playlist request");
+    document.getElementById("musicRequestPopupDetail").textContent = specific
+      ? (request?.detail || "Request details unavailable")
+      : "";
+    document.getElementById("musicRequestPopupOpen").textContent = specific
+      ? "Open song Shortcut"
+      : "Open playlist Shortcut";
+    popup.classList.add("show");
+    popup.setAttribute("aria-hidden", "false");
+  }
+
+  function buildRequestChimeDataUri() {
+    const sampleRate = 22050;
+    const duration = 0.82;
+    const sampleCount = Math.floor(sampleRate * duration);
+    const buffer = new ArrayBuffer(44 + (sampleCount * 2));
+    const view = new DataView(buffer);
+
+    const writeText = (offset, value) => {
+      for (let index = 0; index < value.length; index += 1) {
+        view.setUint8(offset + index, value.charCodeAt(index));
+      }
+    };
+
+    writeText(0, "RIFF");
+    view.setUint32(4, 36 + (sampleCount * 2), true);
+    writeText(8, "WAVE");
+    writeText(12, "fmt ");
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true);
+    view.setUint16(22, 1, true);
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, sampleRate * 2, true);
+    view.setUint16(32, 2, true);
+    view.setUint16(34, 16, true);
+    writeText(36, "data");
+    view.setUint32(40, sampleCount * 2, true);
+
+    for (let index = 0; index < sampleCount; index += 1) {
+      const time = index / sampleRate;
+      const attack = Math.min(1, time / 0.025);
+      const release = Math.min(1, Math.max(0, (duration - time) / 0.16));
+      const envelope = attack * release;
+      const firstTone = time < 0.52
+        ? Math.sin(2 * Math.PI * 659.25 * time) * 0.38
+        : 0;
+      const secondTime = time - 0.18;
+      const secondTone = secondTime >= 0
+        ? Math.sin(2 * Math.PI * 783.99 * secondTime) * 0.42
+        : 0;
+      const sample = Math.max(-1, Math.min(1, (firstTone + secondTone) * envelope));
+      view.setInt16(44 + (index * 2), Math.round(sample * 32767), true);
+    }
+
+    const bytes = new Uint8Array(buffer);
+    let binary = "";
+    for (let offset = 0; offset < bytes.length; offset += 8192) {
+      binary += String.fromCharCode(...bytes.subarray(offset, offset + 8192));
+    }
+    return "data:audio/wav;base64," + btoa(binary);
+  }
+
+  function ensureAlertAudio() {
+    if (alertAudio) return alertAudio;
+    alertAudio = document.createElement("audio");
+    alertAudio.id = "musicRequestAlertAudio";
+    alertAudio.preload = "auto";
+    alertAudio.volume = 1;
+    alertAudio.setAttribute("playsinline", "");
+    alertAudio.setAttribute("webkit-playsinline", "");
+    alertAudio.src = buildRequestChimeDataUri();
+    document.body.appendChild(alertAudio);
+    return alertAudio;
+  }
+
+  async function playChime() {
+    try {
+      const audio = ensureAlertAudio();
+      audio.pause();
+      audio.currentTime = 0;
+      audio.muted = false;
+      audio.volume = 1;
+      await audio.play();
+      return !audio.paused;
+    } catch (error) {
+      console.info("Music request chime unavailable.", error);
+      return false;
+    }
+  }
+
+  function speakRequestAlert(message) {
+    if (!("speechSynthesis" in window)) return false;
+    try {
+      window.speechSynthesis.cancel();
+      activeUtterance = new SpeechSynthesisUtterance(message);
+      activeUtterance.rate = 0.95;
+      activeUtterance.volume = 1;
+      window.speechSynthesis.resume();
+      window.speechSynthesis.speak(activeUtterance);
+      return true;
+    } catch (error) {
+      console.info("Music request announcement unavailable.", error);
+      return false;
+    }
+  }
+
+  async function playRequestAlert(message = "Music request received.") {
+    if (!alertsArmed) {
+      if (alertButton) alertButton.textContent = "🔔 Tap to enable request sound";
+      return false;
+    }
+
+    const chimed = await playChime();
+    if (!chimed) {
+      alertsArmed = false;
+      if (alertButton) {
+        alertButton.textContent = "🔔 Tap to re-enable request sound";
+        alertButton.classList.remove("ready");
+        alertButton.setAttribute("aria-pressed", "false");
+      }
+      return false;
+    }
+    window.setTimeout(() => speakRequestAlert(message), 850);
+    return true;
+  }
+
+  async function armRequestAlerts() {
+    try {
+      const testPlayed = await playChime();
+      alertsArmed = testPlayed;
+      if (!alertsArmed) throw new Error("The test chime did not start.");
+      if (alertButton) {
+        alertButton.textContent = "🔔 Request sound on";
+        alertButton.classList.add("ready");
+        alertButton.setAttribute("aria-pressed", "true");
+      }
+      window.setTimeout(() => speakRequestAlert("Request sound on."), 850);
+      if (typeof showToast === "function") showToast("Request sound on — test chime played");
+      window.setTimeout(checkForNewMusicRequest, 900);
+    } catch (error) {
+      alertsArmed = false;
+      console.info("Music request sound could not be enabled.", error);
+      if (alertButton) {
+        alertButton.textContent = "🔔 Tap to retry request sound";
+        alertButton.classList.remove("ready");
+        alertButton.setAttribute("aria-pressed", "false");
+      }
+      if (typeof showToast === "function") showToast("No test chime — tap to retry");
+    }
+  }
+
+  function installAlertControls() {
+    const card = document.getElementById("musicRequestCard");
+    const state = document.getElementById("musicRequestState");
+    if (!card || !state || document.getElementById("musicRequestAlertEnable")) return false;
+
+    alertButton = document.createElement("button");
+    alertButton.id = "musicRequestAlertEnable";
+    alertButton.type = "button";
+    alertButton.className = "btn btn-secondary music-alert-enable";
+    alertButton.textContent = "🔔 Enable request sound";
+    alertButton.setAttribute("aria-pressed", "false");
+    alertButton.addEventListener("click", armRequestAlerts);
+    state.insertAdjacentElement("beforebegin", alertButton);
+    return true;
+  }
+
+  async function checkForNewMusicRequest() {
+    if (document.hidden || pollBusy) return;
+    pollBusy = true;
+    try {
+      const response = await fetch("/secure-admin/music/request", { cache: "no-store" });
+      const result = await response.json();
+      if (!response.ok || !result.ok) return;
+      const request = result.request;
+      if (!request || request.status !== "PENDING" || !request.id) return;
+
+      const requestId = String(request.id);
+      const lastSeen = sessionStorage.getItem(SEEN_STORAGE_KEY);
+      if (requestId !== lastSeen) {
+        sessionStorage.setItem(SEEN_STORAGE_KEY, requestId);
+        showRequestPopup(request);
+      }
+
+      if (!alertsArmed) {
+        if (alertButton) alertButton.textContent = "🔔 Tap to enable request sound";
+        return;
+      }
+
+      const lastAudible = sessionStorage.getItem(AUDIBLE_STORAGE_KEY);
+      if (requestId === lastAudible) return;
+
+      if (await playRequestAlert()) {
+        sessionStorage.setItem(AUDIBLE_STORAGE_KEY, requestId);
+      }
+    } catch (error) {
+      console.info("Music request alert check unavailable.", error);
+    } finally {
+      pollBusy = false;
+    }
+  }
+
+  const style = document.createElement("style");
+  style.textContent = [
+    ".music-alert-enable{margin:0 0 8px;min-height:38px;padding:6px 10px;font-size:.78rem}",
+    ".music-alert-enable.ready{border-color:#0a5;color:#baffd8}",
+    "#musicRequestAlertAudio{position:fixed;width:1px;height:1px;opacity:.001;pointer-events:none;left:-10px;bottom:-10px}",
+    "#musicRequestPopupBackdrop{position:fixed;inset:0;z-index:10000;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.68);backdrop-filter:blur(6px)}",
+    "#musicRequestPopupBackdrop.show{display:flex}",
+    "#musicRequestPopupBox{width:min(540px,94vw);border:1px solid #7b1d1d;border-radius:22px;background:linear-gradient(180deg,#171111,#0b0b0b);box-shadow:0 26px 90px rgba(0,0,0,.72);overflow:hidden;color:#fff}",
+    "#musicRequestPopupBox .mrp-head{display:flex;align-items:flex-start;gap:12px;padding:20px 20px 12px}",
+    ".mrp-icon{width:54px;height:54px;border-radius:15px;display:grid;place-items:center;background:#2a0909;border:1px solid #711b1b;font-size:1.6rem;flex:0 0 auto}",
+    ".mrp-kicker{font-size:.7rem;letter-spacing:.13em;text-transform:uppercase;color:#ff7979;font-weight:850;margin-bottom:3px}",
+    ".mrp-title{font-size:1.16rem;font-weight:900}",
+    ".mrp-close{margin-left:auto;width:40px;height:40px;border-radius:999px;border:1px solid #444;background:#151515;color:#fff;font-size:1.2rem}",
+    ".mrp-body{padding:0 20px 18px}.mrp-request{font-size:1.12rem;font-weight:850;line-height:1.35;white-space:pre-wrap}.mrp-detail{margin-top:7px;color:#cfcfcf;font-size:.92rem;white-space:pre-wrap}",
+    ".mrp-actions{display:flex;gap:9px;flex-wrap:wrap;padding:0 20px 20px}.mrp-actions .btn{flex:1 1 145px;min-height:46px}"
+  ].join("");
+  document.head.appendChild(style);
+
+  window.addEventListener("load", () => {
+    if (!installAlertControls()) {
+      const retry = setInterval(() => {
+        if (installAlertControls()) clearInterval(retry);
+      }, 250);
+      setTimeout(() => clearInterval(retry), 10000);
+    }
+    const popup = document.getElementById("musicRequestPopupBackdrop");
+    const close = document.getElementById("musicRequestPopupClose");
+    const open = document.getElementById("musicRequestPopupOpen");
+    const playing = document.getElementById("musicRequestPopupPlaying");
+    const dismiss = document.getElementById("musicRequestPopupDismiss");
+    if (close) close.addEventListener("click", hideRequestPopup);
+    if (popup) popup.addEventListener("click", event => { if (event.target === event.currentTarget) hideRequestPopup(); });
+    if (open) open.addEventListener("click", () => { document.getElementById("musicPlayBtn")?.click(); hideRequestPopup(); });
+    if (playing) playing.addEventListener("click", () => { document.getElementById("musicMarkBtn")?.click(); hideRequestPopup(); });
+    if (dismiss) dismiss.addEventListener("click", () => { document.getElementById("musicDismissBtn")?.click(); hideRequestPopup(); });
+
+    checkForNewMusicRequest();
+    setInterval(checkForNewMusicRequest, POLL_MS);
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) checkForNewMusicRequest();
+    });
+  });
+})();
+</script>
+
 </body>
 </html>
-
-
