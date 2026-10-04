@@ -2840,3 +2840,121 @@ button {
     font-size: 12px;
   }
 }
+/* --------------------------------------------------
+   DISCOVER DRIVER PROFILE COMPACT FIT — V21
+   Matches the visual footprint of the other rider overlays
+   without changing profile content or behavior.
+-------------------------------------------------- */
+
+@media (orientation: landscape) and (max-height: 850px) {
+
+  #driverPanel .driver-panel-card {
+    width: min(920px, 96vw);
+    height: auto;
+    max-height: min(610px, calc(100dvh - 28px));
+    padding: 12px 16px 14px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  #driverPanel .driver-panel-card > .back-button {
+    flex: 0 0 auto;
+    align-self: flex-start;
+    margin: 0 0 8px;
+  }
+
+  #driverPanel .driver-profile-grid {
+    flex: 0 1 auto;
+    min-height: 0;
+    height: auto;
+    grid-template-columns: 225px minmax(0, 1fr);
+    gap: 12px;
+    margin-top: 0;
+    align-items: stretch;
+  }
+
+  #driverPanel .driver-identity-card {
+    height: auto;
+    min-height: 0;
+    padding: 11px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    border-radius: 18px;
+  }
+
+  #driverPanel .driver-photo-frame {
+    width: 150px;
+    aspect-ratio: 4 / 5;
+    margin: 0 auto 7px;
+    border-radius: 16px;
+  }
+
+  #driverPanel .driver-kicker,
+  #driverPanel .driver-story-label {
+    font-size: 10px;
+  }
+
+  #driverPanel .driver-identity-card h2 {
+    margin: 3px 0 8px;
+    font-size: 30px;
+  }
+
+  #driverPanel .driver-badges {
+    gap: 5px;
+  }
+
+  #driverPanel .driver-badges span {
+    padding: 6px 8px;
+    border-radius: 10px;
+    font-size: 12px;
+  }
+
+  #driverPanel .driver-story-stack {
+    height: auto;
+    min-height: 0;
+    display: grid;
+    grid-template-rows: repeat(3, auto);
+    gap: 8px;
+  }
+
+  #driverPanel .driver-story-card {
+    min-height: 0;
+    padding: 11px 14px;
+    display: block;
+    border-radius: 16px;
+  }
+
+  #driverPanel .driver-story-card strong {
+    margin-top: 3px;
+    font-size: 22px;
+    line-height: 1.05;
+  }
+
+  #driverPanel .driver-story-card p {
+    margin-top: 4px;
+    font-size: 13px;
+    line-height: 1.25;
+  }
+}
+
+/* Older rear-seat iPads can report a narrow CSS width even in landscape.
+   Keep the profile two-column and compact there too. */
+@media (orientation: landscape) and (max-height: 850px) and (max-width: 900px) {
+  #driverPanel .driver-profile-grid {
+    grid-template-columns: 210px minmax(0, 1fr);
+  }
+
+  #driverPanel .driver-photo-frame {
+    width: 140px;
+  }
+
+  #driverPanel .driver-story-card strong {
+    font-size: 20px;
+  }
+
+  #driverPanel .driver-story-card p {
+    font-size: 12.5px;
+  }
+}
