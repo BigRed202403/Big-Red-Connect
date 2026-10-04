@@ -42,6 +42,10 @@
 
 .rider-music-overlay{position:fixed;inset:0;z-index:180;display:none;background:#050505;color:#fff;padding:max(18px,env(safe-area-inset-top)) max(18px,env(safe-area-inset-right)) max(18px,env(safe-area-inset-bottom)) max(18px,env(safe-area-inset-left));overflow:auto}
 .rider-music-overlay.show{display:flex;align-items:center;justify-content:center}
+.music-request-alert-banner{position:fixed;z-index:220;top:max(78px,calc(env(safe-area-inset-top) + 60px));left:50%;transform:translate(-50%,-14px);width:min(520px,calc(100% - 24px));padding:14px 16px;border:2px solid var(--red);border-radius:14px;background:#0b0b0b;color:#fff;box-shadow:0 16px 42px rgba(0,0,0,.7);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;text-align:left;cursor:pointer}
+.music-request-alert-banner.show{opacity:1;pointer-events:auto;transform:translate(-50%,0)}
+.music-request-alert-banner strong{display:block;font-size:1.05rem}
+.music-request-alert-banner span{display:block;margin-top:4px;color:#ddd;font-size:.9rem}
 .rider-music-card{width:min(900px,100%);background:linear-gradient(180deg,#141414,#0a0a0a);border:1px solid #3a3a3a;border-radius:24px;padding:22px;box-shadow:0 30px 90px #000}
 .rider-music-head{display:flex;align-items:flex-start;gap:14px;margin-bottom:18px}
 .rider-music-head img{width:54px;height:54px;object-fit:contain;border-radius:10px}
@@ -174,6 +178,10 @@ body.rider-music-open{overflow:hidden}
   </main>
 </div>
 
+<button class="music-request-alert-banner" id="musicRequestAlertBanner" type="button" aria-label="Dismiss music request alert">
+  <strong>🎵 Music request received</strong>
+  <span id="musicRequestAlertDetail"></span>
+</button>
 
 <div class="rider-music-overlay" id="riderMusicOverlay" aria-hidden="true">
   <div class="rider-music-card" role="dialog" aria-modal="true" aria-labelledby="riderMusicTitle">
@@ -440,15 +448,18 @@ function renderDispatch(){let rides=state.scope==='all'?state.bookings:state.boo
 async function loadBookings(){try{const data=await jsonFetch(`${API.bookings}/api/driver/bookings?scope=${state.scope}&t=${Date.now()}`,{},'bookings');state.bookings=Array.isArray(data)?data:[];renderDispatch();renderRideGlance()}catch{toast('Dispatch sync failed')}}
 async function updateRide(id,status){try{await jsonFetch(`${API.bookings}/api/driver/bookings/${encodeURIComponent(id)}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({status})},'bookings');toast('Ride updated');loadBookings()}catch{toast('Ride update failed')}}
 
-const ALERT_PREF='brccMusicRequestAlertEnabled',ALERT_LAST='brccMusicRequestLastAlertId';let alertContext=null,alertArmed=false,pendingMusicAlert=null;
+const ALERT_PREF='brccMusicRequestAlertEnabled',ALERT_LAST='brccMusicRequestLastAlertId',ALERT_VISUAL_LAST='brccMusicRequestLastVisualId';let alertContext=null,alertArmed=false,pendingMusicAlert=null;
 function alertPreference(){return localStorage.getItem(ALERT_PREF)==='true'}
 function renderAlertToggle(){const on=alertPreference(),b=$('musicAlertToggle');b.setAttribute('aria-pressed',String(on));b.textContent=on?(alertArmed?'🔊 Alert ON':'🔊 ON • tap to arm'):'🔇 Alert OFF';$('musicAlertHint').textContent=on?(alertArmed?'New music requests will chime and speak once.':'Sound is enabled; tap once anywhere to arm iPad audio.'):'Requests remain visual only. Other system alerts are unchanged.'}
+function musicRequestLabel(item){return item?.kind==='specific'?(item.detail||'Specific song or artist'):(item?.choice||'Playlist request')}
+function showMusicRequestBanner(item){const banner=$('musicRequestAlertBanner'),detail=$('musicRequestAlertDetail');if(!banner||!detail)return;detail.textContent=musicRequestLabel(item);banner.classList.add('show');clearTimeout(showMusicRequestBanner.hideTimer);showMusicRequestBanner.hideTimer=setTimeout(()=>banner.classList.remove('show'),8000)}
+function maybeShowMusicRequestBanner(item){if(!item||item.status!=='PENDING'||!item.id)return;const requestId=String(item.id);if(sessionStorage.getItem(ALERT_VISUAL_LAST)===requestId)return;sessionStorage.setItem(ALERT_VISUAL_LAST,requestId);showMusicRequestBanner(item)}
 async function armMusicAudio(){if(!alertPreference())return false;try{alertContext=alertContext||new (window.AudioContext||window.webkitAudioContext)();await alertContext.resume();alertArmed=alertContext.state==='running';renderAlertToggle();if(alertArmed&&pendingMusicAlert){const item=pendingMusicAlert;pendingMusicAlert=null;localStorage.setItem(ALERT_LAST,String(item.id));playChime(true)}return alertArmed}catch{return false}}
 function setAlertPreference(){const next=!alertPreference();localStorage.setItem(ALERT_PREF,String(next));if(next){armMusicAudio().then(ok=>{if(ok)playChime(false);toast(ok?'Music request sound on':'Sound on — tap once to arm')})}else{alertArmed=false;toast('Music request sound off')}renderAlertToggle()}
 function playChime(speak=true){if(!alertPreference()||!alertArmed||!alertContext)return;const now=alertContext.currentTime;[659.25,880].forEach((f,i)=>{const o=alertContext.createOscillator(),g=alertContext.createGain();o.frequency.value=f;o.type='sine';g.gain.setValueAtTime(.0001,now+i*.16);g.gain.exponentialRampToValueAtTime(.16,now+i*.16+.02);g.gain.exponentialRampToValueAtTime(.0001,now+i*.16+.28);o.connect(g).connect(alertContext.destination);o.start(now+i*.16);o.stop(now+i*.16+.3)});if(speak&&'speechSynthesis'in window){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance('Music request received.');u.rate=.95;u.volume=1;setTimeout(()=>speechSynthesis.speak(u),380)}}
 function maybeAlertMusic(item){if(!item||item.status!=='PENDING'||!item.id||localStorage.getItem(ALERT_LAST)===String(item.id))return;if(!alertPreference()){localStorage.setItem(ALERT_LAST,String(item.id));return}if(!alertArmed){pendingMusicAlert=item;return}localStorage.setItem(ALERT_LAST,String(item.id));playChime(true)}
 function renderMusic(){const item=state.music,has=!!item,pending=item?.status==='PENDING',specific=item?.kind==='specific';$('musicState').textContent=!item?'No rider music request waiting.':specific?`Specific song / artist • ${item.status.toLowerCase()}`:`${item.choice||'Playlist request'} • ${item.status.toLowerCase()}`;$('musicDetail').textContent=specific?(item.detail||'Request details unavailable'):'';$('musicActions').hidden=!has;$('musicOpenBtn').hidden=!pending;$('musicOpenBtn').textContent=specific?'Open Song Request Shortcut':'Open Playlist Shortcut';$('musicPlayingBtn').hidden=!pending;$('musicDismissBtn').hidden=!pending;$('musicClearBtn').hidden=!has||pending;renderRideGlance()}
-async function pollMusic(){if(document.hidden)return;try{const data=await jsonFetch(`${API.music}/request?t=${Date.now()}`,{},'music');const item=data.request||null;maybeAlertMusic(item);state.music=item;renderMusic()}catch{$('musicState').textContent='Music request connection unavailable'}}
+async function pollMusic(){if(document.hidden)return;try{const data=await jsonFetch(`${API.music}/request?t=${Date.now()}`,{},'music');const item=data.request||null;maybeShowMusicRequestBanner(item);maybeAlertMusic(item);state.music=item;renderMusic()}catch{$('musicState').textContent='Music request connection unavailable'}}
 function openMusicShortcut(){const i=state.music;if(!i||i.status!=='PENDING')return;const specific=i.kind==='specific',name=specific?'Big Red Song Request':'Big Red Music',input=specific?(i.detail||''):(i.choice||'');location.href=`shortcuts://run-shortcut?name=${encodeURIComponent(name)}&input=text&text=${encodeURIComponent(input)}`}
 async function resolveMusic(status){if(!state.music)return;try{const d=await jsonFetch(`${API.music}/resolve`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:state.music.id,status})},'music');state.music=d.request||null;renderMusic();toast(`Request ${status.toLowerCase()}`)}catch{toast('Music request update failed')}}
 
@@ -757,6 +768,7 @@ async function checkHealth(){await Promise.allSettled([loadStatus(),loadBookings
 function wire(){
   $('notificationBtn').onclick=enableNotifications;$('modeToggleBtn').onclick=toggleMode;$('refreshBtn').onclick=()=>location.reload();$('saveStatusBtn').onclick=saveStatus;$('trackingBtn').onclick=toggleTracking;$('dispatchRefreshBtn').onclick=loadBookings;if($('healthRefreshBtn'))$('healthRefreshBtn').onclick=checkHealth;
   $('musicAlertToggle').onclick=setAlertPreference;$('musicOpenBtn').onclick=openMusicShortcut;$('musicPlayingBtn').onclick=()=>resolveMusic('PLAYING');$('musicDismissBtn').onclick=()=>resolveMusic('DISMISSED');$('musicClearBtn').onclick=()=>resolveMusic('CLEARED');
+  $('musicRequestAlertBanner').onclick=()=>$('musicRequestAlertBanner').classList.remove('show');
   $('openRiderMusicBtn').onclick=openRiderMusicOverlay;
   $('closeRiderMusicBtn').onclick=closeRiderMusicOverlay;
   $('riderChoiceGrid').onclick=e=>{const b=e.target.closest('[data-rider-choice]');if(b)submitRiderPlaylist(b.dataset.riderChoice,b)};
