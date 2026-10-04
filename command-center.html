@@ -18,74 +18,33 @@
 <style>
 :root{color-scheme:dark;--red:#d31212;--red2:#8d0909;--bg:#050505;--panel:#101010;--panel2:#171717;--line:#2a2a2a;--muted:#a4a4a4;--good:#32d583;--warn:#f7b84b;--bad:#ff5d5d;--touch:48px}
 *{box-sizing:border-box}html,body{min-height:100%;margin:0;background:var(--bg);color:#fff;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif;-webkit-text-size-adjust:100%}body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}button,input,select,textarea{font:inherit}button{touch-action:manipulation}.shell{min-height:100vh;display:flex;flex-direction:column}.topbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:12px;padding:10px 14px;background:rgba(5,5,5,.94);backdrop-filter:blur(18px);border-bottom:1px solid #261010}.brand{display:flex;align-items:center;gap:10px;min-width:0}.brand img{width:44px;height:44px;object-fit:contain;border-radius:9px}.brand-copy{min-width:0}.brand-title{font-weight:850;letter-spacing:.02em;white-space:nowrap}.brand-sub{font-size:.72rem;color:var(--muted);white-space:nowrap}.top-actions{margin-left:auto;display:flex;gap:8px;align-items:center}.chip,.btn{min-height:var(--touch);border-radius:12px;border:1px solid #3a3a3a;background:#151515;color:#fff;padding:9px 12px;font-weight:750}.chip{display:inline-flex;align-items:center;gap:7px;font-size:.78rem;white-space:nowrap}.btn{cursor:pointer;text-decoration:none}.btn:active{transform:scale(.985)}.btn.red{background:linear-gradient(180deg,#d51515,#9f0808);border-color:#ef3434}.btn.ghost{background:#090909}.btn.good{border-color:#16784d;color:#bff7da}.btn.warn{border-color:#805f1c;color:#ffe3a1}.btn.small{min-height:42px;padding:7px 10px;font-size:.78rem}.status-dot{width:8px;height:8px;border-radius:50%;background:#777;box-shadow:0 0 0 3px rgba(255,255,255,.05)}.status-dot.good{background:var(--good)}.status-dot.warn{background:var(--warn)}.status-dot.bad{background:var(--bad)}
-.workspace{display:grid;grid-template-columns:minmax(340px,.72fr) minmax(460px,1.28fr);gap:12px;padding:12px;max-width:1500px;width:100%;margin:0 auto}.control-column,.glance-column{display:flex;flex-direction:column;gap:12px;min-width:0}.admin-only{}.driver-only{}body.mode-driver .admin-only{display:none!important}body.mode-admin .driver-only{display:none!important}.dispatch-panel.dispatch-collapsed .dispatch-list{display:none}.dispatch-panel.dispatch-collapsed{padding-bottom:14px}.panel{background:linear-gradient(180deg,#121212,#0c0c0c);border:1px solid var(--line);border-radius:18px;padding:14px;box-shadow:0 12px 30px rgba(0,0,0,.2)}.panel h2{margin:0;font-size:.95rem;letter-spacing:.02em}.panel-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}.panel-head .right{margin-left:auto}.eyebrow{font-size:.68rem;color:#ff7d7d;text-transform:uppercase;letter-spacing:.14em;font-weight:850}.muted{color:var(--muted)}.fine{font-size:.73rem}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.stack{display:flex;flex-direction:column;gap:8px}.grow{flex:1 1 auto;min-width:0}.field{width:100%;min-height:46px;border:1px solid #383838;border-radius:11px;background:#090909;color:#fff;padding:10px 11px}.field:focus{outline:2px solid rgba(211,18,18,.45);border-color:var(--red)}textarea.field{min-height:100px;resize:vertical}.status-control{display:grid;grid-template-columns:1fr auto auto;gap:8px}.status-control select{min-width:0}.stat-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:10px}.stat{background:#090909;border:1px solid #262626;border-radius:12px;padding:9px}.stat b{display:block;font-size:.86rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.stat span{font-size:.67rem;color:var(--muted)}
+.workspace{display:grid;grid-template-columns:minmax(350px,.72fr) minmax(520px,1.28fr);gap:12px;padding:12px;max-width:1500px;width:100%;margin:0 auto}.control-column,.glance-column{display:flex;flex-direction:column;gap:12px;min-width:0}.panel{background:linear-gradient(180deg,#121212,#0c0c0c);border:1px solid var(--line);border-radius:18px;padding:14px;box-shadow:0 12px 30px rgba(0,0,0,.2)}.panel h2{margin:0;font-size:.95rem;letter-spacing:.02em}.panel-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}.panel-head .right{margin-left:auto}.eyebrow{font-size:.68rem;color:#ff7d7d;text-transform:uppercase;letter-spacing:.14em;font-weight:850}.muted{color:var(--muted)}.fine{font-size:.73rem}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.stack{display:flex;flex-direction:column;gap:8px}.grow{flex:1 1 auto;min-width:0}.field{width:100%;min-height:46px;border:1px solid #383838;border-radius:11px;background:#090909;color:#fff;padding:10px 11px}.field:focus{outline:2px solid rgba(211,18,18,.45);border-color:var(--red)}textarea.field{min-height:100px;resize:vertical}.status-control{display:grid;grid-template-columns:1fr auto auto;gap:8px}.status-control select{min-width:0}.stat-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:10px}.stat{background:#090909;border:1px solid #262626;border-radius:12px;padding:9px}.stat b{display:block;font-size:.86rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.stat span{font-size:.67rem;color:var(--muted)}
 .ride-pair{display:grid;grid-template-columns:1fr 1fr;gap:9px}.ride-summary{background:#090909;border:1px solid #292929;border-radius:14px;padding:11px;min-height:118px}.ride-summary.current{border-color:#6e1515}.ride-summary .label{font-size:.65rem;letter-spacing:.12em;color:#ff8585;text-transform:uppercase;font-weight:850}.ride-summary .name{font-size:.95rem;font-weight:850;margin:6px 0}.route{font-size:.76rem;color:#d8d8d8;line-height:1.35}.route div{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .music-card{border-color:#4c1c1c;background:radial-gradient(circle at 100% 0,rgba(211,18,18,.11),transparent 44%),linear-gradient(180deg,#141111,#0c0c0c)}.music-request{display:flex;gap:12px;align-items:flex-start}.music-icon{width:48px;height:48px;border-radius:13px;display:grid;place-items:center;background:#260909;border:1px solid #6b1717;font-size:1.35rem;flex:0 0 auto}.request-title{font-weight:850}.request-detail{font-size:.82rem;margin-top:3px;color:#ddd;white-space:pre-wrap}.alert-toggle[aria-pressed="true"]{border-color:#158657;color:#c6ffe1}.alert-toggle[aria-pressed="false"]{border-color:#653434;color:#ffb4b4}.request-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:11px}
 .quick-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}.quick{min-height:64px;display:flex;flex-direction:column;gap:3px;align-items:flex-start;justify-content:center;text-align:left;padding:9px}.quick strong{font-size:.76rem}.quick span{font-size:.65rem;color:var(--muted)}
 .dispatch-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}.dispatch-tabs{display:flex;gap:6px;margin-left:auto}.tab{min-height:38px;border-radius:10px;padding:6px 9px;font-size:.73rem}.tab.active{background:#321010;border-color:#9b2020}.dispatch-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;max-height:410px;overflow:auto;padding-right:2px}.ride-card{background:#090909;border:1px solid #292929;border-radius:13px;padding:10px}.ride-card.requested{border-color:#7b2424}.ride-top{display:flex;gap:6px;justify-content:space-between}.ride-name{font-size:.83rem;font-weight:850}.badge{font-size:.61rem;border:1px solid #4b4b4b;border-radius:999px;padding:3px 7px;white-space:nowrap}.ride-meta{font-size:.7rem;color:#bbb;margin-top:6px;line-height:1.35}.ride-card select{width:100%;min-height:40px;margin-top:8px}.empty{padding:18px;color:#777;text-align:center;border:1px dashed #303030;border-radius:12px;grid-column:1/-1}
 .audio-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.audio-grid .btn{font-size:.72rem;line-height:1.12;min-height:52px;padding:7px}.lang-toggle{display:flex;gap:6px;margin-left:auto}.lang-toggle .active{background:#771010;border-color:#d32a2a}
-.preview-frame{position:relative;aspect-ratio:4/3;min-height:420px;background:#000;border:1px solid #333;border-radius:14px;overflow:hidden}.slide-layer{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;opacity:0;transition:opacity 1.2s ease;pointer-events:none}.slide-layer.active{opacity:1}.preview-shield{position:absolute;inset:0;background:linear-gradient(180deg,transparent 78%,rgba(0,0,0,.72));pointer-events:none}.preview-label{position:absolute;left:9px;bottom:8px;font-size:.66rem;background:rgba(0,0,0,.72);border:1px solid #444;border-radius:999px;padding:4px 8px}.preview-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:9px}.preview-tools-toggle{margin-top:10px;width:100%;display:flex;justify-content:flex-end}.preview-tools-wrap{margin-top:8px}.preview-tools-wrap.hidden{display:none!important}.preview-file-name{flex:1 1 160px;min-width:0;font-size:.68rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.health-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.health-item{display:flex;gap:8px;align-items:center;background:#090909;border:1px solid #292929;border-radius:12px;padding:9px}.health-copy{min-width:0}.health-copy b{display:block;font-size:.75rem}.health-copy span{display:block;font-size:.64rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.context-overlay{background:#090909;border:1px solid #292929;border-left:3px solid var(--red);border-radius:12px;padding:11px}.context-overlay b{font-size:.78rem}.context-overlay p{font-size:.72rem;color:#bbb;margin:4px 0 0}
+.preview-frame{position:relative;aspect-ratio:16/10;background:#000;border:1px solid #333;border-radius:14px;overflow:hidden}.preview-frame iframe,.preview-frame video{width:100%;height:100%;border:0;pointer-events:none;transform:translateZ(0)}.preview-frame video{object-fit:contain;background:#000}.preview-shield{position:absolute;inset:0;background:linear-gradient(180deg,transparent 75%,rgba(0,0,0,.75));pointer-events:none}.preview-label{position:absolute;left:9px;bottom:8px;font-size:.66rem;background:rgba(0,0,0,.72);border:1px solid #444;border-radius:999px;padding:4px 8px}.preview-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:9px}.preview-file-name{flex:1 1 160px;min-width:0;font-size:.68rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.health-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.health-item{display:flex;gap:8px;align-items:center;background:#090909;border:1px solid #292929;border-radius:12px;padding:9px}.health-copy{min-width:0}.health-copy b{display:block;font-size:.75rem}.health-copy span{display:block;font-size:.64rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.context-overlay{background:#090909;border:1px solid #292929;border-left:3px solid var(--red);border-radius:12px;padding:11px}.context-overlay b{font-size:.78rem}.context-overlay p{font-size:.72rem;color:#bbb;margin:4px 0 0}
 .drawer{position:fixed;inset:0;z-index:100;display:none;background:rgba(0,0,0,.74);padding:12px;align-items:center;justify-content:center}.drawer.show{display:flex}.drawer-card{width:min(760px,100%);max-height:calc(100vh - 24px);overflow:auto;background:#0c0c0c;border:1px solid #3a3a3a;border-radius:18px;padding:15px;box-shadow:0 24px 80px #000}.drawer-head{position:sticky;top:-15px;z-index:2;background:#0c0c0c;padding:10px 0 12px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #272727;margin-bottom:12px}.drawer-head h2{margin:0;font-size:1rem}.drawer-head button{margin-left:auto}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.span2{grid-column:1/-1}.estimate{font-size:.75rem;line-height:1.45;background:#080808;border:1px solid #303030;border-radius:12px;padding:10px;white-space:pre-line}.toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));z-index:200;transform:translate(-50%,20px);opacity:0;pointer-events:none;background:#151515;border:1px solid #7e1717;border-radius:999px;padding:10px 16px;font-size:.78rem;transition:.22s}.toast.show{opacity:1;transform:translate(-50%,0)}
-/* Command Center section collapse */
-.workspace .panel>.panel-head,
-.workspace .panel>.dispatch-head{cursor:pointer;user-select:none}
-.section-collapse-toggle{flex:0 0 auto;min-width:34px;width:34px;height:34px;border:1px solid #444;border-radius:10px;background:#111;color:#ddd;font-size:1rem;line-height:1;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
-.section-collapse-toggle:active{transform:scale(.96)}
-.section-collapse-toggle .chev{display:inline-block;transition:transform .16s ease}
-.workspace .panel.section-collapsed .section-collapse-toggle .chev{transform:rotate(-90deg)}
-.section-collapse-body{overflow:visible}
-.workspace .panel.section-collapsed>.section-collapse-body{display:none!important}
-.workspace .panel.section-collapsed{padding-bottom:12px}
-.workspace .panel.section-collapsed>.panel-head,
-.workspace .panel.section-collapsed>.dispatch-head{margin-bottom:0}
-#dispatchCollapseBtn{display:none!important}
-
-.rider-music-overlay{position:fixed;inset:0;z-index:180;display:none;background:#050505;color:#fff;padding:max(18px,env(safe-area-inset-top)) max(18px,env(safe-area-inset-right)) max(18px,env(safe-area-inset-bottom)) max(18px,env(safe-area-inset-left));overflow:auto}
-.rider-music-overlay.show{display:flex;align-items:center;justify-content:center}
-.rider-music-card{width:min(900px,100%);background:linear-gradient(180deg,#141414,#0a0a0a);border:1px solid #3a3a3a;border-radius:24px;padding:22px;box-shadow:0 30px 90px #000}
-.rider-music-head{display:flex;align-items:flex-start;gap:14px;margin-bottom:18px}
-.rider-music-head img{width:54px;height:54px;object-fit:contain;border-radius:10px}
-.rider-music-head h2{margin:0;font-size:1.45rem}
-.rider-music-head p{margin:5px 0 0;color:#aaa;font-size:.9rem}
-.rider-music-close{margin-left:auto}
-.rider-choice-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:16px 0 20px}
-.rider-choice{min-height:72px;border-radius:14px;border:1px solid #4a4a4a;background:#111;color:#fff;font-weight:800;padding:12px;cursor:pointer}
-.rider-choice:active{transform:scale(.985)}
-.rider-choice.requested{border-color:#e32b2b;background:#3b0b0b}
-.rider-song-box{border-top:1px solid #2c2c2c;padding-top:18px;margin-top:4px}
-.rider-song-row{display:grid;grid-template-columns:1fr auto;gap:10px;margin-top:9px}
-.rider-song-input{min-height:52px;border:1px solid #444;border-radius:12px;background:#080808;color:#fff;padding:12px 14px}
-.rider-request-status{min-height:24px;margin-top:14px;color:#d0d0d0;font-size:.9rem}
-.rider-request-status.good{color:#bff7da}
-.rider-request-status.bad{color:#ffb4b4}
-body.rider-music-open{overflow:hidden}
-@media(max-width:760px){.preview-frame{aspect-ratio:16/9;min-height:0}.rider-choice-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.rider-music-card{padding:16px}.rider-song-row{grid-template-columns:1fr}}
-
-@media(max-width:1050px){.workspace{grid-template-columns:minmax(310px,.74fr) minmax(380px,1.26fr)}.quick-grid{grid-template-columns:repeat(3,1fr)}.audio-grid{grid-template-columns:repeat(2,1fr)}.dispatch-list{grid-template-columns:1fr}.stat-strip{grid-template-columns:1fr 1fr}}
+@media(max-width:1050px){.workspace{grid-template-columns:minmax(330px,.78fr) minmax(400px,1.22fr)}.quick-grid{grid-template-columns:repeat(3,1fr)}.audio-grid{grid-template-columns:repeat(2,1fr)}.dispatch-list{grid-template-columns:1fr}.stat-strip{grid-template-columns:1fr 1fr}}
 @media(max-width:760px){.workspace{grid-template-columns:1fr;padding:8px}.glance-column{display:grid;grid-template-columns:1fr 1fr}.glance-column .panel:first-child{grid-column:1/-1}.topbar{padding:8px}.brand-sub{display:none}.top-actions .chip span.label{display:none}.ride-pair{grid-template-columns:1fr 1fr}.quick-grid{grid-template-columns:repeat(3,1fr)}.dispatch-list{grid-template-columns:1fr 1fr}}
 @media(max-width:560px){:root{--touch:46px}.brand-title{font-size:.9rem}.brand img{width:38px;height:38px}.workspace{padding:7px;gap:8px}.panel{padding:11px;border-radius:15px}.glance-column{display:flex}.status-control{grid-template-columns:1fr auto}.status-control .save-status{grid-column:1/-1}.ride-pair,.dispatch-list,.form-grid{grid-template-columns:1fr}.quick-grid{grid-template-columns:repeat(2,1fr)}.audio-grid{grid-template-columns:repeat(2,1fr)}.top-actions .fallback-link{display:none}}
 @media(max-width:390px){.brand-title{font-size:.82rem}.top-actions{gap:5px}.chip,.btn{padding:8px 9px}.quick-grid{grid-template-columns:1fr 1fr}.stat-strip{grid-template-columns:1fr 1fr}}
 </style>
 </head>
-<body class="mode-driver">
+<body>
 <div class="shell">
   <header class="topbar">
-    <div class="brand"><img src="Official Logo.png" alt="Big Red Connect"><div class="brand-copy"><div class="brand-title">Big Red Command Center</div><div class="brand-sub" id="modeSubtitle">Driver view • secure live console</div></div></div>
+    <div class="brand"><img src="Official Logo.png" alt="Big Red Connect"><div class="brand-copy"><div class="brand-title">Big Red Command Center</div><div class="brand-sub">Driver operations • secure live console</div></div></div>
     <div class="top-actions">
       <button class="chip" id="notificationBtn" type="button"><span>🔔</span><span class="label">Alerts</span></button>
-      <button class="chip" id="modeToggleBtn" type="button" aria-pressed="false"><span>🚗</span><span class="label">Driver</span></button>
-      <a class="chip fallback-link admin-only" href="/secure-admin/driver"><span>↩</span><span class="label">Fallback</span></a>
+      <a class="chip fallback-link" href="/secure-admin/driver"><span>↩</span><span class="label">Fallback</span></a>
       <button class="chip" id="refreshBtn" type="button"><span>↻</span><span class="label">Refresh</span></button>
     </div>
   </header>
 
   <main class="workspace">
     <div class="control-column">
-      <section class="panel">
-        <div class="panel-head"><div><div class="eyebrow">Driver audio</div><h2>Big Red Audio</h2></div><div class="lang-toggle"><button class="btn small active" data-lang="en">EN</button><button class="btn small" data-lang="es">ES</button></div></div>
-        <div class="audio-grid" id="audioGrid"></div><audio id="driverAudio" preload="auto"></audio>
-      </section>
-
       <section class="panel">
         <div class="panel-head"><div><div class="eyebrow">Operate</div><h2>Status, GPS & Alerts</h2></div><span class="right chip" id="statusReadout"><i class="status-dot bad"></i> Loading</span></div>
         <div class="status-control">
@@ -101,7 +60,12 @@ body.rider-music-open{overflow:hidden}
         </div>
       </section>
 
-      <section class="panel admin-only">
+      <section class="panel">
+        <div class="panel-head"><div><div class="eyebrow">Driver audio</div><h2>Big Red Audio</h2></div><div class="lang-toggle"><button class="btn small active" data-lang="en">EN</button><button class="btn small" data-lang="es">ES</button></div></div>
+        <div class="audio-grid" id="audioGrid"></div><audio id="driverAudio" preload="auto"></audio>
+      </section>
+
+      <section class="panel">
         <div class="panel-head"><div><div class="eyebrow">Ride glance</div><h2>Current & Next Ride</h2></div><button class="btn small ghost right" id="dispatchRefreshBtn" type="button">Refresh</button></div>
         <div class="ride-pair"><div class="ride-summary current" id="currentRide"></div><div class="ride-summary" id="nextRide"></div></div>
       </section>
@@ -112,7 +76,7 @@ body.rider-music-open{overflow:hidden}
         <div class="fine muted" id="musicAlertHint" style="margin-top:10px">Music-request sound is separate from all other alerts.</div>
       </section>
 
-      <section class="panel admin-only">
+      <section class="panel">
         <div class="panel-head"><div><div class="eyebrow">Fast access</div><h2>Quick Operations</h2></div></div>
         <div class="quick-grid">
           <button class="btn quick" data-open="liveMap"><strong>📍 Live Map</strong><span>Caption + post</span></button>
@@ -123,89 +87,30 @@ body.rider-music-open{overflow:hidden}
         </div>
       </section>
 
-      <section class="panel dispatch-panel" id="dispatchPanel">
-        <div class="dispatch-head">
-          <div><div class="eyebrow">Live queue</div><h2>Dispatch Board</h2></div>
-          <button class="btn small ghost right driver-only" id="dispatchCollapseBtn" type="button" aria-expanded="false">Show Rides ▸</button>
-          <div class="dispatch-tabs admin-only"><button class="btn tab active" data-scope="active">Active</button><button class="btn tab" data-scope="all">All</button></div>
-        </div>
+      <section class="panel">
+        <div class="dispatch-head"><div><div class="eyebrow">Live queue</div><h2>Dispatch Board</h2></div><div class="dispatch-tabs"><button class="btn tab active" data-scope="active">Active</button><button class="btn tab" data-scope="all">All</button></div></div>
         <div class="dispatch-list" id="dispatchList"><div class="empty">Loading dispatch…</div></div>
       </section>
+
     </div>
 
     <aside class="glance-column">
       <section class="panel">
-        <div class="panel-head"><div><div class="eyebrow">Weekly deck</div><h2>Discover Preview</h2></div><span class="right chip" id="discoverState"><i class="status-dot"></i> No slides</span></div>
-        <div class="preview-frame" id="slidePreviewFrame">
-          <img id="slideLayerA" class="slide-layer active" alt="Discover slide preview">
-          <img id="slideLayerB" class="slide-layer" alt="" aria-hidden="true">
-          <div class="preview-shield"></div>
-          <span class="preview-label" id="previewLabel">Load weekly slides</span>
-        </div>
-        <div class="preview-tools-toggle">
-          <button class="btn ghost small" id="previewToolsToggleBtn" type="button" aria-expanded="true">Slides ▾</button>
-        </div>
-        <div class="preview-tools-wrap" id="previewToolsWrap">
-          <div class="preview-controls">
-            <button class="btn red small" id="loadDiscoverPreviewBtn" type="button">Load Weekly Slides</button>
-            <span class="preview-file-name" id="discoverPreviewFile">No slide set selected</span>
-            <input id="discoverPreviewFileInput" type="file" accept="image/jpeg,image/png,image/webp" multiple hidden>
-          </div>
-          <p class="fine muted">Select all exported Keynote slide images at once. They are sorted automatically by the trailing slide number (for example .001 through .041), crossfade every 10 seconds, and loop continuously.</p>
-        </div>
+        <div class="panel-head"><div><div class="eyebrow">Rear tablet</div><h2>Discover Preview</h2></div><span class="right chip" id="discoverState"><i class="status-dot"></i> Checking</span></div>
+        <div class="preview-frame"><iframe id="discoverPreview" src="/discover/" title="Silent read-only Discover browser preview" tabindex="-1" aria-hidden="true"></iframe><video id="localDiscoverPreview" muted loop playsinline preload="metadata" hidden aria-label="Selected local Discover program preview"></video><div class="preview-shield"></div><span class="preview-label" id="previewLabel">Silent • browser preview</span></div>
+        <div class="preview-controls"><button class="btn red small" id="loadDiscoverPreviewBtn" type="button">Load Discover Preview</button><span class="preview-file-name" id="discoverPreviewFile">No local program selected</span><input id="discoverPreviewFileInput" type="file" accept="video/*,.mov,.mp4" hidden></div>
+        <p class="fine muted">Select the same weekly movie from the shared iCloud Files folder. It plays silently and loops on this iPad; the rear iPad remains independent.</p>
       </section>
-
-      <section class="panel driver-only">
-        <div class="panel-head"><div><div class="eyebrow">Rider side</div><h2>Music Request</h2></div></div>
-        <button class="btn red" id="openRiderMusicBtn" type="button" style="width:100%;min-height:64px;font-size:1rem">🎵 Let a Rider Request Music</button>
-        <p class="fine muted" style="margin:10px 0 0">Opens the rider-safe request screen while driver controls stay hidden.</p>
-      </section>
-
-      <section class="panel admin-only">
+      <section class="panel">
         <div class="panel-head"><div><div class="eyebrow">Ride context</div><h2>Glance Notes</h2></div></div>
         <div class="stack" id="contextNotes"><div class="context-overlay"><b>No active trip context yet</b><p>Ride-aware notes appear after dispatch loads.</p></div></div>
       </section>
-
-      <section class="panel admin-only">
+      <section class="panel">
         <div class="panel-head"><div><div class="eyebrow">Connections</div><h2>System Health</h2></div><button class="btn small ghost right" id="healthRefreshBtn">Check</button></div>
         <div class="health-grid" id="healthGrid"></div>
       </section>
     </aside>
   </main>
-</div>
-
-
-<div class="rider-music-overlay" id="riderMusicOverlay" aria-hidden="true">
-  <div class="rider-music-card" role="dialog" aria-modal="true" aria-labelledby="riderMusicTitle">
-    <div class="rider-music-head">
-      <img src="Official Logo.png" alt="Big Red Connect">
-      <div>
-        <div class="eyebrow">Your ride • your music</div>
-        <h2 id="riderMusicTitle">Request Music</h2>
-        <p>Pick a playlist vibe or ask for a specific song or artist.</p>
-      </div>
-      <button class="btn ghost rider-music-close" id="closeRiderMusicBtn" type="button">Back to Big Red</button>
-    </div>
-
-    <div class="rider-choice-grid" id="riderChoiceGrid">
-      <button class="rider-choice" type="button" data-rider-choice="Country">🤠 Country</button>
-      <button class="rider-choice" type="button" data-rider-choice="Campus Nights">🎓 Campus Nights</button>
-      <button class="rider-choice" type="button" data-rider-choice="Throwbacks">📼 Throwbacks</button>
-      <button class="rider-choice" type="button" data-rider-choice="Christian">✨ Christian</button>
-      <button class="rider-choice" type="button" data-rider-choice="Chill">🌙 Chill</button>
-      <button class="rider-choice" type="button" data-rider-choice="Rider Requests">🎶 Rider Requests</button>
-    </div>
-
-    <div class="rider-song-box">
-      <div class="eyebrow">Specific song or artist</div>
-      <div class="rider-song-row">
-        <input class="rider-song-input" id="riderSongInput" type="text" maxlength="120" autocomplete="off" placeholder="Type a song, artist, or both">
-        <button class="btn red" id="submitRiderSongBtn" type="button">Send Request</button>
-      </div>
-    </div>
-
-    <div class="rider-request-status" id="riderMusicStatus">Choose one option and I’ll send it to Big Red.</div>
-  </div>
 </div>
 
 <div class="drawer" id="liveMapDrawer"><div class="drawer-card"><div class="drawer-head"><h2>📍 Live Map</h2><button class="btn small" data-close>Close</button></div><div class="stack"><img id="liveImage" src="Official Logo.png" alt="Live Map image" style="width:100%;max-height:250px;object-fit:contain;background:#000;border-radius:12px"><div class="row"><button class="btn small ghost" id="prevImage">Previous Image</button><button class="btn small ghost" id="nextImage">Next Image</button></div><textarea class="field" id="liveCaption" placeholder="Live Map caption"></textarea><button class="btn red" id="postLiveBtn">Post to Live Map</button></div></div></div>
@@ -223,153 +128,6 @@ const API={status:'/secure-admin/status',location:'/secure-admin/location',post:
 const TZ='America/Chicago',HQ={lat:35.31810,lng:-97.49453},FRESH_MS=15*60*1000;
 const $=id=>document.getElementById(id);
 const state={status:'offline',tracking:localStorage.getItem('trackingEnabled')==='true',bookings:[],scope:'active',music:null,audioLang:localStorage.getItem('bigRedAudioLanguage')||'en',health:{},gpsTimer:null,estimate:null};
-const MODE_KEY='bigRedCommandCenterMode';
-const DRIVER_DISPATCH_COLLAPSE_KEY='bigRedDriverDispatchCollapsed';
-function driverDispatchCollapsed(){return false}
-function applyDispatchVisibility(){
-  const panel=$('dispatchPanel');
-  const list=$('dispatchList');
-  if(panel)panel.classList.remove('dispatch-collapsed');
-  if(list)list.hidden=false;
-}
-function toggleDriverDispatch(){}
-function currentMode(){return document.body.classList.contains('mode-admin')?'admin':'driver'}
-const SECTION_COLLAPSE_PREFIX='bigRedSectionCollapse';
-const PREVIEW_TOOLS_KEY='bigRedDiscoverPreviewToolsCollapsed';
-
-function previewToolsCollapsed(){
-  return localStorage.getItem(PREVIEW_TOOLS_KEY)==='true';
-}
-
-function applyPreviewToolsState(){
-  const wrap=$('previewToolsWrap');
-  const btn=$('previewToolsToggleBtn');
-  if(!wrap||!btn)return;
-  const collapsed=previewToolsCollapsed();
-  wrap.classList.toggle('hidden',collapsed);
-  btn.setAttribute('aria-expanded',String(!collapsed));
-  btn.textContent=collapsed?'Slides ▸':'Slides ▾';
-  btn.title=collapsed?'Show slide loading controls':'Hide slide loading controls';
-}
-
-function togglePreviewTools(){
-  localStorage.setItem(PREVIEW_TOOLS_KEY,String(!previewToolsCollapsed()));
-  applyPreviewToolsState();
-}
-
-
-function sectionKey(panel,index){
-  if(panel.dataset.collapseKey)return panel.dataset.collapseKey;
-  const heading=panel.querySelector(':scope > .panel-head h2, :scope > .dispatch-head h2')?.textContent?.trim()||'section';
-  const eyebrow=panel.querySelector(':scope > .panel-head .eyebrow, :scope > .dispatch-head .eyebrow')?.textContent?.trim()||'';
-  const raw=panel.id||`${eyebrow}-${heading}-${index}`;
-  const key=raw.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
-  panel.dataset.collapseKey=key||`section-${index}`;
-  return panel.dataset.collapseKey;
-}
-
-function sectionStorageKey(panel){
-  return `${SECTION_COLLAPSE_PREFIX}:${currentMode()}:${panel.dataset.collapseKey}`;
-}
-
-function defaultSectionCollapsed(panel){
-  return currentMode()==='driver' && panel.id==='dispatchPanel';
-}
-
-function savedSectionCollapsed(panel){
-  const saved=localStorage.getItem(sectionStorageKey(panel));
-  if(saved===null)return defaultSectionCollapsed(panel);
-  return saved==='true';
-}
-
-function setSectionCollapsed(panel,collapsed,{save=true}={}){
-  panel.classList.toggle('section-collapsed',collapsed);
-  const btn=panel.querySelector(':scope > .panel-head .section-collapse-toggle, :scope > .dispatch-head .section-collapse-toggle');
-  if(btn){
-    btn.setAttribute('aria-expanded',String(!collapsed));
-    btn.title=collapsed?'Expand section':'Collapse section';
-    btn.setAttribute('aria-label',collapsed?'Expand section':'Collapse section');
-  }
-  if(save)localStorage.setItem(sectionStorageKey(panel),String(collapsed));
-}
-
-function toggleSection(panel){
-  setSectionCollapsed(panel,!panel.classList.contains('section-collapsed'));
-}
-
-function applySectionCollapseStates(){
-  document.querySelectorAll('.workspace .panel[data-collapse-key]').forEach(panel=>{
-    setSectionCollapsed(panel,savedSectionCollapsed(panel),{save:false});
-  });
-}
-
-function initCollapsibleSections(){
-  const panels=[...document.querySelectorAll('.workspace .panel')];
-  panels.forEach((panel,index)=>{
-    if(panel.dataset.collapseReady==='true')return;
-    const head=panel.querySelector(':scope > .panel-head, :scope > .dispatch-head');
-    if(!head)return;
-
-    sectionKey(panel,index);
-
-    const body=document.createElement('div');
-    body.className='section-collapse-body';
-    const nodes=[...panel.childNodes].filter(node=>node!==head);
-    nodes.forEach(node=>body.appendChild(node));
-    panel.appendChild(body);
-
-    const toggle=document.createElement('button');
-    toggle.type='button';
-    toggle.className='section-collapse-toggle';
-    toggle.innerHTML='<span class="chev">▾</span>';
-    toggle.setAttribute('aria-expanded','true');
-    toggle.setAttribute('aria-label','Collapse section');
-    toggle.title='Collapse section';
-
-    head.appendChild(toggle);
-
-    toggle.addEventListener('click',event=>{
-      event.preventDefault();
-      event.stopPropagation();
-      toggleSection(panel);
-    });
-
-    head.addEventListener('click',event=>{
-      if(event.target.closest('button,a,input,select,textarea,label'))return;
-      toggleSection(panel);
-    });
-
-    panel.dataset.collapseReady='true';
-  });
-
-  applySectionCollapseStates();
-}
-
-function applyMode(mode,{refresh=false}={}){
-  const next=mode==='admin'?'admin':'driver';
-  document.body.classList.toggle('mode-admin',next==='admin');
-  document.body.classList.toggle('mode-driver',next==='driver');
-  localStorage.setItem(MODE_KEY,next);
-  const btn=$('modeToggleBtn');
-  if(btn){
-    const driver=next==='driver';
-    btn.setAttribute('aria-pressed',String(!driver));
-    btn.innerHTML=driver?'<span>🚗</span><span class="label">Driver</span>':'<span>🛠</span><span class="label">Admin</span>';
-    btn.title=driver?'Switch to Admin view':'Switch to Driver view';
-  }
-  const subtitle=$('modeSubtitle');
-  if(subtitle) subtitle.textContent=next==='driver'?'Driver view • secure live console':'Admin view • secure live console';
-  if(next==='driver'){
-    state.scope='active';
-    document.querySelectorAll('[data-scope]').forEach(b=>b.classList.toggle('active',b.dataset.scope==='active'));
-    renderDispatch();
-  }
-  applyDispatchVisibility();
-  applySectionCollapseStates();
-  if(refresh) loadBookings();
-}
-function toggleMode(){applyMode(currentMode()==='driver'?'admin':'driver',{refresh:true})}
-
 const healthNames={status:'Status',location:'GPS service',bookings:'Dispatch',music:'Music requests',ticker:'Ticker',discover:'Discover preview'};
 function toast(message){const el=$('toast');el.textContent=message;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2200)}
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
@@ -384,7 +142,8 @@ async function enableNotifications(){window.OneSignalDeferred.push(async OneSign
 
 function renderStatus(){const online=state.status==='online',away=state.status==='away';$('statusSelect').value=state.status;const read=$('statusReadout');read.innerHTML=`<i class="status-dot ${online?'good':away?'warn':'bad'}"></i>${online?'On the Road':away?'Limited':'Offline'}`;$('trackingBtn').textContent=state.tracking?'📡 GPS ON':'📡 GPS OFF';$('trackingBtn').classList.toggle('good',state.tracking);$('gpsText').textContent=state.tracking?'Tracking armed':'Not tracking'}
 async function loadStatus(){try{const data=await jsonFetch(`${API.status}/status?t=${Date.now()}`,{},'status');state.status=data.status||'offline';$('vehicleText').textContent=data.vehicle?.label||data.vehicle?.name||'Black Acadia';renderStatus();state.lastStatus=data;await loadLocation()}catch(e){toast('Status connection failed')}}
-async function saveStatus(){try{await jsonFetch(`${API.status}/status`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:$('statusSelect').value,online:$('statusSelect').value==='online',message:$('statusSelect').value==='online'?'On the Road':$('statusSelect').value==='away'?'Limited Availability':'Offline'})},'status');state.status=$('statusSelect').value;renderStatus();manageGps();toast('Status saved')}catch{toast('Status save failed')}}
+async function autoOnlinePush(){return jsonFetch(API.push,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'broadcast',title:'Big Red is LIVE',message:'🚗 Big Red Connect is LIVE across the metro — text RED to 405-378-4024 for a flat-rate connection.',url:'https://BigRedConnectOKC.com',filters:[{field:'tag',key:'env',value:'live'}]})})}
+async function saveStatus(){const newStatus=$('statusSelect').value;const wasOnline=state.status==='online';try{await jsonFetch(`${API.status}/status`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:newStatus,online:newStatus==='online',message:newStatus==='online'?'On the Road':newStatus==='away'?'Limited Availability':'Offline'})},'status');state.status=newStatus;renderStatus();manageGps();if(!wasOnline&&newStatus==='online'){try{await autoOnlinePush();toast('Status saved • rider alert sent')}catch{toast('Status saved • push failed')}}else{toast('Status saved')}}catch{toast('Status save failed')}}
 async function loadLocation(){try{const d=await jsonFetch(`${API.location}?t=${Date.now()}`,{},'location');const ts=d.updated||d.timestamp||d.lastUpdated;const fresh=ts&&Date.now()-Date.parse(ts)<FRESH_MS;$('gpsText').textContent=state.tracking?(fresh?`Fresh ${fmt(ts)}`:'Waiting for fresh GPS'):'Not tracking'}catch{$('gpsText').textContent=state.tracking?'GPS unavailable':'Not tracking'}}
 function toggleTracking(){state.tracking=!state.tracking;localStorage.setItem('trackingEnabled',String(state.tracking));renderStatus();manageGps();toast(state.tracking?'GPS tracking on':'GPS tracking off')}
 function manageGps(){if(state.gpsTimer){clearInterval(state.gpsTimer);state.gpsTimer=null}if(!state.tracking||!['online','away'].includes(state.status))return;sendGps();state.gpsTimer=setInterval(sendGps,60000)}
@@ -409,107 +168,6 @@ function renderMusic(){const item=state.music,has=!!item,pending=item?.status===
 async function pollMusic(){if(document.hidden)return;try{const data=await jsonFetch(`${API.music}/request?t=${Date.now()}`,{},'music');const item=data.request||null;maybeAlertMusic(item);state.music=item;renderMusic()}catch{$('musicState').textContent='Music request connection unavailable'}}
 function openMusicShortcut(){const i=state.music;if(!i||i.status!=='PENDING')return;const specific=i.kind==='specific',name=specific?'Big Red Song Request':'Big Red Music',input=specific?(i.detail||''):(i.choice||'');location.href=`shortcuts://run-shortcut?name=${encodeURIComponent(name)}&input=text&text=${encodeURIComponent(input)}`}
 async function resolveMusic(status){if(!state.music)return;try{const d=await jsonFetch(`${API.music}/resolve`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:state.music.id,status})},'music');state.music=d.request||null;renderMusic();toast(`Request ${status.toLowerCase()}`)}catch{toast('Music request update failed')}}
-
-const RIDER_PLAYLIST_CHOICES=new Set(['Country','Campus Nights','Throwbacks','Christian','Chill','Rider Requests']);
-let riderRequestBusy=false;
-let riderOverlayCloseTimer=null;
-
-function setRiderMusicStatus(message,type=''){
-  const el=$('riderMusicStatus');
-  if(!el)return;
-  el.textContent=message;
-  el.classList.remove('good','bad');
-  if(type)el.classList.add(type);
-}
-
-function openRiderMusicOverlay(){
-  if(riderOverlayCloseTimer){clearTimeout(riderOverlayCloseTimer);riderOverlayCloseTimer=null}
-  const overlay=$('riderMusicOverlay');
-  if(!overlay)return;
-  overlay.classList.add('show');
-  overlay.setAttribute('aria-hidden','false');
-  document.body.classList.add('rider-music-open');
-  document.querySelectorAll('[data-rider-choice]').forEach(b=>b.classList.remove('requested'));
-  $('riderSongInput').value='';
-  setRiderMusicStatus('Choose one option and I’ll send it to Big Red.');
-}
-
-function closeRiderMusicOverlay(){
-  if(riderOverlayCloseTimer){clearTimeout(riderOverlayCloseTimer);riderOverlayCloseTimer=null}
-  const overlay=$('riderMusicOverlay');
-  if(!overlay)return;
-  overlay.classList.remove('show');
-  overlay.setAttribute('aria-hidden','true');
-  document.body.classList.remove('rider-music-open');
-}
-
-function lockRiderMusicControls(locked){
-  document.querySelectorAll('[data-rider-choice]').forEach(b=>b.disabled=locked);
-  $('riderSongInput').disabled=locked;
-  $('submitRiderSongBtn').disabled=locked;
-}
-
-async function createRiderMusicRequest(payload,selectedButton=null){
-  if(riderRequestBusy)return;
-  riderRequestBusy=true;
-  lockRiderMusicControls(true);
-  setRiderMusicStatus('Sending your request to Big Red…');
-
-  try{
-    const response=await fetch(`${API.music}/request`,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(payload),
-      cache:'no-store'
-    });
-    let result={};
-    try{result=await response.json()}catch{}
-
-    if(response.status===409){
-      const waiting=result?.request;
-      const waitingLabel=waiting?.kind==='specific'
-        ? (waiting.detail||'another song request')
-        : (waiting?.choice||'another music request');
-      setRiderMusicStatus(`Big Red already has a request waiting: ${waitingLabel}.`,'bad');
-      return;
-    }
-
-    if(!response.ok||!result?.ok)throw new Error(result?.error||`Request failed (${response.status})`);
-
-    if(selectedButton)selectedButton.classList.add('requested');
-    state.music=result.request||null;
-    renderMusic();
-
-    const label=payload.kind==='specific'
-      ? (payload.detail||'Song request')
-      : (payload.choice||'Music request');
-    setRiderMusicStatus(`${label} sent to Big Red. Thanks!`,'good');
-
-    riderOverlayCloseTimer=setTimeout(closeRiderMusicOverlay,2600);
-  }catch(error){
-    console.info('Front rider music request failed.',error);
-    setRiderMusicStatus('That request could not send right now. Please ask Big Red directly.','bad');
-  }finally{
-    riderRequestBusy=false;
-    lockRiderMusicControls(false);
-  }
-}
-
-function submitRiderPlaylist(choice,button){
-  if(!RIDER_PLAYLIST_CHOICES.has(choice))return;
-  createRiderMusicRequest({kind:'playlist',choice},button);
-}
-
-function submitRiderSpecific(){
-  const detail=$('riderSongInput').value.trim();
-  if(!detail){
-    setRiderMusicStatus('Type a song or artist first.','bad');
-    $('riderSongInput').focus();
-    return;
-  }
-  createRiderMusicRequest({kind:'specific',detail});
-}
-
 
 const AUDIO={en:{welcome:'Welcome%20Aboard%202.MOV',welcomeBack:'Welcome%20Back.mov',airportWelcome:'Airport%20Welcome%20Aboard.MOV',who:'Who%20Is%20Big%20Red%20Connect.mov',why:'Why%20Choose%20Red%3F.MOV',think:'Think%20Big%20Red.MOV',save:'Save%20To%20Home%20Screen.MOV',nextStop:'Next%20Stop.mov',continueJourney:'Continue%20Journey.mov',airportArrive:'Airport%20Arrival.MOV',arrival:'Destination%20Arrival%202.MOV'},es:{welcome:'%F0%9F%87%B2%F0%9F%87%BD%201.%20Bienvenida%20%E2%80%94%20Welcome%20Aboard.mov',welcomeBack:'%F0%9F%87%B2%F0%9F%87%BD%2011.%20Bienvenidos%20de%20Nuevo%20%E2%80%94%20Welcome%20Back.mov',airportWelcome:'%F0%9F%87%B2%F0%9F%87%BD%205.%20Bienvenida%20desde%20el%20Aeropuerto%20%E2%80%94%20Airport%20Welcome%20Aboard.mov',who:'%F0%9F%87%B2%F0%9F%87%BD%2010.%20%C2%BFQuie%CC%81n%20es%20Big%20Red%3F%20%E2%80%94%20Who%20Is%20Big%20Red.mov',why:'%F0%9F%87%B2%F0%9F%87%BD%209.%20%C2%BFPor%20que%CC%81%20elegir%20Big%20Red%3F%20%E2%80%94%20Why%20Choose%20Red.mov',think:'%F0%9F%87%B2%F0%9F%87%BD%208.%20Piensa%20en%20Big%20Red%20%E2%80%94%20Think%20Big%20Red.mov',save:'%F0%9F%87%B2%F0%9F%87%BD%207.%20Guardar%20en%20la%20Pantalla%20de%20Inicio%20%E2%80%94%20Save%20to%20Home%20Screen.mov',nextStop:'%F0%9F%87%B2%F0%9F%87%BD%202.%20Pro%CC%81xima%20Parada%20%E2%80%94%20Next%20Stop.mov',continueJourney:'%F0%9F%87%B2%F0%9F%87%BD%203.%20Continuamos%20el%20Viaje%20%E2%80%94%20Continue%20Journey.mov',airportArrive:'%F0%9F%87%B2%F0%9F%87%BD%206.%20Llegada%20al%20Aeropuerto%20%E2%80%94%20Airport%20Arrival.mov',arrival:'%F0%9F%87%B2%F0%9F%87%BD%204.%20Llegada%20al%20Destino%20%E2%80%94%20Destination%20Arrival.mov'}};
 const audioButtons=[['welcome','Welcome Aboard'],['welcomeBack','Welcome Back'],['airportWelcome','Airport Welcome'],['who','Who Is Big Red?'],['why','Why Choose Red?'],['save','Save to Home'],['think','Think Big Red'],['nextStop','Next Stop'],['continueJourney','Continue Journey'],['airportArrive','Airport Arrival'],['arrival','End Ride']];
@@ -537,201 +195,34 @@ function initAutocomplete(){if(!(window.google&&google.maps&&google.maps.places)
 
 function openDrawer(name){closeDrawers();$(`${name}Drawer`).classList.add('show');if(name==='liveMap')loadLiveMap();if(name==='ticker')loadTicker()}
 function closeDrawers(){document.querySelectorAll('.drawer').forEach(d=>d.classList.remove('show'))}
-
-const slidePreview={files:[],urls:[],index:0,timer:null,activeLayer:'A'};
-const SLIDE_INTERVAL_MS=10000;
-const SLIDE_DB_NAME='BigRedCommandCenter';
-const SLIDE_DB_STORE='weeklySlides';
-const SLIDE_DB_KEY='currentDeck';
-
-function slideNumberFromName(name){
-  const s=String(name||'');
-  const match=s.match(/(?:^|[._\-\s])(\d{1,4})(?=\.[^.]+$|$)/);
-  if(match)return Number(match[1]);
-  const numbers=s.match(/\d+/g);
-  return numbers&&numbers.length?Number(numbers[numbers.length-1]):Number.MAX_SAFE_INTEGER;
+let localDiscoverObjectUrl='';
+function muteDiscover(){const local=$('localDiscoverPreview');if(local){local.muted=true;local.volume=0}try{const doc=$('discoverPreview').contentDocument;doc?.querySelectorAll('audio,video').forEach(m=>{m.muted=true;m.volume=0})}catch{}}
+function loadLocalDiscoverPreview(file){
+  if(!file)return;
+  if(!String(file.type||'').startsWith('video/')&&!/\.(mov|mp4|m4v)$/i.test(file.name||'')){toast('Choose a video file');return}
+  const video=$('localDiscoverPreview'),frame=$('discoverPreview');
+  if(localDiscoverObjectUrl)URL.revokeObjectURL(localDiscoverObjectUrl);
+  localDiscoverObjectUrl=URL.createObjectURL(file);
+  video.pause();video.src=localDiscoverObjectUrl;video.muted=true;video.volume=0;video.loop=true;video.hidden=false;frame.hidden=true;
+  $('discoverPreviewFile').textContent=file.name||'Local Discover program';$('previewLabel').textContent='Silent • local program preview';
+  $('discoverState').innerHTML='<i class="status-dot good"></i> Local loaded';markHealth('discover',true,`Local preview: ${file.name||'selected video'}`);
+  video.play().catch(()=>toast('Tap Load Discover Preview again to start'));
 }
-
-function sortSlideFiles(files){
-  return [...files].sort((a,b)=>{
-    const na=slideNumberFromName(a.name);
-    const nb=slideNumberFromName(b.name);
-    if(na!==nb)return na-nb;
-    return a.name.localeCompare(b.name,undefined,{numeric:true,sensitivity:'base'});
-  });
-}
-
-function openSlideDb(){
-  return new Promise((resolve,reject)=>{
-    const req=indexedDB.open(SLIDE_DB_NAME,1);
-    req.onupgradeneeded=()=>{const db=req.result;if(!db.objectStoreNames.contains(SLIDE_DB_STORE))db.createObjectStore(SLIDE_DB_STORE)};
-    req.onsuccess=()=>resolve(req.result);
-    req.onerror=()=>reject(req.error);
-  });
-}
-
-async function saveSlideDeck(files){
-  const db=await openSlideDb();
-  const payload=files.map(file=>({name:file.name,type:file.type||'image/jpeg',blob:file}));
-  await new Promise((resolve,reject)=>{
-    const tx=db.transaction(SLIDE_DB_STORE,'readwrite');
-    tx.objectStore(SLIDE_DB_STORE).put(payload,SLIDE_DB_KEY);
-    tx.oncomplete=resolve;
-    tx.onerror=()=>reject(tx.error);
-  });
-  db.close();
-}
-
-async function restoreSlideDeck(){
-  try{
-    const db=await openSlideDb();
-    const payload=await new Promise((resolve,reject)=>{
-      const tx=db.transaction(SLIDE_DB_STORE,'readonly');
-      const req=tx.objectStore(SLIDE_DB_STORE).get(SLIDE_DB_KEY);
-      req.onsuccess=()=>resolve(req.result||[]);
-      req.onerror=()=>reject(req.error);
-    });
-    db.close();
-    if(!payload.length)return false;
-    const files=payload.map(item=>new File([item.blob],item.name,{type:item.type||item.blob?.type||'image/jpeg'}));
-    applySlideFiles(files,{persist:false,announce:false});
-    return true;
-  }catch(error){
-    console.info('Saved weekly slides could not be restored.',error);
-    return false;
-  }
-}
-
-function revokeSlideUrls(){
-  slidePreview.urls.forEach(url=>{try{URL.revokeObjectURL(url)}catch{}});
-  slidePreview.urls=[];
-}
-
-function stopSlideShow(){
-  if(slidePreview.timer){
-    clearInterval(slidePreview.timer);
-    slidePreview.timer=null;
-  }
-}
-
-function renderSlideStatus(){
-  const count=slidePreview.files.length;
-  const stateEl=$('discoverState');
-  const label=$('previewLabel');
-  const fileEl=$('discoverPreviewFile');
-
-  if(!count){
-    if(stateEl)stateEl.innerHTML='<i class="status-dot"></i> No slides';
-    if(label)label.textContent='Load weekly slides';
-    if(fileEl)fileEl.textContent='No slide set selected';
-    return;
-  }
-
-  const current=slidePreview.files[slidePreview.index];
-  if(stateEl)stateEl.innerHTML=`<i class="status-dot good"></i> ${count} slides loaded`;
-  if(label)label.textContent=`Slide ${slidePreview.index+1} of ${count}`;
-  if(fileEl)fileEl.textContent=current?.name||`${count} slides`;
-}
-
-function showSlide(index,{immediate=false}={}){
-  const count=slidePreview.urls.length;
-  if(!count)return;
-
-  slidePreview.index=((index%count)+count)%count;
-  const nextUrl=slidePreview.urls[slidePreview.index];
-  const useA=slidePreview.activeLayer!=='A';
-  const incoming=useA?$('slideLayerA'):$('slideLayerB');
-  const outgoing=useA?$('slideLayerB'):$('slideLayerA');
-  if(!incoming||!outgoing)return;
-
-  incoming.src=nextUrl;
-
-  const activate=()=>{
-    incoming.classList.add('active');
-    outgoing.classList.remove('active');
-    slidePreview.activeLayer=useA?'A':'B';
-    renderSlideStatus();
-  };
-
-  if(immediate){
-    incoming.style.transition='none';
-    outgoing.style.transition='none';
-    activate();
-    requestAnimationFrame(()=>requestAnimationFrame(()=>{
-      incoming.style.transition='';
-      outgoing.style.transition='';
-    }));
-  }else if(incoming.complete){
-    requestAnimationFrame(activate);
-  }else{
-    incoming.onload=()=>requestAnimationFrame(activate);
-  }
-
-  const preloadIndex=(slidePreview.index+1)%count;
-  const preload=new Image();
-  preload.src=slidePreview.urls[preloadIndex];
-}
-
-function startSlideShow(){
-  stopSlideShow();
-  if(slidePreview.urls.length<2)return;
-  slidePreview.timer=setInterval(()=>{
-    const next=(slidePreview.index+1)%slidePreview.urls.length;
-    showSlide(next);
-  },SLIDE_INTERVAL_MS);
-}
-
-function applySlideFiles(files,{persist=true,announce=true}={}){
-  const images=[...files].filter(file=>
-    /^image\/(jpeg|png|webp)$/i.test(file.type) ||
-    /\.(jpe?g|png|webp)$/i.test(file.name)
-  );
-  if(!images.length){
-    if(announce)toast('No slide images selected');
-    return false;
-  }
-
-  stopSlideShow();
-  revokeSlideUrls();
-  slidePreview.files=sortSlideFiles(images);
-  slidePreview.urls=slidePreview.files.map(file=>URL.createObjectURL(file));
-  slidePreview.index=0;
-  slidePreview.activeLayer='B';
-  showSlide(0,{immediate:true});
-  startSlideShow();
-
-  if(persist){
-    saveSlideDeck(slidePreview.files).catch(error=>console.info('Weekly slides could not be saved locally.',error));
-  }
-  if(announce)toast(`${slidePreview.files.length} slides loaded`);
-  return true;
-}
-
-function loadSlideFiles(fileList){
-  applySlideFiles(fileList,{persist:true,announce:true});
-}
-
 async function checkHealth(){await Promise.allSettled([loadStatus(),loadBookings(),pollMusic(),loadTicker()])}
 function wire(){
-  $('notificationBtn').onclick=enableNotifications;$('modeToggleBtn').onclick=toggleMode;$('refreshBtn').onclick=()=>location.reload();$('saveStatusBtn').onclick=saveStatus;$('trackingBtn').onclick=toggleTracking;$('dispatchRefreshBtn').onclick=loadBookings;if($('healthRefreshBtn'))$('healthRefreshBtn').onclick=checkHealth;
+  $('notificationBtn').onclick=enableNotifications;$('refreshBtn').onclick=()=>location.reload();$('saveStatusBtn').onclick=saveStatus;$('trackingBtn').onclick=toggleTracking;$('dispatchRefreshBtn').onclick=loadBookings;$('healthRefreshBtn').onclick=checkHealth;
   $('musicAlertToggle').onclick=setAlertPreference;$('musicOpenBtn').onclick=openMusicShortcut;$('musicPlayingBtn').onclick=()=>resolveMusic('PLAYING');$('musicDismissBtn').onclick=()=>resolveMusic('DISMISSED');$('musicClearBtn').onclick=()=>resolveMusic('CLEARED');
-  $('openRiderMusicBtn').onclick=openRiderMusicOverlay;
-  $('closeRiderMusicBtn').onclick=closeRiderMusicOverlay;
-  $('riderChoiceGrid').onclick=e=>{const b=e.target.closest('[data-rider-choice]');if(b)submitRiderPlaylist(b.dataset.riderChoice,b)};
-  $('submitRiderSongBtn').onclick=submitRiderSpecific;
-  $('riderSongInput').addEventListener('keydown',e=>{if(e.key==='Enter')submitRiderSpecific()});
-  $('riderMusicOverlay').addEventListener('click',e=>{if(e.target===$('riderMusicOverlay'))closeRiderMusicOverlay()});
-
   document.addEventListener('pointerdown',()=>{if(alertPreference()&&!alertArmed)armMusicAudio()},{passive:true});
   document.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>openDrawer(b.dataset.open));document.querySelectorAll('[data-close]').forEach(b=>b.onclick=closeDrawers);document.querySelectorAll('.drawer').forEach(d=>d.onclick=e=>{if(e.target===d)closeDrawers()});
   document.querySelectorAll('[data-scope]').forEach(b=>b.onclick=()=>{state.scope=b.dataset.scope;document.querySelectorAll('[data-scope]').forEach(x=>x.classList.toggle('active',x===b));loadBookings()});
   $('dispatchList').onchange=e=>{if(e.target.dataset.rideStatus)updateRide(e.target.dataset.rideStatus,e.target.value)};
   document.querySelectorAll('[data-lang]').forEach(b=>b.onclick=()=>{state.audioLang=b.dataset.lang;localStorage.setItem('bigRedAudioLanguage',state.audioLang);renderAudio()});$('audioGrid').onclick=e=>{const b=e.target.closest('[data-audio]');if(b)playDriverAudio(b.dataset.audio)};
   $('prevImage').onclick=()=>setLiveImage(liveImageIndex-1);$('nextImage').onclick=()=>setLiveImage(liveImageIndex+1);$('postLiveBtn').onclick=postLive;$('saveTickerBtn').onclick=saveTicker;$('sendPushBtn').onclick=sendPush;$('estimateBtn').onclick=estimateManual;$('createRideBtn').onclick=createManual;
-  $('loadDiscoverPreviewBtn').onclick=()=>$('discoverPreviewFileInput').click();$('discoverPreviewFileInput').onchange=e=>{loadSlideFiles(e.target.files||[]);e.target.value='';};if($('previewToolsToggleBtn'))$('previewToolsToggleBtn').onclick=togglePreviewTools;
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden){loadBookings();pollMusic();if(slidePreview.urls.length){showSlide(slidePreview.index,{immediate:true});startSlideShow()}}});window.addEventListener('pagehide',()=>{if(state.gpsTimer)clearInterval(state.gpsTimer)});
+  $('loadDiscoverPreviewBtn').onclick=()=>$('discoverPreviewFileInput').click();$('discoverPreviewFileInput').onchange=e=>loadLocalDiscoverPreview(e.target.files?.[0]);
+  $('discoverPreview').onload=()=>{if(localDiscoverObjectUrl)return;markHealth('discover',true,'Page loaded here');$('discoverState').innerHTML='<i class="status-dot good"></i> Preview ready';muteDiscover()};$('discoverPreview').onerror=()=>{markHealth('discover',false,'Preview failed');$('discoverState').innerHTML='<i class="status-dot bad"></i> Unavailable'};
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden){loadBookings();pollMusic();muteDiscover();if(localDiscoverObjectUrl)$('localDiscoverPreview').play().catch(()=>{})}});window.addEventListener('pagehide',()=>{if(state.gpsTimer)clearInterval(state.gpsTimer)});
 }
-window.addEventListener('load',async()=>{initCollapsibleSections();applyMode(localStorage.getItem(MODE_KEY)||'driver');renderHealth();renderStatus();renderAlertToggle();renderAudio();renderRideGlance();wire();renderSlideStatus();applyPreviewToolsState();applyDispatchVisibility();initAutocomplete();loadStatus();loadBookings();pollMusic();await restoreSlideDeck();setInterval(pollMusic,10000);setInterval(()=>{if(!document.hidden&&state.scope==='active')loadBookings()},60000)});
+window.addEventListener('load',()=>{renderHealth();renderStatus();renderAlertToggle();renderAudio();renderRideGlance();wire();initAutocomplete();loadStatus();loadBookings();pollMusic();setInterval(pollMusic,10000);setInterval(()=>{if(!document.hidden&&state.scope==='active')loadBookings()},60000);setInterval(muteDiscover,3000)});
 </script>
 </body>
 </html>
