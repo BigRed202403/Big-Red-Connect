@@ -1264,11 +1264,20 @@
   }
 
   function updateSoundControl() {
-    volumeBtn.classList.toggle("sound-on", soundOn);
-    volumeBtn.classList.toggle("sound-off", !soundOn);
-    volumeIcon.textContent = soundOn ? "🔊" : "🔇";
-    volumeLabel.textContent = soundOn ? "Sound" : "Muted";
-    const label = soundOn ? "Sound On" : "Sound Off";
+    const activeSound = audioUnlocked && soundOn;
+    volumeBtn.classList.toggle("sound-on", activeSound);
+    volumeBtn.classList.toggle("sound-off", !activeSound);
+    volumeIcon.textContent = activeSound ? "🔊" : "🔇";
+    volumeLabel.textContent = !audioUnlocked
+      ? "Tap Sound"
+      : soundOn
+        ? "Sound"
+        : "Muted";
+    const label = !audioUnlocked
+      ? "Tap to enable sound"
+      : soundOn
+        ? "Sound On"
+        : "Sound Off";
     volumeBtn.setAttribute("aria-label", label);
     volumeBtn.title = label;
   }
@@ -1392,14 +1401,15 @@
     }
 
     try {
-      // A top-level file selection is an intentional rider gesture. Record
-      // that activation before replacing the source so the October merged
-      // program can resume with its embedded audio on iPad Safari.
-      if (unlockForSelection) {
-        audioUnlocked = true;
-        soundOn = true;
-        saveSoundState();
-      }
+      /*
+        Replacing src invalidates Safari's previous media activation. Always
+        start the new local source muted; the visible Sound button then unlocks
+        this exact source with a fresh, explicit rider tap. This keeps video
+        playback reliable while preserving the October merged-program audio.
+      */
+      audioUnlocked = false;
+      if (unlockForSelection) soundOn = true;
+      saveSoundState();
 
       if (localProgramUrl) URL.revokeObjectURL(localProgramUrl);
 
@@ -1411,10 +1421,11 @@
       if (source) source.removeAttribute("src");
       video.src = localProgramUrl;
       video.loop = true;
+      video.playsInline = true;
       video.load();
       applySoundState();
 
-      showLocalProgramStatus(`Local program loaded: ${file.name}`, 5000);
+      showLocalProgramStatus(`Local program loaded: ${file.name} — tap Sound for audio.`, 6500);
 
       try {
         await video.play();

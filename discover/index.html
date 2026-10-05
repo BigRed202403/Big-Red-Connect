@@ -300,7 +300,7 @@
 
     <iframe
       id="discoverFrame"
-      src="index-v21-staged.html?v=20261005-media-profile-repair1"
+      src="index-v21-staged.html?v=20261005-safari-local-playback2"
       title="Discover with Big Red"
       allow="autoplay; geolocation">
     </iframe>
@@ -1114,16 +1114,10 @@
     programState.addEventListener(
       "click",
       ()=>{
-        const controller = audioController();
-
-        if(controller){
-          controller
-            .unlockAndPlay()
-            .catch(()=>{});
-        }
-
         // Keep the picker in the top-level page. The previous cross-iframe
         // click lost iPad Safari's media activation when the picker returned.
+        // Do not start/unmute the old source before opening Files: Safari
+        // suspends that permission while the picker is on screen.
         localProgramFile.value = "";
         localProgramFile.click();
       }
@@ -1150,7 +1144,10 @@
         }
 
         try{
-          await controller.loadLocalProgram(file,true);
+          // The staged player deliberately starts every replacement source
+          // muted. The visible Sound button is the reliable iPad gesture that
+          // unlocks the newly created local-media source afterward.
+          await controller.loadLocalProgram(file,false);
           setProgramState();
           applySharedSoundState();
           playBackgroundAudio();
