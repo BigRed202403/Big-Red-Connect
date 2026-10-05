@@ -142,9 +142,9 @@
       left:50%;
       bottom:max(12px,env(safe-area-inset-bottom));
       transform:translateX(-50%);
-      width:min(980px,calc(100% - 26px));
+      width:min(820px,calc(100% - 26px));
       display:grid;
-      grid-template-columns:repeat(5,minmax(0,1fr));
+      grid-template-columns:repeat(4,minmax(0,1fr));
       gap:10px;
       padding:10px;
       border:1px solid rgba(255,255,255,.16);
@@ -300,7 +300,7 @@
 
     <iframe
       id="discoverFrame"
-      src="index-v21-staged.html?v=20261005-safari-local-playback2"
+      src="index-v21-staged.html?v=20260928-merged-program1"
       title="Discover with Big Red"
       allow="autoplay; geolocation">
     </iframe>
@@ -347,7 +347,6 @@
     <nav id="dock" class="dock" aria-label="Discover quick actions">
       <button type="button" data-target="gamesBtn">🎮 Games</button>
       <button type="button" data-target="musicBtn">🎵 Music</button>
-      <button type="button" data-target="driverBtn">👋 Meet Big Red</button>
       <button type="button" data-target="tipBtn">❤️ Tip</button>
       <button type="button" data-target="reviewBtn">⭐ Review</button>
     </nav>
@@ -359,12 +358,6 @@
       playsinline
       aria-hidden="true">
     </audio>
-
-    <input
-      id="localProgramFile"
-      type="file"
-      accept="video/*,.mov,.mp4"
-      hidden />
 
     <section
       id="cutinWrap"
@@ -415,7 +408,6 @@
 
     const backgroundMusicFile = document.getElementById("backgroundMusicFile");
     const backgroundAudio = document.getElementById("backgroundAudio");
-    const localProgramFile = document.getElementById("localProgramFile");
 
     const fastMode =
       new URLSearchParams(location.search).has("fast");
@@ -571,36 +563,20 @@
       );
     }
 
-    function soundIsUnlocked(){
-      const controller = audioController();
-
-      if(controller){
-        try{
-          return Boolean(controller.state().unlocked);
-        }catch{}
-      }
-
-      return false;
-    }
-
     function applySharedSoundState(){
       const soundOn = soundIsOn();
-      const soundUnlocked = soundIsUnlocked();
-      const controller = audioController();
+      const mainVideo = presentationVideo();
 
       /*
-        The staged page owns the merged program's mute state. Calling its
-        controller avoids the wrapper unmuting a newly selected local file
-        before iPad Safari has granted playback permission. Background music
-        follows the same shared Sound state only after that permission exists.
+        The merged program now contains the commercial/short audio.
+        Keep that audio available when sound is on. Background music
+        is a separate continuous layer, so both may play together.
       */
-      if(controller){
-        try{
-          controller.apply();
-        }catch{}
+      if(mainVideo){
+        mainVideo.muted = !soundOn;
       }
 
-      backgroundAudio.muted = !(soundOn && soundUnlocked);
+      backgroundAudio.muted = !soundOn;
     }
 
     function playBackgroundAudio(){
@@ -633,10 +609,7 @@
       backgroundAudio.src = backgroundAudioUrl;
       backgroundAudio.loop = true;
       backgroundAudio.volume = 1;
-      // Start muted so the local file can begin even if Safari has suspended
-      // audio while its file picker was open. Shared sound state is restored
-      // immediately after playback begins.
-      backgroundAudio.muted = true;
+      backgroundAudio.muted = !soundIsOn();
 
       musicState.textContent = "CHECKING BACKGROUND MUSIC…";
       musicState.classList.remove("ready");
@@ -644,14 +617,14 @@
 
       syncStatusUI(true);
 
-      let finalized = false;
+      backgroundAudio.load();
 
-      const finalizeBackgroundMusic = ()=>{
-        if(finalized){
-          return;
-        }
+      // File selection is the rider's direct gesture; use it to unlock audio.
+      backgroundAudio.play().catch(()=>{});
 
-        finalized = true;
+      backgroundAudio.addEventListener(
+        "canplay",
+        ()=>{
           backgroundAudioReady = true;
           musicReady = true;
 
@@ -662,19 +635,7 @@
           applySharedSoundState();
           playBackgroundAudio();
           syncStatusUI(true);
-      };
-
-      // Attach readiness listeners before load(): local object URLs can become
-      // ready quickly enough for iPad Safari to otherwise beat the listener.
-      backgroundAudio.addEventListener(
-        "loadedmetadata",
-        finalizeBackgroundMusic,
-        {once:true}
-      );
-
-      backgroundAudio.addEventListener(
-        "canplay",
-        finalizeBackgroundMusic,
+        },
         {once:true}
       );
 
@@ -692,18 +653,6 @@
         },
         {once:true}
       );
-
-      backgroundAudio.load();
-
-      // File selection is the rider's direct gesture. Muted startup is legal
-      // even when Safari has temporarily dropped the previous audio focus.
-      backgroundAudio
-        .play()
-        .then(()=>{
-          finalizeBackgroundMusic();
-          applySharedSoundState();
-        })
-        .catch(()=>{});
     }
 
     function visibleInnerPanel(){
@@ -1114,47 +1063,51 @@
     programState.addEventListener(
       "click",
       ()=>{
-        // Keep the picker in the top-level page. The previous cross-iframe
-        // click lost iPad Safari's media activation when the picker returned.
-        // Do not start/unmute the old source before opening Files: Safari
-        // suspends that permission while the picker is on screen.
-        localProgramFile.value = "";
-        localProgramFile.click();
-      }
-    );
+        const doc = frameDoc();
 
-    localProgramFile.addEventListener(
-      "change",
-      async ()=>{
-        const file =
-          localProgramFile.files &&
-          localProgramFile.files[0];
-
-        if(!file){
+        if(!doc){
           return;
         }
 
         const controller = audioController();
+        const fileInput =
+          doc.getElementById("localProgramFile");
 
-        if(!controller || !controller.loadLocalProgram){
-          programState.textContent = "PROGRAM NOT READY — REFRESH";
-          programState.classList.remove("ready");
-          programState.classList.add("warning");
-          return;
+        if(controller){
+          controller
+            .unlockAndPlay()
+            .catch(()=>{});
         }
 
-        try{
-          // The staged player deliberately starts every replacement source
-          // muted. The visible Sound button is the reliable iPad gesture that
-          // unlocks the newly created local-media source afterward.
-          await controller.loadLocalProgram(file,false);
-          setProgramState();
-          applySharedSoundState();
-          playBackgroundAudio();
-        }catch{
-          programState.textContent = "SELECT LOCAL PROGRAM";
-          programState.classList.remove("ready");
-          programState.classList.add("warning");
+        if(fileInput){
+          fileInput.value = "";
+
+          const restoreAfterSelection = ()=>{
+            window.setTimeout(
+              ()=>{
+                const currentController =
+                  audioController();
+
+                if(currentController){
+                  currentController
+                    .ensurePlayback()
+                    .catch(()=>{});
+                }
+
+                applySharedSoundState();
+                playBackgroundAudio();
+              },
+              250
+            );
+          };
+
+          fileInput.addEventListener(
+            "change",
+            restoreAfterSelection,
+            {once:true}
+          );
+
+          fileInput.click();
         }
       }
     );
