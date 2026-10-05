@@ -300,7 +300,7 @@
 
     <iframe
       id="discoverFrame"
-      src="index-v21-staged.html?v=20261004-fresh-assets1"
+      src="index-v21-staged.html?v=20261005-media-profile-repair1"
       title="Discover with Big Red"
       allow="autoplay; geolocation">
     </iframe>
@@ -360,6 +360,12 @@
       aria-hidden="true">
     </audio>
 
+    <input
+      id="localProgramFile"
+      type="file"
+      accept="video/*,.mov,.mp4"
+      hidden />
+
     <section
       id="cutinWrap"
       class="cutin-wrap"
@@ -409,6 +415,7 @@
 
     const backgroundMusicFile = document.getElementById("backgroundMusicFile");
     const backgroundAudio = document.getElementById("backgroundAudio");
+    const localProgramFile = document.getElementById("localProgramFile");
 
     const fastMode =
       new URLSearchParams(location.search).has("fast");
@@ -564,20 +571,36 @@
       );
     }
 
-    function applySharedSoundState(){
-      const soundOn = soundIsOn();
-      const mainVideo = presentationVideo();
+    function soundIsUnlocked(){
+      const controller = audioController();
 
-      /*
-        The merged program now contains the commercial/short audio.
-        Keep that audio available when sound is on. Background music
-        is a separate continuous layer, so both may play together.
-      */
-      if(mainVideo){
-        mainVideo.muted = !soundOn;
+      if(controller){
+        try{
+          return Boolean(controller.state().unlocked);
+        }catch{}
       }
 
-      backgroundAudio.muted = !soundOn;
+      return false;
+    }
+
+    function applySharedSoundState(){
+      const soundOn = soundIsOn();
+      const soundUnlocked = soundIsUnlocked();
+      const controller = audioController();
+
+      /*
+        The staged page owns the merged program's mute state. Calling its
+        controller avoids the wrapper unmuting a newly selected local file
+        before iPad Safari has granted playback permission. Background music
+        follows the same shared Sound state only after that permission exists.
+      */
+      if(controller){
+        try{
+          controller.apply();
+        }catch{}
+      }
+
+      backgroundAudio.muted = !(soundOn && soundUnlocked);
     }
 
     function playBackgroundAudio(){
@@ -610,7 +633,10 @@
       backgroundAudio.src = backgroundAudioUrl;
       backgroundAudio.loop = true;
       backgroundAudio.volume = 1;
-      backgroundAudio.muted = !soundIsOn();
+      // Start muted so the local file can begin even if Safari has suspended
+      // audio while its file picker was open. Shared sound state is restored
+      // immediately after playback begins.
+      backgroundAudio.muted = true;
 
       musicState.textContent = "CHECKING BACKGROUND MUSIC…";
       musicState.classList.remove("ready");
@@ -618,14 +644,14 @@
 
       syncStatusUI(true);
 
-      backgroundAudio.load();
+      let finalized = false;
 
-      // File selection is the rider's direct gesture; use it to unlock audio.
-      backgroundAudio.play().catch(()=>{});
+      const finalizeBackgroundMusic = ()=>{
+        if(finalized){
+          return;
+        }
 
-      backgroundAudio.addEventListener(
-        "canplay",
-        ()=>{
+        finalized = true;
           backgroundAudioReady = true;
           musicReady = true;
 
@@ -636,7 +662,19 @@
           applySharedSoundState();
           playBackgroundAudio();
           syncStatusUI(true);
-        },
+      };
+
+      // Attach readiness listeners before load(): local object URLs can become
+      // ready quickly enough for iPad Safari to otherwise beat the listener.
+      backgroundAudio.addEventListener(
+        "loadedmetadata",
+        finalizeBackgroundMusic,
+        {once:true}
+      );
+
+      backgroundAudio.addEventListener(
+        "canplay",
+        finalizeBackgroundMusic,
         {once:true}
       );
 
@@ -654,6 +692,18 @@
         },
         {once:true}
       );
+
+      backgroundAudio.load();
+
+      // File selection is the rider's direct gesture. Muted startup is legal
+      // even when Safari has temporarily dropped the previous audio focus.
+      backgroundAudio
+        .play()
+        .then(()=>{
+          finalizeBackgroundMusic();
+          applySharedSoundState();
+        })
+        .catch(()=>{});
     }
 
     function visibleInnerPanel(){
@@ -1064,15 +1114,7 @@
     programState.addEventListener(
       "click",
       ()=>{
-        const doc = frameDoc();
-
-        if(!doc){
-          return;
-        }
-
         const controller = audioController();
-        const fileInput =
-          doc.getElementById("localProgramFile");
 
         if(controller){
           controller
@@ -1080,35 +1122,42 @@
             .catch(()=>{});
         }
 
-        if(fileInput){
-          fileInput.value = "";
+        // Keep the picker in the top-level page. The previous cross-iframe
+        // click lost iPad Safari's media activation when the picker returned.
+        localProgramFile.value = "";
+        localProgramFile.click();
+      }
+    );
 
-          const restoreAfterSelection = ()=>{
-            window.setTimeout(
-              ()=>{
-                const currentController =
-                  audioController();
+    localProgramFile.addEventListener(
+      "change",
+      async ()=>{
+        const file =
+          localProgramFile.files &&
+          localProgramFile.files[0];
 
-                if(currentController){
-                  currentController
-                    .ensurePlayback()
-                    .catch(()=>{});
-                }
+        if(!file){
+          return;
+        }
 
-                applySharedSoundState();
-                playBackgroundAudio();
-              },
-              250
-            );
-          };
+        const controller = audioController();
 
-          fileInput.addEventListener(
-            "change",
-            restoreAfterSelection,
-            {once:true}
-          );
+        if(!controller || !controller.loadLocalProgram){
+          programState.textContent = "PROGRAM NOT READY — REFRESH";
+          programState.classList.remove("ready");
+          programState.classList.add("warning");
+          return;
+        }
 
-          fileInput.click();
+        try{
+          await controller.loadLocalProgram(file,true);
+          setProgramState();
+          applySharedSoundState();
+          playBackgroundAudio();
+        }catch{
+          programState.textContent = "SELECT LOCAL PROGRAM";
+          programState.classList.remove("ready");
+          programState.classList.add("warning");
         }
       }
     );

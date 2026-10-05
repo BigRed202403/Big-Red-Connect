@@ -1383,7 +1383,7 @@
     localProgramFile.click();
   }
 
-  async function loadLocalProgram(file) {
+  async function loadLocalProgram(file, unlockForSelection = false) {
     if (!file) return;
 
     if (!file.type.startsWith("video/") && !/\.(mov|mp4)$/i.test(file.name)) {
@@ -1392,6 +1392,15 @@
     }
 
     try {
+      // A top-level file selection is an intentional rider gesture. Record
+      // that activation before replacing the source so the October merged
+      // program can resume with its embedded audio on iPad Safari.
+      if (unlockForSelection) {
+        audioUnlocked = true;
+        soundOn = true;
+        saveSoundState();
+      }
+
       if (localProgramUrl) URL.revokeObjectURL(localProgramUrl);
 
       localProgramUrl = URL.createObjectURL(file);
@@ -2379,6 +2388,7 @@
   window.DiscoverAudioController = Object.freeze({
     unlockAndPlay: unlockAndPlaySound,
     ensurePlayback: ensureVideoPlayback,
+    loadLocalProgram,
     apply: applySoundState,
     state: () => ({
       unlocked: audioUnlocked,
