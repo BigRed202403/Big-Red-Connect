@@ -1264,11 +1264,20 @@
   }
 
   function updateSoundControl() {
-    volumeBtn.classList.toggle("sound-on", soundOn);
-    volumeBtn.classList.toggle("sound-off", !soundOn);
-    volumeIcon.textContent = soundOn ? "🔊" : "🔇";
-    volumeLabel.textContent = soundOn ? "Sound" : "Muted";
-    const label = soundOn ? "Sound On" : "Sound Off";
+    const activeSound = audioUnlocked && soundOn;
+    volumeBtn.classList.toggle("sound-on", activeSound);
+    volumeBtn.classList.toggle("sound-off", !activeSound);
+    volumeIcon.textContent = activeSound ? "🔊" : "🔇";
+    volumeLabel.textContent = !audioUnlocked
+      ? "Tap Sound"
+      : soundOn
+        ? "Sound"
+        : "Muted";
+    const label = !audioUnlocked
+      ? "Tap to enable sound"
+      : soundOn
+        ? "Sound On"
+        : "Sound Off";
     volumeBtn.setAttribute("aria-label", label);
     volumeBtn.title = label;
   }
@@ -1383,7 +1392,7 @@
     localProgramFile.click();
   }
 
-  async function loadLocalProgram(file) {
+  async function loadLocalProgram(file, unlockForSelection = false) {
     if (!file) return;
 
     if (!file.type.startsWith("video/") && !/\.(mov|mp4)$/i.test(file.name)) {
@@ -1392,6 +1401,16 @@
     }
 
     try {
+      /*
+        Replacing src invalidates Safari's previous media activation. Always
+        start the new local source muted; the visible Sound button then unlocks
+        this exact source with a fresh, explicit rider tap. This keeps video
+        playback reliable while preserving the October merged-program audio.
+      */
+      audioUnlocked = false;
+      if (unlockForSelection) soundOn = true;
+      saveSoundState();
+
       if (localProgramUrl) URL.revokeObjectURL(localProgramUrl);
 
       localProgramUrl = URL.createObjectURL(file);
@@ -1402,10 +1421,11 @@
       if (source) source.removeAttribute("src");
       video.src = localProgramUrl;
       video.loop = true;
+      video.playsInline = true;
       video.load();
       applySoundState();
 
-      showLocalProgramStatus(`Local program loaded: ${file.name}`, 5000);
+      showLocalProgramStatus(`Local program loaded: ${file.name} — tap Sound for audio.`, 6500);
 
       try {
         await video.play();
@@ -2379,6 +2399,7 @@
   window.DiscoverAudioController = Object.freeze({
     unlockAndPlay: unlockAndPlaySound,
     ensurePlayback: ensureVideoPlayback,
+    loadLocalProgram,
     apply: applySoundState,
     state: () => ({
       unlocked: audioUnlocked,
