@@ -17,7 +17,7 @@
   <title>Discover with Big Red</title>
 
   <!-- Versioned staged assets keep v21 isolated from the live Discover files -->
-  <link rel="stylesheet" href="discover-v21-staged.css?v=20261005-safari-local-playback2" />
+  <link rel="stylesheet" href="discover-v21-staged.css?v=20261025-halloween-toggle1" />
 </head>
 <body>
   <main class="experience-shell">
@@ -229,7 +229,10 @@
 
     <section id="gamesPanel" class="overlay-panel" aria-label="Games" hidden>
       <div class="panel-card">
-        <button class="back-button" data-home-reset type="button">← Back to Big Red</button>
+        <div class="games-toolbar">
+          <button class="back-button" data-home-reset type="button">← Back to Big Red</button>
+          <button id="halloweenToggle" type="button" role="switch" aria-checked="true" aria-label="Halloween games and colors">🎃 Halloween: ON</button>
+        </div>
 
         <div class="panel-heading">
           <div class="eyebrow">DISCOVER WITH BIG RED</div>
@@ -239,18 +242,18 @@
 
         <div class="game-grid">
           <button class="game-card" data-game="trivia" type="button">
-            <strong>Trivia</strong>
-            <span>15 questions • gets harder as you go</span>
+            <strong>Halloween Trivia</strong>
+            <span>15 Halloween questions • gets harder as you go</span>
           </button>
 
           <button class="game-card" data-game="wyr" type="button">
-            <strong>Would You Rather</strong>
-            <span>10 quick choices</span>
+            <strong>Halloween Would You Rather</strong>
+            <span>10 spooky-season choices</span>
           </button>
 
           <button class="game-card" data-game="scramble" type="button">
-            <strong>Word Scramble</strong>
-            <span>10 timed words</span>
+            <strong>Halloween Word Scramble</strong>
+            <span>10 timed Halloween words</span>
           </button>
         </div>
       </div>
@@ -369,6 +372,7 @@
   </main>
 
   <!-- Versioned staged JS keeps v21 isolated from the live Discover engine -->
-  <script src="discover-v21-staged.js?v=20261005-safari-local-playback2"></script>
+  <script src="discover-v21-staged.js?v=20261025-halloween-toggle1"></script>
 </body>
 </html>
+

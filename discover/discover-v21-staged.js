@@ -2,6 +2,12 @@
 (() => {
   "use strict";
 
+  // Set false to disable Halloween site-wide; the Games switch stores a local preference.
+  const HALLOWEEN_MODE = true;
+  const HALLOWEEN_STORAGE_KEY = "discoverHalloweenMode";
+  let halloweenEnabled = HALLOWEEN_MODE;
+  try { halloweenEnabled = HALLOWEEN_MODE && localStorage.getItem(HALLOWEEN_STORAGE_KEY) !== "false"; } catch {}
+
   const CONFIG = {
     videoUrl: "https://media.bigredconnectokc.com/discover-current.mov",
     inactivityMs: 180000,
@@ -1140,6 +1146,6146 @@
     { word: "OCTOBER", scramble: "BEROCTO", hint: "Peak fall month with Halloween." }
   );
 
+  // Halloween banks are separate: all existing normal and early-season banks remain intact.
+  const halloweenTrivia = {
+  "easy": [
+    {
+      "q": "What date is Halloween?",
+      "a": [
+        "October 31",
+        "November 1",
+        "October 13",
+        "October 30"
+      ],
+      "correct": 0,
+      "fact": "october31"
+    },
+    {
+      "q": "What do trick-or-treaters traditionally say at the door?",
+      "a": [
+        "Remus Lupin",
+        "Seeds and pulp",
+        "Trick or treat",
+        "Thriller"
+      ],
+      "correct": 2,
+      "fact": "trickortreat"
+    },
+    {
+      "q": "What orange fruit is commonly carved for Halloween?",
+      "a": [
+        "Remus Lupin",
+        "Corn maze",
+        "Pumpkin",
+        "Zombie"
+      ],
+      "correct": 2,
+      "fact": "pumpkin"
+    },
+    {
+      "q": "What is a carved, illuminated pumpkin called?",
+      "a": [
+        "Spider",
+        "Jack-o'-lantern",
+        "Group costume",
+        "Monster House"
+      ],
+      "correct": 1,
+      "fact": "jackolantern"
+    },
+    {
+      "q": "What do people wear to dress as Halloween characters?",
+      "a": [
+        "Costumes",
+        "Eyes and nose",
+        "Witches",
+        "Ghostbusters"
+      ],
+      "correct": 0,
+      "fact": "costume"
+    },
+    {
+      "q": "What sweet treats are often handed out on Halloween?",
+      "a": [
+        "Candy",
+        "Paper bat",
+        "October 31",
+        "Frankenstein's monster"
+      ],
+      "correct": 0,
+      "fact": "candy"
+    },
+    {
+      "q": "Which monster traditionally drinks blood in stories?",
+      "a": [
+        "Vampire",
+        "Witch",
+        "Thestrals",
+        "Mummy"
+      ],
+      "correct": 0,
+      "fact": "vampire"
+    },
+    {
+      "q": "Which monster turns from a person into a wolf?",
+      "a": [
+        "Zombie",
+        "Werewolf",
+        "Banshee",
+        "Bat"
+      ],
+      "correct": 1,
+      "fact": "werewolf"
+    },
+    {
+      "q": "Which wrapped monster comes from an ancient tomb?",
+      "a": [
+        "House-elf",
+        "Poltergeist",
+        "Mummy",
+        "Skeleton"
+      ],
+      "correct": 2,
+      "fact": "mummy"
+    },
+    {
+      "q": "Which spooky figure is made of bones?",
+      "a": [
+        "Zombie",
+        "Skeleton",
+        "Acromantula",
+        "Centaur"
+      ],
+      "correct": 1,
+      "fact": "skeleton"
+    },
+    {
+      "q": "What is a traditional ghost costume made from?",
+      "a": [
+        "Ghostbusters",
+        "Silver",
+        "A white sheet",
+        "Candy corn"
+      ],
+      "correct": 2,
+      "fact": "awhitesheet"
+    },
+    {
+      "q": "Which animal is often shown flying beside a haunted castle?",
+      "a": [
+        "Werewolf",
+        "Troll",
+        "Bat",
+        "Acromantula"
+      ],
+      "correct": 2,
+      "fact": "bat"
+    },
+    {
+      "q": "Which eight-legged creature makes webs?",
+      "a": [
+        "Raven",
+        "Owl",
+        "Spider",
+        "House-elf"
+      ],
+      "correct": 2,
+      "fact": "spider"
+    },
+    {
+      "q": "What do witches traditionally fly on in stories?",
+      "a": [
+        "Broomsticks",
+        "Wednesday",
+        "Fluffy",
+        "Candy"
+      ],
+      "correct": 0,
+      "fact": "broomstick"
+    },
+    {
+      "q": "What bubbling pot appears in witch decorations?",
+      "a": [
+        "Costumes",
+        "Wednesday",
+        "Eyes and nose",
+        "Cauldron"
+      ],
+      "correct": 3,
+      "fact": "cauldron"
+    },
+    {
+      "q": "Which animal is a witch's familiar in many Halloween pictures?",
+      "a": [
+        "Black cat",
+        "Griffin",
+        "Bat",
+        "Boggart"
+      ],
+      "correct": 0,
+      "fact": "blackcat"
+    },
+    {
+      "q": "Which creature is often shown rising from a grave in scary stories?",
+      "a": [
+        "Witch",
+        "Spider",
+        "Zombie",
+        "Basilisk"
+      ],
+      "correct": 2,
+      "fact": "zombie"
+    },
+    {
+      "q": "What sharp teeth are part of a vampire costume?",
+      "a": [
+        "Castle",
+        "Skull",
+        "Fangs",
+        "Costume contest"
+      ],
+      "correct": 2,
+      "fact": "fang"
+    },
+    {
+      "q": "What pointed headwear is part of a classic witch costume?",
+      "a": [
+        "Paper bat",
+        "Costumes",
+        "Owl",
+        "Witch hat"
+      ],
+      "correct": 3,
+      "fact": "witchhat"
+    },
+    {
+      "q": "What do you call a house said to have ghosts?",
+      "a": [
+        "Rocks",
+        "Eyepatch",
+        "Corn maze",
+        "Haunted house"
+      ],
+      "correct": 3,
+      "fact": "hauntedhouse"
+    },
+    {
+      "q": "What does a ghost traditionally say to surprise someone?",
+      "a": [
+        "Candy apple",
+        "Group costume",
+        "A white sheet",
+        "Boo"
+      ],
+      "correct": 3,
+      "fact": "boo"
+    },
+    {
+      "q": "Which Halloween treat has yellow, orange, and white layers?",
+      "a": [
+        "Hotel Transylvania",
+        "Slimer",
+        "Candy corn",
+        "Flashlight"
+      ],
+      "correct": 2,
+      "fact": "candycorn"
+    },
+    {
+      "q": "What sweet coating commonly covers a Halloween apple?",
+      "a": [
+        "Monster Mash",
+        "Paper bat",
+        "Caramel",
+        "The Mystery Machine"
+      ],
+      "correct": 2,
+      "fact": "caramel"
+    },
+    {
+      "q": "What harvest attraction has winding paths through tall crops?",
+      "a": [
+        "Corn maze",
+        "Hotel Transylvania",
+        "Snowy owl",
+        "Bat"
+      ],
+      "correct": 0,
+      "fact": "cornmaze"
+    },
+    {
+      "q": "What stuffed figure stands in a field to frighten birds?",
+      "a": [
+        "The Munsters",
+        "Rag doll",
+        "Scarecrow",
+        "Popcorn"
+      ],
+      "correct": 2,
+      "fact": "scarecrow"
+    },
+    {
+      "q": "What farm activity takes guests on a wagon ride over straw?",
+      "a": [
+        "Hayride",
+        "A pumpkin face",
+        "Scarecrow",
+        "Linus"
+      ],
+      "correct": 0,
+      "fact": "hayride"
+    },
+    {
+      "q": "Where might you go to choose your own Halloween pumpkin?",
+      "a": [
+        "Cape",
+        "Norman",
+        "A spooky thrill",
+        "Pumpkin patch"
+      ],
+      "correct": 3,
+      "fact": "pumpkinpatch"
+    },
+    {
+      "q": "What do you scoop out before carving a pumpkin?",
+      "a": [
+        "Costumes",
+        "Seeds and pulp",
+        "Corn maze",
+        "Frankenstein's monster"
+      ],
+      "correct": 1,
+      "fact": "seedsandpulp"
+    },
+    {
+      "q": "Which small electric light safely lights a jack-o'-lantern?",
+      "a": [
+        "Skull",
+        "LED candle",
+        "Tombstone",
+        "M&M's"
+      ],
+      "correct": 1,
+      "fact": "ledcandle"
+    },
+    {
+      "q": "What do trick-or-treaters carry to collect treats?",
+      "a": [
+        "Wednesday",
+        "Treat bags",
+        "Black cat",
+        "Tombstone"
+      ],
+      "correct": 1,
+      "fact": "treatbag"
+    },
+    {
+      "q": "Which fruit is used in the party game of bobbing?",
+      "a": [
+        "Plastic skeleton",
+        "Eight legs",
+        "Apples",
+        "The Legend of Sleepy Hollow"
+      ],
+      "correct": 2,
+      "fact": "apple"
+    },
+    {
+      "q": "What is the spooky name for a spider's old web?",
+      "a": [
+        "Castle",
+        "Bat",
+        "Remus Lupin",
+        "Cobweb"
+      ],
+      "correct": 3,
+      "fact": "cobweb"
+    },
+    {
+      "q": "What decorative marker might say RIP in a Halloween yard?",
+      "a": [
+        "Spider",
+        "Full moon",
+        "Bunting",
+        "Tombstone"
+      ],
+      "correct": 3,
+      "fact": "tombstone"
+    },
+    {
+      "q": "Which nighttime bird is often heard hooting in spooky stories?",
+      "a": [
+        "Owl",
+        "Bat",
+        "Spider",
+        "Ghost"
+      ],
+      "correct": 0,
+      "fact": "owl"
+    },
+    {
+      "q": "What bright round shape is associated with werewolf stories?",
+      "a": [
+        "Eyes and nose",
+        "Skeleton",
+        "Monster Mash",
+        "Full moon"
+      ],
+      "correct": 3,
+      "fact": "fullmoon"
+    },
+    {
+      "q": "What flowing garment is part of a classic Dracula costume?",
+      "a": [
+        "Ghostbusters",
+        "Eight legs",
+        "Wednesday",
+        "Cape"
+      ],
+      "correct": 3,
+      "fact": "cape"
+    },
+    {
+      "q": "What face covering can complete a monster costume?",
+      "a": [
+        "Frankenstein's monster",
+        "The Legend of Sleepy Hollow",
+        "Lollipop",
+        "Mask"
+      ],
+      "correct": 3,
+      "fact": "mask"
+    },
+    {
+      "q": "What do magicians and witches wave to cast spells in stories?",
+      "a": [
+        "A spooky thrill",
+        "Wand",
+        "Haunted attraction",
+        "Mist"
+      ],
+      "correct": 1,
+      "fact": "wand"
+    },
+    {
+      "q": "Which creature often has bolts in its neck in Halloween decorations?",
+      "a": [
+        "Eyepatch",
+        "Frankenstein's monster",
+        "A pumpkin face",
+        "Hotel Transylvania"
+      ],
+      "correct": 1,
+      "fact": "frankensteinsmonster"
+    },
+    {
+      "q": "Which friendly cartoon ghost wants to make friends?",
+      "a": [
+        "Casper",
+        "The Mummy",
+        "ParaNorman",
+        "Hotel Transylvania"
+      ],
+      "correct": 0,
+      "fact": "casper"
+    },
+    {
+      "q": "Who is the Pumpkin King in The Nightmare Before Christmas?",
+      "a": [
+        "Sorting Hat",
+        "Ghostbusters theme",
+        "Jack Skellington",
+        "Invisibility Cloak"
+      ],
+      "correct": 2,
+      "fact": "jackskellington"
+    },
+    {
+      "q": "What is the name of Jack Skellington's ghost dog?",
+      "a": [
+        "Zero",
+        "Maleficent",
+        "Fangs",
+        "The Munsters"
+      ],
+      "correct": 0,
+      "fact": "zero"
+    },
+    {
+      "q": "What holiday town is Jack Skellington from?",
+      "a": [
+        "Halloween Town",
+        "Scarecrow",
+        "Fluffy",
+        "Shaggy"
+      ],
+      "correct": 0,
+      "fact": "halloweentown"
+    },
+    {
+      "q": "What type of doll is Sally in The Nightmare Before Christmas?",
+      "a": [
+        "Bunting",
+        "Costume contest",
+        "Fangs",
+        "Rag doll"
+      ],
+      "correct": 3,
+      "fact": "ragdoll"
+    },
+    {
+      "q": "Which movie features the Sanderson sisters?",
+      "a": [
+        "Halloween",
+        "Frankenweenie",
+        "Coraline",
+        "Hocus Pocus"
+      ],
+      "correct": 3,
+      "fact": "hocuspocu"
+    },
+    {
+      "q": "What is the Sanderson sisters' shared profession?",
+      "a": [
+        "Seeds and pulp",
+        "Witches",
+        "Lollipop",
+        "Skull"
+      ],
+      "correct": 1,
+      "fact": "witche"
+    },
+    {
+      "q": "Which spooky family includes Morticia and Gomez?",
+      "a": [
+        "The Addams Family",
+        "ParaNorman",
+        "Coraline",
+        "Scream"
+      ],
+      "correct": 0,
+      "fact": "theaddamsfamily"
+    },
+    {
+      "q": "Which Addams child is famous for her braids and dark clothes?",
+      "a": [
+        "Jack-o'-lantern",
+        "Hotel Transylvania",
+        "M&M's",
+        "Wednesday"
+      ],
+      "correct": 3,
+      "fact": "wednesday"
+    },
+    {
+      "q": "Which Addams character is a disembodied hand?",
+      "a": [
+        "Thing",
+        "Cobweb",
+        "Tombstone",
+        "Broomsticks"
+      ],
+      "correct": 0,
+      "fact": "thing"
+    },
+    {
+      "q": "Which Addams character serves as the family butler?",
+      "a": [
+        "Lurch",
+        "Boggart",
+        "Wednesday",
+        "Plastic skeleton"
+      ],
+      "correct": 0,
+      "fact": "lurch"
+    },
+    {
+      "q": "Which cartoon dog investigates supposedly haunted places?",
+      "a": [
+        "Scooby-Doo",
+        "Fangs",
+        "Candy corn",
+        "Mist"
+      ],
+      "correct": 0,
+      "fact": "scoobydoo"
+    },
+    {
+      "q": "Who is Scooby-Doo's best human friend?",
+      "a": [
+        "Silver",
+        "Caramel",
+        "Headless Horseman",
+        "Shaggy"
+      ],
+      "correct": 3,
+      "fact": "shaggy"
+    },
+    {
+      "q": "What is the name of the Mystery Inc. van?",
+      "a": [
+        "Cape",
+        "Eyepatch",
+        "The Mystery Machine",
+        "Thing"
+      ],
+      "correct": 2,
+      "fact": "themysterymachine"
+    },
+    {
+      "q": "Which team uses proton packs to catch ghosts?",
+      "a": [
+        "Ghostbusters",
+        "The Mummy",
+        "Halloween",
+        "Frankenstein"
+      ],
+      "correct": 0,
+      "fact": "ghostbuster"
+    },
+    {
+      "q": "Which green ghost is famous for leaving slime?",
+      "a": [
+        "Wednesday",
+        "Slimer",
+        "Headless Horseman",
+        "Reflective tape"
+      ],
+      "correct": 1,
+      "fact": "slimer"
+    },
+    {
+      "q": "Which movie features a hotel run by Dracula for monsters?",
+      "a": [
+        "The Nightmare Before Christmas",
+        "The Shining",
+        "Hotel Transylvania",
+        "Friday the 13th"
+      ],
+      "correct": 2,
+      "fact": "hoteltransylvania"
+    },
+    {
+      "q": "Which Peanuts child waits for the Great Pumpkin?",
+      "a": [
+        "Candy",
+        "Haunted house",
+        "Linus",
+        "Jack-o'-lantern"
+      ],
+      "correct": 2,
+      "fact": "linu"
+    },
+    {
+      "q": "What does Charlie Brown keep receiving while trick-or-treating?",
+      "a": [
+        "Rocks",
+        "Apples",
+        "Popcorn",
+        "Skull"
+      ],
+      "correct": 0,
+      "fact": "rock"
+    },
+    {
+      "q": "Which Disney villain turns into a dragon in Sleeping Beauty?",
+      "a": [
+        "Maleficent",
+        "Bunting",
+        "Cauldron",
+        "Wand"
+      ],
+      "correct": 0,
+      "fact": "maleficent"
+    },
+    {
+      "q": "Which Disney villain is a sea witch?",
+      "a": [
+        "Ursula",
+        "Corn maze",
+        "Monster Mash",
+        "Skeleton"
+      ],
+      "correct": 0,
+      "fact": "ursula"
+    },
+    {
+      "q": "Which Harry Potter school has moving staircases and ghosts?",
+      "a": [
+        "Broomstick",
+        "The Munsters",
+        "Candy corn",
+        "Hogwarts"
+      ],
+      "correct": 3,
+      "fact": "hogwart"
+    },
+    {
+      "q": "Which magical object assigns new Hogwarts students to houses?",
+      "a": [
+        "Black cat",
+        "Remus Lupin",
+        "Dementors",
+        "Sorting Hat"
+      ],
+      "correct": 3,
+      "fact": "sortinghat"
+    },
+    {
+      "q": "What type of creature is Dobby?",
+      "a": [
+        "Banshee",
+        "Mummy",
+        "Skeleton",
+        "House-elf"
+      ],
+      "correct": 3,
+      "fact": "houseelf"
+    },
+    {
+      "q": "What animal is Harry Potter's pet Hedwig?",
+      "a": [
+        "Cobweb",
+        "Snowy owl",
+        "Norman",
+        "Thing"
+      ],
+      "correct": 1,
+      "fact": "snowyowl"
+    },
+    {
+      "q": "What flying object carries witches and Quidditch players?",
+      "a": [
+        "Caramel",
+        "Casper",
+        "Broomstick",
+        "Owl"
+      ],
+      "correct": 2,
+      "fact": "broomstick"
+    },
+    {
+      "q": "What magical garment helps Harry hide from view?",
+      "a": [
+        "Skittles",
+        "Scarecrow",
+        "Mist",
+        "Invisibility Cloak"
+      ],
+      "correct": 3,
+      "fact": "invisibilitycloak"
+    },
+    {
+      "q": "Which three-headed dog guards a trapdoor at Hogwarts?",
+      "a": [
+        "Vampire",
+        "Fluffy",
+        "Cauldron",
+        "Cobweb"
+      ],
+      "correct": 1,
+      "fact": "fluffy"
+    },
+    {
+      "q": "What magical creature can turn into a person's worst fear?",
+      "a": [
+        "Skeleton",
+        "Bat",
+        "Zombie",
+        "Boggart"
+      ],
+      "correct": 3,
+      "fact": "boggart"
+    },
+    {
+      "q": "Which Hogwarts teacher is secretly a werewolf?",
+      "a": [
+        "Remus Lupin",
+        "Costumes",
+        "Halloween Town",
+        "Eyes and nose"
+      ],
+      "correct": 0,
+      "fact": "remuslupin"
+    },
+    {
+      "q": "Which magical creatures drain happiness in Harry Potter?",
+      "a": [
+        "Werewolf",
+        "Acromantula",
+        "Basilisk",
+        "Dementors"
+      ],
+      "correct": 3,
+      "fact": "dementor"
+    },
+    {
+      "q": "Which story features a rider with no head?",
+      "a": [
+        "Haunted attraction",
+        "Trick or treat",
+        "The Legend of Sleepy Hollow",
+        "Bunting"
+      ],
+      "correct": 2,
+      "fact": "thelegendofsleepyhollow"
+    },
+    {
+      "q": "What is the headless rider in Sleepy Hollow called?",
+      "a": [
+        "Caramel",
+        "Headless Horseman",
+        "Zero",
+        "Boggart"
+      ],
+      "correct": 1,
+      "fact": "headlesshorseman"
+    },
+    {
+      "q": "Which Michael Jackson song has a famous monster dance video?",
+      "a": [
+        "Seeds and pulp",
+        "Black cat",
+        "Thriller",
+        "Slimer"
+      ],
+      "correct": 2,
+      "fact": "thriller"
+    },
+    {
+      "q": "Which Halloween song describes a monster dance craze?",
+      "a": [
+        "Haunted attraction",
+        "Haunted house",
+        "Monster Mash",
+        "Dementors"
+      ],
+      "correct": 2,
+      "fact": "monstermash"
+    },
+    {
+      "q": "Which holiday song asks who you are going to call?",
+      "a": [
+        "Popcorn",
+        "Ghostbusters theme",
+        "A pumpkin face",
+        "Witch hat"
+      ],
+      "correct": 1,
+      "fact": "ghostbusterstheme"
+    },
+    {
+      "q": "What sort of building is often pictured with vampires?",
+      "a": [
+        "Mummy",
+        "Halloween Town",
+        "Garlic",
+        "Castle"
+      ],
+      "correct": 3,
+      "fact": "castle"
+    },
+    {
+      "q": "What coffin-shaped object is traditionally a vampire's bed?",
+      "a": [
+        "Thriller",
+        "Pumpkin patch",
+        "Coffin",
+        "Halloween Town"
+      ],
+      "correct": 2,
+      "fact": "coffin"
+    },
+    {
+      "q": "Which strong-smelling bulb repels vampires in many stories?",
+      "a": [
+        "Garlic",
+        "Jack Skellington",
+        "Wand",
+        "Cotton candy"
+      ],
+      "correct": 0,
+      "fact": "garlic"
+    },
+    {
+      "q": "What metal is traditionally used against werewolves in folklore?",
+      "a": [
+        "Silver",
+        "Dementors",
+        "Owl",
+        "Pumpkin patch"
+      ],
+      "correct": 0,
+      "fact": "silver"
+    },
+    {
+      "q": "What would a pirate Halloween costume often cover one eye with?",
+      "a": [
+        "Group costume",
+        "Eyepatch",
+        "Tombstone",
+        "Frankenstein's monster"
+      ],
+      "correct": 1,
+      "fact": "eyepatch"
+    },
+    {
+      "q": "Which bone structure protects the brain in a skeleton decoration?",
+      "a": [
+        "Zombie",
+        "Spider",
+        "Dementors",
+        "Skull"
+      ],
+      "correct": 3,
+      "fact": "skull"
+    },
+    {
+      "q": "What do you call a Halloween group dressed around one idea?",
+      "a": [
+        "Mist",
+        "Group costume",
+        "Rag doll",
+        "Shaggy"
+      ],
+      "correct": 1,
+      "fact": "groupcostume"
+    },
+    {
+      "q": "What party contest judges people's Halloween outfits?",
+      "a": [
+        "Costume contest",
+        "A white sheet",
+        "Casper",
+        "Reflective tape"
+      ],
+      "correct": 0,
+      "fact": "costumecontest"
+    },
+    {
+      "q": "What decoration hangs as a string of small Halloween flags?",
+      "a": [
+        "LED candle",
+        "House-elf",
+        "Mask",
+        "Bunting"
+      ],
+      "correct": 3,
+      "fact": "bunting"
+    },
+    {
+      "q": "What sticky sweet treat is spun into fluffy strands at a fall fair?",
+      "a": [
+        "Paper bat",
+        "Norman",
+        "Silver",
+        "Cotton candy"
+      ],
+      "correct": 3,
+      "fact": "cottoncandy"
+    },
+    {
+      "q": "Which snack pops into white puffs at Halloween movie night?",
+      "a": [
+        "Cotton candy",
+        "Popcorn",
+        "Frankenstein's monster",
+        "Pumpkin"
+      ],
+      "correct": 1,
+      "fact": "popcorn"
+    },
+    {
+      "q": "What red fruit can have a hard candy shell at Halloween?",
+      "a": [
+        "Boggart",
+        "Slimer",
+        "Wednesday",
+        "Candy apple"
+      ],
+      "correct": 3,
+      "fact": "candyapple"
+    },
+    {
+      "q": "What candy often comes wrapped on a stick?",
+      "a": [
+        "Zero",
+        "Cobweb",
+        "Lollipop",
+        "Tombstone"
+      ],
+      "correct": 2,
+      "fact": "lollipop"
+    },
+    {
+      "q": "What is a Halloween story meant to give you?",
+      "a": [
+        "Flashlight",
+        "Zero",
+        "Fangs",
+        "A spooky thrill"
+      ],
+      "correct": 3,
+      "fact": "aspookythrill"
+    },
+    {
+      "q": "What do you call a guided walk telling local ghost stories?",
+      "a": [
+        "Flashlight",
+        "Skull",
+        "Ghost tour",
+        "Reese's"
+      ],
+      "correct": 2,
+      "fact": "ghosttour"
+    },
+    {
+      "q": "Which attraction uses actors to give guests safe Halloween scares?",
+      "a": [
+        "Haunted attraction",
+        "Skull",
+        "Ghostbusters theme",
+        "Eight legs"
+      ],
+      "correct": 0,
+      "fact": "hauntedattraction"
+    },
+    {
+      "q": "What is a simple Halloween craft cut from black paper with wings?",
+      "a": [
+        "Invisibility Cloak",
+        "Vampire",
+        "Paper bat",
+        "The Munsters"
+      ],
+      "correct": 2,
+      "fact": "paperbat"
+    },
+    {
+      "q": "What can reflect light on a trick-or-treat costume for visibility?",
+      "a": [
+        "House-elf",
+        "Reflective tape",
+        "Fangs",
+        "Skittles"
+      ],
+      "correct": 1,
+      "fact": "reflectivetape"
+    },
+    {
+      "q": "What handheld light helps trick-or-treaters see a dark path?",
+      "a": [
+        "Flashlight",
+        "Lurch",
+        "Lollipop",
+        "Coffin"
+      ],
+      "correct": 0,
+      "fact": "flashlight"
+    },
+    {
+      "q": "Which part of a pumpkin is attached to its vine?",
+      "a": [
+        "Halloween Town",
+        "Thriller",
+        "Stem",
+        "Treat bags"
+      ],
+      "correct": 2,
+      "fact": "stem"
+    },
+    {
+      "q": "What do carved triangle shapes often form on a jack-o'-lantern?",
+      "a": [
+        "House-elf",
+        "Zombie",
+        "Eyes and nose",
+        "Eight legs"
+      ],
+      "correct": 2,
+      "fact": "eyesandnose"
+    },
+    {
+      "q": "What can you paint instead of carving for a Halloween decoration?",
+      "a": [
+        "Thriller",
+        "A pumpkin face",
+        "Edward Scissorhands",
+        "Eight legs"
+      ],
+      "correct": 1,
+      "fact": "apumpkinface"
+    },
+    {
+      "q": "What does an artificial fog machine add to a Halloween display?",
+      "a": [
+        "Mist",
+        "Popcorn",
+        "The Addams Family",
+        "Edward Scissorhands"
+      ],
+      "correct": 0,
+      "fact": "mist"
+    },
+    {
+      "q": "Which Halloween decoration resembles a human framework?",
+      "a": [
+        "Remus Lupin",
+        "Hayride",
+        "Plastic skeleton",
+        "Thing"
+      ],
+      "correct": 2,
+      "fact": "plasticskeleton"
+    },
+    {
+      "q": "What big insect-like legs are used on a giant spider decoration?",
+      "a": [
+        "Jack Skellington",
+        "Witches",
+        "Eight legs",
+        "Cotton candy"
+      ],
+      "correct": 2,
+      "fact": "eightleg"
+    },
+    {
+      "q": "Which movie character has scissors instead of ordinary hands?",
+      "a": [
+        "Wednesday",
+        "Haunted house",
+        "Edward Scissorhands",
+        "Werewolf"
+      ],
+      "correct": 2,
+      "fact": "edwardscissorhand"
+    },
+    {
+      "q": "Which ghostly bride is the title character of Corpse Bride?",
+      "a": [
+        "Costume contest",
+        "Emily",
+        "Monster House",
+        "House-elf"
+      ],
+      "correct": 1,
+      "fact": "emily"
+    },
+    {
+      "q": "Which animated boy can speak with ghosts in ParaNorman?",
+      "a": [
+        "Scarecrow",
+        "Rocks",
+        "Norman",
+        "Edward Scissorhands"
+      ],
+      "correct": 2,
+      "fact": "norman"
+    },
+    {
+      "q": "Which animated movie features a living, frightening house?",
+      "a": [
+        "Monster House",
+        "The Addams Family",
+        "Corpse Bride",
+        "The Munsters"
+      ],
+      "correct": 0,
+      "fact": "monsterhouse"
+    },
+    {
+      "q": "Which Tim Burton film features a revived dog named Sparky?",
+      "a": [
+        "The Mummy",
+        "Halloween",
+        "Frankenweenie",
+        "Coraline"
+      ],
+      "correct": 2,
+      "fact": "frankenweenie"
+    },
+    {
+      "q": "Which movie features an Other Mother with button eyes?",
+      "a": [
+        "The Invisible Man",
+        "Coraline",
+        "The Addams Family",
+        "ParaNorman"
+      ],
+      "correct": 1,
+      "fact": "coraline"
+    },
+    {
+      "q": "Which spooky television family lives at 1313 Mockingbird Lane?",
+      "a": [
+        "The Munsters",
+        "The Addams Family",
+        "The Invisible Man",
+        "Ghostbusters"
+      ],
+      "correct": 0,
+      "fact": "themunster"
+    },
+    {
+      "q": "Which candy brand is famous for peanut butter cups?",
+      "a": [
+        "Reese's",
+        "Ghostbusters",
+        "M&M's",
+        "Candy"
+      ],
+      "correct": 0,
+      "fact": "reese"
+    },
+    {
+      "q": "Which candy brand says Taste the Rainbow?",
+      "a": [
+        "Coffin",
+        "Skittles",
+        "Frankenstein's monster",
+        "Apples"
+      ],
+      "correct": 1,
+      "fact": "skittle"
+    },
+    {
+      "q": "Which candy is famous for chocolate that melts in your mouth, not your hand?",
+      "a": [
+        "Wednesday",
+        "M&M's",
+        "Hayride",
+        "Vampire"
+      ],
+      "correct": 1,
+      "fact": "mm"
+    }
+  ],
+  "medium": [
+    {
+      "q": "Which ancient Celtic festival is linked with Halloween's roots?",
+      "a": [
+        "Samhain",
+        "Mavis",
+        "Banshee",
+        "All Saints' Day"
+      ],
+      "correct": 0,
+      "fact": "samhain"
+    },
+    {
+      "q": "Halloween is a shortened form of which phrase?",
+      "a": [
+        "All Hallows' Eve",
+        "Basilisk",
+        "Larry Talbot",
+        "Ecto-1"
+      ],
+      "correct": 0,
+      "fact": "allhallowseve"
+    },
+    {
+      "q": "What Christian observance falls on November 1?",
+      "a": [
+        "Henry Selick",
+        "Mary Shelley",
+        "All Saints' Day",
+        "Black Flame Candle"
+      ],
+      "correct": 2,
+      "fact": "allsaintsday"
+    },
+    {
+      "q": "Which root vegetable was traditionally carved into lanterns in Ireland?",
+      "a": [
+        "Turnip",
+        "Oogie Boogie",
+        "Overlook Hotel",
+        "Raul Julia"
+      ],
+      "correct": 0,
+      "fact": "turnip"
+    },
+    {
+      "q": "What is the Irish fruit bread associated with Halloween called?",
+      "a": [
+        "Barmbrack",
+        "Woodsboro",
+        "Fred",
+        "Ray Parker Jr."
+      ],
+      "correct": 0,
+      "fact": "barmbrack"
+    },
+    {
+      "q": "What small object traditionally hidden in barmbrack suggests marriage?",
+      "a": [
+        "Tootsie Pop",
+        "Ring",
+        "What's This?",
+        "Teal"
+      ],
+      "correct": 1,
+      "fact": "ring"
+    },
+    {
+      "q": "What is dressing in disguise and visiting homes for treats traditionally called in Scotland?",
+      "a": [
+        "Winston Zeddemore",
+        "Friday the 13th",
+        "Guising",
+        "Salem"
+      ],
+      "correct": 2,
+      "fact": "guising"
+    },
+    {
+      "q": "What was visiting homes for small cakes in exchange for prayers called?",
+      "a": [
+        "Souling",
+        "Fred",
+        "It has two faces",
+        "Poltergeist"
+      ],
+      "correct": 0,
+      "fact": "souling"
+    },
+    {
+      "q": "Which country is strongly associated with the Day of the Dead celebration?",
+      "a": [
+        "Familiar",
+        "Sour Patch Kids",
+        "Mexico",
+        "Debbie Reynolds"
+      ],
+      "correct": 2,
+      "fact": "mexico"
+    },
+    {
+      "q": "Which orange flower is commonly used for Day of the Dead altars?",
+      "a": [
+        "Marigold",
+        "Lock, Shock, and Barrel",
+        "Basilisk",
+        "Almond Joy"
+      ],
+      "correct": 0,
+      "fact": "marigold"
+    },
+    {
+      "q": "What is a Day of the Dead altar called?",
+      "a": [
+        "Mothman",
+        "Ofrenda",
+        "Christina Ricci",
+        "Thestrals"
+      ],
+      "correct": 1,
+      "fact": "ofrenda"
+    },
+    {
+      "q": "What traditional sweet represents a skull for Day of the Dead?",
+      "a": [
+        "A person in disguise",
+        "All Hallows' Eve",
+        "Sugar skull",
+        "Barmbrack"
+      ],
+      "correct": 2,
+      "fact": "sugarskull"
+    },
+    {
+      "q": "What trick-or-treat pumpkin color signals non-food treats for food allergies?",
+      "a": [
+        "Sandy Claws",
+        "Teal",
+        "Danny Elfman",
+        "Mary Shelley"
+      ],
+      "correct": 1,
+      "fact": "teal"
+    },
+    {
+      "q": "Which charity is known for orange trick-or-treat collection boxes?",
+      "a": [
+        "Great Sphinx",
+        "Poltergeist",
+        "Starburst",
+        "UNICEF"
+      ],
+      "correct": 3,
+      "fact": "unicef"
+    },
+    {
+      "q": "What was candy corn once marketed as because of its farm connection?",
+      "a": [
+        "Nearly Headless Nick",
+        "Uncle Fester",
+        "Henry Selick",
+        "Chicken Feed"
+      ],
+      "correct": 3,
+      "fact": "chickenfeed"
+    },
+    {
+      "q": "What is a pumpkin botanically classified as?",
+      "a": [
+        "Daphne",
+        "Romania",
+        "Fruit",
+        "Proton pack"
+      ],
+      "correct": 2,
+      "fact": "fruit"
+    },
+    {
+      "q": "What plant family includes pumpkins and cucumbers?",
+      "a": [
+        "Cucurbit family",
+        "Samhain",
+        "Freddy Krueger",
+        "Griffin"
+      ],
+      "correct": 0,
+      "fact": "cucurbitfamily"
+    },
+    {
+      "q": "Which Halloween candy combines peanuts, caramel, nougat, and chocolate?",
+      "a": [
+        "A living eye",
+        "Starburst",
+        "Danny Elfman",
+        "Snickers"
+      ],
+      "correct": 3,
+      "fact": "snicker"
+    },
+    {
+      "q": "Which candy bar is known for wafer layers and chocolate?",
+      "a": [
+        "Sandy Claws",
+        "Kit Kat",
+        "Teal",
+        "Larry Talbot"
+      ],
+      "correct": 1,
+      "fact": "kitkat"
+    },
+    {
+      "q": "Which candy bar combines coconut and almonds?",
+      "a": [
+        "Almond Joy",
+        "Snickers",
+        "Larry Talbot",
+        "Firehouse"
+      ],
+      "correct": 0,
+      "fact": "almondjoy"
+    },
+    {
+      "q": "Which candy bar has coconut but no almonds?",
+      "a": [
+        "Almond Joy",
+        "Boris Karloff",
+        "Mounds",
+        "Max"
+      ],
+      "correct": 2,
+      "fact": "mound"
+    },
+    {
+      "q": "Which chewy candy has flavors including strawberry and lemon in small squares?",
+      "a": [
+        "Starburst",
+        "Chicken Feed",
+        "Friday the 13th",
+        "Kit Kat"
+      ],
+      "correct": 0,
+      "fact": "starburst"
+    },
+    {
+      "q": "Which round candy has a chocolate center beneath hard candy?",
+      "a": [
+        "Tootsie Pop",
+        "Larry Talbot",
+        "Woodsboro",
+        "Thackery Binx"
+      ],
+      "correct": 0,
+      "fact": "tootsiepop"
+    },
+    {
+      "q": "Which sour-then-sweet candies are shaped like little people?",
+      "a": [
+        "Fruit",
+        "Kalabar",
+        "Freddy Krueger",
+        "Sour Patch Kids"
+      ],
+      "correct": 3,
+      "fact": "sourpatchkid"
+    },
+    {
+      "q": "Which British author wrote Dracula?",
+      "a": [
+        "Mary Shelley",
+        "Ray Bradbury",
+        "Bram Stoker",
+        "Bobby 'Boris' Pickett"
+      ],
+      "correct": 2,
+      "fact": "bramstoker"
+    },
+    {
+      "q": "Who wrote the novel Frankenstein?",
+      "a": [
+        "Bill Murray",
+        "Shirley Jackson",
+        "Neil Gaiman",
+        "Mary Shelley"
+      ],
+      "correct": 3,
+      "fact": "maryshelley"
+    },
+    {
+      "q": "What is the scientist's first name in the Frankenstein novel?",
+      "a": [
+        "Samhain",
+        "Victor",
+        "Starburst",
+        "This Is Halloween"
+      ],
+      "correct": 1,
+      "fact": "victor"
+    },
+    {
+      "q": "Who wrote The Legend of Sleepy Hollow?",
+      "a": [
+        "Washington Irving",
+        "Warren Zevon",
+        "Bram Stoker",
+        "Andrew Gold"
+      ],
+      "correct": 0,
+      "fact": "washingtonirving"
+    },
+    {
+      "q": "What is Ichabod Crane's job in the original Sleepy Hollow story?",
+      "a": [
+        "Barmbrack",
+        "Schoolteacher",
+        "Stay Puft Marshmallow Man",
+        "Chicken Feed"
+      ],
+      "correct": 1,
+      "fact": "schoolteacher"
+    },
+    {
+      "q": "What region is Dracula traditionally associated with?",
+      "a": [
+        "Riddikulus",
+        "Sandy Claws",
+        "Thestrals",
+        "Transylvania"
+      ],
+      "correct": 3,
+      "fact": "transylvania"
+    },
+    {
+      "q": "Which country contains Transylvania?",
+      "a": [
+        "Sarah Jessica Parker",
+        "Sandy Claws",
+        "Zoinks",
+        "Romania"
+      ],
+      "correct": 3,
+      "fact": "romania"
+    },
+    {
+      "q": "What is a noisy spirit that moves objects called?",
+      "a": [
+        "Poltergeist",
+        "Frankenweenie",
+        "Hocus Pocus",
+        "The Nightmare Before Christmas"
+      ],
+      "correct": 0,
+      "fact": "poltergeist"
+    },
+    {
+      "q": "Which Irish spirit's cry is traditionally an omen of death?",
+      "a": [
+        "Owl",
+        "Basilisk",
+        "Banshee",
+        "Poltergeist"
+      ],
+      "correct": 2,
+      "fact": "banshee"
+    },
+    {
+      "q": "What is a witch's animal companion often called?",
+      "a": [
+        "Bette Midler",
+        "Familiar",
+        "Lon Chaney Jr.",
+        "Kathy Najimy"
+      ],
+      "correct": 1,
+      "fact": "familiar"
+    },
+    {
+      "q": "Which cryptid is associated with Point Pleasant, West Virginia?",
+      "a": [
+        "Peter Venkman",
+        "Firehouse",
+        "Mothman",
+        "It has two faces"
+      ],
+      "correct": 2,
+      "fact": "mothman"
+    },
+    {
+      "q": "Which mythical creature is part human and part horse?",
+      "a": [
+        "House-elf",
+        "Ghost",
+        "Black cat",
+        "Centaur"
+      ],
+      "correct": 3,
+      "fact": "centaur"
+    },
+    {
+      "q": "What mythical creature has a lion body and an eagle head?",
+      "a": [
+        "Griffin",
+        "Black cat",
+        "Owl",
+        "Boggart"
+      ],
+      "correct": 0,
+      "fact": "griffin"
+    },
+    {
+      "q": "Which mythical creature has snakes instead of hair?",
+      "a": [
+        "Velma",
+        "Medusa",
+        "UNICEF",
+        "All Saints' Day"
+      ],
+      "correct": 1,
+      "fact": "medusa"
+    },
+    {
+      "q": "Which Egyptian monument has a lion body and a human head?",
+      "a": [
+        "Centaur",
+        "Great Sphinx",
+        "Thestrals",
+        "Kalabar"
+      ],
+      "correct": 1,
+      "fact": "greatsphinx"
+    },
+    {
+      "q": "Which monster is the title character of The Wolf Man?",
+      "a": [
+        "Larry Talbot",
+        "Mexico",
+        "Johnny",
+        "All Hallows' Eve"
+      ],
+      "correct": 0,
+      "fact": "larrytalbot"
+    },
+    {
+      "q": "Which actor starred as Dracula in the 1931 Universal film?",
+      "a": [
+        "Vincent Price",
+        "Shirley Jackson",
+        "John Carpenter",
+        "Bela Lugosi"
+      ],
+      "correct": 3,
+      "fact": "belalugosi"
+    },
+    {
+      "q": "Which actor played Frankenstein's monster in Universal's 1931 film?",
+      "a": [
+        "Shirley Jackson",
+        "Christopher Lee",
+        "Neil Gaiman",
+        "Boris Karloff"
+      ],
+      "correct": 3,
+      "fact": "boriskarloff"
+    },
+    {
+      "q": "Which actor played the Wolf Man in Universal's 1941 film?",
+      "a": [
+        "James Whale",
+        "Lon Chaney Jr.",
+        "Andrew Gold",
+        "Bette Midler"
+      ],
+      "correct": 1,
+      "fact": "lonchaneyjr"
+    },
+    {
+      "q": "What is the swamp creature in Creature from the Black Lagoon commonly called?",
+      "a": [
+        "Ofrenda",
+        "Gill-man",
+        "Guising",
+        "Romania"
+      ],
+      "correct": 1,
+      "fact": "gillman"
+    },
+    {
+      "q": "Who plays Winifred Sanderson in Hocus Pocus?",
+      "a": [
+        "Lon Chaney Jr.",
+        "Danny Elfman",
+        "Bette Midler",
+        "Boris Karloff"
+      ],
+      "correct": 2,
+      "fact": "bettemidler"
+    },
+    {
+      "q": "Who plays Sarah Sanderson in Hocus Pocus?",
+      "a": [
+        "Lon Chaney Jr.",
+        "Kathy Najimy",
+        "Sarah Jessica Parker",
+        "Vincent Price"
+      ],
+      "correct": 2,
+      "fact": "sarahjessicaparker"
+    },
+    {
+      "q": "Who plays Mary Sanderson in Hocus Pocus?",
+      "a": [
+        "Henry Selick",
+        "Anjelica Huston",
+        "Andrew Gold",
+        "Kathy Najimy"
+      ],
+      "correct": 3,
+      "fact": "kathynajimy"
+    },
+    {
+      "q": "What Massachusetts town is the main setting of Hocus Pocus?",
+      "a": [
+        "Bram Stoker",
+        "Moaning Myrtle",
+        "Bette Midler",
+        "Salem"
+      ],
+      "correct": 3,
+      "fact": "salem"
+    },
+    {
+      "q": "What is the first name of the boy who lights the candle in Hocus Pocus?",
+      "a": [
+        "What's This?",
+        "Max",
+        "Souling",
+        "Fred"
+      ],
+      "correct": 1,
+      "fact": "max"
+    },
+    {
+      "q": "What is the name of Max's younger sister in Hocus Pocus?",
+      "a": [
+        "Transylvania",
+        "Sarah Jessica Parker",
+        "Mexico",
+        "Dani"
+      ],
+      "correct": 3,
+      "fact": "dani"
+    },
+    {
+      "q": "What enchanted object brings back the Sanderson sisters?",
+      "a": [
+        "Black Flame Candle",
+        "Nearly Headless Nick",
+        "Johnny",
+        "Marigold"
+      ],
+      "correct": 0,
+      "fact": "blackflamecandle"
+    },
+    {
+      "q": "What is the black cat's full name in Hocus Pocus?",
+      "a": [
+        "This Is Halloween",
+        "Danny Elfman",
+        "Great Sphinx",
+        "Thackery Binx"
+      ],
+      "correct": 3,
+      "fact": "thackerybinx"
+    },
+    {
+      "q": "Which song do the sisters perform at the Hocus Pocus party?",
+      "a": [
+        "Mavis",
+        "It",
+        "I Put a Spell on You",
+        "Firehouse"
+      ],
+      "correct": 2,
+      "fact": "iputaspellonyou"
+    },
+    {
+      "q": "What is the name of the Sanderson sisters' spell book's unusual feature?",
+      "a": [
+        "UNICEF",
+        "Danny Elfman",
+        "Banshee",
+        "A living eye"
+      ],
+      "correct": 3,
+      "fact": "alivingeye"
+    },
+    {
+      "q": "Who directed The Nightmare Before Christmas?",
+      "a": [
+        "Dan Aykroyd",
+        "Ray Parker Jr.",
+        "Henry Selick",
+        "Danny Elfman"
+      ],
+      "correct": 2,
+      "fact": "henryselick"
+    },
+    {
+      "q": "Who composed the songs for The Nightmare Before Christmas?",
+      "a": [
+        "Danny Elfman",
+        "Tim Burton",
+        "Edgar Allan Poe",
+        "Vincent Price"
+      ],
+      "correct": 0,
+      "fact": "dannyelfman"
+    },
+    {
+      "q": "What villain is a sack filled with bugs in The Nightmare Before Christmas?",
+      "a": [
+        "Ring",
+        "Johnny",
+        "Stay Puft Marshmallow Man",
+        "Oogie Boogie"
+      ],
+      "correct": 3,
+      "fact": "oogieboogie"
+    },
+    {
+      "q": "Who created Sally in The Nightmare Before Christmas?",
+      "a": [
+        "Dr. Finkelstein",
+        "Andrew Gold",
+        "Edgar Allan Poe",
+        "Danny Elfman"
+      ],
+      "correct": 0,
+      "fact": "drfinkelstein"
+    },
+    {
+      "q": "What are the names of Halloween Town's three trick-or-treaters?",
+      "a": [
+        "Lock, Shock, and Barrel",
+        "Familiar",
+        "Kathy Najimy",
+        "Peter Venkman"
+      ],
+      "correct": 0,
+      "fact": "lockshockandbarrel"
+    },
+    {
+      "q": "Which song introduces the residents of Halloween Town?",
+      "a": [
+        "Sandy Claws",
+        "This Is Halloween",
+        "Transylvania",
+        "Teal"
+      ],
+      "correct": 1,
+      "fact": "thisishalloween"
+    },
+    {
+      "q": "What is unusual about Halloween Town's mayor's head?",
+      "a": [
+        "Sarah Jessica Parker",
+        "Oogie Boogie",
+        "Victor",
+        "It has two faces"
+      ],
+      "correct": 3,
+      "fact": "ithastwoface"
+    },
+    {
+      "q": "What does Jack call Santa Claus?",
+      "a": [
+        "Tootsie Pop",
+        "Bram Stoker",
+        "Sandy Claws",
+        "Cucurbit family"
+      ],
+      "correct": 2,
+      "fact": "sandyclaw"
+    },
+    {
+      "q": "Which song does Jack sing while exploring Christmas Town?",
+      "a": [
+        "Mary Shelley",
+        "What's This?",
+        "Sarah Jessica Parker",
+        "Lon Chaney Jr."
+      ],
+      "correct": 1,
+      "fact": "whatsthi"
+    },
+    {
+      "q": "Who plays Morticia in the 1991 Addams Family film?",
+      "a": [
+        "Bobby 'Boris' Pickett",
+        "Michael Keaton",
+        "Anjelica Huston",
+        "Henry James"
+      ],
+      "correct": 2,
+      "fact": "anjelicahuston"
+    },
+    {
+      "q": "Who plays Gomez in the 1991 Addams Family film?",
+      "a": [
+        "Lon Chaney Jr.",
+        "Peter Cushing",
+        "John Carpenter",
+        "Raul Julia"
+      ],
+      "correct": 3,
+      "fact": "rauljulia"
+    },
+    {
+      "q": "Who plays Wednesday in the 1991 Addams Family film?",
+      "a": [
+        "Ray Bradbury",
+        "Mary Shelley",
+        "Christina Ricci",
+        "Danny Elfman"
+      ],
+      "correct": 2,
+      "fact": "christinaricci"
+    },
+    {
+      "q": "What is Wednesday's brother's name?",
+      "a": [
+        "Bette Midler",
+        "Pugsley",
+        "Fred",
+        "Washington Irving"
+      ],
+      "correct": 1,
+      "fact": "pugsley"
+    },
+    {
+      "q": "Which Addams relative is covered in long hair?",
+      "a": [
+        "Cousin Itt",
+        "Poltergeist",
+        "Thackery Binx",
+        "Proton pack"
+      ],
+      "correct": 0,
+      "fact": "cousinitt"
+    },
+    {
+      "q": "Which Addams uncle can light a bulb in his mouth?",
+      "a": [
+        "Egon Spengler",
+        "All Saints' Day",
+        "Washington Irving",
+        "Uncle Fester"
+      ],
+      "correct": 3,
+      "fact": "unclefester"
+    },
+    {
+      "q": "What is the name of the Addams family baby in Addams Family Values?",
+      "a": [
+        "Kathy Najimy",
+        "Pubert",
+        "Cucurbit family",
+        "Max"
+      ],
+      "correct": 1,
+      "fact": "pubert"
+    },
+    {
+      "q": "Which Scooby-Doo character wears an orange sweater and glasses?",
+      "a": [
+        "Friday the 13th",
+        "Kathy Najimy",
+        "Ray Parker Jr.",
+        "Velma"
+      ],
+      "correct": 3,
+      "fact": "velma"
+    },
+    {
+      "q": "Which Scooby-Doo character usually wears an ascot?",
+      "a": [
+        "Fred",
+        "Salem",
+        "Black Flame Candle",
+        "Mary Shelley"
+      ],
+      "correct": 0,
+      "fact": "fred"
+    },
+    {
+      "q": "Which Scooby-Doo character is often dressed in purple?",
+      "a": [
+        "Haddonfield",
+        "Max",
+        "Daphne",
+        "A living eye"
+      ],
+      "correct": 2,
+      "fact": "daphne"
+    },
+    {
+      "q": "What are the treats used to persuade Scooby and Shaggy called?",
+      "a": [
+        "Scooby Snacks",
+        "Haddonfield",
+        "Barmbrack",
+        "Dr. Finkelstein"
+      ],
+      "correct": 0,
+      "fact": "scoobysnack"
+    },
+    {
+      "q": "What does Velma famously say when she finds a clue?",
+      "a": [
+        "Sarah Jessica Parker",
+        "Jinkies",
+        "Anjelica Huston",
+        "Cucurbit family"
+      ],
+      "correct": 1,
+      "fact": "jinkie"
+    },
+    {
+      "q": "What exclamation is strongly associated with Shaggy?",
+      "a": [
+        "Proton pack",
+        "Banshee",
+        "Samhain",
+        "Zoinks"
+      ],
+      "correct": 3,
+      "fact": "zoink"
+    },
+    {
+      "q": "What does Scooby-Doo typically reveal about a supposed monster?",
+      "a": [
+        "It",
+        "Samhain",
+        "A person in disguise",
+        "Peter Venkman"
+      ],
+      "correct": 2,
+      "fact": "apersonindisguise"
+    },
+    {
+      "q": "What is the Ghostbusters' vehicle called?",
+      "a": [
+        "Ecto-1",
+        "Anjelica Huston",
+        "Cousin Itt",
+        "Tootsie Pop"
+      ],
+      "correct": 0,
+      "fact": "ecto1"
+    },
+    {
+      "q": "What New York building is the Ghostbusters' headquarters?",
+      "a": [
+        "Dani",
+        "Oogie Boogie",
+        "Centaur",
+        "Firehouse"
+      ],
+      "correct": 3,
+      "fact": "firehouse"
+    },
+    {
+      "q": "What device do Ghostbusters wear on their backs?",
+      "a": [
+        "Great Sphinx",
+        "Egon Spengler",
+        "Teal",
+        "Proton pack"
+      ],
+      "correct": 3,
+      "fact": "protonpack"
+    },
+    {
+      "q": "What enormous mascot appears at the climax of Ghostbusters (1984)?",
+      "a": [
+        "Stay Puft Marshmallow Man",
+        "Bette Midler",
+        "Snickers",
+        "Freddy Krueger"
+      ],
+      "correct": 0,
+      "fact": "staypuftmarshmallowman"
+    },
+    {
+      "q": "Who wrote and sang the hit Ghostbusters theme?",
+      "a": [
+        "Ray Parker Jr.",
+        "Christopher Lloyd",
+        "Michael Keaton",
+        "Bette Midler"
+      ],
+      "correct": 0,
+      "fact": "rayparkerjr"
+    },
+    {
+      "q": "Which Ghostbuster is played by Bill Murray?",
+      "a": [
+        "Peter Venkman",
+        "Haddonfield",
+        "Overlook Hotel",
+        "Daphne"
+      ],
+      "correct": 0,
+      "fact": "petervenkman"
+    },
+    {
+      "q": "Which Ghostbuster is played by Dan Aykroyd?",
+      "a": [
+        "Ray Stantz",
+        "Gill-man",
+        "This Is Halloween",
+        "Poltergeist"
+      ],
+      "correct": 0,
+      "fact": "raystantz"
+    },
+    {
+      "q": "Which Ghostbuster is played by Harold Ramis?",
+      "a": [
+        "Samhain",
+        "Egon Spengler",
+        "Mothman",
+        "A person in disguise"
+      ],
+      "correct": 1,
+      "fact": "egonspengler"
+    },
+    {
+      "q": "Which Ghostbuster is played by Ernie Hudson?",
+      "a": [
+        "This Is Halloween",
+        "Winston Zeddemore",
+        "Guising",
+        "All Hallows' Eve"
+      ],
+      "correct": 1,
+      "fact": "winstonzeddemore"
+    },
+    {
+      "q": "What is Dracula's daughter's name in Hotel Transylvania?",
+      "a": [
+        "Mavis",
+        "Bram Stoker",
+        "Mexico",
+        "Henry Selick"
+      ],
+      "correct": 0,
+      "fact": "mavi"
+    },
+    {
+      "q": "Who is the human visitor who falls for Mavis?",
+      "a": [
+        "Daphne",
+        "Johnny",
+        "Acromantula",
+        "Snickers"
+      ],
+      "correct": 1,
+      "fact": "johnny"
+    },
+    {
+      "q": "What is the name of the young witch in Halloweentown?",
+      "a": [
+        "Woodsboro",
+        "Marnie Piper",
+        "Raul Julia",
+        "Fruit"
+      ],
+      "correct": 1,
+      "fact": "marniepiper"
+    },
+    {
+      "q": "Which actress plays Aggie Cromwell in Halloweentown?",
+      "a": [
+        "Debbie Reynolds",
+        "Michael Keaton",
+        "Danny Elfman",
+        "Henry James"
+      ],
+      "correct": 0,
+      "fact": "debbiereynold"
+    },
+    {
+      "q": "What is the name of the villain in the first Halloweentown?",
+      "a": [
+        "Mounds",
+        "Kalabar",
+        "A person in disguise",
+        "Guising"
+      ],
+      "correct": 1,
+      "fact": "kalabar"
+    },
+    {
+      "q": "What Halloween creature does Harry face in the girls' bathroom in his first year?",
+      "a": [
+        "Mountain troll",
+        "Boris Karloff",
+        "Ray Parker Jr.",
+        "Jinkies"
+      ],
+      "correct": 0,
+      "fact": "mountaintroll"
+    },
+    {
+      "q": "Whose Deathday party do Harry and friends attend on Halloween?",
+      "a": [
+        "Nearly Headless Nick",
+        "Ecto-1",
+        "Romania",
+        "Mary Shelley"
+      ],
+      "correct": 0,
+      "fact": "nearlyheadlessnick"
+    },
+    {
+      "q": "Which spell is used against a boggart?",
+      "a": [
+        "All Hallows' Eve",
+        "Expecto Patronum",
+        "Riddikulus",
+        "Salem"
+      ],
+      "correct": 2,
+      "fact": "riddikulu"
+    },
+    {
+      "q": "Which spell creates a Patronus to repel Dementors?",
+      "a": [
+        "Expecto Patronum",
+        "A living eye",
+        "Anjelica Huston",
+        "Haddonfield"
+      ],
+      "correct": 0,
+      "fact": "expectopatronum"
+    },
+    {
+      "q": "What type of creature is Aragog in Harry Potter?",
+      "a": [
+        "Bat",
+        "Werewolf",
+        "Centaur",
+        "Acromantula"
+      ],
+      "correct": 3,
+      "fact": "acromantula"
+    },
+    {
+      "q": "What enormous snake lives in the Chamber of Secrets?",
+      "a": [
+        "Bat",
+        "Griffin",
+        "Basilisk",
+        "Poltergeist"
+      ],
+      "correct": 2,
+      "fact": "basilisk"
+    },
+    {
+      "q": "What magical creatures pull the Hogwarts carriages?",
+      "a": [
+        "Basilisk",
+        "Banshee",
+        "Thestrals",
+        "Boggart"
+      ],
+      "correct": 2,
+      "fact": "thestral"
+    },
+    {
+      "q": "Which Hogwarts ghost haunts a girls' bathroom?",
+      "a": [
+        "Dr. Finkelstein",
+        "Stay Puft Marshmallow Man",
+        "Gill-man",
+        "Moaning Myrtle"
+      ],
+      "correct": 3,
+      "fact": "moaningmyrtle"
+    },
+    {
+      "q": "Which character is pursued by Michael Myers in Halloween (1978)?",
+      "a": [
+        "Michael Keaton",
+        "Laurie Strode",
+        "Salem",
+        "Mary Shelley"
+      ],
+      "correct": 1,
+      "fact": "lauriestrode"
+    },
+    {
+      "q": "Which fictional Illinois town is the setting of Halloween (1978)?",
+      "a": [
+        "Haddonfield",
+        "Nearly Headless Nick",
+        "Pubert",
+        "Black Flame Candle"
+      ],
+      "correct": 0,
+      "fact": "haddonfield"
+    },
+    {
+      "q": "Which character haunts dreams in A Nightmare on Elm Street?",
+      "a": [
+        "Anjelica Huston",
+        "Marnie Piper",
+        "Freddy Krueger",
+        "Woodsboro"
+      ],
+      "correct": 2,
+      "fact": "freddykrueger"
+    },
+    {
+      "q": "Which movie series features Ghostface?",
+      "a": [
+        "Scream",
+        "Corpse Bride",
+        "Monster House",
+        "The Invisible Man"
+      ],
+      "correct": 0,
+      "fact": "scream"
+    },
+    {
+      "q": "What is the fictional town in the original Scream?",
+      "a": [
+        "Max",
+        "Woodsboro",
+        "It has two faces",
+        "Bette Midler"
+      ],
+      "correct": 1,
+      "fact": "woodsboro"
+    },
+    {
+      "q": "Which horror franchise features Camp Crystal Lake?",
+      "a": [
+        "Ghostbusters",
+        "Coraline",
+        "Friday the 13th",
+        "Monster House"
+      ],
+      "correct": 2,
+      "fact": "fridaythe13th"
+    },
+    {
+      "q": "Which Stephen King story features Pennywise?",
+      "a": [
+        "The Shining",
+        "It",
+        "Frankenstein",
+        "Monster House"
+      ],
+      "correct": 1,
+      "fact": "it"
+    },
+    {
+      "q": "Which hotel is the setting of The Shining?",
+      "a": [
+        "Zoinks",
+        "Bram Stoker",
+        "Victor",
+        "Overlook Hotel"
+      ],
+      "correct": 3,
+      "fact": "overlookhotel"
+    },
+    {
+      "q": "What movie features a haunted TV and the line They're here?",
+      "a": [
+        "Halloween",
+        "Coraline",
+        "Poltergeist",
+        "Hocus Pocus"
+      ],
+      "correct": 2,
+      "fact": "poltergeist"
+    },
+    {
+      "q": "Which actor plays Beetlejuice in the 1988 film?",
+      "a": [
+        "Michael Keaton",
+        "Warren Zevon",
+        "Kenny Ortega",
+        "Lon Chaney Jr."
+      ],
+      "correct": 0,
+      "fact": "michaelkeaton"
+    },
+    {
+      "q": "Who recorded Monster Mash in 1962?",
+      "a": [
+        "Wes Craven",
+        "Bobby 'Boris' Pickett",
+        "Anjelica Huston",
+        "Warren Zevon"
+      ],
+      "correct": 1,
+      "fact": "bobbyborispickett"
+    }
+  ],
+  "hard": [
+    {
+      "q": "In what year was Bram Stoker's Dracula first published?",
+      "a": [
+        "1969",
+        "1962",
+        "1897",
+        "2009"
+      ],
+      "correct": 2,
+      "fact": "1897"
+    },
+    {
+      "q": "In what year was Mary Shelley's Frankenstein first published?",
+      "a": [
+        "1969",
+        "1818",
+        "1941",
+        "1935"
+      ],
+      "correct": 1,
+      "fact": "1818"
+    },
+    {
+      "q": "What subtitle accompanies Frankenstein?",
+      "a": [
+        "Nevermore",
+        "Lon Chaney",
+        "James Whale",
+        "The Modern Prometheus"
+      ],
+      "correct": 3,
+      "fact": "themodernprometheu"
+    },
+    {
+      "q": "Which novel introduced the vampire Count Orlok to cinema by loose adaptation?",
+      "a": [
+        "Dracula",
+        "Nosferatu",
+        "Casper",
+        "Hotel Transylvania"
+      ],
+      "correct": 0,
+      "fact": "dracula"
+    },
+    {
+      "q": "Who directed the 1922 silent film Nosferatu?",
+      "a": [
+        "Henry Selick",
+        "Christopher Lee",
+        "Shirley Jackson",
+        "F. W. Murnau"
+      ],
+      "correct": 3,
+      "fact": "fwmurnau"
+    },
+    {
+      "q": "Who played Count Orlok in Nosferatu (1922)?",
+      "a": [
+        "Henry Selick",
+        "Anjelica Huston",
+        "Christopher Lloyd",
+        "Max Schreck"
+      ],
+      "correct": 3,
+      "fact": "maxschreck"
+    },
+    {
+      "q": "Who directed the 1931 Universal Dracula?",
+      "a": [
+        "Tod Browning",
+        "Kathy Najimy",
+        "Bobby 'Boris' Pickett",
+        "Stephen King"
+      ],
+      "correct": 0,
+      "fact": "todbrowning"
+    },
+    {
+      "q": "Who directed Universal's Frankenstein (1931)?",
+      "a": [
+        "James Whale",
+        "Michael Keaton",
+        "Vincent Price",
+        "Peter Cushing"
+      ],
+      "correct": 0,
+      "fact": "jameswhale"
+    },
+    {
+      "q": "Who played the Bride in Bride of Frankenstein (1935)?",
+      "a": [
+        "Elsa Lanchester",
+        "Henry James",
+        "Shirley Jackson",
+        "Tod Browning"
+      ],
+      "correct": 0,
+      "fact": "elsalanchester"
+    },
+    {
+      "q": "Who directed The Mummy (1932)?",
+      "a": [
+        "Karl Freund",
+        "Boris Karloff",
+        "Washington Irving",
+        "Bobby 'Boris' Pickett"
+      ],
+      "correct": 0,
+      "fact": "karlfreund"
+    },
+    {
+      "q": "What is the ancient priest's name in The Mummy (1932)?",
+      "a": [
+        "Imhotep",
+        "Ken Page",
+        "Calaveras literarias",
+        "Phasmophobia"
+      ],
+      "correct": 0,
+      "fact": "imhotep"
+    },
+    {
+      "q": "What modern alias does Imhotep use in The Mummy (1932)?",
+      "a": [
+        "Mood slime",
+        "Ardath Bey",
+        "Keene",
+        "Samhainophobia"
+      ],
+      "correct": 1,
+      "fact": "ardathbey"
+    },
+    {
+      "q": "Who played the title character in The Invisible Man (1933)?",
+      "a": [
+        "Tod Browning",
+        "Vincent Price",
+        "Claude Rains",
+        "Shirley Jackson"
+      ],
+      "correct": 2,
+      "fact": "clauderain"
+    },
+    {
+      "q": "What is the Invisible Man's surname in H. G. Wells's novel?",
+      "a": [
+        "Griffin",
+        "Mummy",
+        "Bat",
+        "House-elf"
+      ],
+      "correct": 0,
+      "fact": "griffin"
+    },
+    {
+      "q": "Which author wrote The Invisible Man?",
+      "a": [
+        "Christina Ricci",
+        "H. G. Wells",
+        "Bill Murray",
+        "Ray Bradbury"
+      ],
+      "correct": 1,
+      "fact": "hgwell"
+    },
+    {
+      "q": "Who directed Creature from the Black Lagoon (1954)?",
+      "a": [
+        "Sarah Jessica Parker",
+        "Christina Ricci",
+        "Jack Arnold",
+        "Ray Parker Jr."
+      ],
+      "correct": 2,
+      "fact": "jackarnold"
+    },
+    {
+      "q": "Who played the Phantom in the famous 1925 silent film?",
+      "a": [
+        "Lon Chaney",
+        "Shirley Jackson",
+        "Anjelica Huston",
+        "Peter Cushing"
+      ],
+      "correct": 0,
+      "fact": "lonchaney"
+    },
+    {
+      "q": "Which author wrote The Phantom of the Opera?",
+      "a": [
+        "Andrew Gold",
+        "Gaston Leroux",
+        "Washington Irving",
+        "Bram Stoker"
+      ],
+      "correct": 1,
+      "fact": "gastonleroux"
+    },
+    {
+      "q": "Who wrote the novella Carmilla?",
+      "a": [
+        "Christina Ricci",
+        "Bette Midler",
+        "Michael Keaton",
+        "Sheridan Le Fanu"
+      ],
+      "correct": 3,
+      "fact": "sheridanlefanu"
+    },
+    {
+      "q": "Who wrote The Vampyre, published in 1819?",
+      "a": [
+        "Shirley Jackson",
+        "Mary Shelley",
+        "John Polidori",
+        "Wes Craven"
+      ],
+      "correct": 2,
+      "fact": "johnpolidori"
+    },
+    {
+      "q": "What is the name of the vampire in The Vampyre?",
+      "a": [
+        "Ken Page",
+        "Dakota Fanning",
+        "The New Yorker",
+        "Lord Ruthven"
+      ],
+      "correct": 3,
+      "fact": "lordruthven"
+    },
+    {
+      "q": "Who wrote The Strange Case of Dr Jekyll and Mr Hyde?",
+      "a": [
+        "Kathy Najimy",
+        "Ivan Reitman",
+        "Robert Louis Stevenson",
+        "John Carpenter"
+      ],
+      "correct": 2,
+      "fact": "robertlouisstevenson"
+    },
+    {
+      "q": "What is Dr. Jekyll's first name?",
+      "a": [
+        "Henry",
+        "Charles Addams",
+        "Oscar Wilde",
+        "Carotenoids"
+      ],
+      "correct": 0,
+      "fact": "henry"
+    },
+    {
+      "q": "What is Mr. Hyde's first name?",
+      "a": [
+        "The New Yorker",
+        "Dullahan",
+        "Cooger & Dark's Pandemonium Shadow Show",
+        "Edward"
+      ],
+      "correct": 3,
+      "fact": "edward"
+    },
+    {
+      "q": "Which author wrote The Turn of the Screw?",
+      "a": [
+        "Henry James",
+        "Stephen King",
+        "Dan Aykroyd",
+        "Peter Cushing"
+      ],
+      "correct": 0,
+      "fact": "henryjame"
+    },
+    {
+      "q": "Which author wrote The Haunting of Hill House?",
+      "a": [
+        "Tim Burton",
+        "Boris Karloff",
+        "Stephen King",
+        "Shirley Jackson"
+      ],
+      "correct": 3,
+      "fact": "shirleyjackson"
+    },
+    {
+      "q": "Which author wrote The Halloween Tree?",
+      "a": [
+        "James Whale",
+        "Ray Bradbury",
+        "John Carpenter",
+        "Christina Ricci"
+      ],
+      "correct": 1,
+      "fact": "raybradbury"
+    },
+    {
+      "q": "Who wrote Something Wicked This Way Comes?",
+      "a": [
+        "Andrew Gold",
+        "Ray Bradbury",
+        "James Whale",
+        "Bill Murray"
+      ],
+      "correct": 1,
+      "fact": "raybradbury"
+    },
+    {
+      "q": "What is the carnival's name in Something Wicked This Way Comes?",
+      "a": [
+        "James Whale",
+        "Robert Louis Stevenson",
+        "1897",
+        "Cooger & Dark's Pandemonium Shadow Show"
+      ],
+      "correct": 3,
+      "fact": "coogerdarkspandemoniumshadowshow"
+    },
+    {
+      "q": "Which poet wrote The Raven?",
+      "a": [
+        "Wes Craven",
+        "Edgar Allan Poe",
+        "Bram Stoker",
+        "Christopher Lloyd"
+      ],
+      "correct": 1,
+      "fact": "edgarallanpoe"
+    },
+    {
+      "q": "What is the raven's repeated word in Poe's poem?",
+      "a": [
+        "H. G. Wells",
+        "Stanley Kubrick",
+        "Nevermore",
+        "James Whale"
+      ],
+      "correct": 2,
+      "fact": "nevermore"
+    },
+    {
+      "q": "Who wrote The Canterville Ghost?",
+      "a": [
+        "Andrew Gold",
+        "Christopher Lloyd",
+        "Oscar Wilde",
+        "Winona Ryder"
+      ],
+      "correct": 2,
+      "fact": "oscarwilde"
+    },
+    {
+      "q": "What is the ghost's name in The Canterville Ghost?",
+      "a": [
+        "Beldam",
+        "Kodi Smit-McPhee",
+        "Norville Rogers",
+        "Sir Simon"
+      ],
+      "correct": 3,
+      "fact": "sirsimon"
+    },
+    {
+      "q": "In what collection did The Legend of Sleepy Hollow first appear?",
+      "a": [
+        "Sam Fell and Chris Butler",
+        "The Sketch Book of Geoffrey Crayon, Gent.",
+        "Jones",
+        "Wes Craven"
+      ],
+      "correct": 1,
+      "fact": "thesketchbookofgeoffreycrayongent"
+    },
+    {
+      "q": "What is Ichabod's rival's nickname in Sleepy Hollow?",
+      "a": [
+        "Gaston Leroux",
+        "Edward",
+        "Brom Bones",
+        "Edgar Allan Poe"
+      ],
+      "correct": 2,
+      "fact": "brombone"
+    },
+    {
+      "q": "What is the surname of Ichabod's love interest Katrina?",
+      "a": [
+        "Van Tassel",
+        "Imhotep",
+        "Sheridan Le Fanu",
+        "Pepo"
+      ],
+      "correct": 0,
+      "fact": "vantassel"
+    },
+    {
+      "q": "Who directed Sleepy Hollow (1999)?",
+      "a": [
+        "Edgar Allan Poe",
+        "Ivan Reitman",
+        "Christina Ricci",
+        "Tim Burton"
+      ],
+      "correct": 3,
+      "fact": "timburton"
+    },
+    {
+      "q": "Who plays Ichabod Crane in Sleepy Hollow (1999)?",
+      "a": [
+        "Johnny Depp",
+        "Kenny Ortega",
+        "Stephen King",
+        "Anjelica Huston"
+      ],
+      "correct": 0,
+      "fact": "johnnydepp"
+    },
+    {
+      "q": "Who narrates Disney's 1949 Sleepy Hollow segment?",
+      "a": [
+        "Carolyn Jones",
+        "Keene",
+        "Dracula",
+        "Bing Crosby"
+      ],
+      "correct": 3,
+      "fact": "bingcrosby"
+    },
+    {
+      "q": "What historical soldier is the Horseman said to have been in Irving's story?",
+      "a": [
+        "Sir Simon",
+        "Dracula",
+        "Sir Nicholas de Mimsy-Porpington",
+        "Hessian trooper"
+      ],
+      "correct": 3,
+      "fact": "hessiantrooper"
+    },
+    {
+      "q": "What is the Irish name for a headless rider in folklore?",
+      "a": [
+        "Camp Chippewa",
+        "The Modern Prometheus",
+        "Allison",
+        "Dullahan"
+      ],
+      "correct": 3,
+      "fact": "dullahan"
+    },
+    {
+      "q": "What is fear of Halloween commonly called?",
+      "a": [
+        "Tim Burton",
+        "Scooby-Doo, Where Are You!",
+        "Shirley Jackson",
+        "Samhainophobia"
+      ],
+      "correct": 3,
+      "fact": "samhainophobia"
+    },
+    {
+      "q": "What is fear of ghosts commonly called?",
+      "a": [
+        "John Astin",
+        "Chris Sarandon",
+        "Pan de muerto",
+        "Phasmophobia"
+      ],
+      "correct": 3,
+      "fact": "phasmophobia"
+    },
+    {
+      "q": "What is fear of spiders called?",
+      "a": [
+        "Accountant",
+        "Arachnophobia",
+        "Stanley Kubrick",
+        "Norville Rogers"
+      ],
+      "correct": 1,
+      "fact": "arachnophobia"
+    },
+    {
+      "q": "What Scottish word describes a mischievous household spirit?",
+      "a": [
+        "Henry",
+        "Brownie",
+        "The Sketch Book of Geoffrey Crayon, Gent.",
+        "Pepita"
+      ],
+      "correct": 1,
+      "fact": "brownie"
+    },
+    {
+      "q": "What Japanese term refers to a shape-shifting fox spirit?",
+      "a": [
+        "Kitsune",
+        "Casey Kasem",
+        "Beldam",
+        "H. G. Wells"
+      ],
+      "correct": 0,
+      "fact": "kitsune"
+    },
+    {
+      "q": "What Japanese creature is a long-nosed mountain spirit?",
+      "a": [
+        "Chris Sarandon",
+        "Tengu",
+        "Jack Arnold",
+        "5/4"
+      ],
+      "correct": 1,
+      "fact": "tengu"
+    },
+    {
+      "q": "What is the name for a Japanese ghost often depicted in white funeral clothes?",
+      "a": [
+        "Yurei",
+        "Pamela Voorhees",
+        "Oscar Wilde",
+        "Van Tassel"
+      ],
+      "correct": 0,
+      "fact": "yurei"
+    },
+    {
+      "q": "What Slavic witch lives in a hut on chicken legs?",
+      "a": [
+        "Baba Yaga",
+        "Sheridan Le Fanu",
+        "Scooby-Doo, Where Are You!",
+        "Wes Craven"
+      ],
+      "correct": 0,
+      "fact": "babayaga"
+    },
+    {
+      "q": "What is the legendary Scottish water horse called?",
+      "a": [
+        "Kelpie",
+        "Tengu",
+        "Dracula",
+        "Kenny Ortega"
+      ],
+      "correct": 0,
+      "fact": "kelpie"
+    },
+    {
+      "q": "What is the English folklore name for a spectral black dog of East Anglia?",
+      "a": [
+        "Black Shuck",
+        "Jack Arnold",
+        "Blithe Hollow",
+        "Griffin"
+      ],
+      "correct": 0,
+      "fact": "blackshuck"
+    },
+    {
+      "q": "What kind of light is the folklore will-o'-the-wisp associated with?",
+      "a": [
+        "Norville Rogers",
+        "Marsh light",
+        "Gaston Leroux",
+        "Edgar Allan Poe"
+      ],
+      "correct": 1,
+      "fact": "marshlight"
+    },
+    {
+      "q": "Which Mexican illustrator created the famous La Calavera Catrina etching?",
+      "a": [
+        "Corpse Bride",
+        "5/4",
+        "Henry James",
+        "Jose Guadalupe Posada"
+      ],
+      "correct": 3,
+      "fact": "joseguadalupeposada"
+    },
+    {
+      "q": "What is the traditional Day of the Dead bread called?",
+      "a": [
+        "Pan de muerto",
+        "Kitsune",
+        "Jose Guadalupe Posada",
+        "Pamela Voorhees"
+      ],
+      "correct": 0,
+      "fact": "pandemuerto"
+    },
+    {
+      "q": "What name is used for humorous Day of the Dead poems?",
+      "a": [
+        "Victoria",
+        "Calaveras literarias",
+        "Lon Chaney",
+        "Elsa Lanchester"
+      ],
+      "correct": 1,
+      "fact": "calaverasliteraria"
+    },
+    {
+      "q": "Which city is associated with the annual Village Halloween Parade?",
+      "a": [
+        "Norville Rogers",
+        "Vigo the Carpathian",
+        "Catherine O'Hara",
+        "New York City"
+      ],
+      "correct": 3,
+      "fact": "newyorkcity"
+    },
+    {
+      "q": "Which New Hampshire city became known for its Pumpkin Festival towers?",
+      "a": [
+        "Mood slime",
+        "Baba Yaga",
+        "John Polidori",
+        "Keene"
+      ],
+      "correct": 3,
+      "fact": "keene"
+    },
+    {
+      "q": "What is the pumpkin's botanical fruit type?",
+      "a": [
+        "Pepita",
+        "Pepo",
+        "Jones",
+        "New York City"
+      ],
+      "correct": 1,
+      "fact": "pepo"
+    },
+    {
+      "q": "What is the edible inner part of a pumpkin seed often called?",
+      "a": [
+        "Black Shuck",
+        "Pepita",
+        "Henry Selick",
+        "Corpse Bride"
+      ],
+      "correct": 1,
+      "fact": "pepita"
+    },
+    {
+      "q": "Which pigment family gives pumpkins their orange coloration?",
+      "a": [
+        "Pepita",
+        "Neil Gaiman",
+        "Sheridan Le Fanu",
+        "Carotenoids"
+      ],
+      "correct": 3,
+      "fact": "carotenoid"
+    },
+    {
+      "q": "Who directed Hocus Pocus (1993)?",
+      "a": [
+        "Kenny Ortega",
+        "Bobby 'Boris' Pickett",
+        "Tod Browning",
+        "Christopher Lee"
+      ],
+      "correct": 0,
+      "fact": "kennyortega"
+    },
+    {
+      "q": "What year was the original Hocus Pocus released?",
+      "a": [
+        "1993",
+        "1931",
+        "1954",
+        "1984"
+      ],
+      "correct": 0,
+      "fact": "1993"
+    },
+    {
+      "q": "Who plays Billy Butcherson in Hocus Pocus?",
+      "a": [
+        "Vincent Price",
+        "Neil Gaiman",
+        "Doug Jones",
+        "Bobby 'Boris' Pickett"
+      ],
+      "correct": 2,
+      "fact": "dougjone"
+    },
+    {
+      "q": "What surname do Max and Dani share?",
+      "a": [
+        "Dennison",
+        "Casey Kasem",
+        "Charles Addams",
+        "1818"
+      ],
+      "correct": 0,
+      "fact": "dennison"
+    },
+    {
+      "q": "What is Thackery Binx's sister's name?",
+      "a": [
+        "Imhotep",
+        "Emily",
+        "Kenny Ortega",
+        "Elsa Lanchester"
+      ],
+      "correct": 1,
+      "fact": "emily"
+    },
+    {
+      "q": "What is the name of Max's school crush in Hocus Pocus?",
+      "a": [
+        "LAIKA",
+        "Sam Fell and Chris Butler",
+        "H. G. Wells",
+        "Allison"
+      ],
+      "correct": 3,
+      "fact": "allison"
+    },
+    {
+      "q": "Which actor provides Jack Skellington's speaking voice?",
+      "a": [
+        "Lon Chaney Jr.",
+        "Henry James",
+        "Michael Keaton",
+        "Chris Sarandon"
+      ],
+      "correct": 3,
+      "fact": "chrissarandon"
+    },
+    {
+      "q": "Who provides Oogie Boogie's voice in The Nightmare Before Christmas?",
+      "a": [
+        "Ken Page",
+        "Kathy Najimy",
+        "Tim Burton",
+        "Boris Karloff"
+      ],
+      "correct": 0,
+      "fact": "kenpage"
+    },
+    {
+      "q": "Who voices Sally in The Nightmare Before Christmas?",
+      "a": [
+        "Warren Zevon",
+        "Bram Stoker",
+        "Tod Browning",
+        "Catherine O'Hara"
+      ],
+      "correct": 3,
+      "fact": "catherineohara"
+    },
+    {
+      "q": "Which stop-motion film features Victor Van Dort?",
+      "a": [
+        "Beetlejuice",
+        "The Addams Family",
+        "Casper",
+        "Corpse Bride"
+      ],
+      "correct": 3,
+      "fact": "corpsebride"
+    },
+    {
+      "q": "What is Victor's living fiancee's first name in Corpse Bride?",
+      "a": [
+        "Jose Guadalupe Posada",
+        "James Whale",
+        "Victoria",
+        "Dracula"
+      ],
+      "correct": 2,
+      "fact": "victoria"
+    },
+    {
+      "q": "Who directed Coraline (2009)?",
+      "a": [
+        "Washington Irving",
+        "Henry Selick",
+        "Neil Gaiman",
+        "James Whale"
+      ],
+      "correct": 1,
+      "fact": "henryselick"
+    },
+    {
+      "q": "Who wrote the novella Coraline?",
+      "a": [
+        "Boris Karloff",
+        "Washington Irving",
+        "Neil Gaiman",
+        "Michael Keaton"
+      ],
+      "correct": 2,
+      "fact": "neilgaiman"
+    },
+    {
+      "q": "Who voices Coraline in the 2009 film?",
+      "a": [
+        "Tim Burton",
+        "Warren Zevon",
+        "Dakota Fanning",
+        "Christopher Lee"
+      ],
+      "correct": 2,
+      "fact": "dakotafanning"
+    },
+    {
+      "q": "What is Coraline's surname?",
+      "a": [
+        "Brownie",
+        "Jones",
+        "1969",
+        "Peeves"
+      ],
+      "correct": 1,
+      "fact": "jone"
+    },
+    {
+      "q": "What is the Other Mother's alternative name in Coraline?",
+      "a": [
+        "Claude Rains",
+        "Beldam",
+        "Arachnophobia",
+        "John Astin"
+      ],
+      "correct": 1,
+      "fact": "beldam"
+    },
+    {
+      "q": "Which actor voices Norman in ParaNorman?",
+      "a": [
+        "Bela Lugosi",
+        "Bram Stoker",
+        "Anjelica Huston",
+        "Kodi Smit-McPhee"
+      ],
+      "correct": 3,
+      "fact": "kodismitmcphee"
+    },
+    {
+      "q": "Which studio produced ParaNorman?",
+      "a": [
+        "Ivan Reitman",
+        "Dana Barrett",
+        "LAIKA",
+        "Calaveras literarias"
+      ],
+      "correct": 2,
+      "fact": "laika"
+    },
+    {
+      "q": "Who directed ParaNorman?",
+      "a": [
+        "Sarah Jessica Parker",
+        "Shirley Jackson",
+        "Michael Keaton",
+        "Sam Fell and Chris Butler"
+      ],
+      "correct": 3,
+      "fact": "samfellandchrisbutler"
+    },
+    {
+      "q": "What is the town in ParaNorman called?",
+      "a": [
+        "Blithe Hollow",
+        "Beldam",
+        "Catherine O'Hara",
+        "Johnny Depp"
+      ],
+      "correct": 0,
+      "fact": "blithehollow"
+    },
+    {
+      "q": "Who created The Addams Family cartoons?",
+      "a": [
+        "Charles Addams",
+        "Henry James",
+        "Michael Keaton",
+        "Washington Irving"
+      ],
+      "correct": 0,
+      "fact": "charlesaddam"
+    },
+    {
+      "q": "In which magazine did the Addams Family cartoons originally appear?",
+      "a": [
+        "New York City",
+        "The New Yorker",
+        "Griffin",
+        "Vic Mizzy"
+      ],
+      "correct": 1,
+      "fact": "thenewyorker"
+    },
+    {
+      "q": "Who played Morticia in the 1960s Addams Family television series?",
+      "a": [
+        "Carolyn Jones",
+        "Bette Midler",
+        "Christopher Lloyd",
+        "Bela Lugosi"
+      ],
+      "correct": 0,
+      "fact": "carolynjone"
+    },
+    {
+      "q": "Who played Gomez in the 1960s Addams Family television series?",
+      "a": [
+        "Christopher Lloyd",
+        "John Astin",
+        "Ray Bradbury",
+        "Ivan Reitman"
+      ],
+      "correct": 1,
+      "fact": "johnastin"
+    },
+    {
+      "q": "Who composed the original Addams Family television theme?",
+      "a": [
+        "Neil Gaiman",
+        "Vic Mizzy",
+        "Shirley Jackson",
+        "Stephen King"
+      ],
+      "correct": 1,
+      "fact": "vicmizzy"
+    },
+    {
+      "q": "Who plays Uncle Fester in the 1991 Addams Family film?",
+      "a": [
+        "James Whale",
+        "Wes Craven",
+        "Christopher Lloyd",
+        "Shirley Jackson"
+      ],
+      "correct": 2,
+      "fact": "christopherlloyd"
+    },
+    {
+      "q": "What is the name of the camp in Addams Family Values?",
+      "a": [
+        "Pamela Voorhees",
+        "Henry James",
+        "F. W. Murnau",
+        "Camp Chippewa"
+      ],
+      "correct": 3,
+      "fact": "campchippewa"
+    },
+    {
+      "q": "Who directed The Addams Family (1991)?",
+      "a": [
+        "John Carpenter",
+        "Barry Sonnenfeld",
+        "Boris Karloff",
+        "Ray Bradbury"
+      ],
+      "correct": 1,
+      "fact": "barrysonnenfeld"
+    },
+    {
+      "q": "What is Shaggy's full first and last name?",
+      "a": [
+        "Stephen King",
+        "Norville Rogers",
+        "Baba Yaga",
+        "LAIKA"
+      ],
+      "correct": 1,
+      "fact": "norvilleroger"
+    },
+    {
+      "q": "What is Velma's surname?",
+      "a": [
+        "Dinkley",
+        "Tengu",
+        "Robert Louis Stevenson",
+        "Dakota Fanning"
+      ],
+      "correct": 0,
+      "fact": "dinkley"
+    },
+    {
+      "q": "What is Daphne's surname?",
+      "a": [
+        "Barry Sonnenfeld",
+        "Sir Nicholas de Mimsy-Porpington",
+        "1993",
+        "Blake"
+      ],
+      "correct": 3,
+      "fact": "blake"
+    },
+    {
+      "q": "What was the first Scooby-Doo television series called?",
+      "a": [
+        "Pepita",
+        "Ivan Reitman",
+        "Nevermore",
+        "Scooby-Doo, Where Are You!"
+      ],
+      "correct": 3,
+      "fact": "scoobydoowhereareyou"
+    },
+    {
+      "q": "What year did Scooby-Doo, Where Are You! premiere?",
+      "a": [
+        "1984",
+        "1941",
+        "1969",
+        "1897"
+      ],
+      "correct": 2,
+      "fact": "1969"
+    },
+    {
+      "q": "Which original voice actor performed Scooby-Doo?",
+      "a": [
+        "Sir Simon",
+        "Norville Rogers",
+        "Don Messick",
+        "Henry James"
+      ],
+      "correct": 2,
+      "fact": "donmessick"
+    },
+    {
+      "q": "Which radio host originally voiced Shaggy?",
+      "a": [
+        "Casey Kasem",
+        "Kenny Ortega",
+        "Kathy Najimy",
+        "Washington Irving"
+      ],
+      "correct": 0,
+      "fact": "caseykasem"
+    },
+    {
+      "q": "Who directed Ghostbusters (1984)?",
+      "a": [
+        "Ivan Reitman",
+        "Warren Zevon",
+        "Henry Selick",
+        "Christopher Lee"
+      ],
+      "correct": 0,
+      "fact": "ivanreitman"
+    },
+    {
+      "q": "What is the surname of Ghostbusters receptionist Janine?",
+      "a": [
+        "Allison",
+        "Melnitz",
+        "Samhainophobia",
+        "Dana Barrett"
+      ],
+      "correct": 1,
+      "fact": "melnitz"
+    },
+    {
+      "q": "What is the name of the possessed cellist in Ghostbusters?",
+      "a": [
+        "Baba Yaga",
+        "Scooby-Doo, Where Are You!",
+        "Bing Crosby",
+        "Dana Barrett"
+      ],
+      "correct": 3,
+      "fact": "danabarrett"
+    },
+    {
+      "q": "What is Louis Tully's profession in Ghostbusters?",
+      "a": [
+        "Accountant",
+        "Max Schreck",
+        "Karl Freund",
+        "Sir Simon"
+      ],
+      "correct": 0,
+      "fact": "accountant"
+    },
+    {
+      "q": "What is the river of supernatural material beneath New York in Ghostbusters II?",
+      "a": [
+        "Black Shuck",
+        "The New Yorker",
+        "Wilhelm von Homburg",
+        "Mood slime"
+      ],
+      "correct": 3,
+      "fact": "moodslime"
+    },
+    {
+      "q": "Who plays the painting's villain Vigo in Ghostbusters II on screen?",
+      "a": [
+        "Dan Aykroyd",
+        "Anjelica Huston",
+        "Christopher Lee",
+        "Wilhelm von Homburg"
+      ],
+      "correct": 3,
+      "fact": "wilhelmvonhomburg"
+    },
+    {
+      "q": "What painting villain's full name is given in Ghostbusters II?",
+      "a": [
+        "Casey Kasem",
+        "John Polidori",
+        "Vigo the Carpathian",
+        "Marsh light"
+      ],
+      "correct": 2,
+      "fact": "vigothecarpathian"
+    },
+    {
+      "q": "Which time signature drives the main Halloween film theme?",
+      "a": [
+        "3/4",
+        "5/4",
+        "4/4",
+        "7/8"
+      ],
+      "correct": 1,
+      "fact": "54"
+    },
+    {
+      "q": "Who directed A Nightmare on Elm Street (1984)?",
+      "a": [
+        "Bobby 'Boris' Pickett",
+        "Ray Parker Jr.",
+        "Stephen King",
+        "Wes Craven"
+      ],
+      "correct": 3,
+      "fact": "wescraven"
+    },
+    {
+      "q": "Who wrote the novel The Shining?",
+      "a": [
+        "Sarah Jessica Parker",
+        "Stephen King",
+        "Lon Chaney Jr.",
+        "Tod Browning"
+      ],
+      "correct": 1,
+      "fact": "stephenking"
+    },
+    {
+      "q": "Who directed The Shining (1980)?",
+      "a": [
+        "Stanley Kubrick",
+        "Vincent Price",
+        "Kenny Ortega",
+        "Henry Selick"
+      ],
+      "correct": 0,
+      "fact": "stanleykubrick"
+    },
+    {
+      "q": "What is the name of the mother in the original Friday the 13th?",
+      "a": [
+        "Pamela Voorhees",
+        "Casey Kasem",
+        "Ken Page",
+        "Gaston Leroux"
+      ],
+      "correct": 0,
+      "fact": "pamelavoorhee"
+    },
+    {
+      "q": "What is the name of the Hogwarts poltergeist?",
+      "a": [
+        "Peeves",
+        "Max Schreck",
+        "Elsa Lanchester",
+        "Kenny Ortega"
+      ],
+      "correct": 0,
+      "fact": "peeve"
+    },
+    {
+      "q": "What is Nearly Headless Nick's full name?",
+      "a": [
+        "500th",
+        "Pan de muerto",
+        "Sir Nicholas de Mimsy-Porpington",
+        "Pepita"
+      ],
+      "correct": 2,
+      "fact": "sirnicholasdemimsyporpington"
+    },
+    {
+      "q": "Which Deathday anniversary does Nick celebrate in Chamber of Secrets?",
+      "a": [
+        "100th",
+        "250th",
+        "400th",
+        "500th"
+      ],
+      "correct": 3,
+      "fact": "500th"
+    }
+  ]
+};
+  const halloweenWouldYouRather = [
+  [
+    "Explore a haunted mansion",
+    "Explore a moonlit corn maze"
+  ],
+  [
+    "Wear a vampire costume",
+    "Wear a werewolf costume"
+  ],
+  [
+    "Watch Hocus Pocus",
+    "Watch The Nightmare Before Christmas"
+  ],
+  [
+    "Take a ghost tour",
+    "Visit a haunted attraction"
+  ],
+  [
+    "Carve pumpkins",
+    "Decorate your house for Halloween"
+  ],
+  [
+    "Be a friendly ghost",
+    "Be a helpful witch"
+  ],
+  [
+    "Eat candy corn",
+    "Eat caramel popcorn"
+  ],
+  [
+    "Make a haunted gingerbread house",
+    "Make a pumpkin cake"
+  ],
+  [
+    "Dress as Wednesday Addams",
+    "Dress as Lydia Deetz"
+  ],
+  [
+    "Ride in the Mystery Machine",
+    "Ride in Ecto-1"
+  ],
+  [
+    "Spend Halloween in Salem",
+    "Spend Halloween in Sleepy Hollow"
+  ],
+  [
+    "Have a talking black cat",
+    "Have a friendly pet bat"
+  ],
+  [
+    "Choose a funny costume",
+    "Choose a mysterious costume"
+  ],
+  [
+    "Visit a pumpkin patch at sunrise",
+    "Visit a pumpkin patch at sunset"
+  ],
+  [
+    "Paint a pumpkin galaxy",
+    "Carve a pumpkin grin"
+  ],
+  [
+    "Have a purple witch hat",
+    "Have an orange wizard cloak"
+  ],
+  [
+    "Make paper bats",
+    "Make paper ghosts"
+  ],
+  [
+    "Tell ghost stories by a campfire",
+    "Watch spooky movies under blankets"
+  ],
+  [
+    "Eat a candy apple",
+    "Eat a caramel apple"
+  ],
+  [
+    "Wear a homemade costume",
+    "Wear a movie-quality costume"
+  ],
+  [
+    "Host a monster dance party",
+    "Host a Halloween trivia night"
+  ],
+  [
+    "Visit Halloween Town",
+    "Visit Halloweentown with Marnie"
+  ],
+  [
+    "Be friends with Casper",
+    "Be friends with Zero"
+  ],
+  [
+    "Go on a daytime hayride",
+    "Go on a lantern-lit hayride"
+  ],
+  [
+    "Decorate with pumpkins",
+    "Decorate with friendly ghosts"
+  ],
+  [
+    "Win a costume contest",
+    "Win a pumpkin-carving contest"
+  ],
+  [
+    "Make a candy wreath",
+    "Make a bat garland"
+  ],
+  [
+    "Have a skeleton gardener",
+    "Have a ghost librarian"
+  ],
+  [
+    "Dress as a pirate",
+    "Dress as a wizard"
+  ],
+  [
+    "Choose a classic monster movie",
+    "Choose a Halloween comedy"
+  ],
+  [
+    "Wear glow-in-the-dark shoes",
+    "Carry a glowing pumpkin bucket"
+  ],
+  [
+    "Eat pumpkin cookies",
+    "Eat spiderweb brownies"
+  ],
+  [
+    "Help Sally sew a costume",
+    "Help Jack decorate Halloween Town"
+  ],
+  [
+    "Solve a mystery with Velma",
+    "Find clues with Daphne"
+  ],
+  [
+    "Have Shaggy choose the snacks",
+    "Have Scooby choose the movie"
+  ],
+  [
+    "Stay at Hotel Transylvania",
+    "Visit the Addams mansion"
+  ],
+  [
+    "Learn a dance from Wednesday",
+    "Learn a dance from Frankenstein's monster"
+  ],
+  [
+    "Play Halloween charades",
+    "Play Halloween bingo"
+  ],
+  [
+    "Drink warm apple cider",
+    "Drink pumpkin hot chocolate"
+  ],
+  [
+    "Decorate your porch orange",
+    "Decorate your porch purple"
+  ],
+  [
+    "Be a tiny dragon",
+    "Be a giant friendly bat"
+  ],
+  [
+    "Visit a spooky bookstore",
+    "Visit a haunted toy shop"
+  ],
+  [
+    "Make a scarecrow",
+    "Make a giant paper spider"
+  ],
+  [
+    "Wear a pumpkin hat",
+    "Wear a bat cape"
+  ],
+  [
+    "Hear a ghost story",
+    "Read a ghost story"
+  ],
+  [
+    "Have a candy treasure map",
+    "Have a pumpkin maze map"
+  ],
+  [
+    "Find a secret door in a castle",
+    "Find a secret garden behind a graveyard"
+  ],
+  [
+    "Bake witch-hat cupcakes",
+    "Bake mummy-shaped pastries"
+  ],
+  [
+    "Go to a costume parade",
+    "Go to a lantern parade"
+  ],
+  [
+    "Collect spooky stickers",
+    "Collect miniature pumpkins"
+  ],
+  [
+    "Be invisible for Halloween",
+    "Fly on a broom for Halloween"
+  ],
+  [
+    "Meet the Sanderson sisters in daylight",
+    "Meet Oogie Boogie at a board game"
+  ],
+  [
+    "Sing This Is Halloween",
+    "Sing the Ghostbusters theme"
+  ],
+  [
+    "Watch a Halloween musical",
+    "Watch a monster mystery"
+  ],
+  [
+    "Wear a group Ghostbusters costume",
+    "Wear a group Addams Family costume"
+  ],
+  [
+    "Give out chocolate treats",
+    "Give out fruity treats"
+  ],
+  [
+    "Give out Halloween pencils",
+    "Give out Halloween stickers"
+  ],
+  [
+    "Have a pumpkin coach",
+    "Have a friendly ghost taxi"
+  ],
+  [
+    "Spend a night in a pretend castle",
+    "Spend a night in a Halloween treehouse"
+  ],
+  [
+    "Decorate with cobwebs",
+    "Decorate with floating candles"
+  ],
+  [
+    "Make a stop-motion monster film",
+    "Make a Halloween comic strip"
+  ],
+  [
+    "Dress as a scarecrow",
+    "Dress as a jack-o'-lantern"
+  ],
+  [
+    "Have candy-flavored popcorn",
+    "Have pumpkin-spice popcorn"
+  ],
+  [
+    "Wear a mask you painted",
+    "Wear face paint you designed"
+  ],
+  [
+    "Have a raven deliver invitations",
+    "Have an owl deliver invitations"
+  ],
+  [
+    "Find a friendly ghost in your attic",
+    "Find a tiny witch in your garden"
+  ],
+  [
+    "Take a spooky train ride",
+    "Take a haunted boat ride"
+  ],
+  [
+    "Explore a maze of mirrors",
+    "Explore a maze of pumpkins"
+  ],
+  [
+    "Watch Casper",
+    "Watch Hotel Transylvania"
+  ],
+  [
+    "Watch Coraline",
+    "Watch ParaNorman"
+  ],
+  [
+    "Watch Corpse Bride",
+    "Watch Frankenweenie"
+  ],
+  [
+    "Read Dracula",
+    "Read Frankenstein"
+  ],
+  [
+    "Read a Scooby-Doo comic",
+    "Read a Goosebumps book"
+  ],
+  [
+    "Have a bookshelf that whispers stories",
+    "Have a portrait that tells jokes"
+  ],
+  [
+    "Build a LEGO haunted house",
+    "Build a cardboard haunted castle"
+  ],
+  [
+    "Take Halloween photos at a pumpkin patch",
+    "Take Halloween photos at a foggy bridge"
+  ],
+  [
+    "Eat a chocolate ghost",
+    "Eat a marshmallow mummy"
+  ],
+  [
+    "Try a Halloween escape room",
+    "Try a Halloween scavenger hunt"
+  ],
+  [
+    "Make orange slime",
+    "Make purple slime"
+  ],
+  [
+    "Wear a full skeleton costume",
+    "Wear a glowing ghost costume"
+  ],
+  [
+    "Have a silly Halloween ringtone",
+    "Have a spooky Halloween wallpaper"
+  ],
+  [
+    "Choose a cat-shaped pumpkin",
+    "Choose a bat-shaped pumpkin"
+  ],
+  [
+    "Make a witch's potion with juice",
+    "Make a monster sundae"
+  ],
+  [
+    "Wear a red vampire cape",
+    "Wear a silver werewolf jacket"
+  ],
+  [
+    "Decorate a Halloween window",
+    "Decorate a Halloween doorway"
+  ],
+  [
+    "Have a haunted jukebox",
+    "Have a magical player piano"
+  ],
+  [
+    "See the Great Pumpkin",
+    "See a friendly dragon"
+  ],
+  [
+    "Help Linus wait for the Great Pumpkin",
+    "Help Snoopy plan a Halloween adventure"
+  ],
+  [
+    "Have a broom that cleans itself",
+    "Have a cauldron that cooks soup"
+  ],
+  [
+    "Make pumpkin soup",
+    "Make pumpkin bread"
+  ],
+  [
+    "Celebrate at a fall fair",
+    "Celebrate at a costume picnic"
+  ],
+  [
+    "Be a detective in a monster town",
+    "Be a tour guide in a haunted castle"
+  ],
+  [
+    "Have a ghost help with chores",
+    "Have a witch help with homework"
+  ],
+  [
+    "Win a giant chocolate pumpkin",
+    "Win a year of Halloween movie nights"
+  ],
+  [
+    "Decorate one enormous pumpkin",
+    "Decorate twenty tiny pumpkins"
+  ],
+  [
+    "Wear a black-and-orange costume",
+    "Wear a purple-and-green costume"
+  ],
+  [
+    "Host a Halloween breakfast",
+    "Host a Halloween midnight snack party"
+  ],
+  [
+    "Play Monster Mash on repeat",
+    "Play Thriller on repeat"
+  ],
+  [
+    "Learn stage makeup for monsters",
+    "Learn sound effects for ghost stories"
+  ],
+  [
+    "See a Halloween puppet show",
+    "See a Halloween magic show"
+  ],
+  [
+    "Build a friendly haunted robot",
+    "Build a glowing pumpkin robot"
+  ],
+  [
+    "Visit a museum of movie monsters",
+    "Visit a museum of Halloween costumes"
+  ],
+  [
+    "Find a glowing crystal in a cave",
+    "Find a spell book in a library"
+  ],
+  [
+    "Have a pumpkin-shaped backpack",
+    "Have a coffin-shaped pencil case"
+  ],
+  [
+    "Make a bat mobile",
+    "Make a ghost wind chime"
+  ],
+  [
+    "Design Halloween wrapping paper",
+    "Design Halloween postcards"
+  ],
+  [
+    "Wear a costume with wings",
+    "Wear a costume with a tail"
+  ],
+  [
+    "Have orange hair for Halloween",
+    "Have purple hair for Halloween"
+  ],
+  [
+    "Tour a castle with a vampire guide",
+    "Tour a forest with a werewolf guide"
+  ],
+  [
+    "Be the hero in a ghost story",
+    "Be the funny sidekick in a monster movie"
+  ],
+  [
+    "Pick the Halloween playlist",
+    "Pick the Halloween snacks"
+  ],
+  [
+    "Create a spooky board game",
+    "Create a spooky card game"
+  ],
+  [
+    "Make a jack-o'-lantern snow globe",
+    "Make a haunted-house diorama"
+  ],
+  [
+    "Have an enchanted umbrella",
+    "Have enchanted rain boots"
+  ],
+  [
+    "Grow blue pumpkins",
+    "Grow striped pumpkins"
+  ],
+  [
+    "Eat candy from a treasure chest",
+    "Eat candy from a witch's cauldron"
+  ],
+  [
+    "Meet Frankenstein's monster at a bakery",
+    "Meet Dracula at a library"
+  ],
+  [
+    "Help the Mummy wrap gifts",
+    "Help the Wolf Man brush his fur"
+  ],
+  [
+    "Have a pet spider that knits",
+    "Have a pet bat that sings"
+  ],
+  [
+    "Go to a monster bowling night",
+    "Go to a monster mini-golf night"
+  ],
+  [
+    "Decorate with smiling skeletons",
+    "Decorate with shy ghosts"
+  ],
+  [
+    "Travel through a magic mirror",
+    "Travel through a glowing pumpkin door"
+  ],
+  [
+    "Have a vampire's fashion sense",
+    "Have a witch's herb garden"
+  ],
+  [
+    "Make a Halloween playlist for a road trip",
+    "Make a Halloween playlist for a party"
+  ],
+  [
+    "Dress as a vintage movie monster",
+    "Dress as a futuristic space ghost"
+  ],
+  [
+    "Try pumpkin ice cream",
+    "Try candy-corn ice cream"
+  ],
+  [
+    "Create a tiny cemetery scene",
+    "Create a tiny witch village"
+  ],
+  [
+    "Watch spooky cartoons in pajamas",
+    "Watch monster movies in costume"
+  ],
+  [
+    "Have a pumpkin lantern that changes colors",
+    "Have a ghost lantern that floats"
+  ],
+  [
+    "Decorate a bike for Halloween",
+    "Decorate a wagon for Halloween"
+  ],
+  [
+    "Wear a costume with a secret pocket",
+    "Wear a costume with glowing buttons"
+  ],
+  [
+    "Solve a riddle from a ghost",
+    "Solve a puzzle from a witch"
+  ],
+  [
+    "Have a friendly gargoyle guard your garden",
+    "Have a scarecrow welcome your guests"
+  ],
+  [
+    "Collect Halloween snow globes",
+    "Collect Halloween mugs"
+  ],
+  [
+    "Make spider-shaped sandwiches",
+    "Make pumpkin-shaped pancakes"
+  ],
+  [
+    "Spend Halloween at Hogwarts",
+    "Spend Halloween at Nevermore Academy"
+  ],
+  [
+    "Practice a Patronus charm",
+    "Practice a levitating pumpkin charm"
+  ],
+  [
+    "Meet Nearly Headless Nick",
+    "Meet Moaning Myrtle"
+  ],
+  [
+    "Have a Hogwarts feast",
+    "Have a Sanderson-sisters tea party"
+  ],
+  [
+    "Ride a thestral in a story",
+    "Ride a hippogriff in a story"
+  ],
+  [
+    "Choose a witch-themed escape room",
+    "Choose a vampire-themed escape room"
+  ],
+  [
+    "Wear a classic bedsheet ghost costume",
+    "Wear an elaborate haunted portrait costume"
+  ],
+  [
+    "Have a ghost teach you piano",
+    "Have a skeleton teach you drums"
+  ],
+  [
+    "Decorate cupcakes as eyeballs",
+    "Decorate cookies as bats"
+  ],
+  [
+    "Watch a spooky movie at a drive-in",
+    "Watch a spooky movie in a cozy den"
+  ],
+  [
+    "Build a Halloween blanket fort",
+    "Build a Halloween pillow castle"
+  ],
+  [
+    "Have a Halloween photo booth",
+    "Have a Halloween karaoke booth"
+  ],
+  [
+    "Learn to draw monsters",
+    "Learn to sculpt pumpkins"
+  ],
+  [
+    "Make pumpkin earrings",
+    "Make a bat bow tie"
+  ],
+  [
+    "Win the funniest costume award",
+    "Win the most creative costume award"
+  ],
+  [
+    "Host a pumpkin-painting afternoon",
+    "Host a Halloween baking afternoon"
+  ],
+  [
+    "Make a family-friendly haunted trail",
+    "Make a Halloween obstacle course"
+  ],
+  [
+    "Have a candy bowl that tells jokes",
+    "Have a doorbell that says Boo"
+  ],
+  [
+    "Choose a foggy graveyard movie setting",
+    "Choose a stormy castle movie setting"
+  ],
+  [
+    "Have a spooky cat companion",
+    "Have a silly zombie companion"
+  ],
+  [
+    "Dance with the Addams Family",
+    "Sing with the Ghostbusters"
+  ],
+  [
+    "Borrow Wednesday's umbrella",
+    "Borrow Morticia's gardening tools"
+  ],
+  [
+    "Plan a Halloween picnic with Gomez",
+    "Plan a Halloween party with Fester"
+  ],
+  [
+    "Have Thing help carve pumpkins",
+    "Have Lurch help carry decorations"
+  ],
+  [
+    "Solve a mystery with Fred",
+    "Share snacks with Shaggy"
+  ],
+  [
+    "Wear Scooby-Doo pajamas",
+    "Wear Ghostbusters pajamas"
+  ],
+  [
+    "Own a miniature Ecto-1",
+    "Own a miniature Mystery Machine"
+  ],
+  [
+    "Make a Stay Puft cake",
+    "Make an Oogie Boogie cake"
+  ],
+  [
+    "Have Slimer taste-test your snacks",
+    "Have Casper greet your guests"
+  ],
+  [
+    "Visit a Halloween market",
+    "Visit a Halloween craft fair"
+  ],
+  [
+    "Read spooky poetry aloud",
+    "Act out a Halloween radio play"
+  ],
+  [
+    "Make a Halloween shadow-puppet show",
+    "Make a Halloween flipbook"
+  ],
+  [
+    "Have magical candles that never melt",
+    "Have magical pumpkins that never rot"
+  ],
+  [
+    "Bake a haunted-castle cake",
+    "Bake a pumpkin-patch pie"
+  ],
+  [
+    "Choose an old-fashioned Halloween postcard",
+    "Choose a hand-drawn Halloween poster"
+  ],
+  [
+    "Wear a moon-themed costume",
+    "Wear a starry witch costume"
+  ],
+  [
+    "Go to a Halloween roller rink",
+    "Go to a Halloween dance hall"
+  ],
+  [
+    "Have a bat-shaped kite",
+    "Have a pumpkin-shaped balloon"
+  ],
+  [
+    "Learn about Halloween traditions",
+    "Learn about monster-movie effects"
+  ],
+  [
+    "Tour a real historic cemetery by day",
+    "Tour a movie-set graveyard by night"
+  ],
+  [
+    "Carve a cat silhouette",
+    "Carve a castle silhouette"
+  ],
+  [
+    "Make spooky origami",
+    "Make spooky bead art"
+  ],
+  [
+    "Have a glowing spiderweb ceiling",
+    "Have a starry Halloween ceiling"
+  ],
+  [
+    "Play Halloween word games",
+    "Play Halloween picture puzzles"
+  ],
+  [
+    "Create a monster trading card",
+    "Create a witch character sheet"
+  ],
+  [
+    "Host a spooky soup supper",
+    "Host a Halloween dessert swap"
+  ],
+  [
+    "Have a vampire pen pal",
+    "Have a ghost pen pal"
+  ],
+  [
+    "Explore a friendly haunted lighthouse",
+    "Explore a friendly haunted train station"
+  ],
+  [
+    "Find a witch's recipe box",
+    "Find a vampire's travel diary"
+  ],
+  [
+    "Have a houseplant that says Boo",
+    "Have a pumpkin that tells riddles"
+  ],
+  [
+    "Choose a monster-themed puzzle",
+    "Choose a haunted-house puzzle"
+  ],
+  [
+    "Decorate pumpkins with stickers",
+    "Decorate pumpkins with paint pens"
+  ],
+  [
+    "Make a Halloween comic about a bat",
+    "Make a Halloween comic about a pumpkin"
+  ],
+  [
+    "Walk a lantern trail",
+    "Walk a decorated neighborhood"
+  ],
+  [
+    "Wear a werewolf hoodie",
+    "Wear a vampire velvet jacket"
+  ],
+  [
+    "Make paper-chain skeletons",
+    "Make tissue-paper ghosts"
+  ],
+  [
+    "Find candy in a pirate chest",
+    "Find candy in a wizard's drawer"
+  ],
+  [
+    "Pick a pumpkin by its shape",
+    "Pick a pumpkin by its color"
+  ],
+  [
+    "Have a ghost dog like Zero",
+    "Have a reanimated dog like Sparky"
+  ],
+  [
+    "Bring a pumpkin pie to a party",
+    "Bring monster cookies to a party"
+  ],
+  [
+    "See a silent horror movie with live music",
+    "See a Halloween cartoon with an orchestra"
+  ],
+  [
+    "Have the best Halloween costume",
+    "Have the best Halloween decorations"
+  ],
+  [
+    "Finish a corn maze with friends",
+    "Finish a Halloween puzzle with family"
+  ],
+  [
+    "Celebrate Halloween with a big party",
+    "Celebrate Halloween with a cozy movie night"
+  ],
+  [
+    "Create a Halloween treasure hunt",
+    "Create a Halloween mystery dinner"
+  ]
+];
+  const halloweenScrambles = [
+  {
+    "word": "HALLOWEEN",
+    "scramble": "NLAOELEWH",
+    "hint": "October 31 celebration"
+  },
+  {
+    "word": "PUMPKIN",
+    "scramble": "PIMPUNK",
+    "hint": "Orange fruit carved in October"
+  },
+  {
+    "word": "VAMPIRE",
+    "scramble": "PAIVREM",
+    "hint": "Fanged monster of folklore"
+  },
+  {
+    "word": "WEREWOLF",
+    "scramble": "WOEFLREW",
+    "hint": "Person who becomes a wolf"
+  },
+  {
+    "word": "SKELETON",
+    "scramble": "OEKELNST",
+    "hint": "A framework of bones"
+  },
+  {
+    "word": "ZOMBIE",
+    "scramble": "MOIZEB",
+    "hint": "Walking undead movie creature"
+  },
+  {
+    "word": "WITCH",
+    "scramble": "TCIWH",
+    "hint": "A Halloween spell caster"
+  },
+  {
+    "word": "GHOST",
+    "scramble": "TGOHS",
+    "hint": "A spooky spirit"
+  },
+  {
+    "word": "SPIDER",
+    "scramble": "PEDRSI",
+    "hint": "Eight-legged web maker"
+  },
+  {
+    "word": "COBWEB",
+    "scramble": "EWCBOB",
+    "hint": "An old spider web"
+  },
+  {
+    "word": "CAULDRON",
+    "scramble": "ARCNOUDL",
+    "hint": "A witch's bubbling pot"
+  },
+  {
+    "word": "BROOMSTICK",
+    "scramble": "ITKMSCBROO",
+    "hint": "A witch's flying transport"
+  },
+  {
+    "word": "COSTUME",
+    "scramble": "TCEUMSO",
+    "hint": "An outfit for dressing up"
+  },
+  {
+    "word": "CANDY",
+    "scramble": "NYCDA",
+    "hint": "Sweet trick-or-treat prize"
+  },
+  {
+    "word": "MUMMY",
+    "scramble": "YMMUM",
+    "hint": "A wrapped tomb monster"
+  },
+  {
+    "word": "BAT",
+    "scramble": "ABT",
+    "hint": "Winged mammal of Halloween imagery"
+  },
+  {
+    "word": "TOMBSTONE",
+    "scramble": "BTOOTESMN",
+    "hint": "A grave marker"
+  },
+  {
+    "word": "CEMETERY",
+    "scramble": "RYMECETE",
+    "hint": "A burial ground"
+  },
+  {
+    "word": "HAUNTED",
+    "scramble": "EDTNUAH",
+    "hint": "Said to have ghosts"
+  },
+  {
+    "word": "TRICKORTREAT",
+    "scramble": "EOITRCTRKART",
+    "hint": "The doorstep Halloween greeting"
+  },
+  {
+    "word": "JACKOLANTERN",
+    "scramble": "OEJALACNNKTR",
+    "hint": "A glowing carved pumpkin"
+  },
+  {
+    "word": "CANDYCORN",
+    "scramble": "AYCDRCONN",
+    "hint": "Triangular yellow-orange-white candy"
+  },
+  {
+    "word": "SCARECROW",
+    "scramble": "WRCASOCER",
+    "hint": "A field guardian made of straw"
+  },
+  {
+    "word": "CORNMAZE",
+    "scramble": "CNEZORAM",
+    "hint": "Twisting paths through a crop"
+  },
+  {
+    "word": "HAYRIDE",
+    "scramble": "EDRIAHY",
+    "hint": "A harvest wagon outing"
+  },
+  {
+    "word": "BLACKCAT",
+    "scramble": "ACBKCTLA",
+    "hint": "A witch's feline companion"
+  },
+  {
+    "word": "FULLMOON",
+    "scramble": "LFNLUOMO",
+    "hint": "Round nighttime sky associated with werewolves"
+  },
+  {
+    "word": "SANDERSON",
+    "scramble": "ENRSSDNOA",
+    "hint": "The Hocus Pocus sisters' surname"
+  },
+  {
+    "word": "CASPER",
+    "scramble": "CRPSEA",
+    "hint": "The friendly ghost"
+  },
+  {
+    "word": "WEDNESDAY",
+    "scramble": "DDYWEESNA",
+    "hint": "The Addams daughter"
+  },
+  {
+    "word": "THING",
+    "scramble": "NHITG",
+    "hint": "The Addams family's helpful hand"
+  },
+  {
+    "word": "LURCH",
+    "scramble": "LRCUH",
+    "hint": "The Addams family's butler"
+  },
+  {
+    "word": "SCOOBYDOO",
+    "scramble": "SDCYBOOOO",
+    "hint": "Mystery-solving Great Dane"
+  },
+  {
+    "word": "GHOSTFACE",
+    "scramble": "TFESCHGAO",
+    "hint": "Masked character in Scream"
+  },
+  {
+    "word": "MICHAELMYERS",
+    "scramble": "EIAELCHMYSMR",
+    "hint": "Halloween's masked antagonist"
+  },
+  {
+    "word": "FREDDYKRUEGER",
+    "scramble": "ERDEGRRDKYEFU",
+    "hint": "Elm Street's dream villain"
+  },
+  {
+    "word": "JASONVOORHEES",
+    "scramble": "SAOSNOERHOJVE",
+    "hint": "A Friday the 13th character"
+  },
+  {
+    "word": "PENNYWISE",
+    "scramble": "YINSNEWPE",
+    "hint": "The clown in It"
+  },
+  {
+    "word": "BEETLEJUICE",
+    "scramble": "JEEUETCLIBE",
+    "hint": "A mischievous film bio-exorcist"
+  },
+  {
+    "word": "SKELLINGTON",
+    "scramble": "GLEKNSTINOL",
+    "hint": "The Pumpkin King's surname"
+  },
+  {
+    "word": "OOGIEBOOGIE",
+    "scramble": "GOIOOOGEBEI",
+    "hint": "Halloween Town's burlap villain"
+  },
+  {
+    "word": "SAMHAIN",
+    "scramble": "MINHASA",
+    "hint": "Celtic festival linked to Halloween"
+  },
+  {
+    "word": "TURNIP",
+    "scramble": "RNIPUT",
+    "hint": "Traditional Irish lantern vegetable"
+  },
+  {
+    "word": "MARIGOLD",
+    "scramble": "DMRGIAOL",
+    "hint": "Orange Day of the Dead flower"
+  },
+  {
+    "word": "GHOSTBUSTERS",
+    "scramble": "HSSTGSOTURBE",
+    "hint": "Proton-pack ghost-catching team"
+  },
+  {
+    "word": "FRANKENSTEIN",
+    "scramble": "NKFSAENETNRI",
+    "hint": "Mary Shelley's scientist"
+  },
+  {
+    "word": "DRACULA",
+    "scramble": "AUCDLAR",
+    "hint": "Bram Stoker's vampire count"
+  },
+  {
+    "word": "SLEEPYHOLLOW",
+    "scramble": "YEWLEPLOSLHO",
+    "hint": "Home of the Headless Horseman legend"
+  },
+  {
+    "word": "OVERLOOK",
+    "scramble": "KVELOOOR",
+    "hint": "The Shining's hotel"
+  },
+  {
+    "word": "WOODSBORO",
+    "scramble": "SOORWDOBO",
+    "hint": "The original Scream's town"
+  },
+  {
+    "word": "HADDONFIELD",
+    "scramble": "DODLHADNIFE",
+    "hint": "Halloween's fictional Illinois town"
+  },
+  {
+    "word": "CRYSTALLAKE",
+    "scramble": "TLYACELSKAR",
+    "hint": "Friday the 13th camp location"
+  },
+  {
+    "word": "ELMSTREET",
+    "scramble": "RTTESELEM",
+    "hint": "Freddy's nightmare address"
+  },
+  {
+    "word": "THRILLER",
+    "scramble": "ELRILTRH",
+    "hint": "Michael Jackson's spooky dance hit"
+  },
+  {
+    "word": "MONSTERMASH",
+    "scramble": "NSEMSOTAHMR",
+    "hint": "Bobby Pickett's monster dance song"
+  },
+  {
+    "word": "TIMEWARP",
+    "scramble": "ETMIAPWR",
+    "hint": "Rocky Horror's famous dance"
+  },
+  {
+    "word": "UPSIDEDOWN",
+    "scramble": "WUDNPSODEI",
+    "hint": "Stranger Things' eerie other dimension"
+  },
+  {
+    "word": "BLACKFLAME",
+    "scramble": "CFBLKELAAM",
+    "hint": "The magical candle's unusual fire"
+  },
+  {
+    "word": "WINIFRED",
+    "scramble": "DNWRFIIE",
+    "hint": "The eldest Sanderson sister"
+  },
+  {
+    "word": "SARAH",
+    "scramble": "HASRA",
+    "hint": "The blonde Sanderson sister"
+  },
+  {
+    "word": "MARY",
+    "scramble": "YMRA",
+    "hint": "The Sanderson sister played by Kathy Najimy"
+  },
+  {
+    "word": "THACKERYBINX",
+    "scramble": "BHYINXTRAEKC",
+    "hint": "Hocus Pocus's enchanted black cat"
+  },
+  {
+    "word": "BILLYBUTCHERSON",
+    "scramble": "OINLYLRECBSTHUB",
+    "hint": "Hocus Pocus's awakened cemetery resident"
+  },
+  {
+    "word": "DENNISON",
+    "scramble": "IONNSDNE",
+    "hint": "Max and Dani's surname"
+  },
+  {
+    "word": "ALLISON",
+    "scramble": "AINLSOL",
+    "hint": "Max's crush in Hocus Pocus"
+  },
+  {
+    "word": "DANI",
+    "scramble": "DINA",
+    "hint": "Max's younger sister"
+  },
+  {
+    "word": "SALEM",
+    "scramble": "LMESA",
+    "hint": "Massachusetts setting of Hocus Pocus"
+  },
+  {
+    "word": "SPELLBOOK",
+    "scramble": "KPSOLBELO",
+    "hint": "A witch's written collection of magic"
+  },
+  {
+    "word": "SALLY",
+    "scramble": "SYLLA",
+    "hint": "Halloween Town's rag-doll heroine"
+  },
+  {
+    "word": "ZERO",
+    "scramble": "ZROE",
+    "hint": "Jack Skellington's ghost dog"
+  },
+  {
+    "word": "FINKELSTEIN",
+    "scramble": "IKLNIFEENST",
+    "hint": "Sally's creator"
+  },
+  {
+    "word": "LOCK",
+    "scramble": "KCOL",
+    "hint": "One of Oogie's three trick-or-treaters"
+  },
+  {
+    "word": "SHOCK",
+    "scramble": "HOKSC",
+    "hint": "The witch-costumed trick-or-treater"
+  },
+  {
+    "word": "BARREL",
+    "scramble": "ERRLBA",
+    "hint": "The skeleton-costumed trick-or-treater"
+  },
+  {
+    "word": "SANDYCLAWS",
+    "scramble": "SADACNYLSW",
+    "hint": "Jack's name for Santa"
+  },
+  {
+    "word": "PUMPKINKING",
+    "scramble": "NNPKUGMKIIP",
+    "hint": "Jack Skellington's royal title"
+  },
+  {
+    "word": "RAGDOLL",
+    "scramble": "ODGALLR",
+    "hint": "Sally's kind of stitched toy"
+  },
+  {
+    "word": "MORTICIA",
+    "scramble": "ORICMTIA",
+    "hint": "The Addams mother"
+  },
+  {
+    "word": "GOMEZ",
+    "scramble": "EZOGM",
+    "hint": "The Addams father"
+  },
+  {
+    "word": "PUGSLEY",
+    "scramble": "GYEULSP",
+    "hint": "Wednesday's brother"
+  },
+  {
+    "word": "FESTER",
+    "scramble": "FEETRS",
+    "hint": "The bulb-lighting Addams uncle"
+  },
+  {
+    "word": "COUSINITT",
+    "scramble": "STIUONCTI",
+    "hint": "The hairy Addams relative"
+  },
+  {
+    "word": "PUBERT",
+    "scramble": "REBUPT",
+    "hint": "The Addams baby"
+  },
+  {
+    "word": "GRANDMAMA",
+    "scramble": "DMGANRAMA",
+    "hint": "The Addams family elder"
+  },
+  {
+    "word": "NEVERMORE",
+    "scramble": "MEREENVOR",
+    "hint": "Wednesday's academy"
+  },
+  {
+    "word": "NIGHTSHADE",
+    "scramble": "AGSIDETNHH",
+    "hint": "A poisonous plant with a spooky name"
+  },
+  {
+    "word": "SHAGGY",
+    "scramble": "ASGYGH",
+    "hint": "Scooby's hungry best friend"
+  },
+  {
+    "word": "VELMA",
+    "scramble": "ELMVA",
+    "hint": "The orange-sweater detective"
+  },
+  {
+    "word": "DAPHNE",
+    "scramble": "NEPDAH",
+    "hint": "The purple-clad detective"
+  },
+  {
+    "word": "FRED",
+    "scramble": "RFED",
+    "hint": "The ascot-wearing detective"
+  },
+  {
+    "word": "MYSTERYMACHINE",
+    "scramble": "TAEYCERMSHIMYN",
+    "hint": "Mystery Inc.'s van"
+  },
+  {
+    "word": "SCOOBYSNACKS",
+    "scramble": "NSCBSYSOAOCK",
+    "hint": "Treats for a mystery-solving dog"
+  },
+  {
+    "word": "JINKIES",
+    "scramble": "SEJNIIK",
+    "hint": "Velma's famous exclamation"
+  },
+  {
+    "word": "ZOINKS",
+    "scramble": "KSIOZN",
+    "hint": "Shaggy's startled exclamation"
+  },
+  {
+    "word": "NORVILLE",
+    "scramble": "OELRLVNI",
+    "hint": "Shaggy's first name"
+  },
+  {
+    "word": "DINKLEY",
+    "scramble": "EYDNIKL",
+    "hint": "Velma's surname"
+  },
+  {
+    "word": "SCRAPPYDOO",
+    "scramble": "OSRAOPYPCD",
+    "hint": "Scooby's small nephew"
+  },
+  {
+    "word": "SLIMER",
+    "scramble": "ELIRMS",
+    "hint": "A green Ghostbusters ghost"
+  },
+  {
+    "word": "STAYPUFT",
+    "scramble": "APUYTFTS",
+    "hint": "The marshmallow mascot"
+  },
+  {
+    "word": "PROTONPACK",
+    "scramble": "TPOPKCANRO",
+    "hint": "A Ghostbuster's backpack equipment"
+  },
+  {
+    "word": "ECTOONE",
+    "scramble": "ONOEETC",
+    "hint": "The Ghostbusters vehicle, spelled out"
+  },
+  {
+    "word": "VENKMAN",
+    "scramble": "MKNAEVN",
+    "hint": "Bill Murray's Ghostbuster"
+  },
+  {
+    "word": "STANTZ",
+    "scramble": "NSAZTT",
+    "hint": "Dan Aykroyd's Ghostbuster"
+  },
+  {
+    "word": "SPENGLER",
+    "scramble": "NSEGPLRE",
+    "hint": "Harold Ramis's Ghostbuster"
+  },
+  {
+    "word": "ZEDDEMORE",
+    "scramble": "ZRDEMDOEE",
+    "hint": "Ernie Hudson's Ghostbuster"
+  },
+  {
+    "word": "JANINE",
+    "scramble": "AJINNE",
+    "hint": "Ghostbusters receptionist"
+  },
+  {
+    "word": "GOZER",
+    "scramble": "GZROE",
+    "hint": "A supernatural Ghostbusters antagonist"
+  },
+  {
+    "word": "VIGO",
+    "scramble": "IVGO",
+    "hint": "Ghostbusters II's painting villain"
+  },
+  {
+    "word": "MOODSLIME",
+    "scramble": "SEOOMIMDL",
+    "hint": "Emotion-responsive Ghostbusters II substance"
+  },
+  {
+    "word": "GHOSTTRAP",
+    "scramble": "PTSAGORTH",
+    "hint": "A device to contain a captured spirit"
+  },
+  {
+    "word": "HOGWARTS",
+    "scramble": "RGAHTOWS",
+    "hint": "A school with ghosts and moving stairs"
+  },
+  {
+    "word": "BOGGART",
+    "scramble": "GOBGART",
+    "hint": "A creature shaped by your fears"
+  },
+  {
+    "word": "RIDDIKULUS",
+    "scramble": "ULRISDDUKI",
+    "hint": "The boggart-banishing charm"
+  },
+  {
+    "word": "DEMENTOR",
+    "scramble": "DOTNREEM",
+    "hint": "A happiness-draining magical creature"
+  },
+  {
+    "word": "PATRONUS",
+    "scramble": "STUANOPR",
+    "hint": "A magical guardian against Dementors"
+  },
+  {
+    "word": "THESTRAL",
+    "scramble": "RLESTATH",
+    "hint": "A winged horse seen by some Hogwarts students"
+  },
+  {
+    "word": "BASILISK",
+    "scramble": "KIISALSB",
+    "hint": "The Chamber of Secrets serpent"
+  },
+  {
+    "word": "ARAGOG",
+    "scramble": "OGRAAG",
+    "hint": "Hagrid's enormous spider friend"
+  },
+  {
+    "word": "ACROMANTULA",
+    "scramble": "UNCOALTARMA",
+    "hint": "A giant magical spider species"
+  },
+  {
+    "word": "FLUFFY",
+    "scramble": "FUFYLF",
+    "hint": "A three-headed Hogwarts dog"
+  },
+  {
+    "word": "PEEVES",
+    "scramble": "VEEESP",
+    "hint": "The Hogwarts poltergeist"
+  },
+  {
+    "word": "MOANINGMYRTLE",
+    "scramble": "IEYOATNMGLNMR",
+    "hint": "A ghost in a Hogwarts bathroom"
+  },
+  {
+    "word": "DEATHDAY",
+    "scramble": "DHDEYATA",
+    "hint": "A ghost's anniversary party"
+  },
+  {
+    "word": "NICK",
+    "scramble": "KICN",
+    "hint": "The nearly headless Hogwarts ghost"
+  },
+  {
+    "word": "LUPIN",
+    "scramble": "INULP",
+    "hint": "A Hogwarts professor who is a werewolf"
+  },
+  {
+    "word": "LUMOS",
+    "scramble": "MOLSU",
+    "hint": "The wand-lighting charm"
+  },
+  {
+    "word": "NOX",
+    "scramble": "ONX",
+    "hint": "The charm that extinguishes wand light"
+  },
+  {
+    "word": "DOBBY",
+    "scramble": "BDOYB",
+    "hint": "A friendly house-elf"
+  },
+  {
+    "word": "HEDWIG",
+    "scramble": "EIDWHG",
+    "hint": "Harry's snowy owl"
+  },
+  {
+    "word": "AZKABAN",
+    "scramble": "ANKAAZB",
+    "hint": "A prison once guarded by Dementors"
+  },
+  {
+    "word": "POTION",
+    "scramble": "IOONPT",
+    "hint": "A magical brewed mixture"
+  },
+  {
+    "word": "MANDRAKE",
+    "scramble": "AKANRDME",
+    "hint": "A magical plant with a dangerous cry"
+  },
+  {
+    "word": "FANG",
+    "scramble": "GANF",
+    "hint": "Hagrid's large dog"
+  },
+  {
+    "word": "FORBIDDENFOREST",
+    "scramble": "OROIFESDFTBRDNE",
+    "hint": "The woods beside Hogwarts"
+  },
+  {
+    "word": "DARKARTS",
+    "scramble": "RATRKSDA",
+    "hint": "Sinister magic studied defensively"
+  },
+  {
+    "word": "TRANSYLVANIA",
+    "scramble": "TIYNRNLAAASV",
+    "hint": "Dracula's legendary region"
+  },
+  {
+    "word": "NOSFERATU",
+    "scramble": "NASOURETF",
+    "hint": "A classic silent vampire film"
+  },
+  {
+    "word": "ORLOK",
+    "scramble": "KOLRO",
+    "hint": "The vampire count in Nosferatu"
+  },
+  {
+    "word": "IMHOTEP",
+    "scramble": "EOIHTMP",
+    "hint": "The Mummy's ancient priest"
+  },
+  {
+    "word": "GILLMAN",
+    "scramble": "MALINGL",
+    "hint": "The Black Lagoon creature"
+  },
+  {
+    "word": "WOLFMAN",
+    "scramble": "FWNOALM",
+    "hint": "Universal's lycanthrope monster"
+  },
+  {
+    "word": "INVISIBLEMAN",
+    "scramble": "SMIEBNIAVLIN",
+    "hint": "H. G. Wells's unseen character"
+  },
+  {
+    "word": "PHANTOM",
+    "scramble": "TOAPNHM",
+    "hint": "The opera's mysterious masked figure"
+  },
+  {
+    "word": "JEKYLL",
+    "scramble": "LYLJKE",
+    "hint": "The doctor with a dangerous alter ego"
+  },
+  {
+    "word": "HYDE",
+    "scramble": "HDYE",
+    "hint": "Dr. Jekyll's other identity"
+  },
+  {
+    "word": "CARMILLA",
+    "scramble": "LACAMIRL",
+    "hint": "Sheridan Le Fanu's vampire novella"
+  },
+  {
+    "word": "RUTHVEN",
+    "scramble": "NRHETVU",
+    "hint": "The vampire lord in The Vampyre"
+  },
+  {
+    "word": "BANSHEE",
+    "scramble": "ESHNBEA",
+    "hint": "An Irish wailing spirit"
+  },
+  {
+    "word": "DULLAHAN",
+    "scramble": "LUHNALAD",
+    "hint": "An Irish headless rider"
+  },
+  {
+    "word": "POLTERGEIST",
+    "scramble": "ESPOTLIRTEG",
+    "hint": "A noisy, object-moving spirit"
+  },
+  {
+    "word": "GARGOYLE",
+    "scramble": "GLAEOYGR",
+    "hint": "A carved stone creature on a building"
+  },
+  {
+    "word": "GRIFFIN",
+    "scramble": "NIFRFGI",
+    "hint": "A lion-and-eagle creature"
+  },
+  {
+    "word": "CENTAUR",
+    "scramble": "URNACTE",
+    "hint": "A human-and-horse creature"
+  },
+  {
+    "word": "MEDUSA",
+    "scramble": "UADSEM",
+    "hint": "A figure with snakes for hair"
+  },
+  {
+    "word": "KRAKEN",
+    "scramble": "KANKER",
+    "hint": "A legendary sea monster"
+  },
+  {
+    "word": "KELPIE",
+    "scramble": "KEILPE",
+    "hint": "A Scottish water horse"
+  },
+  {
+    "word": "BROWNIE",
+    "scramble": "WENBORI",
+    "hint": "A household spirit in Scottish folklore"
+  },
+  {
+    "word": "KITSUNE",
+    "scramble": "NKSEITU",
+    "hint": "A Japanese fox spirit"
+  },
+  {
+    "word": "TENGU",
+    "scramble": "EUNTG",
+    "hint": "A Japanese mountain spirit"
+  },
+  {
+    "word": "YUREI",
+    "scramble": "ERUYI",
+    "hint": "A Japanese ghost"
+  },
+  {
+    "word": "BABAYAGA",
+    "scramble": "AAGABABY",
+    "hint": "A witch with a chicken-legged hut"
+  },
+  {
+    "word": "BLACKSHUCK",
+    "scramble": "CKBUCSLKAH",
+    "hint": "East Anglia's spectral black dog"
+  },
+  {
+    "word": "WILLOWISP",
+    "scramble": "OIILWLWSP",
+    "hint": "A mysterious marsh light"
+  },
+  {
+    "word": "MOTHMAN",
+    "scramble": "AMHTMON",
+    "hint": "Point Pleasant's winged cryptid"
+  },
+  {
+    "word": "CHUPACABRA",
+    "scramble": "CRAHAABCUP",
+    "hint": "A legendary creature of the Americas"
+  },
+  {
+    "word": "GOBLIN",
+    "scramble": "ILGONB",
+    "hint": "A mischievous folklore creature"
+  },
+  {
+    "word": "TROLL",
+    "scramble": "LLORT",
+    "hint": "A lumbering creature of stories"
+  },
+  {
+    "word": "OGRE",
+    "scramble": "GEOR",
+    "hint": "A giant fairy-tale monster"
+  },
+  {
+    "word": "GREMLIN",
+    "scramble": "ERGNIML",
+    "hint": "A mischievous creature blamed for breakdowns"
+  },
+  {
+    "word": "IMP",
+    "scramble": "PIM",
+    "hint": "A tiny mischievous spirit"
+  },
+  {
+    "word": "SPRITE",
+    "scramble": "SEITRP",
+    "hint": "A small fairy-like spirit"
+  },
+  {
+    "word": "SPECTER",
+    "scramble": "PETSRCE",
+    "hint": "Another word for a ghost"
+  },
+  {
+    "word": "PHANTASM",
+    "scramble": "TNAHAMPS",
+    "hint": "A ghostly apparition"
+  },
+  {
+    "word": "APPARITION",
+    "scramble": "PIIATONPAR",
+    "hint": "A supernatural appearance"
+  },
+  {
+    "word": "WRAITH",
+    "scramble": "TIHAWR",
+    "hint": "A ghostlike figure"
+  },
+  {
+    "word": "REVENANT",
+    "scramble": "EENVNART",
+    "hint": "One who returns from the dead in folklore"
+  },
+  {
+    "word": "FAMILIAR",
+    "scramble": "IALFAIMR",
+    "hint": "A witch's animal companion"
+  },
+  {
+    "word": "ENCHANTMENT",
+    "scramble": "TNEAEMTCHNN",
+    "hint": "A magical influence or spell"
+  },
+  {
+    "word": "HEX",
+    "scramble": "HXE",
+    "hint": "A short word for a spell or curse"
+  },
+  {
+    "word": "CHARM",
+    "scramble": "MCARH",
+    "hint": "A small spell or magical protection"
+  },
+  {
+    "word": "INCANTATION",
+    "scramble": "NATINNTAOCI",
+    "hint": "Words spoken to cast magic"
+  },
+  {
+    "word": "SORCERY",
+    "scramble": "RRYESOC",
+    "hint": "The practice of magic"
+  },
+  {
+    "word": "WIZARD",
+    "scramble": "WDIZRA",
+    "hint": "A learned fictional magic user"
+  },
+  {
+    "word": "WARLOCK",
+    "scramble": "WARCLOK",
+    "hint": "A male spell caster in fiction"
+  },
+  {
+    "word": "ALCHEMY",
+    "scramble": "LMAYEHC",
+    "hint": "An old practice of magical transformation"
+  },
+  {
+    "word": "AMULET",
+    "scramble": "UTLAME",
+    "hint": "An object worn for protection"
+  },
+  {
+    "word": "TALISMAN",
+    "scramble": "SNILAMTA",
+    "hint": "An object believed to bring magical help"
+  },
+  {
+    "word": "CRYSTALBALL",
+    "scramble": "TSAYLLCBLRA",
+    "hint": "A fortune-teller's sphere"
+  },
+  {
+    "word": "TAROT",
+    "scramble": "OTART",
+    "hint": "A deck used in fortune-telling"
+  },
+  {
+    "word": "RUNES",
+    "scramble": "SUNRE",
+    "hint": "Symbols on a fantasy spell tablet"
+  },
+  {
+    "word": "MOONSTONE",
+    "scramble": "NEOTSOONM",
+    "hint": "A shimmering stone with a lunar name"
+  },
+  {
+    "word": "RAVEN",
+    "scramble": "VNERA",
+    "hint": "A dark bird in Poe's poem"
+  },
+  {
+    "word": "CROW",
+    "scramble": "CRWO",
+    "hint": "A black bird seen near scarecrows"
+  },
+  {
+    "word": "OWL",
+    "scramble": "LWO",
+    "hint": "A hooting nighttime bird"
+  },
+  {
+    "word": "TOAD",
+    "scramble": "DTOA",
+    "hint": "A witch's warty storybook companion"
+  },
+  {
+    "word": "NEWT",
+    "scramble": "TNEW",
+    "hint": "A small amphibian named in witch lore"
+  },
+  {
+    "word": "SNAKE",
+    "scramble": "ENSKA",
+    "hint": "A slithering spooky-season creature"
+  },
+  {
+    "word": "RAT",
+    "scramble": "ATR",
+    "hint": "A small rodent in haunted-house imagery"
+  },
+  {
+    "word": "WOLF",
+    "scramble": "WLOF",
+    "hint": "A howling animal"
+  },
+  {
+    "word": "WEB",
+    "scramble": "BWE",
+    "hint": "A spider's silk net"
+  },
+  {
+    "word": "FANGS",
+    "scramble": "FASGN",
+    "hint": "A vampire's pointed teeth"
+  },
+  {
+    "word": "CLAWS",
+    "scramble": "LCSAW",
+    "hint": "A monster's sharp nails"
+  },
+  {
+    "word": "SKULL",
+    "scramble": "KSLUL",
+    "hint": "Bones forming a head"
+  },
+  {
+    "word": "BONES",
+    "scramble": "BEONS",
+    "hint": "Pieces of a skeleton"
+  },
+  {
+    "word": "RIBCAGE",
+    "scramble": "CIEBRAG",
+    "hint": "The skeleton's chest framework"
+  },
+  {
+    "word": "COFFIN",
+    "scramble": "FINCOF",
+    "hint": "A vampire's resting box in stories"
+  },
+  {
+    "word": "CRYPT",
+    "scramble": "PCTYR",
+    "hint": "A burial chamber"
+  },
+  {
+    "word": "MAUSOLEUM",
+    "scramble": "USMAMELUO",
+    "hint": "A building containing tombs"
+  },
+  {
+    "word": "GRAVEYARD",
+    "scramble": "RADVRAYGE",
+    "hint": "Another word for a cemetery"
+  },
+  {
+    "word": "EPITAPH",
+    "scramble": "HPTIAEP",
+    "hint": "Words on a tombstone"
+  },
+  {
+    "word": "HEADSTONE",
+    "scramble": "OTEEHASDN",
+    "hint": "An upright grave marker"
+  },
+  {
+    "word": "GATE",
+    "scramble": "TAGE",
+    "hint": "An entrance to a spooky cemetery"
+  },
+  {
+    "word": "LANTERN",
+    "scramble": "RLEANTN",
+    "hint": "A portable enclosed light"
+  },
+  {
+    "word": "CANDLE",
+    "scramble": "CLNADE",
+    "hint": "A wax light source"
+  },
+  {
+    "word": "WICK",
+    "scramble": "WKCI",
+    "hint": "The string inside a candle"
+  },
+  {
+    "word": "TORCH",
+    "scramble": "OHRTC",
+    "hint": "A flame light carried in old castle stories"
+  },
+  {
+    "word": "SHADOW",
+    "scramble": "HDOSWA",
+    "hint": "A dark shape cast by light"
+  },
+  {
+    "word": "SILHOUETTE",
+    "scramble": "TEELUTOSIH",
+    "hint": "A dark outline of a figure"
+  },
+  {
+    "word": "FOG",
+    "scramble": "GFO",
+    "hint": "Low mist in a spooky scene"
+  },
+  {
+    "word": "MIST",
+    "scramble": "ITMS",
+    "hint": "Fine suspended water droplets"
+  },
+  {
+    "word": "MIDNIGHT",
+    "scramble": "HMTNGDII",
+    "hint": "Twelve at night"
+  },
+  {
+    "word": "TWILIGHT",
+    "scramble": "GHTTILIW",
+    "hint": "The light between day and night"
+  },
+  {
+    "word": "MOONLIGHT",
+    "scramble": "HNLTOGIOM",
+    "hint": "Light from the night sky's bright disk"
+  },
+  {
+    "word": "ECLIPSE",
+    "scramble": "CPEEISL",
+    "hint": "A celestial shadow event"
+  },
+  {
+    "word": "HOWL",
+    "scramble": "OHWL",
+    "hint": "A wolf's long cry"
+  },
+  {
+    "word": "CACKLE",
+    "scramble": "ACLEKC",
+    "hint": "A witch's storybook laugh"
+  },
+  {
+    "word": "SCREAM",
+    "scramble": "CEMARS",
+    "hint": "A startled cry"
+  },
+  {
+    "word": "SHIVER",
+    "scramble": "VRESHI",
+    "hint": "A trembling response to a chill"
+  },
+  {
+    "word": "GOOSEBUMPS",
+    "scramble": "SUOPOMSBEG",
+    "hint": "Tiny skin bumps from a scare"
+  },
+  {
+    "word": "DREAD",
+    "scramble": "EDDAR",
+    "hint": "A feeling of apprehension"
+  },
+  {
+    "word": "MYSTERY",
+    "scramble": "SRTEYYM",
+    "hint": "Something waiting to be solved"
+  },
+  {
+    "word": "RIDDLE",
+    "scramble": "IRLDED",
+    "hint": "A puzzling question"
+  },
+  {
+    "word": "CLUE",
+    "scramble": "ELUC",
+    "hint": "A hint in a spooky investigation"
+  },
+  {
+    "word": "DISGUISE",
+    "scramble": "ESIGUSID",
+    "hint": "A look that hides who you are"
+  },
+  {
+    "word": "MASQUERADE",
+    "scramble": "RQMESAAEUD",
+    "hint": "A masked costume gathering"
+  },
+  {
+    "word": "EYEPATCH",
+    "scramble": "AYHCTEPE",
+    "hint": "A pirate costume accessory"
+  },
+  {
+    "word": "CAPE",
+    "scramble": "ACPE",
+    "hint": "A vampire's flowing garment"
+  },
+  {
+    "word": "MASK",
+    "scramble": "KAMS",
+    "hint": "A face-covering disguise"
+  },
+  {
+    "word": "MAKEUP",
+    "scramble": "PAEKMU",
+    "hint": "Color used to create a monster face"
+  },
+  {
+    "word": "WIG",
+    "scramble": "GIW",
+    "hint": "Artificial hair for a costume"
+  },
+  {
+    "word": "FELT",
+    "scramble": "FETL",
+    "hint": "A soft fabric used for costume crafts"
+  },
+  {
+    "word": "GLITTER",
+    "scramble": "RGTLETI",
+    "hint": "Sparkles on a magical costume"
+  },
+  {
+    "word": "FACEPAINT",
+    "scramble": "TFACNPEAI",
+    "hint": "Color applied directly for a costume"
+  },
+  {
+    "word": "COSTUMEPARADE",
+    "scramble": "EETUMORCASADP",
+    "hint": "A procession of dressed-up people"
+  },
+  {
+    "word": "BOO",
+    "scramble": "OBO",
+    "hint": "A ghost's short greeting"
+  },
+  {
+    "word": "TRICK",
+    "scramble": "RTKCI",
+    "hint": "The mischievous half of Halloween's greeting"
+  },
+  {
+    "word": "TREAT",
+    "scramble": "TEATR",
+    "hint": "The sweet half of Halloween's greeting"
+  },
+  {
+    "word": "LOLLIPOP",
+    "scramble": "PLIPLLOO",
+    "hint": "Hard candy on a stick"
+  },
+  {
+    "word": "CHOCOLATE",
+    "scramble": "CHOCOTLAE",
+    "hint": "A common Halloween candy ingredient"
+  },
+  {
+    "word": "CARAMEL",
+    "scramble": "AACRMLE",
+    "hint": "A golden sweet apple coating"
+  },
+  {
+    "word": "TAFFY",
+    "scramble": "FYAFT",
+    "hint": "A chewy pulled candy"
+  },
+  {
+    "word": "GUMMIES",
+    "scramble": "UIEGMMS",
+    "hint": "Chewy gelatin-style candies"
+  },
+  {
+    "word": "LICORICE",
+    "scramble": "OERCIICL",
+    "hint": "A rope-shaped candy"
+  },
+  {
+    "word": "MARSHMALLOW",
+    "scramble": "WRLHASMOLAM",
+    "hint": "A fluffy sweet treat"
+  },
+  {
+    "word": "CANDYAPPLE",
+    "scramble": "YDNAPLCAPE",
+    "hint": "Fruit with a hard sweet shell"
+  },
+  {
+    "word": "CARAMELAPPLE",
+    "scramble": "EPLAPLCARMAE",
+    "hint": "Fruit with a chewy golden coating"
+  },
+  {
+    "word": "POPCORN",
+    "scramble": "ORPONCP",
+    "hint": "A favorite spooky-movie snack"
+  },
+  {
+    "word": "PUMPKINPIE",
+    "scramble": "PIMKEPNUIP",
+    "hint": "A spiced autumn dessert"
+  },
+  {
+    "word": "PUMPKINBREAD",
+    "scramble": "NPDAIMRUPKEB",
+    "hint": "A sweet autumn loaf"
+  },
+  {
+    "word": "CIDER",
+    "scramble": "ERCID",
+    "hint": "A popular apple drink in fall"
+  },
+  {
+    "word": "CINNAMON",
+    "scramble": "OIACNNNM",
+    "hint": "A warm spice used with pumpkin"
+  },
+  {
+    "word": "NUTMEG",
+    "scramble": "NTUMEG",
+    "hint": "An aromatic pumpkin-pie spice"
+  },
+  {
+    "word": "CLOVES",
+    "scramble": "SOLCVE",
+    "hint": "A pungent spice used in fall baking"
+  },
+  {
+    "word": "GINGER",
+    "scramble": "GRINGE",
+    "hint": "A warming spice in autumn treats"
+  },
+  {
+    "word": "ALLSPICE",
+    "scramble": "ICLASEPL",
+    "hint": "A berry spice used in pumpkin blends"
+  },
+  {
+    "word": "SEEDS",
+    "scramble": "DEESS",
+    "hint": "A pumpkin's scoopable contents"
+  },
+  {
+    "word": "PEPITA",
+    "scramble": "ITPAEP",
+    "hint": "An edible pumpkin seed kernel"
+  },
+  {
+    "word": "STEM",
+    "scramble": "TEMS",
+    "hint": "The pumpkin's vine attachment"
+  },
+  {
+    "word": "VINE",
+    "scramble": "ENIV",
+    "hint": "A pumpkin plant's trailing growth"
+  },
+  {
+    "word": "GOURD",
+    "scramble": "GRDOU",
+    "hint": "A hard-skinned decorative fall fruit"
+  },
+  {
+    "word": "HARVEST",
+    "scramble": "VESTHAR",
+    "hint": "Gathering crops in autumn"
+  },
+  {
+    "word": "AUTUMN",
+    "scramble": "UAMUNT",
+    "hint": "The season of Halloween"
+  },
+  {
+    "word": "OCTOBER",
+    "scramble": "TCROBOE",
+    "hint": "Halloween's month"
+  },
+  {
+    "word": "LEAVES",
+    "scramble": "AVEESL",
+    "hint": "Colorful autumn tree coverings"
+  },
+  {
+    "word": "STRAW",
+    "scramble": "STWAR",
+    "hint": "A scarecrow's stuffing"
+  },
+  {
+    "word": "BARN",
+    "scramble": "RNBA",
+    "hint": "A building near a pumpkin patch"
+  },
+  {
+    "word": "WAGON",
+    "scramble": "NOAGW",
+    "hint": "A vehicle used for hayrides"
+  },
+  {
+    "word": "ORCHARD",
+    "scramble": "RCORDHA",
+    "hint": "A place to pick autumn apples"
+  },
+  {
+    "word": "BUSHEL",
+    "scramble": "HEULSB",
+    "hint": "A basket measure at a harvest market"
+  },
+  {
+    "word": "PATCH",
+    "scramble": "CTAPH",
+    "hint": "A place where pumpkins grow"
+  },
+  {
+    "word": "BARMBRACK",
+    "scramble": "ARRABMCKB",
+    "hint": "Irish Halloween fruit bread"
+  },
+  {
+    "word": "GUISING",
+    "scramble": "GIGUSIN",
+    "hint": "Traditional costumed house visiting"
+  },
+  {
+    "word": "SOULING",
+    "scramble": "OSGNIUL",
+    "hint": "An old custom of exchanging prayers for cakes"
+  },
+  {
+    "word": "OFRENDA",
+    "scramble": "FENDOAR",
+    "hint": "A Day of the Dead altar"
+  },
+  {
+    "word": "CATRINA",
+    "scramble": "CIAARNT",
+    "hint": "An elegant skeletal Day of the Dead figure"
+  },
+  {
+    "word": "CALAVERA",
+    "scramble": "EAACRVAL",
+    "hint": "Spanish word for skull"
+  },
+  {
+    "word": "PAPELPICADO",
+    "scramble": "OAEALCPPIPD",
+    "hint": "Decorative cut-paper banners"
+  },
+  {
+    "word": "PANDEMUERTO",
+    "scramble": "AOPDUEMETNR",
+    "hint": "Day of the Dead bread"
+  },
+  {
+    "word": "SUGARSKULL",
+    "scramble": "SLKRGUASUL",
+    "hint": "A decorated sweet remembrance symbol"
+  },
+  {
+    "word": "CORALINE",
+    "scramble": "AREOILNC",
+    "hint": "A girl who discovers an Other Mother"
+  },
+  {
+    "word": "BELDAM",
+    "scramble": "EDBMLA",
+    "hint": "Another name for Coraline's Other Mother"
+  },
+  {
+    "word": "BUTTONEYES",
+    "scramble": "TOTNYSUEBE",
+    "hint": "A disturbing feature in Coraline"
+  },
+  {
+    "word": "PARANORMAN",
+    "scramble": "ROAMNANPAR",
+    "hint": "A film about a boy who sees ghosts"
+  },
+  {
+    "word": "NORMAN",
+    "scramble": "ANMNOR",
+    "hint": "ParaNorman's young hero"
+  },
+  {
+    "word": "BLITHEHOLLOW",
+    "scramble": "EHHWLOIBLTOL",
+    "hint": "ParaNorman's town"
+  },
+  {
+    "word": "CORPSEBRIDE",
+    "scramble": "OICRRBPEDES",
+    "hint": "A stop-motion film with a ghostly wedding"
+  },
+  {
+    "word": "EMILY",
+    "scramble": "YLEMI",
+    "hint": "The title bride of a Tim Burton film"
+  },
+  {
+    "word": "VICTOR",
+    "scramble": "ITROCV",
+    "hint": "The young groom in Corpse Bride"
+  },
+  {
+    "word": "FRANKENWEENIE",
+    "scramble": "ENAWREIFKNNEE",
+    "hint": "A film about a revived dog"
+  },
+  {
+    "word": "SPARKY",
+    "scramble": "KRSAPY",
+    "hint": "The dog in Frankenweenie"
+  },
+  {
+    "word": "MAVIS",
+    "scramble": "SAVIM",
+    "hint": "Dracula's daughter in Hotel Transylvania"
+  },
+  {
+    "word": "JOHNNY",
+    "scramble": "NHOYJN",
+    "hint": "Mavis's human love interest"
+  },
+  {
+    "word": "HALLOWEENTOWN",
+    "scramble": "NLWTHENOEALWO",
+    "hint": "Marnie Piper's magical destination"
+  },
+  {
+    "word": "MARNIE",
+    "scramble": "EMIRNA",
+    "hint": "The young heroine of Halloweentown"
+  },
+  {
+    "word": "AGGIE",
+    "scramble": "GGEIA",
+    "hint": "Marnie's witch grandmother"
+  },
+  {
+    "word": "KALABAR",
+    "scramble": "KBALARA",
+    "hint": "Halloweentown's first villain"
+  },
+  {
+    "word": "LINUS",
+    "scramble": "LUSNI",
+    "hint": "The Peanuts child waiting in a pumpkin patch"
+  },
+  {
+    "word": "GREATPUMPKIN",
+    "scramble": "IAUPKTNEGMRP",
+    "hint": "Linus's hoped-for Halloween visitor"
+  },
+  {
+    "word": "SNOOPY",
+    "scramble": "NSOOPY",
+    "hint": "Peanuts' imaginative beagle"
+  },
+  {
+    "word": "MUNSTERS",
+    "scramble": "SMNUERTS",
+    "hint": "The family at Mockingbird Lane"
+  },
+  {
+    "word": "HERMAN",
+    "scramble": "MHRNEA",
+    "hint": "The Munster family's father"
+  },
+  {
+    "word": "LILY",
+    "scramble": "ILLY",
+    "hint": "The Munster family's mother"
+  },
+  {
+    "word": "EDDIE",
+    "scramble": "IEDDE",
+    "hint": "The Munsters' young werewolf son"
+  },
+  {
+    "word": "ELVIRA",
+    "scramble": "IVARLE",
+    "hint": "A famous horror hostess"
+  },
+  {
+    "word": "LYDIA",
+    "scramble": "LAYDI",
+    "hint": "The goth girl in Beetlejuice"
+  },
+  {
+    "word": "DEETZ",
+    "scramble": "DEEZT",
+    "hint": "Lydia's family surname"
+  },
+  {
+    "word": "ICHABODCRANE",
+    "scramble": "ROEACADCHBNI",
+    "hint": "Sleepy Hollow's schoolteacher"
+  },
+  {
+    "word": "BROMBONES",
+    "scramble": "MBBRSEOON",
+    "hint": "Ichabod's rival"
+  },
+  {
+    "word": "KATRINA",
+    "scramble": "RAKANTI",
+    "hint": "Ichabod's love interest"
+  },
+  {
+    "word": "HORSEMAN",
+    "scramble": "ARSNMOHE",
+    "hint": "Sleepy Hollow's headless rider"
+  },
+  {
+    "word": "MONSTERHOUSE",
+    "scramble": "MSEUTOENSRHO",
+    "hint": "An animated film about a living house"
+  },
+  {
+    "word": "GRIMGRINNING",
+    "scramble": "GRNMGNGIIINR",
+    "hint": "The Haunted Mansion ghosts are described this way"
+  },
+  {
+    "word": "SKELETONDANCE",
+    "scramble": "DEESCLNNOTAEK",
+    "hint": "Disney's 1929 graveyard cartoon"
+  },
+  {
+    "word": "DANSEMACABRE",
+    "scramble": "DMEAASREBACN",
+    "hint": "Saint-Saens's spooky musical piece"
+  },
+  {
+    "word": "SPOOKY",
+    "scramble": "YSPKOO",
+    "hint": "Eerie in a playful way"
+  },
+  {
+    "word": "EERIE",
+    "scramble": "IEEER",
+    "hint": "Strangely frightening"
+  },
+  {
+    "word": "PUMPKINPATCH",
+    "scramble": "NIPUTMCPAKPH",
+    "hint": "A field for choosing a jack-o'-lantern fruit"
+  },
+  {
+    "word": "GHOSTTOUR",
+    "scramble": "TSUORGHTO",
+    "hint": "A guided outing for local spooky stories"
+  },
+  {
+    "word": "HAUNTEDHOUSE",
+    "scramble": "EEUAHDOUSNHT",
+    "hint": "A building said to contain spirits"
+  },
+  {
+    "word": "HOCUSPOCUS",
+    "scramble": "CCOSOPUHUS",
+    "hint": "A film about three Salem witches"
+  }
+];
+
+  const gameLabels = {
+    trivia: ["Trivia", "15 questions • gets harder as you go", "15 Halloween questions • gets harder as you go"],
+    wyr: ["Would You Rather", "10 quick choices", "10 spooky-season choices"],
+    scramble: ["Word Scramble", "10 timed words", "10 timed Halloween words"]
+  };
+  function syncHalloweenUI() {
+    document.body.classList.toggle("halloween-mode", halloweenEnabled);
+    const toggle = document.getElementById("halloweenToggle");
+    toggle.setAttribute("aria-checked", String(halloweenEnabled));
+    toggle.textContent = `🎃 Halloween: ${halloweenEnabled ? "ON" : "OFF"}`;
+    toggle.disabled = !HALLOWEEN_MODE;
+    gamesPanel.querySelector(".eyebrow").textContent = halloweenEnabled ? "🎃 HALLOWEEN WEEK 🦇" : "DISCOVER WITH BIG RED";
+    gamesPanel.querySelectorAll("[data-game]").forEach(card => {
+      const [title, normal, seasonal] = gameLabels[card.dataset.game];
+      card.querySelector("strong").textContent = `${halloweenEnabled ? "Halloween " : ""}${title}`;
+      card.querySelector("span").textContent = halloweenEnabled ? seasonal : normal;
+    });
+  }
+  document.getElementById("halloweenToggle").addEventListener("click", () => {
+    halloweenEnabled = HALLOWEEN_MODE && !halloweenEnabled;
+    try { localStorage.setItem(HALLOWEEN_STORAGE_KEY, String(halloweenEnabled)); } catch {}
+    syncHalloweenUI();
+  });
+  syncHalloweenUI();
+
+  // A game captures its mode at start. Changing preference never mixes banks mid-game.
+  function seasonalGameTitle(kind, suffix = "") {
+    return `${session[kind]?.halloween ? "Halloween " : ""}${gameLabels[kind][0]}${suffix}`;
+  }
+  function drawHalloweenTrivia(tier, usedFacts) {
+    const key = `halloweenTrivia_${tier}`;
+    let deck = gameDecks[key] || [];
+    const selected = [];
+    while (selected.length < 5) {
+      if (!deck.some(item => !usedFacts.has(item.fact))) {
+        deck = shuffledCopy(halloweenTrivia[tier].filter(item => !usedFacts.has(item.fact)));
+      }
+      const index = deck.findIndex(item => !usedFacts.has(item.fact));
+      const item = deck.splice(index, 1)[0];
+      usedFacts.add(item.fact);
+      selected.push(item);
+    }
+    gameDecks[key] = deck;
+    return selected;
+  }
+
   const gameDecks = {
     triviaEasy: [],
     triviaMedium: [],
@@ -1694,6 +7840,17 @@
   }
 
   function startTriviaSession() {
+    if (halloweenEnabled) {
+      const usedFacts = new Set();
+      session.trivia = {
+        halloween: true,
+        easy: drawHalloweenTrivia("easy", usedFacts),
+        medium: drawHalloweenTrivia("medium", usedFacts),
+        hard: drawHalloweenTrivia("hard", usedFacts),
+        round: 0, correct: 0, points: 0, streak: 0, bestStreak: 0
+      };
+      return;
+    }
     // Early-season mix: guarantee visible fall / Harry Potter content
     // without taking over the whole 15-question game.
     // 5 seasonal questions per session: 2 Easy, 2 Medium, 1 Hard.
@@ -1867,7 +8024,7 @@
         <div id="triviaTimerPill" class="game-status-pill">Time <strong id="triviaTimerNumber">${remaining}s</strong></div>
       </div>
 
-      <h2 class="game-title">Trivia</h2>
+      <h2 class="game-title">${seasonalGameTitle("trivia")}</h2>
       <div class="game-prompt">${escapeHtml(item.q)}</div>
 
       <div class="answer-grid">
@@ -1966,7 +8123,7 @@
     const pct = Math.round((state.correct / CONFIG.triviaRounds) * 100);
 
     renderScoreScreen({
-      title: "Trivia Results",
+      title: seasonalGameTitle("trivia", " Results"),
       subtitle: "15 questions complete",
       hero: `${state.points}/30`,
       cards: [
@@ -1983,7 +8140,8 @@
 
   function startWyrSession() {
     session.wyr = {
-      rounds: drawFromDeck("wyr", wouldYouRather, CONFIG.wyrRounds),
+      halloween: halloweenEnabled,
+      rounds: drawFromDeck(halloweenEnabled ? "halloweenWyr" : "wyr", halloweenEnabled ? halloweenWouldYouRather : wouldYouRather, CONFIG.wyrRounds),
       round: 0,
       choices: []
     };
@@ -2001,7 +8159,7 @@
     gameContent.innerHTML = `
       <div class="wyr-progress">Round ${state.round + 1} of ${CONFIG.wyrRounds}</div>
 
-      <h2 class="game-title">Would You Rather</h2>
+      <h2 class="game-title">${seasonalGameTitle("wyr")}</h2>
       <div class="game-prompt">Pick one.</div>
 
       <div class="wyr-grid">
@@ -2049,7 +8207,7 @@
     const samplePicks = state.choices.slice(-3);
 
     renderScoreScreen({
-      title: "Would You Rather",
+      title: seasonalGameTitle("wyr", ""),
       subtitle: "10 choices complete",
       hero: "10/10",
       cards: [
@@ -2068,7 +8226,8 @@
     clearScrambleTimer();
 
     session.scramble = {
-      rounds: drawFromDeck("scramble", scrambles, CONFIG.scrambleRounds),
+      halloween: halloweenEnabled,
+      rounds: drawFromDeck(halloweenEnabled ? "halloweenScramble" : "scramble", halloweenEnabled ? halloweenScrambles : scrambles, CONFIG.scrambleRounds),
       round: 0,
       solved: 0,
       streak: 0,
@@ -2099,7 +8258,7 @@
         <div class="game-status-pill">Streak <strong>${state.streak}</strong></div>
       </div>
 
-      <h2 class="game-title">Word Scramble</h2>
+      <h2 class="game-title">${seasonalGameTitle("scramble")}</h2>
 
       <div class="timer-wrap">
         <div class="timer-row">
@@ -2209,7 +8368,7 @@
       : CONFIG.scrambleSeconds;
 
     renderScoreScreen({
-      title: "Word Scramble Results",
+      title: seasonalGameTitle("scramble", " Results"),
       subtitle: "10 timed words complete",
       hero: `${state.solved}/10`,
       cards: [
@@ -2413,3 +8572,4 @@
     if (localProgramUrl) URL.revokeObjectURL(localProgramUrl);
   });
 })();
+

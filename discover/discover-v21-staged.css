@@ -2980,3 +2980,25 @@ button {
     font-size: 10.5px;
   }
 }
+
+
+/* Games-only seasonal theme. No changes to media, dock, or other overlays. */
+#gamesPanel .games-toolbar { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+#gamesPanel .games-toolbar .back-button { margin-bottom:0; }
+#gamesPanel #halloweenToggle { min-height:44px; padding:8px 12px; border:1px solid #666; border-radius:12px; background:#171717; color:#fff; font-family:inherit; font-size:15px; font-weight:700; line-height:1.2; cursor:pointer; }
+#gamesPanel #halloweenToggle:focus-visible { outline:3px solid #fff; outline-offset:3px; }
+body.halloween-mode #gamesPanel .panel-card,
+body.halloween-mode #gamePanel .panel-card { background:radial-gradient(ellipse at top left,rgba(174,75,0,.18),transparent 60%),linear-gradient(135deg,#110b12,#100f15 65%,#21102e); border-color:#985c24; box-shadow:0 0 24px #a94d0026, inset 0 0 32px #713fa31c; }
+body.halloween-mode #gamesPanel .eyebrow,
+body.halloween-mode #gamesPanel .game-card strong,
+body.halloween-mode #gamePanel .game-title { color:#ffbb72; }
+body.halloween-mode #gamesPanel .game-card { background:linear-gradient(140deg,#20140d,#1c1028); border-color:#84519c; }
+body.halloween-mode #gamesPanel #halloweenToggle { background:#47230d; border-color:#ffb56b; color:#ffdbb4; }
+body.halloween-mode #gamePanel .timer-fill { background:linear-gradient(90deg,#e78935,#b58ae0); }
+body.halloween-mode #gamePanel #triviaTimerPill { border-color:#bb83d6; }
+body.halloween-mode #gamePanel .answer-btn,
+body.halloween-mode #gamePanel .wyr-choice { border-color:#82559a; }
+/* Keep longer seasonal titles within the existing game card space. */
+body.halloween-mode #gamePanel .game-title { font-size:clamp(22px,3vw,32px)!important; line-height:1.1!important; }
+body.halloween-mode #gamePanel .scramble-word { font-size:clamp(28px,4vw,44px)!important; letter-spacing:.04em; overflow-wrap:anywhere; }
+body.halloween-mode #gamesPanel .game-card strong { font-size:clamp(20px,2.5vw,28px); }
