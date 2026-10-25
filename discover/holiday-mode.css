@@ -1,0 +1,169 @@
+/* Big Red Connect — Automatic Holiday Mode
+   Version: 2026.10.25
+   Site-wide seasonal accents only. Media/audio sizing and playback are untouched. */
+
+:root {
+  --holiday-accent: #d71920;
+  --holiday-accent-2: #ffffff;
+  --holiday-glow: rgba(215,25,32,.18);
+  --holiday-soft: rgba(255,255,255,.06);
+}
+
+/* Internal control from the previous Halloween implementation stays in the DOM
+   for compatibility with the core engine but is never rider-visible. */
+#halloweenToggle {
+  display: none !important;
+}
+
+body.holiday-mode {
+  background:
+    radial-gradient(circle at 12% 16%, var(--holiday-glow), transparent 34%),
+    #000;
+}
+
+body.holiday-mode .panel-card,
+body.holiday-mode .loading-card,
+body.holiday-mode .fallback-card {
+  border-color: color-mix(in srgb, var(--holiday-accent) 38%, rgba(255,255,255,.18));
+  box-shadow:
+    0 22px 62px rgba(0,0,0,.55),
+    0 0 28px var(--holiday-glow);
+}
+
+body.holiday-mode .eyebrow,
+body.holiday-mode .holiday-game-label {
+  color: var(--holiday-accent);
+}
+
+body.holiday-mode .holiday-game-label {
+  margin: 0 auto 7px;
+  text-align: center;
+  font: 900 10px/1 system-ui,-apple-system,sans-serif;
+  letter-spacing: .14em;
+}
+
+body.holiday-mode .game-card,
+body.holiday-mode .answer-btn,
+body.holiday-mode .wyr-choice,
+body.holiday-mode .secondary-game-btn,
+body.holiday-mode .next-btn {
+  border-color: color-mix(in srgb, var(--holiday-accent) 38%, rgba(255,255,255,.16));
+}
+
+body.holiday-mode .game-card strong,
+body.holiday-mode .game-title,
+body.holiday-mode .scramble-word {
+  color: var(--holiday-accent);
+}
+
+body.holiday-mode .timer-fill {
+  background: linear-gradient(90deg,var(--holiday-accent),var(--holiday-accent-2));
+}
+
+body.holiday-mode .discover-badge,
+body.holiday-mode .volume-control {
+  border-color: color-mix(in srgb, var(--holiday-accent) 38%, rgba(255,255,255,.15));
+  box-shadow: 0 0 20px var(--holiday-glow);
+}
+
+/* Outer wrapper: holiday-mode.js adds holiday-mode + holiday-* to parent body. */
+body.holiday-mode .dock {
+  border-color: color-mix(in srgb, var(--holiday-accent) 40%, rgba(255,255,255,.18));
+  box-shadow:
+    0 18px 42px rgba(0,0,0,.52),
+    0 0 24px var(--holiday-glow);
+}
+
+body.holiday-mode .dock button {
+  border-color: color-mix(in srgb, var(--holiday-accent) 28%, rgba(255,255,255,.15));
+}
+
+body.holiday-mode .dock button:active,
+body.holiday-mode .dock button:focus-visible {
+  border-color: var(--holiday-accent);
+}
+
+body.holiday-mode .status-toggle,
+body.holiday-mode .state-button,
+body.holiday-mode .cutin-card {
+  border-color: color-mix(in srgb, var(--holiday-accent) 36%, rgba(255,255,255,.16));
+}
+
+body.holiday-mode .cutin-eyebrow {
+  color: var(--holiday-accent);
+}
+
+/* Holiday palettes */
+body.holiday-newyear {
+  --holiday-accent:#e5c15f;
+  --holiday-accent-2:#f5f5f5;
+  --holiday-glow:rgba(229,193,95,.20);
+}
+
+body.holiday-valentines {
+  --holiday-accent:#ff5b7f;
+  --holiday-accent-2:#ffd3dc;
+  --holiday-glow:rgba(255,91,127,.18);
+}
+
+body.holiday-stpatrick {
+  --holiday-accent:#4fc46b;
+  --holiday-accent-2:#d7b85a;
+  --holiday-glow:rgba(79,196,107,.18);
+}
+
+body.holiday-easter {
+  --holiday-accent:#d4a9ff;
+  --holiday-accent-2:#8ed5ff;
+  --holiday-glow:rgba(212,169,255,.18);
+}
+
+body.holiday-memorial,
+body.holiday-independence,
+body.holiday-veterans {
+  --holiday-accent:#e84c4c;
+  --holiday-accent-2:#79a7ff;
+  --holiday-glow:rgba(70,105,180,.20);
+}
+
+body.holiday-labor {
+  --holiday-accent:#d84b4b;
+  --holiday-accent-2:#aebbd0;
+  --holiday-glow:rgba(110,130,165,.18);
+}
+
+body.holiday-halloween {
+  --holiday-accent:#ff932f;
+  --holiday-accent-2:#9c5bd0;
+  --holiday-glow:rgba(255,126,0,.20);
+}
+
+body.holiday-thanksgiving {
+  --holiday-accent:#d98532;
+  --holiday-accent-2:#d8b36a;
+  --holiday-glow:rgba(217,133,50,.20);
+}
+
+body.holiday-christmas {
+  --holiday-accent:#df3434;
+  --holiday-accent-2:#49a95f;
+  --holiday-glow:rgba(223,52,52,.18);
+}
+
+/* Slightly richer but still calm holiday surfaces. */
+body.holiday-halloween .panel-card,
+body.holiday-thanksgiving .panel-card,
+body.holiday-christmas .panel-card,
+body.holiday-newyear .panel-card {
+  background:
+    linear-gradient(145deg,
+      color-mix(in srgb, var(--holiday-accent) 7%, rgba(12,12,12,.96)),
+      rgba(7,7,7,.97));
+}
+
+@media (orientation: landscape) and (max-height:850px) {
+  body.holiday-mode .holiday-game-label {
+    margin-bottom:4px;
+    font-size:9px;
+  }
+}
