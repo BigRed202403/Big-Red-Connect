@@ -8138,12 +8138,40 @@
     });
   }
 
+  function getCoreRideVibe(state) {
+    const left = state.leftPicks || 0;
+
+    const normalVibes = [
+      ["Cozy Cruiser", "You lean toward comfortable, easygoing choices."],
+      ["Easygoing Explorer", "You like a little variety without making everything a production."],
+      ["Social Spark", "You tend to pick the livelier, more adventurous option."],
+      ["Wildcard Rider", "You bring the bold, unpredictable energy."]
+    ];
+
+    const halloweenVibes = [
+      ["Cozy Ghoul", "You like Halloween fun without needing maximum chaos."],
+      ["Trick-or-Treater", "You mix the classics with a little spooky adventure."],
+      ["Haunted House Hero", "You lean into the bigger, bolder Halloween choices."],
+      ["Chaos Goblin", "You bring full spooky-season wildcard energy."]
+    ];
+
+    const tiers = state.halloween ? halloweenVibes : normalVibes;
+    const index = left <= 2 ? 0 : left <= 5 ? 1 : left <= 8 ? 2 : 3;
+    return tiers[index];
+  }
+
   function startWyrSession() {
     session.wyr = {
       halloween: halloweenEnabled,
-      rounds: drawFromDeck(halloweenEnabled ? "halloweenWyr" : "wyr", halloweenEnabled ? halloweenWouldYouRather : wouldYouRather, CONFIG.wyrRounds),
+      rounds: drawFromDeck(
+        halloweenEnabled ? "halloweenWyr" : "wyr",
+        halloweenEnabled ? halloweenWouldYouRather : wouldYouRather,
+        CONFIG.wyrRounds
+      ),
       round: 0,
-      choices: []
+      choices: [],
+      leftPicks: 0,
+      rightPicks: 0
     };
   }
 
@@ -8160,7 +8188,7 @@
       <div class="wyr-progress">Round ${state.round + 1} of ${CONFIG.wyrRounds}</div>
 
       <h2 class="game-title">${seasonalGameTitle("wyr")}</h2>
-      <div class="game-prompt">Pick one.</div>
+      <div class="game-prompt">Tap what you'd rather do.</div>
 
       <div class="wyr-grid">
         <button class="wyr-choice" data-choice="left" type="button">
@@ -8184,6 +8212,9 @@
         const choiceSide = button.dataset.choice;
         const selectedText = choiceSide === "left" ? leftChoice : rightChoice;
 
+        if (choiceSide === "left") state.leftPicks += 1;
+        else state.rightPicks += 1;
+
         state.choices.push(selectedText);
 
         gameContent.querySelectorAll("[data-choice]").forEach((candidate) => {
@@ -8204,30 +8235,65 @@
 
   function renderWyrResults() {
     const state = session.wyr;
-    const samplePicks = state.choices.slice(-3);
+    const [vibe, description] = getCoreRideVibe(state);
+    const lastPick = state.choices[state.choices.length - 1] || "—";
 
-    renderScoreScreen({
-      title: seasonalGameTitle("wyr", ""),
-      subtitle: "10 choices complete",
-      hero: "10/10",
-      cards: [
-        ["Rounds", "10"],
-        ["Choices Made", "10"],
-        ["Last Pick", samplePicks[samplePicks.length - 1] || "—"]
-      ],
-      replay: () => {
-        startWyrSession();
-        renderWouldYouRather();
-      }
+    gameContent.innerHTML = `
+      <div class="score-screen">
+        <h2 class="score-title">${escapeHtml(seasonalGameTitle("wyr", " Ride Vibe"))}</h2>
+        <p class="score-subtitle">Based on your 10 choices — just for fun.</p>
+
+        <div class="score-hero">${escapeHtml(vibe)}</div>
+
+        <div class="score-grid">
+          <div class="score-card">
+            <span>Your vibe</span>
+            <strong>${escapeHtml(description)}</strong>
+          </div>
+          <div class="score-card">
+            <span>Choices</span>
+            <strong>10</strong>
+          </div>
+          <div class="score-card">
+            <span>Last pick</span>
+            <strong>${escapeHtml(lastPick)}</strong>
+          </div>
+        </div>
+
+        <div class="score-actions">
+          <button id="playAgainBtn" class="score-primary" type="button">Play Again</button>
+          <button id="scoreGamesBtn" class="score-secondary" type="button">Back to Games</button>
+          <button id="scoreHomeBtn" class="score-secondary" type="button">Back to Big Red</button>
+        </div>
+      </div>
+    `;
+
+    document.getElementById("playAgainBtn").addEventListener("click", () => {
+      startWyrSession();
+      renderWouldYouRather();
     });
+
+    document.getElementById("scoreGamesBtn").addEventListener("click", () => {
+      activeGame = null;
+      openPanel(gamesPanel);
+    });
+
+    document.getElementById("scoreHomeBtn").addEventListener("click", goHomeAndReset);
   }
 
   function startScrambleSession() {
     clearScrambleTimer();
 
+    const sourcePool = halloweenEnabled ? halloweenScrambles : scrambles;
+
     session.scramble = {
       halloween: halloweenEnabled,
-      rounds: drawFromDeck(halloweenEnabled ? "halloweenScramble" : "scramble", halloweenEnabled ? halloweenScrambles : scrambles, CONFIG.scrambleRounds),
+      sourcePool,
+      rounds: drawFromDeck(
+        halloweenEnabled ? "halloweenScramble" : "scramble",
+        sourcePool,
+        CONFIG.scrambleRounds
+      ),
       round: 0,
       solved: 0,
       streak: 0,
@@ -8247,6 +8313,13 @@
     }
 
     const item = state.rounds[state.round];
+    const distractors = sampleWithoutReplacement(
+      state.sourcePool.filter(candidate => candidate.word !== item.word),
+      3
+    );
+    const answers = shuffledCopy([item.word, ...distractors.map(candidate => candidate.word)]);
+    const correctIndex = answers.indexOf(item.word);
+
     let remaining = CONFIG.scrambleSeconds;
     let finished = false;
     scrambleDeadline = Date.now() + (CONFIG.scrambleSeconds * 1000);
@@ -8254,7 +8327,7 @@
     gameContent.innerHTML = `
       <div class="game-statusbar">
         <div class="game-status-pill">Word <strong>${state.round + 1}/${CONFIG.scrambleRounds}</strong></div>
-        <div class="game-status-pill">Solved <strong>${state.solved}</strong></div>
+        <div class="game-status-pill">Correct <strong>${state.solved}</strong></div>
         <div class="game-status-pill">Streak <strong>${state.streak}</strong></div>
       </div>
 
@@ -8273,32 +8346,37 @@
       <div class="scramble-word">${escapeHtml(item.scramble)}</div>
 
       <div class="scramble-credit-note">
-        Know it? Tap <strong>Solved!</strong> before time runs out to get credit.
+        Unscramble it, then <strong>tap the correct word.</strong>
       </div>
 
       <div id="scrambleHint" class="scramble-hint" hidden>
         Hint: ${escapeHtml(item.hint)}
       </div>
 
+      <div class="answer-grid">
+        ${answers.map((answer,index)=>`
+          <button class="answer-btn" data-scramble-answer="${index}" type="button">
+            ${escapeHtml(answer)}
+          </button>
+        `).join("")}
+      </div>
+
       <div id="scrambleResult" class="result-text scramble-result" aria-live="polite">
-        Beat the clock.
+        Pick the answer before time runs out.
       </div>
 
       <div class="next-row">
         <button id="hintBtn" class="secondary-game-btn" type="button">Hint</button>
-        <button id="solvedBtn" class="next-btn" type="button">Solved!</button>
-        <button id="revealBtn" class="secondary-game-btn" type="button">Reveal</button>
       </div>
     `;
 
     const timerNumber = document.getElementById("timerNumber");
     const timerFill = document.getElementById("timerFill");
     const result = document.getElementById("scrambleResult");
-    const solvedBtn = document.getElementById("solvedBtn");
-    const revealBtn = document.getElementById("revealBtn");
     const hintBtn = document.getElementById("hintBtn");
+    const answerButtons = [...gameContent.querySelectorAll("[data-scramble-answer]")];
 
-    function finishRound(outcome) {
+    function finishRound(selected = null) {
       if (finished) return;
       finished = true;
 
@@ -8310,25 +8388,32 @@
       );
 
       state.totalTimeUsed += elapsed;
-
-      solvedBtn.disabled = true;
-      revealBtn.disabled = true;
       hintBtn.disabled = true;
 
-      if (outcome === "solved") {
+      const correct = selected === correctIndex;
+
+      answerButtons.forEach((candidate,index) => {
+        candidate.disabled = true;
+
+        if (index === correctIndex) {
+          candidate.classList.add("correct");
+        }
+
+        if (selected !== null && index === selected && !correct) {
+          candidate.classList.add("wrong");
+        }
+      });
+
+      if (correct) {
         state.solved += 1;
         state.streak += 1;
         state.bestStreak = Math.max(state.bestStreak, state.streak);
-        result.innerHTML = `
-          <span class="scramble-answer-label">Solved!</span>
-          <strong class="scramble-answer-reveal">${escapeHtml(item.word)}</strong>
-        `;
+        result.textContent = "Correct!";
       } else {
         state.streak = 0;
-        result.innerHTML = `
-          <span class="scramble-answer-label">Answer</span>
-          <strong class="scramble-answer-reveal">${escapeHtml(item.word)}</strong>
-        `;
+        result.textContent = selected === null
+          ? `Time's up! Answer: ${item.word}`
+          : `Answer: ${item.word}`;
       }
 
       setTimeout(() => {
@@ -8341,8 +8426,11 @@
       document.getElementById("scrambleHint").hidden = false;
     });
 
-    solvedBtn.addEventListener("click", () => finishRound("solved"));
-    revealBtn.addEventListener("click", () => finishRound("revealed"));
+    answerButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        finishRound(Number(button.dataset.scrambleAnswer));
+      }, {once:true});
+    });
 
     scrambleTimer = setInterval(() => {
       const msLeft = Math.max(0, scrambleDeadline - Date.now());
@@ -8354,7 +8442,7 @@
       timerFill.style.transform = `scaleX(${Math.max(0, Math.min(1, ratio))})`;
 
       if (msLeft <= 0) {
-        finishRound("timeout");
+        finishRound(null);
       }
     }, 100);
   }
@@ -8372,7 +8460,7 @@
       subtitle: "10 timed words complete",
       hero: `${state.solved}/10`,
       cards: [
-        ["Solved", `${state.solved}/10`],
+        ["Correct", `${state.solved}/10`],
         ["Best Streak", state.bestStreak],
         ["Avg. Time", `${avgTime}s`]
       ],
